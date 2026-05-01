@@ -546,6 +546,26 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'educator_today_page_test.dart'),
       'utf8'
     );
+    const flutterObservationCapturePageSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'educator', 'observation_capture_page.dart'),
+      'utf8'
+    );
+    const flutterObservationCaptureTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'observation_capture_page_test.dart'),
+      'utf8'
+    );
+    const flutterProofVerificationPageSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'educator', 'proof_verification_page.dart'),
+      'utf8'
+    );
+    const flutterProofVerificationTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'proof_verification_page_test.dart'),
+      'utf8'
+    );
+    const flutterFirestoreServiceSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'services', 'firestore_service.dart'),
+      'utf8'
+    );
     const flutterReflectionPageSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'learner', 'reflection_journal_page.dart'),
       'utf8'
@@ -615,6 +635,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Learner proof assembly small-screen and offline replay');
     expect(flutterMobilePlanSource).toContain('Learner portfolio created-item provenance');
     expect(flutterMobilePlanSource).toContain('Educator today mobile evidence capture access');
+    expect(flutterMobilePlanSource).toContain('Educator observation capture small-screen and site-boundary proof');
+    expect(flutterMobilePlanSource).toContain('Educator proof-review persistence and site-boundary proof');
     expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
     expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
     expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
@@ -654,6 +676,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Learner proof assembly small-screen and offline replay proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner portfolio created-item provenance proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Educator today mobile evidence capture access proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Educator observation capture small-screen and site-boundary proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Educator proof-review persistence and site-boundary proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
     expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
@@ -701,6 +725,25 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterEducatorTodayTestSource).toContain("find.text('Log Evidence')");
     expect(flutterEducatorTodayTestSource).toContain("find.text('Quick Observation Capture')");
     expect(flutterEducatorTodayTestSource).toContain('expect(tester.takeException(), isNull)');
+    expect(flutterFirestoreServiceSource).toContain("case 'arrayContains':");
+    expect(flutterObservationCapturePageSource).toContain("<dynamic>['siteIds', 'arrayContains', siteId]");
+    expect(flutterObservationCapturePageSource).toContain("<dynamic>['siteId', siteId]");
+    expect(flutterObservationCapturePageSource).toContain("<dynamic>['recordedBy', appState.userId]");
+    expect(flutterObservationCaptureTestSource).toContain('observation capture records same-site classroom evidence on mobile width');
+    expect(flutterObservationCaptureTestSource).toContain("find.text('Other Site Learner'), findsNothing");
+    expect(flutterObservationCaptureTestSource).toContain('Other-site recent observation should stay hidden');
+    expect(flutterObservationCaptureTestSource).toContain("saved['rubricStatus'], 'pending'");
+    expect(flutterObservationCaptureTestSource).toContain("saved['growthStatus'], 'pending'");
+    expect(flutterObservationCaptureTestSource).toContain("saved.containsKey('capabilityMastery'), isFalse");
+    expect(flutterObservationCaptureTestSource).toContain('expect(tester.takeException(), isNull)');
+    expect(flutterProofVerificationPageSource).toContain("<dynamic>['siteId', siteId]");
+    expect(flutterProofVerificationPageSource).toContain("'proofOfLearningBundles'");
+    expect(flutterProofVerificationPageSource).toContain('Wrap(');
+    expect(flutterProofVerificationTestSource).toContain('proof verification shows same-site bundles and persists revision request on mobile width');
+    expect(flutterProofVerificationTestSource).toContain("find.text('Other Site Learner'), findsNothing");
+    expect(flutterProofVerificationTestSource).toContain("sameSiteProof.data()?['verificationStatus'], 'revision_requested'");
+    expect(flutterProofVerificationTestSource).toContain("otherSiteProof.data()?['verificationStatus'], 'pending_review'");
+    expect(flutterProofVerificationTestSource).toContain('expect(tester.takeException(), isNull)');
     expect(flutterReflectionPageSource).toContain("where('siteId', isEqualTo: siteId)");
     expect(flutterReflectionPageSource).toContain('Portfolio-linked reflection');
     expect(flutterReflectionTestSource).toContain('reflection journal renders same-site portfolio provenance on classroom mobile width');

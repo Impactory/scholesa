@@ -26,6 +26,17 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
   String _t(String input) => EvidenceChainI18n.text(context, input);
 
+  String? _activeSiteId() {
+    final AppState appState = context.read<AppState>();
+    final String activeSiteId = (appState.activeSiteId ?? '').trim();
+    if (activeSiteId.isNotEmpty) return activeSiteId;
+    if (appState.siteIds.isNotEmpty) {
+      final String first = appState.siteIds.first.trim();
+      if (first.isNotEmpty) return first;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,11 +51,21 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
       _error = null;
     });
     try {
+      final String? siteId = _activeSiteId();
+      if (siteId == null) {
+        setState(() {
+          _error = 'No active site selected.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Load bundles that are not yet verified
       final List<Map<String, dynamic>> partial =
           await _firestoreService.queryCollection(
         'proofOfLearningBundles',
         where: <List<dynamic>>[
+          <dynamic>['siteId', siteId],
           <dynamic>['verificationStatus', 'partial'],
         ],
         orderBy: 'createdAt',
@@ -54,6 +75,7 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
           await _firestoreService.queryCollection(
         'proofOfLearningBundles',
         where: <List<dynamic>>[
+          <dynamic>['siteId', siteId],
           <dynamic>['verificationStatus', 'missing'],
         ],
         orderBy: 'createdAt',
@@ -64,6 +86,7 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
           await _firestoreService.queryCollection(
         'proofOfLearningBundles',
         where: <List<dynamic>>[
+          <dynamic>['siteId', siteId],
           <dynamic>['verificationStatus', 'pending_review'],
         ],
         orderBy: 'createdAt',
@@ -71,7 +94,11 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
       );
 
       setState(() {
-        _pendingBundles = <Map<String, dynamic>>[...pendingReview, ...partial, ...missing];
+        _pendingBundles = <Map<String, dynamic>>[
+          ...pendingReview,
+          ...partial,
+          ...missing,
+        ];
         _isLoading = false;
       });
     } catch (e) {
@@ -84,14 +111,17 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
   Future<void> _verifyBundle(Map<String, dynamic> bundle) async {
     final AppState appState = context.read<AppState>();
-    final GrowthEngineService growthEngine = context.read<GrowthEngineService>();
+    final GrowthEngineService growthEngine =
+        context.read<GrowthEngineService>();
     final String educatorId = appState.userId ?? '';
     final String portfolioItemId = bundle['portfolioItemId'] as String? ?? '';
     final String bundleId = bundle['id'] as String? ?? '';
 
     // Prefer calling the Cloud Function which atomically updates:
     // portfolioItem, capabilityMastery, capabilityGrowthEvents, and back-links
-    if (educatorId.isEmpty || (portfolioItemId.isEmpty && bundleId.isEmpty)) return;
+    if (educatorId.isEmpty || (portfolioItemId.isEmpty && bundleId.isEmpty)) {
+      return;
+    }
 
     try {
       if (portfolioItemId.isNotEmpty) {
@@ -195,7 +225,8 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_error!, style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -235,12 +266,12 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
   Widget _buildBundleCard(Map<String, dynamic> bundle) {
     final ThemeData theme = Theme.of(context);
-    final String learnerName =
-        bundle['learnerName'] as String? ?? bundle['learnerId'] as String? ?? 'Unknown';
-    final String portfolioItemTitle =
-        bundle['portfolioItemTitle'] as String? ??
-            bundle['portfolioItemId'] as String? ??
-            'Portfolio Item';
+    final String learnerName = bundle['learnerName'] as String? ??
+        bundle['learnerId'] as String? ??
+        'Unknown';
+    final String portfolioItemTitle = bundle['portfolioItemTitle'] as String? ??
+        bundle['portfolioItemId'] as String? ??
+        'Portfolio Item';
     final String status = bundle['verificationStatus'] as String? ?? 'missing';
     final bool hasEIB = bundle['hasExplainItBack'] as bool? ?? false;
     final bool hasOC = bundle['hasOralCheck'] as bool? ?? false;
@@ -264,7 +295,8 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
                     children: <Widget>[
                       Text(learnerName, style: theme.textTheme.titleMedium),
                       const SizedBox(height: 2),
-                      Text(portfolioItemTitle, style: theme.textTheme.bodyMedium),
+                      Text(portfolioItemTitle,
+                          style: theme.textTheme.bodyMedium),
                     ],
                   ),
                 ),
@@ -289,14 +321,15 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
               excerpt: mrExcerpt,
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: <Widget>[
                 FilledButton.icon(
                   onPressed: () => _verifyBundle(bundle),
                   icon: const Icon(Icons.verified, size: 18),
                   label: Text(_t('Verify')),
                 ),
-                const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () => _requestRevision(bundle),
                   icon: const Icon(Icons.edit_note, size: 18),
@@ -339,7 +372,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
+        style: TextStyle(
+            fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
       ),
     );
   }

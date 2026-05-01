@@ -943,7 +943,21 @@ class FirestoreService {
 
     if (where != null) {
       for (final List<dynamic> condition in where) {
-        query = query.where(condition[0] as String, isEqualTo: condition[1]);
+        final String field = condition[0] as String;
+        if (condition.length >= 3) {
+          final String operator = condition[1] as String;
+          final dynamic value = condition[2];
+          switch (operator) {
+            case 'arrayContains':
+              query = query.where(field, arrayContains: value);
+              break;
+            default:
+              throw ArgumentError(
+                  'Unsupported Firestore query operator: $operator');
+          }
+        } else {
+          query = query.where(field, isEqualTo: condition[1]);
+        }
       }
     }
 

@@ -1,0 +1,128 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nested/nested.dart';
+import 'package:provider/provider.dart';
+import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/educator/proof_verification_page.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+AppState _buildEducatorState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'educator-1',
+    'email': 'educator-1@scholesa.test',
+    'displayName': 'Educator One',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': const <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+Widget _buildHarness({
+  required AppState appState,
+  required FirestoreService firestoreService,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: appState),
+      Provider<FirestoreService>.value(value: firestoreService),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(useMaterial3: true),
+      home: const ProofVerificationPage(),
+    ),
+  );
+}
+
+Future<void> _seedProofBundles(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('proofOfLearningBundles').doc('proof-site-1').set(
+    <String, dynamic>{
+      'siteId': 'site-1',
+      'learnerId': 'learner-1',
+      'learnerName': 'Same Site Learner',
+      'portfolioItemId': 'portfolio-1',
+      'portfolioItemTitle': 'Water Filter Prototype',
+      'verificationStatus': 'pending_review',
+      'hasExplainItBack': true,
+      'hasOralCheck': true,
+      'hasMiniRebuild': true,
+      'explainItBackExcerpt': 'I changed the filter angle after testing flow.',
+      'oralCheckExcerpt':
+          'The learner explained the tradeoff in their own words.',
+      'miniRebuildExcerpt': 'The learner rebuilt the intake using fewer parts.',
+      'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1, 10)),
+    },
+  );
+  await firestore.collection('proofOfLearningBundles').doc('proof-site-2').set(
+    <String, dynamic>{
+      'siteId': 'site-2',
+      'learnerId': 'learner-2',
+      'learnerName': 'Other Site Learner',
+      'portfolioItemId': 'portfolio-2',
+      'portfolioItemTitle': 'Other Site Artifact',
+      'verificationStatus': 'pending_review',
+      'hasExplainItBack': true,
+      'hasOralCheck': true,
+      'hasMiniRebuild': true,
+      'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1, 11)),
+    },
+  );
+}
+
+void main() {
+  testWidgets(
+      'proof verification shows same-site bundles and persists revision request on mobile width',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedProofBundles(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildEducatorState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Proof of Learning'), findsOneWidget);
+    expect(find.text('Same Site Learner'), findsOneWidget);
+    expect(find.text('Water Filter Prototype'), findsOneWidget);
+    expect(find.text('Other Site Learner'), findsNothing);
+    expect(find.text('Other Site Artifact'), findsNothing);
+    expect(find.text('Explain-It-Back'), findsOneWidget);
+    expect(find.text('Oral Check'), findsOneWidget);
+    expect(find.text('Mini Rebuild'), findsOneWidget);
+
+    await tester.tap(find.text('Request Revision'));
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> sameSiteProof = await firestore
+        .collection('proofOfLearningBundles')
+        .doc('proof-site-1')
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> otherSiteProof =
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc('proof-site-2')
+            .get();
+
+    expect(sameSiteProof.data()?['verificationStatus'], 'revision_requested');
+    expect(otherSiteProof.data()?['verificationStatus'], 'pending_review');
+    expect(find.text('All proof bundles have been verified.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

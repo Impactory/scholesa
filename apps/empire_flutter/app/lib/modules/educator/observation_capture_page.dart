@@ -35,8 +35,13 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
   // Timer for 10-second capture goal
   DateTime? _captureStartTime;
 
-  static const List<Map<String, dynamic>> _observationTypes = <Map<String, dynamic>>[
-    <String, dynamic>{'value': 'engagement', 'label': 'Engagement', 'icon': Icons.visibility},
+  static const List<Map<String, dynamic>> _observationTypes =
+      <Map<String, dynamic>>[
+    <String, dynamic>{
+      'value': 'engagement',
+      'label': 'Engagement',
+      'icon': Icons.visibility
+    },
     <String, dynamic>{
       'value': 'participation',
       'label': 'Participation',
@@ -107,18 +112,10 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         'users',
         where: <List<dynamic>>[
           <dynamic>['role', 'learner'],
+          <dynamic>['siteIds', 'arrayContains', siteId],
         ],
         limit: 100,
       );
-
-      // Filter to learners in this site
-      final List<Map<String, dynamic>> siteLearners = learners
-          .where((Map<String, dynamic> l) {
-            final List<dynamic> siteIds =
-                l['siteIds'] as List<dynamic>? ?? <dynamic>[];
-            return siteIds.contains(siteId);
-          })
-          .toList();
 
       // Load recent observations by this educator
       final List<Map<String, dynamic>> recent =
@@ -134,7 +131,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
       );
 
       setState(() {
-        _learners = siteLearners;
+        _learners = learners;
         _recentObservations = recent;
         _isLoading = false;
       });
@@ -159,7 +156,9 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
     final String educatorId = appState.userId ?? '';
     final String? siteId = _activeSiteId();
 
-    if (_selectedLearnerId == null || educatorId.isEmpty || siteId == null) return;
+    if (_selectedLearnerId == null || educatorId.isEmpty || siteId == null) {
+      return;
+    }
     if (_noteController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_t('Please enter an observation note.'))),
@@ -191,10 +190,10 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
       };
 
       // Route through offline queue so observations survive connectivity loss.
-      final SyncCoordinator? syncCoordinator =
-          context.read<SyncCoordinator?>();
+      final SyncCoordinator? syncCoordinator = context.read<SyncCoordinator?>();
       if (syncCoordinator != null) {
-        await syncCoordinator.queueOperation(OpType.observationCapture, payload);
+        await syncCoordinator.queueOperation(
+            OpType.observationCapture, payload);
       } else {
         // Fallback: direct write when sync coordinator is not provided (tests).
         await _firestoreService.createDocument('evidenceRecords', payload);
@@ -242,7 +241,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_t(_error!), style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -261,7 +261,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                     children: <Widget>[
                       if (_selectedLearnerId != null) _buildCaptureForm(),
                       if (_selectedLearnerId == null) ...<Widget>[
-                        Text(_t('Select a Learner'), style: theme.textTheme.titleMedium),
+                        Text(_t('Select a Learner'),
+                            style: theme.textTheme.titleMedium),
                         const SizedBox(height: 8),
                         if (_learners.isEmpty)
                           Padding(
@@ -272,7 +273,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                           ..._learners.map(_buildLearnerCard),
                       ],
                       const SizedBox(height: 24),
-                      Text(_t('Recent Observations'), style: theme.textTheme.titleMedium),
+                      Text(_t('Recent Observations'),
+                          style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
                       if (_recentObservations.isEmpty)
                         Padding(
@@ -289,12 +291,14 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
 
   Widget _buildLearnerCard(Map<String, dynamic> learner) {
     final String id = learner['id'] as String? ?? '';
-    final String name =
-        learner['displayName'] as String? ?? learner['email'] as String? ?? 'Unknown';
+    final String name = learner['displayName'] as String? ??
+        learner['email'] as String? ??
+        'Unknown';
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: CircleAvatar(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?')),
+        leading: CircleAvatar(
+            child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?')),
         title: Text(name),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => _selectLearner(id, name),
@@ -433,7 +437,8 @@ class _CaptureTimer extends StatefulWidget {
   State<_CaptureTimer> createState() => _CaptureTimerState();
 }
 
-class _CaptureTimerState extends State<_CaptureTimer> with SingleTickerProviderStateMixin {
+class _CaptureTimerState extends State<_CaptureTimer>
+    with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   int _elapsedSeconds = 0;
 
