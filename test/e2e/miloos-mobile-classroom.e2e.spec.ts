@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
-  canonicalMiloOSGoldWebEvents,
+  seedCanonicalMiloOSGoldWebState,
   WEB_MILOOS_SYNTHETIC_IDS,
 } from './miloos-synthetic-gold-fixture';
 
@@ -8,7 +8,6 @@ type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
   reset: (locale?: string) => Promise<void>;
   currentUid: () => string | null;
-  seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
@@ -82,11 +81,7 @@ async function expectWithinMobileWidth(locator: Locator): Promise<void> {
 }
 
 async function seedSupportEvents(page: Page): Promise<void> {
-  await page.evaluate((events) => {
-    (window as Window & {
-      __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents(events);
-  }, canonicalMiloOSGoldWebEvents());
+  await seedCanonicalMiloOSGoldWebState(page);
 }
 
 test.describe('MiloOS mobile classroom proof', () => {

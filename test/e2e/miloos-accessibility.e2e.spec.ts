@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import {
-  canonicalMiloOSGoldWebEvents,
+  seedCanonicalMiloOSGoldWebState,
   WEB_MILOOS_SYNTHETIC_IDS,
 } from './miloos-synthetic-gold-fixture';
 
@@ -9,7 +9,6 @@ type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
   reset: (locale?: string) => Promise<void>;
   currentUid: () => string | null;
-  seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
 const LEARNER_ALPHA = WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId;
@@ -67,11 +66,7 @@ async function signInAs(page: Page, uid: string): Promise<void> {
 }
 
 async function seedMiloOSSupportEvents(page: Page): Promise<void> {
-  await page.evaluate((events) => {
-    (window as Window & {
-      __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents(events);
-  }, canonicalMiloOSGoldWebEvents());
+  await seedCanonicalMiloOSGoldWebState(page);
 }
 
 test.beforeEach(async ({ page }) => {

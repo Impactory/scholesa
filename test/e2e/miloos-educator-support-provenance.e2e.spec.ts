@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  canonicalMiloOSGoldWebEvents,
+  seedCanonicalMiloOSGoldWebState,
   WEB_MILOOS_SYNTHETIC_IDS,
 } from './miloos-synthetic-gold-fixture';
 
@@ -8,7 +8,6 @@ type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
   reset: (locale?: string) => Promise<void>;
   currentUid: () => string | null;
-  seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
 const EDUCATOR_ALPHA = 'educator-alpha';
@@ -54,11 +53,7 @@ test.beforeEach(async ({ page }) => {
 
 test('educator AI audit shows same-site MiloOS support provenance without mastery claims', async ({ page }) => {
   await signInAsEducator(page);
-  await page.evaluate((events) => {
-    (window as Window & {
-      __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents(events);
-  }, canonicalMiloOSGoldWebEvents());
+  await seedCanonicalMiloOSGoldWebState(page);
 
   await page.goto('/en/educator/learners');
 

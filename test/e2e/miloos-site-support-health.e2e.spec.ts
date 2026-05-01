@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { canonicalMiloOSGoldWebEvents } from './miloos-synthetic-gold-fixture';
+import { seedCanonicalMiloOSGoldWebState } from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
   reset: (locale?: string) => Promise<void>;
   currentUid: () => string | null;
-  seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
+  getCollection: (collectionName: string) => Array<Record<string, unknown>>;
 };
 
 const SITE_ADMIN = 'site-alpha-admin';
@@ -49,13 +49,23 @@ test.beforeEach(async ({ page }) => {
 
 test('site dashboard shows MiloOS support health without treating support as mastery', async ({ page }) => {
   await signInAsSiteAdmin(page);
-  await page.evaluate((events) => {
-    (window as Window & {
-      __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents(events);
-  }, canonicalMiloOSGoldWebEvents());
+  await seedCanonicalMiloOSGoldWebState(page);
 
   await page.goto('/en/site/dashboard');
+
+  const syntheticStates = await page.evaluate(() => {
+    return (window as Window & {
+      __scholesaE2E: E2EWindowApi;
+    }).__scholesaE2E.getCollection('syntheticMiloOSGoldStates');
+  });
+  expect(syntheticStates).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      id: 'latest',
+      noMasteryWrites: true,
+      sourcePack: 'miloos-gold-readiness',
+      siteId: 'site-alpha',
+    }),
+  ]));
 
   const supportHealth = page.getByTestId('site-miloos-support-health');
   await expect(supportHealth).toBeVisible();
