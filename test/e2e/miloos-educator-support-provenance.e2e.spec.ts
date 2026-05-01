@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import {
+  canonicalMiloOSGoldWebEvents,
+  WEB_MILOOS_SYNTHETIC_IDS,
+} from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -7,11 +11,9 @@ type E2EWindowApi = {
   seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
-const SITE_ALPHA = 'site-alpha';
-const SITE_BETA = 'site-beta';
 const EDUCATOR_ALPHA = 'educator-alpha';
-const LEARNER_ALPHA = 'learner-alpha';
-const LEARNER_BETA = 'learner-beta';
+const LEARNER_ALPHA = WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId;
+const LEARNER_BETA = WEB_MILOOS_SYNTHETIC_IDS.supportCurrentLearnerId;
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() => Boolean((window as Window & {
@@ -52,62 +54,11 @@ test.beforeEach(async ({ page }) => {
 
 test('educator AI audit shows same-site MiloOS support provenance without mastery claims', async ({ page }) => {
   await signInAsEducator(page);
-  await page.evaluate(({ siteAlpha, siteBeta, learnerAlpha, learnerBeta }) => {
+  await page.evaluate((events) => {
     (window as Window & {
       __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents([
-      {
-        id: 'educator-alpha-opened',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'educator-alpha-used',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_used',
-        interactionId: 'educator-alpha-opened',
-      },
-      {
-        id: 'educator-beta-opened',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'educator-beta-used',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_used',
-        interactionId: 'educator-beta-opened',
-      },
-      {
-        id: 'educator-beta-explain-back',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'explain_it_back_submitted',
-        interactionId: 'educator-beta-opened',
-      },
-      {
-        id: 'educator-other-site-opened',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-    ]);
-  }, {
-    siteAlpha: SITE_ALPHA,
-    siteBeta: SITE_BETA,
-    learnerAlpha: LEARNER_ALPHA,
-    learnerBeta: LEARNER_BETA,
-  });
+    }).__scholesaE2E.seedInteractionEvents(events);
+  }, canonicalMiloOSGoldWebEvents());
 
   await page.goto('/en/educator/learners');
 

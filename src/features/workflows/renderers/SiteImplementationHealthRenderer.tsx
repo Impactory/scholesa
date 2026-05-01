@@ -42,6 +42,7 @@ interface HealthMetrics {
   totalRubricApplications: number;
   miloosSupportOpened: number;
   miloosSupportUsed: number;
+  miloosCoachResponses: number;
   miloosExplainBackSubmitted: number;
   miloosPendingExplainBack: number;
   averageEvidencePerLearner: number;
@@ -51,6 +52,7 @@ interface HealthMetrics {
 interface MiloOSLearnerSupportCounts {
   opened: number;
   used: number;
+  responses: number;
   explainBackSubmitted: number;
 }
 
@@ -60,6 +62,7 @@ type MiloOSSupportMetrics = Pick<
   | 'learnersWithPendingMiloOSExplainBack'
   | 'miloosSupportOpened'
   | 'miloosSupportUsed'
+  | 'miloosCoachResponses'
   | 'miloosExplainBackSubmitted'
   | 'miloosPendingExplainBack'
 >;
@@ -72,7 +75,7 @@ function deriveMiloOSSupportMetrics(
   const ensureMiloOSLearner = (learnerId: string): MiloOSLearnerSupportCounts => {
     const existing = miloosLearnerSupport.get(learnerId);
     if (existing) return existing;
-    const created = { opened: 0, used: 0, explainBackSubmitted: 0 };
+    const created = { opened: 0, used: 0, responses: 0, explainBackSubmitted: 0 };
     miloosLearnerSupport.set(learnerId, created);
     return created;
   };
@@ -87,17 +90,24 @@ function deriveMiloOSSupportMetrics(
       : '';
     if (!learnerId) return;
     const eventType = typeof data.eventType === 'string' ? data.eventType.trim().toLowerCase() : '';
-    if (!['ai_help_opened', 'ai_help_used', 'explain_it_back_submitted'].includes(eventType)) {
+    if (![
+      'ai_help_opened',
+      'ai_help_used',
+      'ai_coach_response',
+      'explain_it_back_submitted',
+    ].includes(eventType)) {
       return;
     }
     const support = ensureMiloOSLearner(learnerId);
     if (eventType === 'ai_help_opened') support.opened++;
     if (eventType === 'ai_help_used') support.used++;
+    if (eventType === 'ai_coach_response') support.responses++;
     if (eventType === 'explain_it_back_submitted') support.explainBackSubmitted++;
   });
 
   let miloosSupportOpened = 0;
   let miloosSupportUsed = 0;
+  let miloosCoachResponses = 0;
   let miloosExplainBackSubmitted = 0;
   let miloosPendingExplainBack = 0;
   let learnersWithMiloOSSupport = 0;
@@ -107,6 +117,7 @@ function deriveMiloOSSupportMetrics(
     const pendingExplainBack = Math.max(learnerOpenedOrUsed - support.explainBackSubmitted, 0);
     miloosSupportOpened += support.opened;
     miloosSupportUsed += support.used;
+    miloosCoachResponses += support.responses;
     miloosExplainBackSubmitted += support.explainBackSubmitted;
     miloosPendingExplainBack += pendingExplainBack;
     if (learnerOpenedOrUsed > 0) learnersWithMiloOSSupport++;
@@ -118,6 +129,7 @@ function deriveMiloOSSupportMetrics(
     learnersWithPendingMiloOSExplainBack,
     miloosSupportOpened,
     miloosSupportUsed,
+    miloosCoachResponses,
     miloosExplainBackSubmitted,
     miloosPendingExplainBack,
   };
@@ -209,6 +221,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
           totalRubricApplications: 0,
           miloosSupportOpened: miloosSupport.miloosSupportOpened,
           miloosSupportUsed: miloosSupport.miloosSupportUsed,
+          miloosCoachResponses: miloosSupport.miloosCoachResponses,
           miloosExplainBackSubmitted: miloosSupport.miloosExplainBackSubmitted,
           miloosPendingExplainBack: miloosSupport.miloosPendingExplainBack,
           averageEvidencePerLearner: 0,
@@ -294,6 +307,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         totalRubricApplications: rubricAppsSnap.size,
         miloosSupportOpened: miloosSupport.miloosSupportOpened,
         miloosSupportUsed: miloosSupport.miloosSupportUsed,
+        miloosCoachResponses: miloosSupport.miloosCoachResponses,
         miloosExplainBackSubmitted: miloosSupport.miloosExplainBackSubmitted,
         miloosPendingExplainBack: miloosSupport.miloosPendingExplainBack,
         averageEvidencePerLearner: totalLearners > 0 ? totalEvidence / totalLearners : 0,
@@ -430,7 +444,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
             {metrics.learnersWithMiloOSSupport}/{metrics.totalLearners} learners used support
           </span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           <div
             className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
             data-testid="site-miloos-support-opened"
@@ -451,6 +465,13 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
           >
             <p className="text-lg font-bold text-gray-900">{metrics.miloosExplainBackSubmitted}</p>
             <p className="text-xs text-gray-500">Explain-backs</p>
+          </div>
+          <div
+            className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
+            data-testid="site-miloos-coach-responses"
+          >
+            <p className="text-lg font-bold text-gray-900">{metrics.miloosCoachResponses}</p>
+            <p className="text-xs text-gray-500">Coach responses</p>
           </div>
           <div
             className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"

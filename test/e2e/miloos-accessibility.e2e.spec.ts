@@ -1,5 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import {
+  canonicalMiloOSGoldWebEvents,
+  WEB_MILOOS_SYNTHETIC_IDS,
+} from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -8,10 +12,7 @@ type E2EWindowApi = {
   seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
-const SITE_ALPHA = 'site-alpha';
-const SITE_BETA = 'site-beta';
-const LEARNER_ALPHA = 'learner-alpha';
-const LEARNER_BETA = 'learner-beta';
+const LEARNER_ALPHA = WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId;
 
 async function expectNoWcagViolations(page: Page, selector: string): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -66,62 +67,11 @@ async function signInAs(page: Page, uid: string): Promise<void> {
 }
 
 async function seedMiloOSSupportEvents(page: Page): Promise<void> {
-  await page.evaluate(({ siteAlpha, siteBeta, learnerAlpha, learnerBeta }) => {
+  await page.evaluate((events) => {
     (window as Window & {
       __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents([
-      {
-        id: 'a11y-alpha-opened',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'a11y-alpha-used',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_used',
-        interactionId: 'a11y-alpha-opened',
-      },
-      {
-        id: 'a11y-beta-opened',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'a11y-beta-used',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_used',
-        interactionId: 'a11y-beta-opened',
-      },
-      {
-        id: 'a11y-beta-explain-back',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'explain_it_back_submitted',
-        interactionId: 'a11y-beta-opened',
-      },
-      {
-        id: 'a11y-other-site-opened',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-    ]);
-  }, {
-    siteAlpha: SITE_ALPHA,
-    siteBeta: SITE_BETA,
-    learnerAlpha: LEARNER_ALPHA,
-    learnerBeta: LEARNER_BETA,
-  });
+    }).__scholesaE2E.seedInteractionEvents(events);
+  }, canonicalMiloOSGoldWebEvents());
 }
 
 test.beforeEach(async ({ page }) => {

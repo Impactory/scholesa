@@ -323,12 +323,16 @@ describe('Renderers delegate to real evidence components', () => {
     expect(fakeBackendSource).toContain('interactionEvents');
     expect(fakeBackendSource).toContain("eventType: 'ai_help_opened'");
     expect(fakeBackendSource).toContain("eventType: 'ai_help_used'");
+    expect(fakeBackendSource).toContain("eventType: 'ai_coach_response'");
     expect(fakeBackendSource).toContain("eventType: 'explain_it_back_submitted'");
     expect(fakeBackendSource).toContain('pendingExplainBack: Math.max(aiHelpOpened - explainBackSubmitted, 0)');
     expect(e2eSource).toContain("page.goto('/en/learner/miloos')");
     expect(e2eSource).toContain("getCollection(page, 'interactionEvents')");
     expect(e2eSource).toContain("getCollection(page, 'capabilityMastery')");
+    expect(e2eSource).toContain("getCollection(page, 'capabilityGrowthEvents')");
+    expect(e2eSource).toContain('ai_coach_response');
     expect(e2eSource).toContain('expect(masteryRecords).toEqual([])');
+    expect(e2eSource).toContain('expect(growthRecords).toEqual([])');
   });
 
   it('SiteImplementationHealthRenderer queries evidence chain collections', () => {
@@ -348,8 +352,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('data-testid="site-miloos-support-health"');
     expect(source).toContain('data-testid="site-miloos-support-opened"');
     expect(source).toContain('data-testid="site-miloos-support-used"');
+    expect(source).toContain('data-testid="site-miloos-coach-responses"');
     expect(source).toContain('data-testid="site-miloos-explain-backs"');
     expect(source).toContain('data-testid="site-miloos-pending-checks"');
+    expect(source).toContain('ai_coach_response');
     expect(source).toContain('learnersWithPendingMiloOSExplainBack');
     expect(source).toContain('data-testid="site-implementation-site-required"');
   });
@@ -365,11 +371,40 @@ describe('Renderers delegate to real evidence components', () => {
     expect(clientInitSource).toContain('seedInteractionEvents');
     expect(clientInitSource).toContain('isE2ETestMode');
     expect(fakeBackendSource).toContain('seedE2EInteractionEvents');
+    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
     expect(e2eSource).toContain("page.goto('/en/site/dashboard')");
     expect(e2eSource).toContain('seedInteractionEvents');
     expect(e2eSource).toContain('site-miloos-support-health');
     expect(e2eSource).toContain('not capability mastery');
+    expect(e2eSource).toContain('site-miloos-coach-responses');
     expect(e2eSource).toContain('site-miloos-pending-checks');
+  });
+
+  it('MiloOS web browser proofs consume canonical synthetic gold importer output', () => {
+    const fixtureSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-synthetic-gold-fixture.ts'),
+      'utf8'
+    );
+    const educatorE2ESource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-educator-support-provenance.e2e.spec.ts'),
+      'utf8'
+    );
+    const guardianE2ESource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-guardian-support-provenance.e2e.spec.ts'),
+      'utf8'
+    );
+    const mobileE2ESource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-mobile-classroom.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(fixtureSource).toContain("buildImportBundle({ mode: 'starter' })");
+    expect(fixtureSource).toContain('syntheticMiloOSGoldStates');
+    expect(fixtureSource).toContain('noMasteryWrites');
+    expect(fixtureSource).toContain('pendingExplainBackLearnerId');
+    expect(educatorE2ESource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(guardianE2ESource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(mobileE2ESource).toContain('canonicalMiloOSGoldWebEvents');
   });
 
   it('MiloOS protected support surfaces have focused WCAG browser coverage', () => {
@@ -388,6 +423,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('miloos-support-');
     expect(e2eSource).toContain('guardian-miloos-support-');
     expect(e2eSource).toContain('site-miloos-support-health');
+    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
     expect(e2eSource).toContain('seedInteractionEvents');
   });
 
@@ -405,6 +441,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('learner-miloos-submit-pending-explain-back');
     expect(e2eSource).toContain('explain_it_back_submitted');
     expect(e2eSource).toContain("getCollection(page, 'capabilityMastery')");
+    expect(e2eSource).toContain("getCollection(page, 'capabilityGrowthEvents')");
+    expect(e2eSource).toContain('site-miloos-coach-responses');
     expect(e2eSource).toContain('not capability mastery');
   });
 
@@ -461,7 +499,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(importerSource).toContain('synthetic-miloos-cross-site-denial-learner');
     expect(importerSource).toContain('synthetic-miloos-missing-site-denial-learner');
     expect(importerSource).toContain('syntheticMiloOSGoldStates');
+    expect(importerSource).toContain('activeSiteId: siteId');
     expect(syntheticStateTest).toContain('does not seed support-only capability mastery or growth writes');
+    expect(syntheticStateTest).toContain("users.get('synthetic-miloos-gold-educator')");
     expect(syntheticStateTest).toContain('miloosGoldInteractionEvents: 13');
   });
 
@@ -504,6 +544,10 @@ describe('Renderers delegate to real evidence components', () => {
     );
     const flutterSiteTestSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'site_dashboard_page_test.dart'),
+      'utf8'
+    );
+    const flutterSyntheticMiloOSMobileTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'synthetic_miloos_gold_states_mobile_test.dart'),
       'utf8'
     );
     const flutterParentGrowthTimelineTestSource = fs.readFileSync(
@@ -616,6 +660,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(planSource).toContain('the non-deploying `./scripts/deploy.sh release-gate` also passed from the current worktree');
     expect(checklistSource).toContain('Flutter MiloOS role parity is now in scope for the focused support-provenance gate.');
     expect(checklistSource).toContain('flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart');
+    expect(checklistSource).toContain('synthetic_miloos_gold_states_mobile_test.dart');
     expect(checklistSource).toContain('./scripts/deploy.sh release-gate');
     expect(flutterMobilePlanSource).toContain('Flutter/mobile is not blanket gold-ready yet.');
     expect(flutterMobilePlanSource).toContain('Flutter route proof matrix');
@@ -637,6 +682,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Educator today mobile evidence capture access');
     expect(flutterMobilePlanSource).toContain('Educator observation capture small-screen and site-boundary proof');
     expect(flutterMobilePlanSource).toContain('Educator proof-review persistence and site-boundary proof');
+    expect(flutterMobilePlanSource).toContain('Canonical MiloOS synthetic mobile consumption');
+    expect(flutterMobilePlanSource).toContain('Site support-health signal completeness');
     expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
     expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
     expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
@@ -678,6 +725,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Educator today mobile evidence capture access proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Educator observation capture small-screen and site-boundary proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Educator proof-review persistence and site-boundary proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Canonical MiloOS synthetic mobile consumption proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
     expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
@@ -689,8 +737,16 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterSiteSource).toContain('MiloOS Support Health');
     expect(flutterSiteSource).toContain('Site-scoped support provenance and explain-back debt. Not capability mastery.');
     expect(flutterSiteSource).toContain("collection('interactionEvents')");
+    expect(flutterSiteSource).toContain("_t('Responses')");
+    expect(flutterSiteSource).toContain("_t('Pending explain-backs')");
     expect(flutterEducatorTestSource).toContain('shows MiloOS support debt for every learner');
     expect(flutterSiteTestSource).toContain('shows site-scoped MiloOS support health without mastery claims');
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain("buildImportBundle({ mode: 'starter' })");
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain('syntheticMiloOSGoldStates');
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain('canonical MiloOS synthetic states feed Flutter educator support provenance');
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain('canonical MiloOS synthetic states feed Flutter site support health');
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain("collection('capabilityMastery')");
+    expect(flutterSyntheticMiloOSMobileTestSource).toContain("collection('capabilityGrowthEvents')");
     expect(flutterParentGrowthTimelineTestSource).toContain('parent growth timeline shows only linked learner growth provenance');
     expect(flutterParentGrowthTimelineTestSource).toContain("collection('capabilityGrowthEvents')");
     expect(flutterParentGrowthTimelineTestSource).toContain('Unlinked capability');
@@ -825,7 +881,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('seedInteractionEvents');
     expect(e2eSource).toContain('guardian-miloos-support-');
     expect(e2eSource).toContain('not capability mastery');
-    expect(e2eSource).toContain('guardian-other-site-opened');
+    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(e2eSource).toContain('WEB_MILOOS_SYNTHETIC_IDS');
   });
 
   it('EducatorTodayRenderer uses canonical site context for live capture', () => {
@@ -1200,6 +1257,7 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
     expect(e2eSource).toContain('seedInteractionEvents');
     expect(e2eSource).toContain('miloos-support-');
     expect(e2eSource).toContain('support signals and verification gaps, not capability mastery');
-    expect(e2eSource).toContain('educator-other-site-opened');
+    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(e2eSource).toContain('WEB_MILOOS_SYNTHETIC_IDS');
   });
 });

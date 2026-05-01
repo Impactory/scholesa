@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { canonicalMiloOSGoldWebEvents } from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -7,11 +8,7 @@ type E2EWindowApi = {
   seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
-const SITE_ALPHA = 'site-alpha';
-const SITE_BETA = 'site-beta';
 const SITE_ADMIN = 'site-alpha-admin';
-const LEARNER_ALPHA = 'learner-alpha';
-const LEARNER_BETA = 'learner-beta';
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() => Boolean((window as Window & {
@@ -52,62 +49,11 @@ test.beforeEach(async ({ page }) => {
 
 test('site dashboard shows MiloOS support health without treating support as mastery', async ({ page }) => {
   await signInAsSiteAdmin(page);
-  await page.evaluate(({ siteAlpha, siteBeta, learnerAlpha, learnerBeta }) => {
+  await page.evaluate((events) => {
     (window as Window & {
       __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents([
-      {
-        id: 'e2e-alpha-opened',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'e2e-alpha-used',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_used',
-        interactionId: 'e2e-alpha-opened',
-      },
-      {
-        id: 'e2e-beta-opened',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'e2e-beta-used',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_used',
-        interactionId: 'e2e-beta-opened',
-      },
-      {
-        id: 'e2e-beta-explain-back',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'explain_it_back_submitted',
-        interactionId: 'e2e-beta-opened',
-      },
-      {
-        id: 'e2e-other-site-opened',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-    ]);
-  }, {
-    siteAlpha: SITE_ALPHA,
-    siteBeta: SITE_BETA,
-    learnerAlpha: LEARNER_ALPHA,
-    learnerBeta: LEARNER_BETA,
-  });
+    }).__scholesaE2E.seedInteractionEvents(events);
+  }, canonicalMiloOSGoldWebEvents());
 
   await page.goto('/en/site/dashboard');
 
@@ -120,6 +66,7 @@ test('site dashboard shows MiloOS support health without treating support as mas
   await expect(supportHealth).toContainText('2/2 learners used support');
   await expect(supportHealth.getByTestId('site-miloos-support-opened')).toContainText('2');
   await expect(supportHealth.getByTestId('site-miloos-support-used')).toContainText('2');
+  await expect(supportHealth.getByTestId('site-miloos-coach-responses')).toContainText('2');
   await expect(supportHealth.getByTestId('site-miloos-explain-backs')).toContainText('1');
   await expect(supportHealth.getByTestId('site-miloos-pending-checks')).toContainText('1');
   await expect(supportHealth).toContainText('1 learner');

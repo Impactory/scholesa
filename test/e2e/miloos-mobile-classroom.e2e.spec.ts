@@ -1,4 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  canonicalMiloOSGoldWebEvents,
+  WEB_MILOOS_SYNTHETIC_IDS,
+} from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -8,10 +12,7 @@ type E2EWindowApi = {
 };
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
-const SITE_ALPHA = 'site-alpha';
-const SITE_BETA = 'site-beta';
-const LEARNER_ALPHA = 'learner-alpha';
-const LEARNER_BETA = 'learner-beta';
+const LEARNER_ALPHA = WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId;
 const EDUCATOR_ALPHA = 'educator-alpha';
 const SITE_ADMIN = 'site-alpha-admin';
 
@@ -81,62 +82,11 @@ async function expectWithinMobileWidth(locator: Locator): Promise<void> {
 }
 
 async function seedSupportEvents(page: Page): Promise<void> {
-  await page.evaluate(({ siteAlpha, siteBeta, learnerAlpha, learnerBeta }) => {
+  await page.evaluate((events) => {
     (window as Window & {
       __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents([
-      {
-        id: 'mobile-alpha-opened',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'mobile-alpha-used',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_used',
-        interactionId: 'mobile-alpha-opened',
-      },
-      {
-        id: 'mobile-beta-opened',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'mobile-beta-used',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'ai_help_used',
-        interactionId: 'mobile-beta-opened',
-      },
-      {
-        id: 'mobile-beta-explain-back',
-        siteId: siteAlpha,
-        actorId: learnerBeta,
-        learnerId: learnerBeta,
-        eventType: 'explain_it_back_submitted',
-        interactionId: 'mobile-beta-opened',
-      },
-      {
-        id: 'mobile-other-site-opened',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-    ]);
-  }, {
-    siteAlpha: SITE_ALPHA,
-    siteBeta: SITE_BETA,
-    learnerAlpha: LEARNER_ALPHA,
-    learnerBeta: LEARNER_BETA,
-  });
+    }).__scholesaE2E.seedInteractionEvents(events);
+  }, canonicalMiloOSGoldWebEvents());
 }
 
 test.describe('MiloOS mobile classroom proof', () => {
@@ -202,6 +152,7 @@ test.describe('MiloOS mobile classroom proof', () => {
     await expect(supportHealth).toContainText('2/2 learners used support');
     await expectWithinMobileWidth(supportHealth.getByTestId('site-miloos-support-opened'));
     await expectWithinMobileWidth(supportHealth.getByTestId('site-miloos-support-used'));
+    await expectWithinMobileWidth(supportHealth.getByTestId('site-miloos-coach-responses'));
     await expectWithinMobileWidth(supportHealth.getByTestId('site-miloos-explain-backs'));
     await expectWithinMobileWidth(supportHealth.getByTestId('site-miloos-pending-checks'));
     await expectNoHorizontalOverflow(page);

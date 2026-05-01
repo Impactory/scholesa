@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import {
+  canonicalMiloOSGoldWebEvents,
+  WEB_MILOOS_SYNTHETIC_IDS,
+} from './miloos-synthetic-gold-fixture';
 
 type E2EWindowApi = {
   signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -7,10 +11,8 @@ type E2EWindowApi = {
   seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
 };
 
-const SITE_ALPHA = 'site-alpha';
-const SITE_BETA = 'site-beta';
 const PARENT_ALPHA = 'parent-alpha';
-const LEARNER_ALPHA = 'learner-alpha';
+const LEARNER_ALPHA = WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId;
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() => Boolean((window as Window & {
@@ -51,46 +53,11 @@ test.beforeEach(async ({ page }) => {
 
 test('guardian summary shows linked learner MiloOS support provenance without mastery claims', async ({ page }) => {
   await signInAsParent(page);
-  await page.evaluate(({ siteAlpha, siteBeta, learnerAlpha }) => {
+  await page.evaluate((events) => {
     (window as Window & {
       __scholesaE2E: E2EWindowApi;
-    }).__scholesaE2E.seedInteractionEvents([
-      {
-        id: 'guardian-alpha-opened',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'guardian-alpha-used',
-        siteId: siteAlpha,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_used',
-        interactionId: 'guardian-alpha-opened',
-      },
-      {
-        id: 'guardian-other-site-opened',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'ai_help_opened',
-      },
-      {
-        id: 'guardian-other-site-explain-back',
-        siteId: siteBeta,
-        actorId: learnerAlpha,
-        learnerId: learnerAlpha,
-        eventType: 'explain_it_back_submitted',
-        interactionId: 'guardian-other-site-opened',
-      },
-    ]);
-  }, {
-    siteAlpha: SITE_ALPHA,
-    siteBeta: SITE_BETA,
-    learnerAlpha: LEARNER_ALPHA,
-  });
+    }).__scholesaE2E.seedInteractionEvents(events);
+  }, canonicalMiloOSGoldWebEvents());
 
   await page.goto('/en/parent/summary');
 

@@ -102,14 +102,19 @@ test('learner MiloOS route records support provenance and explain-back without m
     const eventTypes = (await getCollection(page, 'interactionEvents'))
       .filter((entry) => entry.actorId === LEARNER_UID)
       .map((entry) => entry.eventType);
-    return ['ai_help_opened', 'ai_help_used', 'explain_it_back_submitted'].every((eventType) =>
-      eventTypes.includes(eventType)
-    );
+    return [
+      'ai_help_opened',
+      'ai_help_used',
+      'ai_coach_response',
+      'explain_it_back_submitted',
+    ].every((eventType) => eventTypes.includes(eventType));
   }, {
     timeout: 10_000,
   }).toBe(true);
 
   const masteryRecords = await getCollection(page, 'capabilityMastery');
+  const growthRecords = await getCollection(page, 'capabilityGrowthEvents');
   expect(masteryRecords).toEqual([]);
+  expect(growthRecords).toEqual([]);
   await expect(page.getByText(/mastery level|capability score/i)).toHaveCount(0);
 });

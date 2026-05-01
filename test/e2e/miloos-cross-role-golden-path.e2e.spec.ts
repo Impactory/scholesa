@@ -138,6 +138,7 @@ test('MiloOS support journey flows across learner, educator, guardian, and site 
   await expect(supportHealth).toContainText('1/2 learners used support');
   await expect(supportHealth.getByTestId('site-miloos-support-opened')).toContainText('1');
   await expect(supportHealth.getByTestId('site-miloos-support-used')).toContainText('1');
+  await expect(supportHealth.getByTestId('site-miloos-coach-responses')).toContainText('1');
   await expect(supportHealth.getByTestId('site-miloos-explain-backs')).toContainText('1');
   await expect(supportHealth.getByTestId('site-miloos-pending-checks')).toContainText('0');
   await expect(supportHealth).toContainText(
@@ -156,4 +157,5 @@ test('MiloOS support journey flows across learner, educator, guardian, and site 
   ]));
 
   expect(await getCollection(page, 'capabilityMastery')).toEqual([]);
+  expect(await getCollection(page, 'capabilityGrowthEvents')).toEqual([]);
 });

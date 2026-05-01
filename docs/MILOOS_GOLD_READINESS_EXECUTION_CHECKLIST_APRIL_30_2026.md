@@ -166,10 +166,13 @@ npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.t
 - [x] Add canonical seed data for missing-site event denial.
 - [x] Document which seed mode supports MiloOS demos/UAT.
 - [x] Prove Flutter/mobile support surfaces consume the canonical importer output.
+- [x] Prove web support surfaces consume canonical importer-derived MiloOS events.
 
 Completed 2026-04-30: `scripts/import_synthetic_data.js` now always adds `syntheticMiloOSGoldStates/latest` with five canonical learner states for MiloOS demos, UAT, rules tests, and regression checks. The states are available in `starter`, `full`, and `all` seed modes; `test/synthetic_miloos_gold_states.test.js` proves they do not seed support-only `capabilityMastery` or `capabilityGrowthEvents` writes.
 
 Completed 2026-05-01: `synthetic_miloos_gold_states_mobile_test.dart` now loads the actual `buildImportBundle({ mode: 'starter' })` output from `scripts/import_synthetic_data.js`, hydrates Flutter fake Firestore with the canonical `syntheticMiloOSGoldStates/latest` users, enrollments, sessions, and `interactionEvents`, and proves educator support provenance plus site support health consume those records without local mastery or growth writes. The synthetic educator and site-lead users now carry `activeSiteId` so current mobile AppState/site-context consumers can use the pack directly.
+
+Completed 2026-05-01: web MiloOS Playwright proofs now derive support events through `test/e2e/miloos-synthetic-gold-fixture.ts`, which calls the same `buildImportBundle({ mode: 'starter' })` synthetic importer and maps the canonical `syntheticMiloOSGoldStates/latest` support turns into the existing browser E2E users. Educator, guardian, site, WCAG, and phone-width classroom proofs now consume importer-derived pending, current, cross-site, and missing-site states instead of local ad hoc support arrays.
 
 Candidate files:
 
@@ -184,6 +187,7 @@ npm run seed:synthetic-data:dry-run
 npm run test:integration:rules
 npm run test:integration:evidence-chain
 cd apps/empire_flutter/app && flutter test test/synthetic_miloos_gold_states_mobile_test.dart
+npx playwright test test/e2e/miloos-educator-support-provenance.e2e.spec.ts test/e2e/miloos-site-support-health.e2e.spec.ts test/e2e/miloos-guardian-support-provenance.e2e.spec.ts test/e2e/miloos-mobile-classroom.e2e.spec.ts test/e2e/miloos-accessibility.e2e.spec.ts
 ```
 
 ## Milestone 8 - Flutter Scope Decision
