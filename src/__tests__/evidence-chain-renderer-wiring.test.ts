@@ -530,6 +530,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_credentials_page_test.dart'),
       'utf8'
     );
+    const flutterLearnerPortfolioTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_portfolio_honesty_test.dart'),
+      'utf8'
+    );
     const flutterLearnerTodayTestSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_today_page_test.dart'),
       'utf8'
@@ -601,6 +605,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Learner checkpoint same-site capture');
     expect(flutterMobilePlanSource).toContain('Learner reflection portfolio provenance');
     expect(flutterMobilePlanSource).toContain('Learner proof assembly small-screen and offline replay');
+    expect(flutterMobilePlanSource).toContain('Learner portfolio created-item provenance');
     expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
     expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
     expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
@@ -638,6 +643,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Learner checkpoint same-site mobile capture proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner reflection same-site portfolio provenance proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner proof assembly small-screen and offline replay proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Learner portfolio created-item provenance proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
     expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
@@ -669,6 +675,12 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterLearnerCredentialsTestSource).toContain("collection('credentials')");
     expect(flutterLearnerCredentialsTestSource).toContain("find.text('Evidence provenance')");
     expect(flutterLearnerCredentialsTestSource).toContain("find.text('Other Site Credential'), findsNothing");
+    expect(flutterLearnerPortfolioTestSource).toContain('learner portfolio renders reviewed artifacts created by the live educator mission review flow');
+    expect(flutterLearnerPortfolioTestSource).toContain("createdPortfolioItem['source'], 'educator_review_linkage'");
+    expect(flutterLearnerPortfolioTestSource).toContain("createdPortfolioItem['proofBundleId'], 'learner-1_mission-1'");
+    expect(flutterLearnerPortfolioTestSource).toContain("createdPortfolioItem['proofOfLearningStatus'], 'verified'");
+    expect(flutterLearnerPortfolioTestSource).toContain("createdPortfolioItem['aiDisclosureStatus'], 'learner-ai-not-used'");
+    expect(flutterLearnerPortfolioTestSource).toContain("find.text('Evidence linked • Reviewed')");
     expect(flutterLearnerTodayTestSource).toContain('learner today renders current evidence actions on classroom mobile width');
     expect(flutterLearnerTodayTestSource).toContain("find.text('My Evidence Loop')");
     expect(flutterLearnerTodayTestSource).toContain("find.text('What evidence I have shown')");

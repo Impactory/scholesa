@@ -634,13 +634,40 @@ void main() {
     final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
         await firestore.collection('portfolioItems').doc('evidence-1').get();
     expect(portfolioDoc.exists, isTrue);
-    expect(portfolioDoc.data()?['proofCheckpointCount'], 1);
+    final Map<String, dynamic> createdPortfolioItem = portfolioDoc.data()!;
+    expect(createdPortfolioItem['siteId'], 'site-1');
+    expect(createdPortfolioItem['learnerId'], 'learner-1');
+    expect(createdPortfolioItem['source'], 'educator_review_linkage');
+    expect(createdPortfolioItem['verificationStatus'], 'reviewed');
+    expect(createdPortfolioItem['educatorId'], 'educator-1');
+    expect(createdPortfolioItem['reviewedBy'], 'educator-1');
     expect(
-      portfolioDoc.data()?['artifactUrls'],
+      createdPortfolioItem['evidenceRecordIds'],
+      contains('evidence-1'),
+    );
+    expect(
+      createdPortfolioItem['capabilityIds'],
+      contains('cap-prototype-evidence'),
+    );
+    expect(
+      createdPortfolioItem['capabilityTitles'],
+      contains('Prototype evidence'),
+    );
+    expect(createdPortfolioItem['missionAttemptId'], isNotNull);
+    expect(createdPortfolioItem['proofBundleId'], 'learner-1_mission-1');
+    expect(createdPortfolioItem['proofCheckpointCount'], 1);
+    expect(createdPortfolioItem['proofOfLearningStatus'], 'verified');
+    expect(createdPortfolioItem['aiDisclosureStatus'], 'learner-ai-not-used');
+    expect(
+      createdPortfolioItem['verificationPrompt'],
+      'Explain why this prototype path best matched the evidence.',
+    );
+    expect(
+      createdPortfolioItem['artifactUrls'],
       contains('https://example.com/prototype.png'),
     );
     expect(
-      portfolioDoc.data()?['description'],
+      createdPortfolioItem['description'],
       contains('Completed the working prototype before review.'),
     );
 
