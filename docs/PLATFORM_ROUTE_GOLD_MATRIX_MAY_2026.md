@@ -31,7 +31,7 @@ This is the smallest route-level path that can prove Scholesa's central capabili
 
 | Priority | Route | Current status | Why it blocks blanket gold | Next proof |
 | --- | --- | --- | --- | --- |
-| 1 | `/educator/rubrics/apply` joined to `/parent/passport` | aligned and reusable | Rubric application is proven locally, but blanket gold needs one current proof that guardian/passport claims only appear after server-owned growth and portfolio linkage. | Add a cross-role evidence-chain E2E using canonical synthetic data. |
+| 1 | `/educator/rubrics/apply` joined to `/parent/passport` | aligned and reusable | Functions emulator proof now blocks rubric growth before verified proof and proves the resulting parent/passport output after server-owned growth, but blanket gold still needs browser coverage using canonical synthetic data. | Add a cross-role evidence-chain E2E using canonical synthetic data. |
 | 2 | `/hq/capability-frameworks` + `/hq/rubric-builder` | aligned and reusable | HQ setup is real, but the final route chain must prove setup feeds educator rubricing without manual fixture shortcuts. | Seed/import canonical framework and rubric records, then consume them in educator rubric flow. |
 | 3 | `/site/evidence-health` | aligned and reusable | Site leaders must see evidence coverage gaps from the same route chain, not generic operational totals. | Assert evidence-health reflects the canonical full-chain learner/educator records. |
 | 4 | `/educator/sessions` and `/site/sessions` | reusable with modification | Session views communicate evidence coverage but still need final joined proof across educator and site scopes. | Add route proof that session coverage counts are site-scoped and evidence-backed. |
@@ -128,4 +128,4 @@ Work Package 1 is complete when:
 - partner routes are either explicitly included with proof or deferred;
 - the first gold-critical route chain is named and pinned by source-contract tests.
 
-Current status: **Work Package 1 is substantially started, not complete**. The route matrix exists and is pinned, but the next pass must attach exact E2E/test file references to each route and then implement the first cross-role evidence-chain proof.
+Current status: **Work Package 1 is substantially started, not complete**. The route matrix exists and is pinned, and `functions/src/evidenceChainEmulator.test.ts` now proves the first server-side route chain boundary from verified proof to rubric growth to parent/passport output and site-health-readable evidence. The next pass must attach exact E2E/test file references to each route and implement browser coverage for the same cross-role evidence-chain proof using canonical synthetic data.

@@ -235,10 +235,12 @@ async function seedEvidenceChainFixture(): Promise<void> {
     learnerId: LEARNER_ID,
     educatorId: EDUCATOR_ID,
     capabilityId: CAPABILITY_ID,
+    capabilityMapped: true,
     pillarCode: 'FUTURE_SKILLS',
     description: 'Observed the learner diagnosing a prototype system failure.',
     sessionOccurrenceId: SESSION_OCCURRENCE_ID,
     observedAt,
+    createdAt: observedAt,
     rubricStatus: 'pending',
     growthStatus: 'pending',
   });
@@ -299,6 +301,39 @@ describe('Evidence chain emulator integration', () => {
 
   it('drives session-backed evidence through proof, rubric, mastery, and passport bundles', async () => {
     const db = admin.firestore();
+
+    try {
+      await functionsModule.applyRubricToEvidence.run(callableRequest(
+        EDUCATOR_ID,
+        {
+          evidenceRecordIds: [EVIDENCE_ID],
+          portfolioItemId: PORTFOLIO_ITEM_ID,
+          learnerId: LEARNER_ID,
+          siteId: SITE_ID,
+          rubricId: 'rubric-template-1',
+          scores: [
+            {
+              criterionId: 'systems-thinking-criterion',
+              capabilityId: CAPABILITY_ID,
+              processDomainId: PROCESS_DOMAIN_ID,
+              pillarCode: 'FUTURE_SKILLS',
+              score: 4,
+              maxScore: 4,
+            },
+          ],
+        },
+      ));
+      throw new Error('Rubric application should have required verified proof-of-learning.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      expect(message).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    }
+
+    const preProofGrowthSnap = await db.collection('capabilityGrowthEvents')
+      .where('learnerId', '==', LEARNER_ID)
+      .get();
+    expect(preProofGrowthSnap.empty).toBe(true);
+
     const verifyResult = await functionsModule.verifyProofOfLearning.run(callableRequest(
       EDUCATOR_ID,
       {
@@ -468,6 +503,50 @@ describe('Evidence chain emulator integration', () => {
           capabilityId: CAPABILITY_ID,
           title: 'Systems Thinking',
           evidenceCount: 1,
+          proofOfLearningStatus: 'verified',
+          proofHasExplainItBack: true,
+          proofHasOralCheck: true,
+          portfolioItemIds: [PORTFOLIO_ITEM_ID],
+          evidenceRecordIds: [EVIDENCE_ID],
+          rubricRawScore: 4,
+          rubricMaxScore: 4,
+        }),
+      ]),
+    );
+    expect(parentSummary.capabilitySnapshot).toMatchObject({
+      futureSkills: 1,
+      overall: 1,
+      band: 'strong',
+    });
+    expect(parentSummary.evidenceSummary).toMatchObject({
+      recordCount: 1,
+      reviewedCount: 1,
+    });
+    expect(parentSummary.growthTimeline).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          capabilityId: CAPABILITY_ID,
+          title: 'Systems Thinking',
+          level: 4,
+          linkedEvidenceRecordIds: [EVIDENCE_ID],
+          linkedPortfolioItemIds: [PORTFOLIO_ITEM_ID],
+          rubricRawScore: 4,
+          rubricMaxScore: 4,
+        }),
+      ]),
+    );
+    expect(parentSummary.portfolioItemsPreview).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: PORTFOLIO_ITEM_ID,
+          proofOfLearningStatus: 'verified',
+          evidenceLinked: true,
+          evidenceRecordIds: [EVIDENCE_ID],
+          rubricRawScore: 4,
+          rubricMaxScore: 4,
+          rubricLevel: 4,
+          proofHasExplainItBack: true,
+          proofHasOralCheck: true,
         }),
       ]),
     );
@@ -477,6 +556,22 @@ describe('Evidence chain emulator integration', () => {
           processDomainId: PROCESS_DOMAIN_ID,
           title: 'Collaboration',
           currentLevel: 4,
+        }),
+      ]),
+    );
+
+    const siteEvidenceHealthSnap = await db.collection('evidenceRecords')
+      .where('siteId', '==', SITE_ID)
+      .where('createdAt', '>=', admin.firestore.Timestamp.fromMillis(Date.now() - (7 * 24 * 60 * 60 * 1000)))
+      .get();
+    expect(siteEvidenceHealthSnap.docs.map((doc) => doc.data())).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          learnerId: LEARNER_ID,
+          educatorId: EDUCATOR_ID,
+          capabilityMapped: true,
+          rubricStatus: 'applied',
+          growthStatus: 'recorded',
         }),
       ]),
     );
