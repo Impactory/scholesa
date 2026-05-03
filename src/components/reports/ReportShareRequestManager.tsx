@@ -78,6 +78,11 @@ function labelForDelivery(delivery: ReportShareRequest['reportDelivery']): strin
   return delivery.replace(/-/g, ' ');
 }
 
+function revocationActionLabel(request: ReportShareRequestRow, viewer: 'learner' | 'guardian') {
+  if (isRevocableForViewer(request, viewer)) return 'Revoke active report share';
+  return 'Visible for transparency; revocation belongs to the share audience';
+}
+
 export function ReportShareRequestManager({
   siteId,
   learnerId,
@@ -185,49 +190,55 @@ export function ReportShareRequestManager({
       ) : (
         <ul className="mt-3 space-y-2">
           {requests.map((request) => (
-            <li
-              key={request.id}
-              className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-gray-200 bg-white p-3"
-            >
-              <div className="max-w-3xl text-xs text-gray-600">
-                <p className="font-medium text-gray-900">
-                  {labelForAction(request.reportAction)} · {request.visibility}
-                </p>
-                <p className="mt-0.5">
-                  {request.fileName ?? request.surface ?? 'Evidence-backed report'} · expires{' '}
-                  {formatDate(request.expiresAt)}
-                </p>
-                <p className="mt-1">
-                  Audience: {request.audience} · delivery:{' '}
-                  {labelForDelivery(request.reportDelivery)}
-                </p>
-                <p className="mt-1">
-                  Provenance contract:{' '}
-                  {request.provenance.meetsDeliveryContract ? 'passed' : 'needs review'} · expected:{' '}
-                  {formatSignalList(request.provenance.expectedSignals)} · missing:{' '}
-                  {formatSignalList(request.provenance.missingSignals)}
-                </p>
-                <p className="mt-1">
-                  Policy: evidence provenance{' '}
-                  {request.sharePolicy.requiresEvidenceProvenance ? 'required' : 'not required'} ·
-                  guardian context{' '}
-                  {request.sharePolicy.requiresGuardianContext ? 'required' : 'not required'} ·
-                  external sharing{' '}
-                  {request.sharePolicy.allowsExternalSharing ? 'allowed' : 'blocked'}
-                </p>
+            <li key={request.id} className="rounded-md border border-gray-200 bg-white p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="max-w-3xl text-xs text-gray-600">
+                  <p className="font-medium text-gray-900">
+                    {labelForAction(request.reportAction)} · {request.visibility}
+                  </p>
+                  <p className="mt-0.5">
+                    {request.fileName ?? request.surface ?? 'Evidence-backed report'} · expires{' '}
+                    {formatDate(request.expiresAt)}
+                  </p>
+                  <p className="mt-1">
+                    Audience: {request.audience} · delivery:{' '}
+                    {labelForDelivery(request.reportDelivery)}
+                  </p>
+                  <p className="mt-1">
+                    Provenance contract:{' '}
+                    {request.provenance.meetsDeliveryContract ? 'passed' : 'needs review'} ·
+                    expected: {formatSignalList(request.provenance.expectedSignals)} · missing:{' '}
+                    {formatSignalList(request.provenance.missingSignals)}
+                  </p>
+                  <p className="mt-1">
+                    Policy: evidence provenance{' '}
+                    {request.sharePolicy.requiresEvidenceProvenance ? 'required' : 'not required'} ·
+                    guardian context{' '}
+                    {request.sharePolicy.requiresGuardianContext ? 'required' : 'not required'} ·
+                    external sharing{' '}
+                    {request.sharePolicy.allowsExternalSharing ? 'allowed' : 'blocked'}
+                  </p>
+                  {!isRevocableForViewer(request, viewer) && (
+                    <p className="mt-1 font-medium text-gray-700">
+                      Visible for transparency; revocation belongs to the share audience.
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleRevoke(request.id)}
+                  disabled={revokingId === request.id || !isRevocableForViewer(request, viewer)}
+                  aria-label={revocationActionLabel(request, viewer)}
+                  title={revocationActionLabel(request, viewer)}
+                  className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {revokingId === request.id
+                    ? 'Revoking...'
+                    : isRevocableForViewer(request, viewer)
+                      ? 'Revoke'
+                      : 'Visible'}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => void handleRevoke(request.id)}
-                disabled={revokingId === request.id || !isRevocableForViewer(request, viewer)}
-                className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {revokingId === request.id
-                  ? 'Revoking...'
-                  : isRevocableForViewer(request, viewer)
-                    ? 'Revoke'
-                    : 'Visible'}
-              </button>
             </li>
           ))}
         </ul>

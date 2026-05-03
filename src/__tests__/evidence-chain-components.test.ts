@@ -1037,7 +1037,13 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain("request.audience === 'learner'");
     expect(managerSource).toContain('isVisibleForViewer(request, viewer)');
     expect(managerSource).toContain('isRevocableForViewer(request, viewer)');
-    expect(managerSource).toContain("? 'Revoke'\n                    : 'Visible'");
+    expect(managerSource).toContain('revocationActionLabel(request, viewer)');
+    expect(managerSource).toContain(
+      'Visible for transparency; revocation belongs to the share audience.'
+    );
+    expect(managerSource).toContain('aria-label={revocationActionLabel(request, viewer)}');
+    expect(managerSource).toContain("? 'Revoke'");
+    expect(managerSource).toContain(": 'Visible'");
     expect(managerSource).toContain('.slice(0, 25)');
     expect(managerSource).toContain('revokeReportShareRequest');
     expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
