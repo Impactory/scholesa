@@ -965,6 +965,7 @@ describe('recordReportDeliveryAudit callable', () => {
       'Skipped report share lifecycle requires a reason.'
     );
     expect(reportDeliveryAuditSource).toContain('unsupported_visibility');
+    expect(reportDeliveryAuditSource).toContain('actor_policy_misaligned');
     expect(reportDeliveryAuditSource).toContain(
       'Skipped report share lifecycle reason is unsupported.'
     );
@@ -1040,6 +1041,17 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain(
       "request.visibility === 'family' || request.visibility === 'private'"
     );
+  });
+
+  it('marks learner-originated family sharing as audit-only until guardian consent workflow exists', () => {
+    const learnerPassportSource = readSrcFile(
+      'components',
+      'passport',
+      'LearnerPassportExport.tsx'
+    );
+
+    expect(learnerPassportSource).toContain('learner_passport_share_family_summary');
+    expect(learnerPassportSource).toContain('shareRequestActorPolicyAligned: false');
   });
 });
 

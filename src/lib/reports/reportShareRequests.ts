@@ -14,6 +14,7 @@ interface CreateReportShareRequestParams {
   cta: string;
   fileName?: string;
   expiresInDays?: number;
+  shareRequestActorPolicyAligned?: boolean;
 }
 
 interface RevokeReportShareRequestParams {
@@ -29,7 +30,8 @@ export type ReportShareRequestSkipReason =
   | 'not_family_safe'
   | 'external_sharing_enabled'
   | 'unsupported_audience'
-  | 'unsupported_visibility';
+  | 'unsupported_visibility'
+  | 'actor_policy_misaligned';
 
 export type ReportShareRequestLifecycleOutcome = 'created' | 'skipped' | 'expected_but_missing';
 
@@ -50,17 +52,26 @@ const supportedClientShareVisibilities = new Set<
 
 export function shouldCreateReportShareRequest(
   reportDelivery: ReportDeliveryAuditStatus,
-  metadata?: ReportProvenanceMetadata | null
+  metadata?: ReportProvenanceMetadata | null,
+  shareRequestActorPolicyAligned = true
 ): boolean {
-  return resolveReportShareRequestSkipReason(reportDelivery, metadata) === null;
+  return (
+    resolveReportShareRequestSkipReason(
+      reportDelivery,
+      metadata,
+      shareRequestActorPolicyAligned
+    ) === null
+  );
 }
 
 export function resolveReportShareRequestSkipReason(
   reportDelivery: ReportDeliveryAuditStatus,
-  metadata?: ReportProvenanceMetadata | null
+  metadata?: ReportProvenanceMetadata | null,
+  shareRequestActorPolicyAligned = true
 ): ReportShareRequestSkipReason | null {
   if (!completedDeliveryStatuses.has(reportDelivery)) return 'incomplete_delivery';
   if (!metadata) return 'missing_metadata';
+  if (!shareRequestActorPolicyAligned) return 'actor_policy_misaligned';
   if (metadata.report_meets_delivery_contract !== true) return 'failed_delivery_contract';
   if (metadata.report_share_policy_declared !== true) return 'missing_share_policy';
   if (metadata.report_share_family_safe !== true) return 'not_family_safe';
@@ -77,9 +88,14 @@ export function resolveReportShareRequestSkipReason(
 export function reportShareRequestLifecycleMetadata(
   reportDelivery: ReportDeliveryAuditStatus,
   metadata?: ReportProvenanceMetadata | null,
-  shareRequestId?: string | null
+  shareRequestId?: string | null,
+  shareRequestActorPolicyAligned = true
 ): Record<string, unknown> {
-  const skippedReason = resolveReportShareRequestSkipReason(reportDelivery, metadata);
+  const skippedReason = resolveReportShareRequestSkipReason(
+    reportDelivery,
+    metadata,
+    shareRequestActorPolicyAligned
+  );
   if (skippedReason) {
     return {
       report_share_request_lifecycle_expected: false,
@@ -110,9 +126,12 @@ export async function createReportShareRequest({
   cta,
   fileName,
   expiresInDays,
+  shareRequestActorPolicyAligned,
 }: CreateReportShareRequestParams): Promise<string | null> {
   if (!siteId || !learnerId || !metadata || !reportDelivery) return null;
-  if (!shouldCreateReportShareRequest(reportDelivery, metadata)) return null;
+  if (!shouldCreateReportShareRequest(reportDelivery, metadata, shareRequestActorPolicyAligned)) {
+    return null;
+  }
 
   try {
     const callable = httpsCallable(functions, 'createReportShareRequest');

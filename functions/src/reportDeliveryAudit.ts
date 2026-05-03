@@ -43,6 +43,7 @@ const ALLOWED_REPORT_SHARE_LIFECYCLE_SKIPPED_REASONS = new Set([
   'external_sharing_enabled',
   'unsupported_audience',
   'unsupported_visibility',
+  'actor_policy_misaligned',
 ]);
 
 export function validateReportShareLifecycleMetadata(params: {

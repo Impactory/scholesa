@@ -51,6 +51,19 @@ describe('reportDeliveryAudit', () => {
     ).not.toThrow();
   });
 
+  it('accepts actor-policy-misaligned skipped lifecycle metadata', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        metadata: {
+          report_share_request_lifecycle_expected: false,
+          report_share_request_lifecycle_outcome: 'skipped',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: 'actor_policy_misaligned',
+        },
+      })
+    ).not.toThrow();
+  });
+
   it('rejects skipped lifecycle metadata with a non-canonical reason', () => {
     expect(() =>
       validateReportShareLifecycleMetadata({

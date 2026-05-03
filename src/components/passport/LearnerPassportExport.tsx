@@ -873,6 +873,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
       module: 'passport',
       surface: 'learner_passport_export',
       cta: 'learner_passport_share_family_summary',
+      shareRequestActorPolicyAligned: false,
     });
 
     if (result === 'aborted') return;

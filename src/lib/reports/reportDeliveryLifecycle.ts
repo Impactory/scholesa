@@ -19,6 +19,7 @@ interface ReportDeliveryLifecycleParams {
   surface: string;
   cta: string;
   fileName?: string;
+  shareRequestActorPolicyAligned?: boolean;
 }
 
 export async function recordReportDeliveryLifecycle(
@@ -33,7 +34,8 @@ export async function recordReportDeliveryLifecycle(
           ...reportShareRequestLifecycleMetadata(
             params.reportDelivery,
             params.metadata,
-            shareRequestId
+            shareRequestId,
+            params.shareRequestActorPolicyAligned
           ),
         }
       : params.metadata,
