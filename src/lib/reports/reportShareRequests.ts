@@ -29,9 +29,15 @@ const completedDeliveryStatuses = new Set<ReportDeliveryAuditStatus>([
 
 export function shouldCreateReportShareRequest(
   reportDelivery: ReportDeliveryAuditStatus,
-  metadata?: ReportProvenanceMetadata | null,
+  metadata?: ReportProvenanceMetadata | null
 ): boolean {
-  return completedDeliveryStatuses.has(reportDelivery) && metadata?.report_meets_delivery_contract === true;
+  return (
+    completedDeliveryStatuses.has(reportDelivery) &&
+    metadata?.report_meets_delivery_contract === true &&
+    metadata.report_share_policy_declared === true &&
+    metadata.report_share_family_safe === true &&
+    metadata.report_share_allows_external_sharing !== true
+  );
 }
 
 export async function createReportShareRequest({

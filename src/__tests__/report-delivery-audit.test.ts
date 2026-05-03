@@ -21,7 +21,7 @@ import {
 import type { ReportProvenanceMetadata } from '@/src/lib/reports/shareExport';
 
 function buildMetadata(
-  overrides: Partial<ReportProvenanceMetadata> = {},
+  overrides: Partial<ReportProvenanceMetadata> = {}
 ): ReportProvenanceMetadata {
   return {
     report_provenance_signal_count: 8,
@@ -74,7 +74,7 @@ describe('recordReportDeliveryAudit', () => {
 
     expect(httpsCallableMock).toHaveBeenCalledWith(
       { app: 'test-app' },
-      'recordReportDeliveryAudit',
+      'recordReportDeliveryAudit'
     );
     expect(callableMock).toHaveBeenCalledWith({
       siteId: 'site-1',
@@ -109,10 +109,12 @@ describe('recordReportDeliveryAudit', () => {
       cta: 'learner_passport_share_family_summary',
     });
 
-    expect(callableMock).toHaveBeenCalledWith(expect.objectContaining({
-      reportDelivery: 'contract-failed',
-      reportBlockReason: 'missing_share_policy',
-    }));
+    expect(callableMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reportDelivery: 'contract-failed',
+        reportBlockReason: 'missing_share_policy',
+      })
+    );
   });
 
   it('does not call the server when required site, learner, or metadata is unavailable', async () => {
@@ -145,9 +147,11 @@ describe('recordReportDeliveryAudit', () => {
       shareRequestId: 'share-request-1',
     });
 
-    expect(callableMock).toHaveBeenCalledWith(expect.objectContaining({
-      shareRequestId: 'share-request-1',
-    }));
+    expect(callableMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shareRequestId: 'share-request-1',
+      })
+    );
   });
 });
 
@@ -161,9 +165,38 @@ describe('report share request client helpers', () => {
     expect(shouldCreateReportShareRequest('downloaded', buildMetadata())).toBe(true);
     expect(shouldCreateReportShareRequest('contract-failed', buildMetadata())).toBe(false);
     expect(shouldCreateReportShareRequest('aborted', buildMetadata())).toBe(false);
-    expect(shouldCreateReportShareRequest('copied', buildMetadata({
-      report_meets_delivery_contract: false,
-    }))).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_meets_delivery_contract: false,
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_policy_declared: false,
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_family_safe: false,
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_allows_external_sharing: true,
+        })
+      )
+    ).toBe(false);
   });
 
   it('creates a report share request through the callable with policy metadata', async () => {
@@ -181,19 +214,18 @@ describe('report share request client helpers', () => {
     });
 
     expect(id).toBe('audit-1');
-    expect(httpsCallableMock).toHaveBeenCalledWith(
-      { app: 'test-app' },
-      'createReportShareRequest'
+    expect(httpsCallableMock).toHaveBeenCalledWith({ app: 'test-app' }, 'createReportShareRequest');
+    expect(callableMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        siteId: 'site-1',
+        learnerId: 'learner-1',
+        reportAction: 'share',
+        reportDelivery: 'copied',
+        audience: 'guardian',
+        visibility: 'family',
+        metadata,
+      })
     );
-    expect(callableMock).toHaveBeenCalledWith(expect.objectContaining({
-      siteId: 'site-1',
-      learnerId: 'learner-1',
-      reportAction: 'share',
-      reportDelivery: 'copied',
-      audience: 'guardian',
-      visibility: 'family',
-      metadata,
-    }));
   });
 
   it('creates a share request before recording the linked delivery audit', async () => {
@@ -223,24 +255,35 @@ describe('report share request client helpers', () => {
       { app: 'test-app' },
       'recordReportDeliveryAudit'
     );
-    expect(callableMock).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      reportDelivery: 'copied',
-      shareRequestId: 'share-request-1',
-    }));
+    expect(callableMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        reportDelivery: 'copied',
+        shareRequestId: 'share-request-1',
+      })
+    );
   });
 });
 
 describe('resolveReportDeliveryBlockReason', () => {
   it('prefers missing share policy over missing provenance', () => {
-    expect(resolveReportDeliveryBlockReason(buildMetadata({
-      report_missing_delivery_contract_fields: ['sharePolicy'],
-      report_missing_provenance_signals: ['evidence'],
-    }))).toBe('missing_share_policy');
+    expect(
+      resolveReportDeliveryBlockReason(
+        buildMetadata({
+          report_missing_delivery_contract_fields: ['sharePolicy'],
+          report_missing_provenance_signals: ['evidence'],
+        })
+      )
+    ).toBe('missing_share_policy');
   });
 
   it('returns missing provenance when expected signals are absent', () => {
-    expect(resolveReportDeliveryBlockReason(buildMetadata({
-      report_missing_provenance_signals: ['proof'],
-    }))).toBe('missing_provenance');
+    expect(
+      resolveReportDeliveryBlockReason(
+        buildMetadata({
+          report_missing_provenance_signals: ['proof'],
+        })
+      )
+    ).toBe('missing_provenance');
   });
 });

@@ -53,6 +53,16 @@ function labelForAction(action: ReportShareRequest['reportAction']): string {
   }
 }
 
+function formatSignalList(signals: string[] | undefined): string {
+  if (!signals || signals.length === 0) return 'none';
+  return signals.join(', ');
+}
+
+function labelForDelivery(delivery: ReportShareRequest['reportDelivery']): string {
+  if (!delivery) return 'recorded';
+  return delivery.replace(/-/g, ' ');
+}
+
 export function ReportShareRequestManager({
   siteId,
   learnerId,
@@ -131,6 +141,7 @@ export function ReportShareRequestManager({
           <h3 className="text-sm font-semibold text-gray-900">Active report shares</h3>
           <p className="mt-1 text-xs text-gray-600">
             Family/private report deliveries stay visible here until they expire or are revoked.
+            External/public sharing remains blocked until explicit consent workflow support exists.
           </p>
         </div>
         <button
@@ -160,15 +171,33 @@ export function ReportShareRequestManager({
           {requests.map((request) => (
             <li
               key={request.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-gray-200 bg-white p-3"
+              className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-gray-200 bg-white p-3"
             >
-              <div className="text-xs text-gray-600">
+              <div className="max-w-3xl text-xs text-gray-600">
                 <p className="font-medium text-gray-900">
                   {labelForAction(request.reportAction)} · {request.visibility}
                 </p>
                 <p className="mt-0.5">
                   {request.fileName ?? request.surface ?? 'Evidence-backed report'} · expires{' '}
                   {formatDate(request.expiresAt)}
+                </p>
+                <p className="mt-1">
+                  Audience: {request.audience} · delivery:{' '}
+                  {labelForDelivery(request.reportDelivery)}
+                </p>
+                <p className="mt-1">
+                  Provenance contract:{' '}
+                  {request.provenance.meetsDeliveryContract ? 'passed' : 'needs review'} · expected:{' '}
+                  {formatSignalList(request.provenance.expectedSignals)} · missing:{' '}
+                  {formatSignalList(request.provenance.missingSignals)}
+                </p>
+                <p className="mt-1">
+                  Policy: evidence provenance{' '}
+                  {request.sharePolicy.requiresEvidenceProvenance ? 'required' : 'not required'} ·
+                  guardian context{' '}
+                  {request.sharePolicy.requiresGuardianContext ? 'required' : 'not required'} ·
+                  external sharing{' '}
+                  {request.sharePolicy.allowsExternalSharing ? 'allowed' : 'blocked'}
                 </p>
               </div>
               <button

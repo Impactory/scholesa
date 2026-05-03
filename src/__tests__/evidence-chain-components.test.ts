@@ -982,6 +982,7 @@ describe('report share request lifecycle', () => {
   it('exposes web active-share management with server-owned revocation', () => {
     const managerSource = readSrcFile('components', 'reports', 'ReportShareRequestManager.tsx');
 
+    expect(managerSource).toContain("'use client'");
     expect(managerSource).toContain('reportShareRequestsCollection');
     expect(managerSource).toContain("where('siteId', '==', siteId)");
     expect(managerSource).toContain("where('learnerId', '==', learnerId)");
@@ -989,6 +990,15 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain('revokeReportShareRequest');
     expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
     expect(managerSource).toContain('Share revocation failed. The active share is still listed.');
+    expect(managerSource).toContain(
+      'External/public sharing remains blocked until explicit consent workflow support exists.'
+    );
+    expect(managerSource).toContain('request.provenance.meetsDeliveryContract');
+    expect(managerSource).toContain('formatSignalList(request.provenance.expectedSignals)');
+    expect(managerSource).toContain('formatSignalList(request.provenance.missingSignals)');
+    expect(managerSource).toContain('request.sharePolicy.requiresEvidenceProvenance');
+    expect(managerSource).toContain('request.sharePolicy.requiresGuardianContext');
+    expect(managerSource).toContain('request.sharePolicy.allowsExternalSharing');
     expect(managerSource).toContain('data-testid={`report-share-request-manager-${learnerId}`}');
     expect(managerSource).toContain(
       "request.visibility === 'family' || request.visibility === 'private'"
