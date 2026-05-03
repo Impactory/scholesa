@@ -1,6 +1,7 @@
 import {
   buildReportShareRequestRecord,
   canCreateReportShareRequestForPolicy,
+  doesReportShareRequestMatchDeliveryAudit,
   isActiveUnexpiredReportShareRequestRecord,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
@@ -208,6 +209,47 @@ describe('reportShareRequests', () => {
         learnerId: 'learner-1',
         audience: 'guardian',
         visibility: 'family',
+      })
+    ).toBe(false);
+  });
+
+  it('matches delivery-audit linkage only to the originating share request actor and delivery', () => {
+    const shareRequestData = {
+      createdBy: 'parent-1',
+      learnerId: 'learner-1',
+      siteId: 'site-1',
+      reportAction: 'share',
+      reportDelivery: 'copied',
+    };
+
+    expect(
+      doesReportShareRequestMatchDeliveryAudit({
+        data: shareRequestData,
+        actorId: 'parent-1',
+        learnerId: 'learner-1',
+        siteId: 'site-1',
+        reportAction: 'share',
+        reportDelivery: 'copied',
+      })
+    ).toBe(true);
+    expect(
+      doesReportShareRequestMatchDeliveryAudit({
+        data: shareRequestData,
+        actorId: 'parent-2',
+        learnerId: 'learner-1',
+        siteId: 'site-1',
+        reportAction: 'share',
+        reportDelivery: 'copied',
+      })
+    ).toBe(false);
+    expect(
+      doesReportShareRequestMatchDeliveryAudit({
+        data: shareRequestData,
+        actorId: 'parent-1',
+        learnerId: 'learner-1',
+        siteId: 'site-1',
+        reportAction: 'export_pdf',
+        reportDelivery: 'downloaded',
       })
     ).toBe(false);
   });

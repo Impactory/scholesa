@@ -22,6 +22,7 @@ import {
 } from './reportDeliveryAudit';
 import {
   canCreateReportShareRequestForPolicy,
+  doesReportShareRequestMatchDeliveryAudit,
   isActiveUnexpiredReportShareRequestRecord,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
@@ -5338,6 +5339,21 @@ export const recordReportDeliveryAudit = onCall(
         throw new HttpsError(
           'permission-denied',
           'Report share request does not match this delivery audit.'
+        );
+      }
+      if (
+        !doesReportShareRequestMatchDeliveryAudit({
+          data: shareData,
+          actorId: authUid,
+          learnerId,
+          siteId,
+          reportAction: reportAction as ReportShareRequestAction,
+          reportDelivery: reportDelivery as ReportShareRequestDelivery,
+        })
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Report share request must match the delivery audit actor, action, and delivery status.'
         );
       }
       if (!isActiveUnexpiredReportShareRequestRecord(shareData)) {

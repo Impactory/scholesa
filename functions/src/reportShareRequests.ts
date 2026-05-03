@@ -133,6 +133,23 @@ export function canCreateReportShareRequestForPolicy(params: {
   return false;
 }
 
+export function doesReportShareRequestMatchDeliveryAudit(params: {
+  data: Record<string, unknown>;
+  actorId: string;
+  learnerId: string;
+  siteId: string;
+  reportAction: ReportShareRequestAction;
+  reportDelivery: ReportShareRequestDelivery;
+}): boolean {
+  return (
+    params.data.createdBy === params.actorId &&
+    params.data.learnerId === params.learnerId &&
+    params.data.siteId === params.siteId &&
+    params.data.reportAction === params.reportAction &&
+    params.data.reportDelivery === params.reportDelivery
+  );
+}
+
 export async function persistReportShareRequestRecord(params: ReportShareRequestWriteParams) {
   const collectionName = params.collectionName ?? 'reportShareRequests';
   const shareRef = admin.firestore().collection(collectionName).doc();

@@ -945,6 +945,10 @@ describe('recordReportDeliveryAudit callable', () => {
   it('links successful delivery audits back to active share request records', () => {
     expect(auditSection).toContain('shareRequestId');
     expect(auditSection).toContain('Report share request does not match this delivery audit.');
+    expect(auditSection).toContain('doesReportShareRequestMatchDeliveryAudit');
+    expect(auditSection).toContain(
+      'Report share request must match the delivery audit actor, action, and delivery status.'
+    );
     expect(auditSection).toContain(
       'Only active, unexpired report share requests can be linked to delivery audit.'
     );
