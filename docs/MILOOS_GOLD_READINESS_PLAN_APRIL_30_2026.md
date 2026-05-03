@@ -78,6 +78,8 @@ Do not call MiloOS gold-ready if any of these are true:
 
 Final web gate commands passed 2026-04-30: typecheck, lint, focused web/source tests, focused Functions honesty tests, Functions build, Firestore rules integration, evidence-chain emulator integration, MiloOS browser/WCAG/mobile/keyboard E2E suite, synthetic-data dry-run, and `git diff --check`. On 2026-05-01, the non-deploying `./scripts/deploy.sh release-gate` also passed from the current worktree, including root tests, combined Firestore emulator release tests, Functions gates, full Flutter analyze/test, and diff hygiene. On 2026-05-03, the approved no-traffic Cloud Run web rehearsal passed with `CLOUD_RUN_NO_TRAFFIC=1 IMAGE_TAG=rehearsal-20260503-081143 ./scripts/deploy.sh web`, creating ready 0-traffic revisions for both primary web (`scholesa-web-00040-qpw`) and Flutter web (`empire-web-00072-fw6`) while production traffic remained on the previous revisions.
 
+Canonical synthetic parity update 2026-05-03: the `syntheticMiloOSGoldStates/latest` manifest itself now includes `sourceCounts` for 5 learner states and 13 interaction events. The JS importer contract, web E2E fixture, browser manifest assertion, Flutter fake Firestore bridge, and source-contract test all verify that current systems consume the same manifest metadata.
+
 Final focused Flutter/mobile gate passed 2026-04-30:
 
 ```bash

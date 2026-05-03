@@ -35,6 +35,8 @@
 
 **MiloOS no-traffic deploy rehearsal update**: On 2026-05-03, `CLOUD_RUN_NO_TRAFFIC=1 IMAGE_TAG=rehearsal-20260503-081143 ./scripts/deploy.sh web` passed against `studio-3328096157-e3f79`. Cloud Run created ready 0-traffic revisions `scholesa-web-00040-qpw` and `empire-web-00072-fw6`; service traffic stayed on `scholesa-web-00038-fvt` and `empire-web-00071-6mx`. This closes the deploy-rehearsal blocker for the validated MiloOS/Flutter-web release slice while preserving the broader platform beta boundary.
 
+**MiloOS synthetic manifest parity update**: On 2026-05-03, `syntheticMiloOSGoldStates/latest` was strengthened to carry canonical `sourceCounts` directly in the manifest (`miloosGoldLearnerStates: 5`, `miloosGoldInteractionEvents: 13`). The JS importer test, web E2E fixture, browser manifest assertion, Flutter fake Firestore bridge, and source-contract test now all verify the same manifest metadata, removing the previous web-summary-vs-mobile-manifest asymmetry.
+
 **MiloOS final signoff**: MiloOS creates support/provenance evidence (`ai_help_opened`, `ai_help_used`, `ai_coach_response`, `explain_it_back_submitted`), lets learners/educators/guardians/site leaders observe the right scoped summaries on web, adds focused Flutter/mobile learner/educator/site support-provenance parity, verifies authenticity through explain-back linked to the support turn, and keeps support separate from mastery by never writing support-only `capabilityMastery` or `capabilityGrowthEvents`. Broader platform and broader Flutter workflows remain beta.
 
 | Metric | Value |

@@ -2,9 +2,9 @@
 **Date:** 2026-03-30
 **Platform:** Scholesa Empire Flutter App
 **Target:** Google Cloud Run (Flutter Web)
-**Assessment:** Historical snapshot; superseded by the April 30 / May 1 Flutter-mobile and MiloOS release-gate records
+**Assessment:** Historical snapshot; superseded by the April 30 / May 1 Flutter-mobile and MiloOS release-gate records plus the May 3 no-traffic Cloud Run rehearsal
 
-> **Current status note - 2026-05-01**
+> **Current status note - 2026-05-03**
 >
 > This report is preserved as a March 30 audit snapshot. It no longer represents the current Flutter/mobile or MiloOS release state.
 >
@@ -16,7 +16,7 @@
 > - `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md`
 > - `docs/MILOOS_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md`
 >
-> The prior hard blockers for Cloud Run deployment path and end-to-end evidence-chain Flutter failures are closed in the current worktree: `scripts/deploy.sh` now includes Cloud Run deployment targets and the non-deploying `./scripts/deploy.sh release-gate`; the validated Flutter/mobile bundle now passes full app-scoped Flutter tests/analyzer, root tests, Firestore rules plus evidence-chain integration in one emulator session, Functions build/verify and split tests, production web build, and diff hygiene. The full Flutter/mobile app still must not be called blanket gold-ready until an approved live or `CLOUD_RUN_NO_TRAFFIC=1` deploy rehearsal passes from the current worktree.
+> The prior hard blockers for Cloud Run deployment path and end-to-end evidence-chain Flutter failures are closed in the current worktree: `scripts/deploy.sh` now includes Cloud Run deployment targets and the non-deploying `./scripts/deploy.sh release-gate`; the validated Flutter/mobile bundle now passes full app-scoped Flutter tests/analyzer, root tests, Firestore rules plus evidence-chain integration in one emulator session, Functions build/verify and split tests, production web build, and diff hygiene. On 2026-05-03, `CLOUD_RUN_NO_TRAFFIC=1 IMAGE_TAG=rehearsal-20260503-081143 ./scripts/deploy.sh web` created ready 0-traffic Cloud Run revisions for primary web and Flutter web without moving production traffic. Do not treat this historical March report as blanket platform gold certification; use the current readiness docs above for the bounded release verdict.
 
 ---
 

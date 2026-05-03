@@ -176,6 +176,8 @@ Completed 2026-05-01: web MiloOS Playwright proofs now derive support events thr
 
 Updated 2026-05-01: the web browser E2E harness now also stores the mapped `syntheticMiloOSGoldStates/latest` manifest via `seedSyntheticMiloOSGoldStates`, including the importer source counts for 5 learner states and 13 interaction events, so current web tests can assert the canonical state record is present alongside the importer-derived support events. This closes the event-only fixture gap between web and Flutter fake Firestore.
 
+Updated 2026-05-03: `syntheticMiloOSGoldStates/latest` now carries its own canonical `sourceCounts` object in the importer output, and both the web E2E fixture and Flutter fake Firestore bridge assert those counts from the manifest. This removes the prior asymmetry where web copied source counts from the import summary while mobile consumed only the manifest.
+
 Completed 2026-05-01: learner-facing web and Flutter support summaries now expose MiloOS coach responses as support provenance alongside opened, used, explained, and pending counts. This keeps learner usability consistent with site support-health reporting while preserving the boundary that coach responses are not capability mastery or growth.
 
 Candidate files:

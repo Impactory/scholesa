@@ -676,7 +676,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(checklistSource).toContain('flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart');
     expect(checklistSource).toContain('synthetic_miloos_gold_states_mobile_test.dart');
     expect(checklistSource).toContain('./scripts/deploy.sh release-gate');
-    expect(flutterMobilePlanSource).toContain('Flutter/mobile is not blanket gold-ready yet.');
+    expect(flutterMobilePlanSource).toContain('validated release bundle and approved Cloud Run web no-traffic rehearsal now pass');
     expect(flutterMobilePlanSource).toContain('Flutter route proof matrix');
     expect(flutterMobilePlanSource).toContain('Offline evidence-chain gate');
     expect(flutterMobilePlanSource).toContain('Mobile classroom ergonomics');
@@ -698,9 +698,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Educator proof-review persistence and site-boundary proof');
     expect(flutterMobilePlanSource).toContain('Canonical MiloOS synthetic mobile consumption');
     expect(flutterMobilePlanSource).toContain('Site support-health signal completeness');
-    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
-    expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
-    expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
+    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **post-rehearsal operator evidence and native release reproducibility**.');
+    expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` passes without deploying');
+    expect(flutterMobilePlanSource).toContain('2026-05-03 `CLOUD_RUN_NO_TRAFFIC=1` web rehearsal created ready no-traffic revisions');
+    expect(flutterMobilePlanSource).toContain('approved 2026-05-03 no-traffic web deploy rehearsal passed without moving production traffic');
     expect(flutterMobileChecklistSource).toContain('Milestone 1 - Guardian And Report Workflow Stabilization');
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`');
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the focused offline evidence-chain suite passed as a bundle with 46 tests.');
