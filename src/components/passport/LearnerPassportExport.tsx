@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
+import { ReportShareRequestManager } from '@/src/components/reports/ReportShareRequestManager';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
@@ -1413,6 +1414,16 @@ ${growthHtml}
             </button>
           </div>
         </div>
+
+        {learner && (
+          <div className="mb-6 print:hidden">
+            <ReportShareRequestManager
+              siteId={siteId}
+              learnerId={learner.learnerId}
+              viewer="learner"
+            />
+          </div>
+        )}
 
         {learner && <PassportDocument learner={learner} />}
       </div>

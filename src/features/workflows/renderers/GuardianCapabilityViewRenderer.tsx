@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
+import { ReportShareRequestManager } from '@/src/components/reports/ReportShareRequestManager';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
@@ -1847,6 +1848,15 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                     </div>
                   )}
                 </div>
+                {showGuardianShareActions && (
+                  <div className="mb-3">
+                    <ReportShareRequestManager
+                      siteId={siteId}
+                      learnerId={learner.learnerId}
+                      viewer="guardian"
+                    />
+                  </div>
+                )}
                 <div className="mb-3 flex flex-wrap gap-4 text-sm text-app-muted">
                   <span>
                     <strong className="text-app-foreground">

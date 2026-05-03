@@ -46,7 +46,10 @@ describe('EducatorEvidenceCapture session context linking', () => {
     // The addDoc block should write sessionOccurrenceId
     const addDocBlock = source.slice(
       source.indexOf('await addDoc(evidenceRecordsCollection'),
-      source.indexOf('} as Omit<EvidenceRecord', source.indexOf('await addDoc(evidenceRecordsCollection'))
+      source.indexOf(
+        '} as Omit<EvidenceRecord',
+        source.indexOf('await addDoc(evidenceRecordsCollection')
+      )
     );
     expect(addDocBlock).toContain('sessionOccurrenceId');
   });
@@ -69,7 +72,9 @@ describe('EducatorEvidenceCapture session context linking', () => {
   it('renders a live session selector and roster provenance banner in the form', () => {
     expect(source).toContain('data-testid="evidence-session"');
     expect(source).toContain('data-testid="evidence-roster-source"');
-    expect(source).toContain('Showing present learners from attendance for this session occurrence.');
+    expect(source).toContain(
+      'Showing present learners from attendance for this session occurrence.'
+    );
   });
 
   it('keeps session selection sticky across logs', () => {
@@ -86,7 +91,9 @@ describe('EducatorEvidenceCapture session context linking', () => {
   });
 
   it('requires capability linkage before creating a portfolio-backed educator observation', () => {
-    expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
+    expect(source).toContain(
+      'Select a capability before flagging this observation as portfolio evidence.'
+    );
     expect(source).toContain('portfolioItemsCollection');
     expect(source).toContain("where('evidenceRecordIds', 'array-contains-any', evidenceIds)");
     expect(source).toContain('portfolioItemId={reviewingEvidence.portfolioItemId}');
@@ -163,7 +170,9 @@ describe('Rubric proof gate honesty', () => {
 
   it('requires verified proof before educator rubric review can update growth', () => {
     expect(reviewSource).toContain("attempt.proofOfLearningStatus !== 'verified'");
-    expect(reviewSource).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(reviewSource).toContain(
+      'Verify proof-of-learning before applying a rubric that updates capability growth.'
+    );
     expect(reviewSource).toContain('portfolioItemId: attempt.portfolioItemId ?? undefined');
     expect(reviewSource).not.toContain('rubric-proof-verified-');
   });
@@ -171,7 +180,9 @@ describe('Rubric proof gate honesty', () => {
   it('keeps the shared rubric review panel blocked until proof is verified', () => {
     expect(panelSource).toContain('proofVerified = false');
     expect(panelSource).toContain('data-testid="rubric-review-proof-gate"');
-    expect(panelSource).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(panelSource).toContain(
+      'Verify proof-of-learning before applying a rubric that updates capability growth.'
+    );
   });
 });
 
@@ -196,15 +207,23 @@ describe('Checkpoint proof chain honesty', () => {
     expect(learnerCheckpointSource).toContain('proofOfLearningStatus');
     expect(learnerCheckpointSource).toContain('portfolioItemId: portfolioRef.id');
     expect(learnerCheckpointSource).toContain('checkpointDefinitionId');
-    expect(learnerCheckpointSource).toContain('Select an assigned checkpoint before submitting checkpoint evidence.');
-    expect(learnerCheckpointSource).toContain('No HQ-authored checkpoints are available for this site yet.');
+    expect(learnerCheckpointSource).toContain(
+      'Select an assigned checkpoint before submitting checkpoint evidence.'
+    );
+    expect(learnerCheckpointSource).toContain(
+      'No HQ-authored checkpoints are available for this site yet.'
+    );
   });
 
   it('keeps educator checkpoint review truthful about proof before growth', () => {
     expect(educatorReviewSource).toContain('cp.portfolioItemId');
     expect(educatorReviewSource).toContain("where('status', 'in', ['submitted', 'pending_proof'])");
-    expect(educatorReviewSource).toContain('Checkpoint correctness saved. Verify the linked proof-of-learning, then record capability growth from this review surface.');
-    expect(educatorReviewSource).toContain('Linked proof is verified. Confirm this checkpoint again to record capability growth.');
+    expect(educatorReviewSource).toContain(
+      'Checkpoint correctness saved. Verify the linked proof-of-learning, then record capability growth from this review surface.'
+    );
+    expect(educatorReviewSource).toContain(
+      'Linked proof is verified. Confirm this checkpoint again to record capability growth.'
+    );
     expect(educatorReviewSource).toContain('Record growth');
   });
 });
@@ -232,13 +251,13 @@ describe('LearnerPortfolioCurationRenderer site context', () => {
   it('writes canonical portfolio fields for learner-created artifacts', () => {
     const addDocBlock = source.slice(
       source.indexOf('const portfolioDoc = await addDoc(portfolioItemsCollection'),
-      source.indexOf('} as unknown as Omit<PortfolioItemRecord, \'id\'>);') +
-        '} as unknown as Omit<PortfolioItemRecord, \'id\'>);'.length
+      source.indexOf("} as unknown as Omit<PortfolioItemRecord, 'id'>);") +
+        "} as unknown as Omit<PortfolioItemRecord, 'id'>);".length
     );
     expect(addDocBlock).toContain('portfolioItemsCollection');
     expect(addDocBlock).toContain('pillarCodes');
     expect(addDocBlock).toContain('artifacts');
-    expect(addDocBlock).toContain('proofOfLearningStatus: \'not-available\'');
+    expect(addDocBlock).toContain("proofOfLearningStatus: 'not-available'");
     expect(addDocBlock).toContain('aiDisclosureStatus');
     expect(addDocBlock).not.toContain('artifactUrl: newArtifactUrl.trim()');
     expect(addDocBlock).not.toContain('aiDisclosure: newAiDisclosure');
@@ -268,7 +287,9 @@ describe('EducatorEvidenceReviewRenderer site context', () => {
 
   it('resolves site context through the shared active-site helper', () => {
     expect(source).toContain('resolveActiveSiteId');
-    expect(source).not.toContain('const educatorSiteId = ctx.profile?.studioId || ctx.profile?.siteIds?.[0] || \'\';');
+    expect(source).not.toContain(
+      "const educatorSiteId = ctx.profile?.studioId || ctx.profile?.siteIds?.[0] || '';"
+    );
   });
 
   it('uses the resolved active site for rubric lookup and apply fallbacks', () => {
@@ -278,24 +299,21 @@ describe('EducatorEvidenceReviewRenderer site context', () => {
 
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="educator-review-site-required"');
-    expect(source).toContain('Select an active site before reviewing learner evidence and applying rubric decisions.');
+    expect(source).toContain(
+      'Select an active site before reviewing learner evidence and applying rubric decisions.'
+    );
   });
 });
 
 /* ───── EducatorTodayRenderer site context ───── */
 
 describe('EducatorTodayRenderer site context', () => {
-  const source = readSrcFile(
-    'features',
-    'workflows',
-    'renderers',
-    'EducatorTodayRenderer.tsx'
-  );
+  const source = readSrcFile('features', 'workflows', 'renderers', 'EducatorTodayRenderer.tsx');
 
   it('resolves site context through the shared active-site helper', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).not.toContain('const siteId = ctx.profile?.siteIds?.[0] ?? null;');
-    expect(source).not.toContain('const educatorSiteId = ctx.profile?.studioId || siteId || \'\';');
+    expect(source).not.toContain("const educatorSiteId = ctx.profile?.studioId || siteId || '';");
   });
 
   it('site-scopes today sessions, learner roster, and review queue counts', () => {
@@ -318,7 +336,9 @@ describe('EducatorTodayRenderer site context', () => {
   });
 
   it('requires capability linkage before creating portfolio-backed live evidence', () => {
-    expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
+    expect(source).toContain(
+      'Select a capability before flagging this observation as portfolio evidence.'
+    );
     expect(source).toContain('capabilityId: selectedCapabilityId || undefined');
     expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
     expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
@@ -327,7 +347,10 @@ describe('EducatorTodayRenderer site context', () => {
   it('writes quick observations against sessionOccurrenceId instead of legacy sessionId', () => {
     const addDocBlock = source.slice(
       source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')"),
-      source.indexOf('});', source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')")) + 3
+      source.indexOf(
+        '});',
+        source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')")
+      ) + 3
     );
     expect(addDocBlock).toContain('sessionOccurrenceId: sessionOccurrenceId || undefined');
     expect(addDocBlock).not.toContain('sessionId: sessionId || null');
@@ -336,7 +359,9 @@ describe('EducatorTodayRenderer site context', () => {
   it('renders a live session selector and roster source banner for quick capture', () => {
     expect(source).toContain('data-testid="quick-observation-session"');
     expect(source).toContain('data-testid="quick-observation-roster-source"');
-    expect(source).toContain('Showing present learners from attendance for this session occurrence.');
+    expect(source).toContain(
+      'Showing present learners from attendance for this session occurrence.'
+    );
   });
 
   it('shows an explicit no-site blocked state', () => {
@@ -377,7 +402,9 @@ describe('LearnerProgressReportRenderer site context', () => {
 
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="learner-progress-site-required"');
-    expect(source).toContain('Select an active site before viewing your progress report and MiloOS coach.');
+    expect(source).toContain(
+      'Select an active site before viewing your progress report and MiloOS coach.'
+    );
   });
 });
 
@@ -437,6 +464,8 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('familyReportSharePolicy');
     expect(source).toContain('learnerPrivateReportSharePolicy');
     expect(source).toContain('recordReportDeliveryLifecycle');
+    expect(source).toContain('ReportShareRequestManager');
+    expect(source).toContain('viewer="learner"');
     expect(source).toContain("reportAction: 'export_html'");
     expect(source).toContain('report_delivery');
     expect(source).toContain('const processDomainSnapshotHtml =');
@@ -508,7 +537,9 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
   it('surfaces MiloOS support provenance for guardians without calling it mastery', () => {
     expect(source).toContain('miloosSupportSummary');
     expect(source).toContain('MiloOS support provenance');
-    expect(source).toContain('support signals and explain-back verification gaps, not capability mastery');
+    expect(source).toContain(
+      'support signals and explain-back verification gaps, not capability mastery'
+    );
     expect(source).toContain('data-testid={`guardian-miloos-support-${learner.learnerId}`}');
     expect(source).toContain('data-testid="guardian-miloos-support-opened"');
     expect(source).toContain('data-testid="guardian-miloos-support-used"');
@@ -532,6 +563,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('enforceProvenanceContract: true');
     expect(source).toContain('familyReportSharePolicy');
     expect(source).toContain('recordReportDeliveryLifecycle');
+    expect(source).toContain('ReportShareRequestManager');
+    expect(source).toContain('viewer="guardian"');
     expect(source).toContain('report_delivery');
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
@@ -540,7 +573,9 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
   it('also exposes the same family-safe share and export actions on the parent summary route', () => {
     expect(source).toContain("const isSummaryRoute = ctx.routePath === '/parent/summary'");
     expect(source).toContain('const showGuardianShareActions = isPassportRoute || isSummaryRoute');
-    expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth');
+    expect(source).toContain(
+      'Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth'
+    );
     expect(source).toContain('Featured AI disclosure:');
     expect(source).toContain('Recent growth provenance:');
     expect(source).toContain('Recent process-domain growth:');
@@ -555,7 +590,9 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('${event.linkedEvidenceCount} evidence link(s)');
     expect(source).toContain('${event.linkedPortfolioCount} portfolio link(s)');
     expect(source).toContain('${item.evidenceCount ?? 0} evidence, ${item.missionAttemptId ?');
-    expect(source).toContain('Rubric Score:    ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})');
+    expect(source).toContain(
+      'Rubric Score:    ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})'
+    );
     expect(source).toContain('Reviewed by:     ${event.educatorName}');
     expect(source).toContain('Rubric Score:    ${event.rubricScore.raw}/${event.rubricScore.max}');
   });
@@ -615,7 +652,8 @@ describe('LearnerEvidenceSubmission component', () => {
   it('writes checkpoint to missionAttempts with submitted status', () => {
     const handler = source.slice(
       source.indexOf('const handleSubmitCheckpoint'),
-      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) + 2
+      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) +
+        2
     );
     expect(handler).toContain('missionAttemptsCollection');
     expect(handler).toContain("status: 'submitted'");
@@ -624,7 +662,8 @@ describe('LearnerEvidenceSubmission component', () => {
   it('also writes checkpoint to portfolio for visibility', () => {
     const handler = source.slice(
       source.indexOf('const handleSubmitCheckpoint'),
-      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) + 2
+      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) +
+        2
     );
     expect(handler).toContain('portfolioItemsCollection');
     expect(handler).toContain("source: 'checkpoint_submission'");
@@ -654,8 +693,12 @@ describe('LearnerEvidenceSubmission component', () => {
     );
 
     expect(artifactHandler).toContain('aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined');
-    expect(reflectionHandler).toContain('aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined');
-    expect(checkpointHandler).toContain('aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined');
+    expect(reflectionHandler).toContain(
+      'aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined'
+    );
+    expect(checkpointHandler).toContain(
+      'aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined'
+    );
   });
 
   it('back-links reflection submissions onto the canonical portfolio item', () => {
@@ -665,7 +708,9 @@ describe('LearnerEvidenceSubmission component', () => {
     );
 
     expect(reflectionHandler).toContain('reflectionIds: [] as string[]');
-    expect(reflectionHandler).toContain('const reflectionDoc = await addDoc(learnerReflectionsCollection');
+    expect(reflectionHandler).toContain(
+      'const reflectionDoc = await addDoc(learnerReflectionsCollection'
+    );
     expect(reflectionHandler).toContain('portfolioItemId: portfolioRef.id');
     expect(reflectionHandler).toContain('await updateDoc(portfolioRef, {');
     expect(reflectionHandler).toContain('reflectionIds: [reflectionDoc.id]');
@@ -676,8 +721,12 @@ describe('LearnerEvidenceSubmission component', () => {
   });
 
   it('requires capability linkage for learner-created proof items', () => {
-    expect(source).toContain('Select at least one capability before submitting portfolio evidence.');
-    expect(source).toContain('Select at least one capability before saving a reflection to your evidence portfolio.');
+    expect(source).toContain(
+      'Select at least one capability before submitting portfolio evidence.'
+    );
+    expect(source).toContain(
+      'Select at least one capability before saving a reflection to your evidence portfolio.'
+    );
     expect(source).toContain('This checkpoint is not linked to a capability yet.');
     expect(source).toContain("where('siteId', '==', siteId)");
   });
@@ -777,7 +826,9 @@ describe('ParentAnalyticsDashboard guardian honesty', () => {
 
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="parent-analytics-site-required"');
-    expect(source).toContain('Select an active site before viewing supplemental engagement signals.');
+    expect(source).toContain(
+      'Select an active site before viewing supplemental engagement signals.'
+    );
   });
 
   it('frames engagement as secondary to evidence-backed capability judgments', () => {
@@ -794,10 +845,7 @@ describe('ParentAnalyticsDashboard guardian honesty', () => {
 /* ───── verifyProofOfLearning callable ───── */
 
 describe('verifyProofOfLearning callable', () => {
-  const functionsSource = fs.readFileSync(
-    path.join(functionsDir, 'index.ts'),
-    'utf8'
-  );
+  const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
   const verifyStart = functionsSource.indexOf('export const verifyProofOfLearning');
   const verifyEnd = functionsSource.indexOf('\n});', verifyStart);
   const verifySection = functionsSource.slice(
@@ -830,16 +878,15 @@ describe('verifyProofOfLearning callable', () => {
 
   it('refuses verified proof when capability linkage is missing', () => {
     expect(verifySection).toContain("'failed-precondition'");
-    expect(verifySection).toContain('Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.');
+    expect(verifySection).toContain(
+      'Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.'
+    );
     expect(verifySection).toContain('evidenceRecordIds');
   });
 });
 
 describe('getLearnerPassportBundle callable', () => {
-  const functionsSource = fs.readFileSync(
-    path.join(functionsDir, 'index.ts'),
-    'utf8'
-  );
+  const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
 
   it('exports a learner-safe passport callable', () => {
     expect(functionsSource).toContain('export const getLearnerPassportBundle');
@@ -860,10 +907,7 @@ describe('getLearnerPassportBundle callable', () => {
 });
 
 describe('recordReportDeliveryAudit callable', () => {
-  const functionsSource = fs.readFileSync(
-    path.join(functionsDir, 'index.ts'),
-    'utf8'
-  );
+  const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
   const auditStart = functionsSource.indexOf('export const recordReportDeliveryAudit');
   const auditEnd = functionsSource.indexOf('export const processNotificationRequests', auditStart);
   const auditSection = functionsSource.slice(
@@ -894,21 +938,17 @@ describe('recordReportDeliveryAudit callable', () => {
   it('links successful delivery audits back to active share request records', () => {
     expect(auditSection).toContain('shareRequestId');
     expect(auditSection).toContain('Report share request does not match this delivery audit.');
-    expect(auditSection).toContain('Only active report share requests can be linked to delivery audit.');
+    expect(auditSection).toContain(
+      'Only active report share requests can be linked to delivery audit.'
+    );
     expect(auditSection).toContain('deliveryAuditId: id');
   });
 });
 
 describe('report share request lifecycle', () => {
-  const functionsSource = fs.readFileSync(
-    path.join(functionsDir, 'index.ts'),
-    'utf8'
-  );
+  const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
   const schemaSource = readSrcFile('types', 'schema.ts');
-  const rulesSource = fs.readFileSync(
-    path.join(process.cwd(), 'firestore.rules'),
-    'utf8'
-  );
+  const rulesSource = fs.readFileSync(path.join(process.cwd(), 'firestore.rules'), 'utf8');
 
   it('defines a first-class report share request schema and collection', () => {
     expect(schemaSource).toContain('export interface ReportShareRequest');
@@ -927,9 +967,29 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain('export const createReportShareRequest');
     expect(functionsSource).toContain('export const revokeReportShareRequest');
     expect(functionsSource).toContain('Report share requests require a passing delivery contract.');
-    expect(functionsSource).toContain('External and partner report sharing requires explicit consent workflow support.');
-    expect(functionsSource).toContain('Only completed report deliveries can create active share requests.');
+    expect(functionsSource).toContain(
+      'External and partner report sharing requires explicit consent workflow support.'
+    );
+    expect(functionsSource).toContain(
+      'Only completed report deliveries can create active share requests.'
+    );
     expect(functionsSource).toContain('report.share_request_revoked');
+  });
+
+  it('exposes web active-share management with server-owned revocation', () => {
+    const managerSource = readSrcFile('components', 'reports', 'ReportShareRequestManager.tsx');
+
+    expect(managerSource).toContain('reportShareRequestsCollection');
+    expect(managerSource).toContain("where('siteId', '==', siteId)");
+    expect(managerSource).toContain("where('learnerId', '==', learnerId)");
+    expect(managerSource).toContain("where('status', '==', 'active')");
+    expect(managerSource).toContain('revokeReportShareRequest');
+    expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
+    expect(managerSource).toContain('Share revocation failed. The active share is still listed.');
+    expect(managerSource).toContain('data-testid={`report-share-request-manager-${learnerId}`}');
+    expect(managerSource).toContain(
+      "request.visibility === 'family' || request.visibility === 'private'"
+    );
   });
 });
 
@@ -939,16 +999,13 @@ describe('EvidenceRecord schema supports session linking', () => {
   const schemaSource = readSrcFile('types', 'schema.ts');
 
   it('EvidenceRecord has sessionOccurrenceId field', () => {
-    const erBlock = schemaSource.match(
-      /export interface EvidenceRecord \{[\s\S]*?\n\}/
-    )?.[0] ?? '';
+    const erBlock = schemaSource.match(/export interface EvidenceRecord \{[\s\S]*?\n\}/)?.[0] ?? '';
     expect(erBlock).toContain('sessionOccurrenceId');
   });
 
   it('SessionOccurrence type exists with required fields', () => {
-    const soBlock = schemaSource.match(
-      /export interface SessionOccurrence \{[\s\S]*?\n\}/
-    )?.[0] ?? '';
+    const soBlock =
+      schemaSource.match(/export interface SessionOccurrence \{[\s\S]*?\n\}/)?.[0] ?? '';
     expect(soBlock).toContain('sessionId');
     expect(soBlock).toContain('date');
     expect(soBlock).toContain('siteId');
@@ -960,8 +1017,18 @@ describe('EvidenceRecord schema supports session linking', () => {
 
 describe('HQ capability framework site context', () => {
   const editorSource = readSrcFile('components', 'capabilities', 'CapabilityFrameworkEditor.tsx');
-  const hqRendererSource = readSrcFile('features', 'workflows', 'renderers', 'HqCapabilityFrameworkRenderer.tsx');
-  const rubricRendererSource = readSrcFile('features', 'workflows', 'renderers', 'HqRubricBuilderRenderer.tsx');
+  const hqRendererSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'HqCapabilityFrameworkRenderer.tsx'
+  );
+  const rubricRendererSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'HqRubricBuilderRenderer.tsx'
+  );
 
   it('resolves site context through the shared active-site helper', () => {
     expect(editorSource).toContain('resolveActiveSiteId');
@@ -993,7 +1060,9 @@ describe('SiteEvidenceHealthDashboard school health view', () => {
 
   it('resolves site context through the shared active-site helper', () => {
     expect(source).toContain('resolveActiveSiteId');
-    expect(source).not.toContain('const siteId = profile?.activeSiteId ?? profile?.studioId ?? null;');
+    expect(source).not.toContain(
+      'const siteId = profile?.activeSiteId ?? profile?.studioId ?? null;'
+    );
   });
 
   it('queries evidence records by site and period', () => {
@@ -1087,7 +1156,11 @@ describe('P1-F typed collection reconciliation', () => {
   });
 
   it('keeps showcase and peer-review surfaces on typed refs', () => {
-    const combinedShowcaseSource = [showcaseRendererSource, showcaseFormSource, showcaseGallerySource].join('\n');
+    const combinedShowcaseSource = [
+      showcaseRendererSource,
+      showcaseFormSource,
+      showcaseGallerySource,
+    ].join('\n');
     expect(combinedShowcaseSource).toContain('showcaseSubmissionsCollection');
     expect(showcaseRendererSource).toContain('peerFeedbackCollection');
     expect(combinedShowcaseSource).not.toContain("collection(firestore, 'showcaseSubmissions')");
