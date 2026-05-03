@@ -911,6 +911,10 @@ describe('getLearnerPassportBundle callable', () => {
 
 describe('recordReportDeliveryAudit callable', () => {
   const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
+  const reportDeliveryAuditSource = fs.readFileSync(
+    path.join(functionsDir, 'reportDeliveryAudit.ts'),
+    'utf8'
+  );
   const auditStart = functionsSource.indexOf('export const recordReportDeliveryAudit');
   const auditEnd = functionsSource.indexOf('export const processNotificationRequests', auditStart);
   const auditSection = functionsSource.slice(
@@ -943,6 +947,21 @@ describe('recordReportDeliveryAudit callable', () => {
     expect(auditSection).toContain('Report share request does not match this delivery audit.');
     expect(auditSection).toContain(
       'Only active report share requests can be linked to delivery audit.'
+    );
+    expect(auditSection).toContain('validateReportShareLifecycleMetadata');
+    expect(reportDeliveryAuditSource).toContain('Invalid report share lifecycle outcome.');
+    expect(reportDeliveryAuditSource).toContain(
+      'Report share lifecycle metadata conflicts with linked share request.'
+    );
+    expect(reportDeliveryAuditSource).toContain(
+      'Report share lifecycle metadata requires a linked share request.'
+    );
+    expect(reportDeliveryAuditSource).toContain(
+      'Skipped report share lifecycle requires a reason.'
+    );
+    expect(reportDeliveryAuditSource).toContain('unsupported_visibility');
+    expect(reportDeliveryAuditSource).toContain(
+      'Skipped report share lifecycle reason is unsupported.'
     );
     expect(auditSection).toContain('deliveryAuditId: id');
   });

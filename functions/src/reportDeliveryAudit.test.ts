@@ -1,6 +1,7 @@
 import {
   buildReportDeliveryAuditRecord,
   persistReportDeliveryAuditRecord,
+  validateReportShareLifecycleMetadata,
 } from './reportDeliveryAudit';
 
 const mockSet = jest.fn(async () => undefined);
@@ -21,6 +22,86 @@ jest.mock('firebase-admin', () => ({
 describe('reportDeliveryAudit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('accepts lifecycle metadata for a created linked share request', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        shareRequestId: 'share-request-1',
+        metadata: {
+          report_share_request_lifecycle_expected: true,
+          report_share_request_lifecycle_outcome: 'created',
+          report_share_request_created: true,
+          report_share_request_skipped_reason: null,
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it('accepts skipped lifecycle metadata with a canonical reason', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        metadata: {
+          report_share_request_lifecycle_expected: false,
+          report_share_request_lifecycle_outcome: 'skipped',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: 'unsupported_visibility',
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it('rejects skipped lifecycle metadata with a non-canonical reason', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        metadata: {
+          report_share_request_lifecycle_expected: false,
+          report_share_request_lifecycle_outcome: 'skipped',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: 'manual_review_needed',
+        },
+      })
+    ).toThrow('Skipped report share lifecycle reason is unsupported.');
+  });
+
+  it('rejects lifecycle metadata that claims creation without a linked share request', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        metadata: {
+          report_share_request_lifecycle_expected: true,
+          report_share_request_lifecycle_outcome: 'created',
+          report_share_request_created: true,
+          report_share_request_skipped_reason: null,
+        },
+      })
+    ).toThrow('Report share lifecycle metadata requires a linked share request.');
+  });
+
+  it('rejects linked share request metadata that does not claim creation', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        shareRequestId: 'share-request-1',
+        metadata: {
+          report_share_request_lifecycle_expected: false,
+          report_share_request_lifecycle_outcome: 'skipped',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: 'unsupported_visibility',
+        },
+      })
+    ).toThrow('Report share lifecycle metadata conflicts with linked share request.');
+  });
+
+  it('accepts expected-but-missing lifecycle metadata when callable creation returns no id', () => {
+    expect(() =>
+      validateReportShareLifecycleMetadata({
+        metadata: {
+          report_share_request_lifecycle_expected: true,
+          report_share_request_lifecycle_outcome: 'expected_but_missing',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: null,
+        },
+      })
+    ).not.toThrow();
   });
 
   it('builds a durable delivered report audit payload', () => {

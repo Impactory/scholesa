@@ -16,6 +16,7 @@ import { callInternalInferenceJson } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
 import {
   persistReportDeliveryAuditRecord,
+  validateReportShareLifecycleMetadata,
   type ReportDeliveryAuditAction,
   type ReportDeliveryAuditStatus,
 } from './reportDeliveryAudit';
@@ -5344,6 +5345,7 @@ export const recordReportDeliveryAudit = onCall(
         );
       }
     }
+    validateReportShareLifecycleMetadata({ metadata, shareRequestId });
 
     const reportBlockReason =
       reportDelivery === 'contract-failed'
