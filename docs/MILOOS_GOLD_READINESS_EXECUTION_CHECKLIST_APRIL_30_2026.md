@@ -231,6 +231,8 @@ cd apps/empire_flutter/app && flutter analyze
 
 Completed 2026-04-30: the web MiloOS gold-candidate release bundle passed, and the focused Flutter/mobile MiloOS support-provenance gate passed with learner-loop, educator, and site widget tests plus `flutter analyze`.
 
+Updated 2026-05-03: the approved no-traffic Cloud Run web deploy rehearsal passed from the current worktree with `CLOUD_RUN_NO_TRAFFIC=1 IMAGE_TAG=rehearsal-20260503-081143 ./scripts/deploy.sh web`. Primary web created ready 0-traffic revision `scholesa-web-00040-qpw`, Flutter web created ready 0-traffic revision `empire-web-00072-fw6`, and production traffic remained pinned to `scholesa-web-00038-fvt` and `empire-web-00071-6mx`.
+
 Minimum command bundle:
 
 ```bash
