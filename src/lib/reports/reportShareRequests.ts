@@ -21,23 +21,82 @@ interface RevokeReportShareRequestParams {
   reason?: string;
 }
 
+export type ReportShareRequestSkipReason =
+  | 'incomplete_delivery'
+  | 'missing_metadata'
+  | 'failed_delivery_contract'
+  | 'missing_share_policy'
+  | 'not_family_safe'
+  | 'external_sharing_enabled'
+  | 'unsupported_audience'
+  | 'unsupported_visibility';
+
+export type ReportShareRequestLifecycleOutcome = 'created' | 'skipped' | 'expected_but_missing';
+
 const completedDeliveryStatuses = new Set<ReportDeliveryAuditStatus>([
   'shared',
   'copied',
   'downloaded',
 ]);
 
+const supportedClientShareAudiences = new Set<ReportProvenanceMetadata['report_share_audience']>([
+  'learner',
+  'guardian',
+]);
+
+const supportedClientShareVisibilities = new Set<
+  ReportProvenanceMetadata['report_share_visibility']
+>(['private', 'family']);
+
 export function shouldCreateReportShareRequest(
   reportDelivery: ReportDeliveryAuditStatus,
   metadata?: ReportProvenanceMetadata | null
 ): boolean {
-  return (
-    completedDeliveryStatuses.has(reportDelivery) &&
-    metadata?.report_meets_delivery_contract === true &&
-    metadata.report_share_policy_declared === true &&
-    metadata.report_share_family_safe === true &&
-    metadata.report_share_allows_external_sharing !== true
-  );
+  return resolveReportShareRequestSkipReason(reportDelivery, metadata) === null;
+}
+
+export function resolveReportShareRequestSkipReason(
+  reportDelivery: ReportDeliveryAuditStatus,
+  metadata?: ReportProvenanceMetadata | null
+): ReportShareRequestSkipReason | null {
+  if (!completedDeliveryStatuses.has(reportDelivery)) return 'incomplete_delivery';
+  if (!metadata) return 'missing_metadata';
+  if (metadata.report_meets_delivery_contract !== true) return 'failed_delivery_contract';
+  if (metadata.report_share_policy_declared !== true) return 'missing_share_policy';
+  if (metadata.report_share_family_safe !== true) return 'not_family_safe';
+  if (metadata.report_share_allows_external_sharing === true) return 'external_sharing_enabled';
+  if (!supportedClientShareAudiences.has(metadata.report_share_audience)) {
+    return 'unsupported_audience';
+  }
+  if (!supportedClientShareVisibilities.has(metadata.report_share_visibility)) {
+    return 'unsupported_visibility';
+  }
+  return null;
+}
+
+export function reportShareRequestLifecycleMetadata(
+  reportDelivery: ReportDeliveryAuditStatus,
+  metadata?: ReportProvenanceMetadata | null,
+  shareRequestId?: string | null
+): Record<string, unknown> {
+  const skippedReason = resolveReportShareRequestSkipReason(reportDelivery, metadata);
+  if (skippedReason) {
+    return {
+      report_share_request_lifecycle_expected: false,
+      report_share_request_lifecycle_outcome:
+        'skipped' satisfies ReportShareRequestLifecycleOutcome,
+      report_share_request_created: false,
+      report_share_request_skipped_reason: skippedReason,
+    };
+  }
+  return {
+    report_share_request_lifecycle_expected: true,
+    report_share_request_lifecycle_outcome: (shareRequestId
+      ? 'created'
+      : 'expected_but_missing') satisfies ReportShareRequestLifecycleOutcome,
+    report_share_request_created: Boolean(shareRequestId),
+    report_share_request_skipped_reason: null,
+  };
 }
 
 export async function createReportShareRequest({

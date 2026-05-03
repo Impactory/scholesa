@@ -1,4 +1,8 @@
-const callableMock = jest.fn(async () => ({ data: { status: 'ok', id: 'audit-1' } }));
+const callableMock = jest.fn(
+  async (): Promise<{ data: { status: string; id?: string } }> => ({
+    data: { status: 'ok', id: 'audit-1' },
+  })
+);
 const httpsCallableMock = jest.fn((_functionsArg: unknown, _name: string) => callableMock);
 
 jest.mock('firebase/functions', () => ({
@@ -16,6 +20,8 @@ import {
 import { recordReportDeliveryLifecycle } from '@/src/lib/reports/reportDeliveryLifecycle';
 import {
   createReportShareRequest,
+  reportShareRequestLifecycleMetadata,
+  resolveReportShareRequestSkipReason,
   shouldCreateReportShareRequest,
 } from '@/src/lib/reports/reportShareRequests';
 import type { ReportProvenanceMetadata } from '@/src/lib/reports/shareExport';
@@ -197,6 +203,146 @@ describe('report share request client helpers', () => {
         })
       )
     ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_audience: 'partner',
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_audience: 'unspecified',
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_visibility: 'site',
+        })
+      )
+    ).toBe(false);
+    expect(
+      shouldCreateReportShareRequest(
+        'copied',
+        buildMetadata({
+          report_share_visibility: 'unspecified',
+        })
+      )
+    ).toBe(false);
+  });
+
+  it('explains why active share-request lifecycle creation is skipped', () => {
+    expect(resolveReportShareRequestSkipReason('aborted', buildMetadata())).toBe(
+      'incomplete_delivery'
+    );
+    expect(resolveReportShareRequestSkipReason('copied', null)).toBe('missing_metadata');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_meets_delivery_contract: false,
+        })
+      )
+    ).toBe('failed_delivery_contract');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_share_policy_declared: false,
+        })
+      )
+    ).toBe('missing_share_policy');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_share_family_safe: false,
+        })
+      )
+    ).toBe('not_family_safe');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_share_allows_external_sharing: true,
+        })
+      )
+    ).toBe('external_sharing_enabled');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_share_audience: 'partner',
+        })
+      )
+    ).toBe('unsupported_audience');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_share_visibility: 'site',
+        })
+      )
+    ).toBe('unsupported_visibility');
+    expect(resolveReportShareRequestSkipReason('copied', buildMetadata())).toBeNull();
+  });
+
+  it('adds share-request lifecycle skip metadata to delivery audits', async () => {
+    const metadata = buildMetadata({
+      report_share_audience: 'partner',
+    });
+
+    const result = await recordReportDeliveryLifecycle({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      reportAction: 'share',
+      reportDelivery: 'copied',
+      metadata,
+      module: 'passport',
+      surface: 'guardian_capability_view',
+      cta: 'guardian_passport_share_family_summary',
+    });
+
+    expect(result).toEqual({ shareRequestId: null, deliveryAuditId: 'audit-1' });
+    expect(httpsCallableMock).toHaveBeenCalledTimes(1);
+    expect(httpsCallableMock).toHaveBeenCalledWith(
+      { app: 'test-app' },
+      'recordReportDeliveryAudit'
+    );
+    expect(callableMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shareRequestId: undefined,
+        metadata: expect.objectContaining({
+          report_share_request_lifecycle_expected: false,
+          report_share_request_lifecycle_outcome: 'skipped',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: 'unsupported_audience',
+        }),
+      })
+    );
+  });
+
+  it('marks share-request lifecycle as expected for supported policy metadata', () => {
+    expect(reportShareRequestLifecycleMetadata('copied', buildMetadata())).toEqual({
+      report_share_request_lifecycle_expected: true,
+      report_share_request_lifecycle_outcome: 'expected_but_missing',
+      report_share_request_created: false,
+      report_share_request_skipped_reason: null,
+    });
+    expect(
+      reportShareRequestLifecycleMetadata('copied', buildMetadata(), 'share-request-1')
+    ).toEqual({
+      report_share_request_lifecycle_expected: true,
+      report_share_request_lifecycle_outcome: 'created',
+      report_share_request_created: true,
+      report_share_request_skipped_reason: null,
+    });
   });
 
   it('creates a report share request through the callable with policy metadata', async () => {
@@ -260,6 +406,53 @@ describe('report share request client helpers', () => {
       expect.objectContaining({
         reportDelivery: 'copied',
         shareRequestId: 'share-request-1',
+        metadata: expect.objectContaining({
+          report_share_request_lifecycle_expected: true,
+          report_share_request_lifecycle_outcome: 'created',
+          report_share_request_created: true,
+          report_share_request_skipped_reason: null,
+        }),
+      })
+    );
+  });
+
+  it('audits expected-but-missing share-request lifecycle when creation returns no id', async () => {
+    callableMock
+      .mockResolvedValueOnce({ data: { status: 'ok' } })
+      .mockResolvedValueOnce({ data: { status: 'ok', id: 'audit-1' } });
+
+    const result = await recordReportDeliveryLifecycle({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      reportAction: 'share',
+      reportDelivery: 'copied',
+      metadata: buildMetadata(),
+      module: 'passport',
+      surface: 'guardian_capability_view',
+      cta: 'guardian_passport_share_family_summary',
+    });
+
+    expect(result).toEqual({ shareRequestId: null, deliveryAuditId: 'audit-1' });
+    expect(httpsCallableMock).toHaveBeenNthCalledWith(
+      1,
+      { app: 'test-app' },
+      'createReportShareRequest'
+    );
+    expect(httpsCallableMock).toHaveBeenNthCalledWith(
+      2,
+      { app: 'test-app' },
+      'recordReportDeliveryAudit'
+    );
+    expect(callableMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        shareRequestId: undefined,
+        metadata: expect.objectContaining({
+          report_share_request_lifecycle_expected: true,
+          report_share_request_lifecycle_outcome: 'expected_but_missing',
+          report_share_request_created: false,
+          report_share_request_skipped_reason: null,
+        }),
       })
     );
   });

@@ -5073,6 +5073,16 @@ const REPORT_SHARE_VISIBILITIES = new Set<ReportShareRequestVisibility>([
   'public',
 ]);
 
+const SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES = new Set<ReportShareRequestAudience>([
+  'learner',
+  'guardian',
+]);
+
+const SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES = new Set<ReportShareRequestVisibility>([
+  'private',
+  'family',
+]);
+
 const REPORT_SHARE_MAX_EXPIRY_DAYS = 30;
 
 function readTrimmedField(
@@ -5415,6 +5425,7 @@ export const createReportShareRequest = onCall(
       readTrimmedField(data, 'visibility') ?? metadata.report_share_visibility
     );
     const allowsExternalSharing = metadata.report_share_allows_external_sharing === true;
+    const familySafe = metadata.report_share_family_safe === true;
     if (
       allowsExternalSharing ||
       audience === 'external' ||
@@ -5425,6 +5436,16 @@ export const createReportShareRequest = onCall(
       throw new HttpsError(
         'failed-precondition',
         'External and partner report sharing requires explicit consent workflow support.'
+      );
+    }
+    if (
+      !familySafe ||
+      !SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES.has(audience) ||
+      !SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES.has(visibility)
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
       );
     }
 

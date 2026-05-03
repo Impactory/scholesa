@@ -973,6 +973,12 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain(
       'External and partner report sharing requires explicit consent workflow support.'
     );
+    expect(functionsSource).toContain('SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES');
+    expect(functionsSource).toContain('SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES');
+    expect(functionsSource).toContain('metadata.report_share_family_safe === true');
+    expect(functionsSource).toContain(
+      'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
+    );
     expect(functionsSource).toContain(
       'Only completed report deliveries can create active share requests.'
     );

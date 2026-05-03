@@ -3,7 +3,10 @@ import {
   type ReportDeliveryAuditAction,
   type ReportDeliveryAuditStatus,
 } from './reportDeliveryAudit';
-import { createReportShareRequest } from './reportShareRequests';
+import {
+  createReportShareRequest,
+  reportShareRequestLifecycleMetadata,
+} from './reportShareRequests';
 import type { ReportProvenanceMetadata } from './shareExport';
 
 interface ReportDeliveryLifecycleParams {
@@ -19,11 +22,21 @@ interface ReportDeliveryLifecycleParams {
 }
 
 export async function recordReportDeliveryLifecycle(
-  params: ReportDeliveryLifecycleParams,
+  params: ReportDeliveryLifecycleParams
 ): Promise<{ shareRequestId: string | null; deliveryAuditId: string | null }> {
   const shareRequestId = await createReportShareRequest(params);
   const deliveryAuditId = await recordReportDeliveryAudit({
     ...params,
+    metadata: params.metadata
+      ? {
+          ...params.metadata,
+          ...reportShareRequestLifecycleMetadata(
+            params.reportDelivery,
+            params.metadata,
+            shareRequestId
+          ),
+        }
+      : params.metadata,
     shareRequestId,
   });
   return { shareRequestId, deliveryAuditId };
