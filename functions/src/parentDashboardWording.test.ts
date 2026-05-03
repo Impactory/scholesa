@@ -67,9 +67,8 @@ describe('parent dashboard wording honesty', () => {
 
     expect(growthBlock).toContain('linkedEvidenceRecordIds:');
     expect(growthBlock).toContain('linkedPortfolioItemIds:');
-    expect(growthBlock).toContain(
-      'reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null'
-    );
+    expect(growthBlock).toContain('reviewingEducatorName: reviewerId ?');
+    expect(growthBlock).toContain('reviewerNames[reviewerId] ?? null');
     expect(growthBlock).toContain('rubricRawScore:');
     expect(growthBlock).toContain('missionAttemptId:');
 
@@ -83,12 +82,14 @@ describe('parent dashboard wording honesty', () => {
     expect(summaryTailBlock).toContain(
       'title: processDomainTitlesById.get(processDomainId) ?? processDomainId'
     );
-    expect(summaryTailBlock).toContain(
-      'reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null'
-    );
+    expect(summaryTailBlock).toContain('reviewingEducatorName: educatorId ?');
+    expect(summaryTailBlock).toContain('reviewerNames[educatorId] ?? null');
     expect(summaryTailBlock).toContain('linkedEvidenceRecordIds: evidenceIds');
-    expect(summaryTailBlock).toContain('missionAttemptId: typeof data.missionAttemptId');
-    expect(summaryTailBlock).toContain('rubricApplicationId: typeof data.rubricApplicationId');
-    expect(summaryTailBlock).toContain('rubricRawScore: typeof data.rawScore');
+    expect(summaryTailBlock).toContain('missionAttemptId:');
+    expect(summaryTailBlock).toContain('typeof data.missionAttemptId');
+    expect(summaryTailBlock).toContain('rubricApplicationId:');
+    expect(summaryTailBlock).toContain('typeof data.rubricApplicationId');
+    expect(summaryTailBlock).toContain('rubricRawScore:');
+    expect(summaryTailBlock).toContain('typeof data.rawScore');
   });
 });

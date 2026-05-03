@@ -698,6 +698,9 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
     lines.push('  No capability claims backed by reviewed evidence yet.');
   } else {
     for (const claim of learner.ideationPassport.claims) {
+      const evidenceLinkCount = claim.evidenceRecordIds?.length ?? claim.evidenceCount;
+      const portfolioLinkCount = claim.portfolioItemIds?.length ?? claim.portfolioItemCount;
+      const missionLinkCount = claim.missionAttemptIds?.length ?? claim.missionAttemptCount;
       lines.push('');
       lines.push(`  ${claim.capabilityTitle}`);
       lines.push(`    Level:           ${claim.level}`);
@@ -705,7 +708,7 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
         `    Evidence:        ${claim.evidenceCount} evidence, ${claim.verifiedArtifactCount} verified artifacts`
       );
       lines.push(
-        `    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio item(s), ${claim.missionAttemptIds.length} mission attempt(s)`
+        `    Provenance:      ${evidenceLinkCount} evidence, ${portfolioLinkCount} portfolio item(s), ${missionLinkCount} mission attempt(s)`
       );
       lines.push(
         `    Proof-of-Learn:  ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`
@@ -775,14 +778,15 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
     lines.push('  No process domain growth events have been recorded yet.');
   } else {
     for (const event of learner.processDomainGrowthTimeline.slice(0, 5)) {
+      const evidenceLinkCount = event.linkedEvidenceRecordIds?.length ?? event.evidenceCount;
       lines.push(
         `  ${formatDate(event.date ?? new Date().toISOString())} · ${event.processDomainTitle}`
       );
       lines.push(`    Level change:    ${event.fromLevel} -> ${event.toLevel}`);
       lines.push(`    Reviewed by:     ${event.educatorName}`);
-      lines.push(`    Evidence links:  ${event.linkedEvidenceRecordIds.length}`);
+      lines.push(`    Evidence links:  ${evidenceLinkCount}`);
       lines.push(
-        `    Provenance:      ${event.linkedEvidenceRecordIds.length} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`
+        `    Provenance:      ${evidenceLinkCount} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`
       );
       if (event.rubricScore) {
         lines.push(`    Rubric Score:    ${event.rubricScore.raw}/${event.rubricScore.max}`);
@@ -879,13 +883,16 @@ export function buildGuardianFamilyShareSummary(learner: LearnerSummary): string
 }
 
 function formatGuardianFamilyShareClaimLine(claim: PassportClaim): string {
+  const evidenceLinkCount = claim.evidenceRecordIds?.length ?? claim.evidenceCount;
+  const portfolioLinkCount = claim.portfolioItemIds?.length ?? claim.portfolioItemCount;
+  const missionLinkCount = claim.missionAttemptIds?.length ?? claim.missionAttemptCount;
   return [
     `- ${claim.capabilityTitle}: ${claim.level}`,
     `${claim.evidenceCount} evidence record(s)`,
     `${claim.verifiedArtifactCount} verified artifact(s)`,
-    `${claim.evidenceRecordIds.length} evidence link(s)`,
-    `${claim.portfolioItemIds.length} portfolio link(s)`,
-    `${claim.missionAttemptIds.length} mission link(s)`,
+    `${evidenceLinkCount} evidence link(s)`,
+    `${portfolioLinkCount} portfolio link(s)`,
+    `${missionLinkCount} mission link(s)`,
     `proof ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`,
     `AI ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`,
     claim.rubricScore ? `rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}` : null,
@@ -898,13 +905,15 @@ function formatGuardianFamilyShareClaimLine(claim: PassportClaim): string {
 }
 
 function formatGuardianFamilyShareGrowthLine(event: GrowthEvent): string {
+  const evidenceLinkCount = event.linkedEvidenceRecordIds?.length ?? event.linkedEvidenceCount;
+  const portfolioLinkCount = event.linkedPortfolioItemIds?.length ?? event.linkedPortfolioCount;
   return [
     `- ${event.capabilityTitle}: ${event.levelAchieved}`,
     `proof ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`,
     event.rubricScore ? `rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : null,
     event.educatorName ? `reviewed by ${event.educatorName}` : null,
-    `${event.linkedEvidenceRecordIds.length} evidence link(s)`,
-    `${event.linkedPortfolioItemIds.length} portfolio link(s)`,
+    `${evidenceLinkCount} evidence link(s)`,
+    `${portfolioLinkCount} portfolio link(s)`,
     event.missionAttemptId ? 'mission-linked' : null,
     `date ${formatDate(event.date)}`,
   ]
@@ -913,9 +922,10 @@ function formatGuardianFamilyShareGrowthLine(event: GrowthEvent): string {
 }
 
 function formatGuardianFamilyShareProcessGrowthLine(event: ProcessDomainGrowthEvent): string {
+  const evidenceLinkCount = event.linkedEvidenceRecordIds?.length ?? event.evidenceCount;
   return [
     `- ${event.processDomainTitle}: ${event.fromLevel} -> ${event.toLevel}`,
-    `${event.linkedEvidenceRecordIds.length} evidence link(s)`,
+    `${evidenceLinkCount} evidence link(s)`,
     event.missionAttemptId ? 'mission-linked' : null,
     event.rubricApplicationId ? 'rubric-linked' : null,
     event.rubricScore ? `rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : null,
