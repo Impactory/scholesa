@@ -69,6 +69,82 @@ export function SiteEvidenceHealthDashboard() {
       }
       periodStart.setHours(0, 0, 0, 0);
 
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const users = getE2ECollection('users');
+        const learners = users.filter((user) => (
+          user.role === 'learner' &&
+          Array.isArray(user.siteIds) &&
+          user.siteIds.includes(siteId)
+        ));
+        const educatorNames = new Map<string, string>();
+        users
+          .filter((user) => (
+            user.role === 'educator' &&
+            Array.isArray(user.siteIds) &&
+            user.siteIds.includes(siteId)
+          ))
+          .forEach((user) => {
+            const uid = typeof user.uid === 'string' ? user.uid : '';
+            if (!uid) return;
+            educatorNames.set(
+              uid,
+              typeof user.displayName === 'string' && user.displayName.trim().length > 0
+                ? user.displayName
+                : uid
+            );
+          });
+
+        const learnerIds = new Set(
+          learners
+            .map((user) => (typeof user.uid === 'string' ? user.uid : ''))
+            .filter(Boolean)
+        );
+        const evidence = getE2ECollection('evidenceRecords').filter((record) => {
+          const createdAt = typeof record.createdAt === 'string' ? new Date(record.createdAt) : null;
+          return record.siteId === siteId && (!createdAt || createdAt >= periodStart);
+        });
+        const learnersWithEvidenceSet = new Set<string>();
+        const educatorMap = new Map<string, { count: number; mapped: number; rubric: number }>();
+
+        evidence.forEach((record) => {
+          const learnerId = typeof record.learnerId === 'string' ? record.learnerId : '';
+          const educatorId = typeof record.educatorId === 'string' ? record.educatorId : '';
+          if (learnerId && learnerIds.has(learnerId)) learnersWithEvidenceSet.add(learnerId);
+          const existing = educatorMap.get(educatorId) ?? { count: 0, mapped: 0, rubric: 0 };
+          existing.count++;
+          if (record.capabilityMapped === true) existing.mapped++;
+          if (record.rubricStatus === 'applied') existing.rubric++;
+          educatorMap.set(educatorId, existing);
+        });
+
+        let totalMapped = 0;
+        let totalRubric = 0;
+        const educatorMetrics: EducatorMetric[] = [];
+        educatorMap.forEach((agg, educatorId) => {
+          totalMapped += agg.mapped;
+          totalRubric += agg.rubric;
+          educatorMetrics.push({
+            educatorId,
+            educatorName: educatorNames.get(educatorId) ?? educatorId.slice(0, 8),
+            evidenceCount: agg.count,
+            capabilityMappedCount: agg.mapped,
+            rubricAppliedCount: agg.rubric,
+          });
+        });
+        educatorMetrics.sort((a, b) => b.evidenceCount - a.evidenceCount);
+
+        setMetrics({
+          totalLearners: learnerIds.size,
+          totalEvidence: evidence.length,
+          learnersWithEvidence: learnersWithEvidenceSet.size,
+          capabilityMappedRate: evidence.length > 0 ? totalMapped / evidence.length : 0,
+          rubricAppliedRate: evidence.length > 0 ? totalRubric / evidence.length : 0,
+          educatorMetrics,
+        });
+        return;
+      }
+
       const [siteLearnerSnap, legacyLearnerSnap, evidenceSnap] = await Promise.all([
         getDocs(
           query(

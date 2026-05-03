@@ -113,6 +113,15 @@ type PortfolioRecord = {
   mediaType: string;
   status: string;
   updatedAt: string;
+  source?: string;
+  capabilityIds?: string[];
+  evidenceRecordIds?: string[];
+  missionAttemptId?: string;
+  proofOfLearningStatus?: string;
+  aiDisclosureStatus?: string;
+  proofDetails?: Record<string, unknown>;
+  reviewedAt?: string;
+  rubricScore?: Record<string, unknown>;
 };
 
 type MissionAttemptRecord = {
@@ -175,6 +184,23 @@ type SyntheticMiloOSGoldStateRecord = {
 
 type SeedSyntheticMiloOSGoldStateInput = SyntheticMiloOSGoldStateRecord;
 
+type EvidenceChainRecord = Record<string, unknown> & { id: string };
+
+type EvidenceChainSeedInput = Partial<Pick<StoreState,
+  | 'capabilities'
+  | 'processDomains'
+  | 'evidenceRecords'
+  | 'proofOfLearningBundles'
+  | 'rubricApplications'
+  | 'capabilityMastery'
+  | 'processDomainMastery'
+  | 'capabilityGrowthEvents'
+  | 'processDomainGrowthEvents'
+  | 'rubricTemplates'
+>> & {
+  portfolioItems?: PortfolioRecord[];
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -190,6 +216,16 @@ type StoreState = {
   marketplaceListings: MarketplaceListingRecord[];
   interactionEvents: InteractionEventRecord[];
   syntheticMiloOSGoldStates: SyntheticMiloOSGoldStateRecord[];
+  capabilities: EvidenceChainRecord[];
+  processDomains: EvidenceChainRecord[];
+  evidenceRecords: EvidenceChainRecord[];
+  proofOfLearningBundles: EvidenceChainRecord[];
+  rubricApplications: EvidenceChainRecord[];
+  capabilityMastery: EvidenceChainRecord[];
+  processDomainMastery: EvidenceChainRecord[];
+  capabilityGrowthEvents: EvidenceChainRecord[];
+  processDomainGrowthEvents: EvidenceChainRecord[];
+  rubricTemplates: EvidenceChainRecord[];
 };
 
 const USERS: SeedUser[] = [
@@ -355,6 +391,16 @@ function defaultState(): StoreState {
     marketplaceListings: [],
     interactionEvents: [],
     syntheticMiloOSGoldStates: [],
+    capabilities: [],
+    processDomains: [],
+    evidenceRecords: [],
+    proofOfLearningBundles: [],
+    rubricApplications: [],
+    capabilityMastery: [],
+    processDomainMastery: [],
+    capabilityGrowthEvents: [],
+    processDomainGrowthEvents: [],
+    rubricTemplates: [],
   };
 }
 
@@ -622,6 +668,46 @@ export function seedE2ESyntheticMiloOSGoldStates(
   writeStore(state);
 }
 
+function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
+  const nextById = new Map(current.map((record) => [record.id, record]));
+  incoming.forEach((record) => nextById.set(record.id, cloneState(record)));
+  return Array.from(nextById.values());
+}
+
+export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
+  const state = readStore();
+
+  if (records.portfolioItems) {
+    state.portfolioItems = mergeById(state.portfolioItems, records.portfolioItems);
+  }
+  if (records.capabilities) state.capabilities = mergeById(state.capabilities, records.capabilities);
+  if (records.processDomains) state.processDomains = mergeById(state.processDomains, records.processDomains);
+  if (records.evidenceRecords) state.evidenceRecords = mergeById(state.evidenceRecords, records.evidenceRecords);
+  if (records.proofOfLearningBundles) {
+    state.proofOfLearningBundles = mergeById(state.proofOfLearningBundles, records.proofOfLearningBundles);
+  }
+  if (records.rubricApplications) {
+    state.rubricApplications = mergeById(state.rubricApplications, records.rubricApplications);
+  }
+  if (records.capabilityMastery) {
+    state.capabilityMastery = mergeById(state.capabilityMastery, records.capabilityMastery);
+  }
+  if (records.processDomainMastery) {
+    state.processDomainMastery = mergeById(state.processDomainMastery, records.processDomainMastery);
+  }
+  if (records.capabilityGrowthEvents) {
+    state.capabilityGrowthEvents = mergeById(state.capabilityGrowthEvents, records.capabilityGrowthEvents);
+  }
+  if (records.processDomainGrowthEvents) {
+    state.processDomainGrowthEvents = mergeById(state.processDomainGrowthEvents, records.processDomainGrowthEvents);
+  }
+  if (records.rubricTemplates) {
+    state.rubricTemplates = mergeById(state.rubricTemplates, records.rubricTemplates);
+  }
+
+  writeStore(state);
+}
+
 function appendInteractionEvent(
   state: StoreState,
   input: Omit<InteractionEventRecord, 'createdAt' | 'timestamp'>
@@ -825,15 +911,86 @@ export async function getE2EParentDashboardBundle(params: {
         .filter(Boolean)
         .sort()
         .at(-1) || null;
+      const learnerEvidence = state.evidenceRecords.filter(
+        (record) => record.siteId === params.siteId && record.learnerId === learner.uid
+      );
+      const learnerGrowthEvents = state.capabilityGrowthEvents.filter(
+        (record) => record.siteId === params.siteId && record.learnerId === learner.uid
+      );
+      const learnerProcessGrowthEvents = state.processDomainGrowthEvents.filter(
+        (record) => record.siteId === params.siteId && record.learnerId === learner.uid
+      );
+      const learnerMastery = state.capabilityMastery.filter(
+        (record) => record.siteId === params.siteId && record.learnerId === learner.uid
+      );
+      const learnerProcessMastery = state.processDomainMastery.filter(
+        (record) => record.siteId === params.siteId && record.learnerId === learner.uid
+      );
       const portfolioItemsPreview = state.portfolioItems
         .filter((item) => item.siteId === params.siteId && item.learnerId === learner.uid)
         .map((item) => ({
           id: item.id,
           title: item.title,
-          capabilityTitles: ['Prototype iteration'],
-          verificationStatus: item.status === 'published' ? 'verified' : 'pending',
-          aiDisclosureStatus: 'learner-ai-not-used',
+          capabilityTitles: (item.capabilityIds || [])
+            .map((capabilityId) => state.capabilities.find((capability) => capability.id === capabilityId)?.title)
+            .filter((title): title is string => typeof title === 'string' && title.length > 0),
+          source: item.source || null,
+          verificationStatus: item.proofOfLearningStatus === 'verified'
+            ? 'verified'
+            : item.status === 'published'
+            ? 'verified'
+            : 'pending',
+          aiDisclosureStatus: item.aiDisclosureStatus || 'learner-ai-not-used',
+          proofDetails: item.proofDetails || {
+            explainItBack: false,
+            oralCheck: false,
+            miniRebuild: false,
+          },
+          reviewedAt: item.reviewedAt || item.updatedAt,
+          evidenceCount: item.evidenceRecordIds?.length || 0,
+          proofCheckpointCount: item.proofDetails?.proofCheckpointCount || 0,
+          missionAttemptId: item.missionAttemptId || null,
+          rubricScore: item.rubricScore || null,
         }));
+      const reviewedEvidenceCount = learnerEvidence.filter((record) => (
+        record.rubricStatus === 'applied' || record.growthStatus === 'recorded'
+      )).length;
+      const capabilityClaims = learnerMastery.map((mastery) => {
+        const capabilityId = typeof mastery.capabilityId === 'string' ? mastery.capabilityId : mastery.id;
+        const capability = state.capabilities.find((record) => record.id === capabilityId);
+        const relatedGrowth = learnerGrowthEvents.find((record) => record.capabilityId === capabilityId);
+        const relatedPortfolioCount = portfolioItemsPreview.filter((item) =>
+          state.portfolioItems.find((portfolio) => portfolio.id === item.id)?.capabilityIds?.includes(capabilityId)
+        ).length;
+
+        return {
+          capabilityId,
+          capabilityTitle: typeof capability?.title === 'string' ? capability.title : String(mastery.title || capabilityId),
+          pillarCode: typeof capability?.pillarCode === 'string' ? capability.pillarCode : 'FUTURE_SKILLS',
+          level: String(mastery.currentLevel || mastery.levelAchieved || relatedGrowth?.levelAchieved || 'Level 4'),
+          evidenceCount: Number(mastery.evidenceCount || relatedGrowth?.linkedEvidenceCount || learnerEvidence.length),
+          verifiedArtifactCount: relatedPortfolioCount,
+          portfolioItemCount: relatedPortfolioCount,
+          missionAttemptCount: relatedGrowth?.missionAttemptId ? 1 : 0,
+          proofStatus: 'verified',
+          aiDisclosureStatus: 'learner-ai-not-used',
+          reviewerName: String(relatedGrowth?.educatorName || 'Educator Alpha'),
+          reviewedAt: String(relatedGrowth?.date || mastery.updatedAt || DEFAULT_TIMESTAMP),
+          rubricScore: relatedGrowth?.rubricScore || mastery.rubricScore || null,
+          proofHasExplainItBack: true,
+          proofHasOralCheck: true,
+          proofHasMiniRebuild: true,
+          proofCheckpointCount: 3,
+          progressionDescriptor: typeof mastery.progressionDescriptor === 'string'
+            ? mastery.progressionDescriptor
+            : typeof capability?.progressionDescriptor === 'string'
+            ? capability.progressionDescriptor
+            : undefined,
+        };
+      });
+      const averageLevel = learnerMastery.length > 0
+        ? learnerMastery.reduce((sum, mastery) => sum + Number(mastery.currentLevel || 0), 0) / learnerMastery.length
+        : 0;
 
       return {
         learnerId: learner.uid,
@@ -855,13 +1012,56 @@ export async function getE2EParentDashboardBundle(params: {
         portfolioItemsPreview,
         portfolioSnapshot: {
           artifactCount: portfolioItemsPreview.length,
-          verifiedCount: portfolioItemsPreview.length,
+          verifiedCount: portfolioItemsPreview.filter((item) => item.verificationStatus === 'verified').length,
           badgeCount: 0,
         },
         evidenceSummary: {
-          recordCount: 0,
-          reviewedCount: 0,
+          recordCount: learnerEvidence.length,
+          reviewedCount: reviewedEvidenceCount,
           portfolioLinkedCount: portfolioItemsPreview.length,
+        },
+        growthSummary: {
+          capabilityCount: state.capabilities.filter((record) => record.siteId === params.siteId).length,
+          updatedCapabilityCount: learnerMastery.length,
+          averageLevel,
+        },
+        growthTimeline: learnerGrowthEvents.map((event) => ({
+          id: event.id,
+          capabilityTitle: String(event.capabilityTitle || state.capabilities.find((record) => record.id === event.capabilityId)?.title || event.capabilityId || 'Capability'),
+          levelAchieved: String(event.levelAchieved || 'Level 4'),
+          educatorName: String(event.educatorName || 'Educator Alpha'),
+          date: String(event.date || event.createdAt || DEFAULT_TIMESTAMP),
+          proofStatus: 'verified',
+          linkedEvidenceCount: Number(event.linkedEvidenceCount || learnerEvidence.length),
+          linkedPortfolioCount: Number(event.linkedPortfolioCount || portfolioItemsPreview.length),
+          missionAttemptId: event.missionAttemptId || null,
+          rubricScore: event.rubricScore || null,
+        })),
+        processDomainSnapshot: learnerProcessMastery.map((mastery) => ({
+          processDomainId: mastery.processDomainId || mastery.id,
+          title: String(mastery.title || state.processDomains.find((record) => record.id === mastery.processDomainId)?.title || 'Process domain'),
+          currentLevel: String(mastery.currentLevel || 'Level 4'),
+          highestLevel: String(mastery.highestLevel || mastery.currentLevel || 'Level 4'),
+          evidenceCount: Number(mastery.evidenceCount || learnerEvidence.length),
+          updatedAt: mastery.updatedAt || DEFAULT_TIMESTAMP,
+        })),
+        processDomainGrowthTimeline: learnerProcessGrowthEvents.map((event) => ({
+          id: event.id,
+          processDomainTitle: String(event.processDomainTitle || state.processDomains.find((record) => record.id === event.processDomainId)?.title || 'Process domain'),
+          fromLevel: String(event.fromLevel || 'Level 3'),
+          toLevel: String(event.toLevel || 'Level 4'),
+          educatorName: String(event.educatorName || 'Educator Alpha'),
+          date: String(event.date || event.createdAt || DEFAULT_TIMESTAMP),
+          evidenceCount: Number(event.evidenceCount || learnerEvidence.length),
+        })),
+        ideationPassport: {
+          completedMissions: learnerGrowthEvents.filter((event) => event.missionAttemptId).length,
+          reflectionsSubmitted: learnerEvidence.filter((event) => event.source === 'reflection').length,
+          capabilityClaimsCount: capabilityClaims.length,
+          summary: capabilityClaims.length > 0
+            ? 'Learner Alpha has verified evidence-backed capability growth from the robotics prototype cycle.'
+            : 'No capability claims backed by reviewed evidence yet.',
+          claims: capabilityClaims,
         },
         miloosSupportSummary: {
           supportOpened,

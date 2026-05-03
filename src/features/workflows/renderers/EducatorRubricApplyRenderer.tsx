@@ -56,6 +56,47 @@ export default function EducatorRubricApplyRenderer({ ctx }: CustomRouteRenderer
       setLoading(true);
       setError(null);
       try {
+        if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+          const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+          const portfolioData = getE2ECollection('portfolioItems').find(
+            (item) => item.id === portfolioItemId
+          );
+          if (!portfolioData) {
+            throw new Error('Verified portfolio item not found.');
+          }
+          const rowSiteId = typeof portfolioData.siteId === 'string' ? portfolioData.siteId.trim() : '';
+          if (rowSiteId && rowSiteId !== activeSiteId) {
+            throw new Error('This verified portfolio item belongs to a different site.');
+          }
+          if (portfolioData.proofOfLearningStatus !== 'verified') {
+            throw new Error('Only verified proof-of-learning items can enter direct rubric application.');
+          }
+          const learnerId = typeof portfolioData.learnerId === 'string' ? portfolioData.learnerId : '';
+          const learner = getE2ECollection('users').find((user) => user.uid === learnerId);
+          const learnerName = typeof learner?.displayName === 'string' ? learner.displayName : learnerId;
+
+          if (!alive) {
+            return;
+          }
+
+          setSelectedItem({
+            id: portfolioItemId,
+            learnerId,
+            learnerName,
+            siteId: rowSiteId || activeSiteId,
+            title: typeof portfolioData.title === 'string' ? portfolioData.title : 'Verified proof',
+            description: typeof portfolioData.description === 'string' ? portfolioData.description : '',
+            evidenceRecordIds: Array.isArray(portfolioData.evidenceRecordIds)
+              ? portfolioData.evidenceRecordIds.filter((entry): entry is string => typeof entry === 'string')
+              : [],
+            missionAttemptId: typeof portfolioData.missionAttemptId === 'string' ? portfolioData.missionAttemptId : undefined,
+            capabilityIds: Array.isArray(portfolioData.capabilityIds)
+              ? portfolioData.capabilityIds.filter((entry): entry is string => typeof entry === 'string')
+              : [],
+          });
+          return;
+        }
+
         const portfolioSnap = await getDoc(doc(portfolioItemsCollection, portfolioItemId));
         if (!portfolioSnap.exists()) {
           throw new Error('Verified portfolio item not found.');
