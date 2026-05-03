@@ -79,6 +79,11 @@ interface ProcessDomainGrowthEntry {
   fromLevel: number | null;
   toLevel: number | null;
   reviewingEducatorName: string | null;
+  linkedEvidenceRecordIds: string[];
+  missionAttemptId: string | null;
+  rubricApplicationId: string | null;
+  rubricRawScore: number | null;
+  rubricMaxScore: number | null;
   evidenceCount: number;
   createdAt: string | null;
 }
@@ -296,9 +301,13 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
   for (const event of learner.processDomainGrowthTimeline.slice(0, 10)) {
     lines.push(`  ${formatDate(event.createdAt)} · ${event.title}`);
     lines.push(`    Level change:    ${levelLabel(event.fromLevel)} -> ${levelLabel(event.toLevel)}`);
-    lines.push(`    Evidence count:  ${event.evidenceCount}`);
+    lines.push(`    Evidence links:  ${event.linkedEvidenceRecordIds.length}`);
+    lines.push(`    Provenance:      ${event.linkedEvidenceRecordIds.length} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`);
     if (event.reviewingEducatorName) {
       lines.push(`    Reviewed by:     ${event.reviewingEducatorName}`);
+    }
+    if (event.rubricRawScore != null && event.rubricMaxScore != null) {
+      lines.push(`    Rubric Score:    ${event.rubricRawScore}/${event.rubricMaxScore}`);
     }
   }
   lines.push('');
@@ -586,6 +595,13 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
         fromLevel: fin(r.fromLevel),
         toLevel: fin(r.toLevel),
         reviewingEducatorName: str(r.reviewingEducatorName) || null,
+        linkedEvidenceRecordIds: Array.isArray(r.linkedEvidenceRecordIds)
+          ? r.linkedEvidenceRecordIds.filter((v): v is string => typeof v === 'string')
+          : [],
+        missionAttemptId: str(r.missionAttemptId) || null,
+        rubricApplicationId: str(r.rubricApplicationId) || null,
+        rubricRawScore: fin(r.rubricRawScore),
+        rubricMaxScore: fin(r.rubricMaxScore),
         evidenceCount: fin(r.evidenceCount) ?? 0,
         createdAt: str(r.createdAt) || null,
       });
@@ -916,7 +932,8 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
             </div>
             <div style="font-size:12px;color:#374151;text-align:right">
               <div>${escapeHtml(levelLabel(entry.fromLevel))} → ${escapeHtml(levelLabel(entry.toLevel))}</div>
-              <div>${entry.evidenceCount} evidence</div>
+              <div>${entry.linkedEvidenceRecordIds.length} evidence${entry.missionAttemptId ? ' · mission-linked' : ''}${entry.rubricApplicationId ? ' · rubric-linked' : ''}</div>
+              ${entry.rubricRawScore != null && entry.rubricMaxScore != null ? `<div>${entry.rubricRawScore}/${entry.rubricMaxScore}</div>` : ''}
             </div>
           </div>
         </div>`).join('');
@@ -1382,7 +1399,12 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
                     <div className="mt-0.5 text-[11px] text-gray-500">
                       {levelLabel(entry.fromLevel)} to {levelLabel(entry.toLevel)}
                       {entry.reviewingEducatorName ? ` · ${entry.reviewingEducatorName}` : ''}
-                      {entry.evidenceCount > 0 ? ` · ${entry.evidenceCount} evidence` : ''}
+                      {entry.linkedEvidenceRecordIds.length > 0 ? ` · ${entry.linkedEvidenceRecordIds.length} evidence` : ''}
+                      {entry.missionAttemptId ? ' · mission-linked' : ''}
+                      {entry.rubricApplicationId ? ' · rubric-linked' : ''}
+                      {entry.rubricRawScore != null && entry.rubricMaxScore != null
+                        ? ` · ${entry.rubricRawScore}/${entry.rubricMaxScore}`
+                        : ''}
                     </div>
                   </div>
                 </div>

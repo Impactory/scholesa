@@ -74,6 +74,11 @@ const learnerPassport = {
       fromLevel: 2,
       toLevel: 3,
       reviewingEducatorName: 'Coach Rivera',
+      linkedEvidenceRecordIds: ['ev-1'],
+      missionAttemptId: 'attempt-1',
+      rubricApplicationId: 'rubric-app-1',
+      rubricRawScore: 3,
+      rubricMaxScore: 4,
       evidenceCount: 1,
       createdAt: '2026-03-21T10:00:00.000Z',
     },
@@ -195,6 +200,10 @@ const guardianLearner = {
       toLevel: 'Level 3/4',
       educatorName: 'Coach Rivera',
       date: '2026-03-21T10:00:00.000Z',
+      linkedEvidenceRecordIds: ['ev-1'],
+      missionAttemptId: 'attempt-1',
+      rubricApplicationId: 'rubric-app-1',
+      rubricScore: { raw: 3, max: 4 },
       evidenceCount: 1,
     },
   ],
@@ -287,6 +296,10 @@ describe('generated web report payload provenance', () => {
       expectedSignals: familySummaryProvenanceSignals,
       reportName: 'learner family share generated text',
     });
+
+    expect(buildPassportTextLines(learnerPassport as any).join('\n')).toContain(
+      'Provenance:      1 evidence, mission-linked, rubric-linked'
+    );
   });
 
   it('asserts guardian passport text and family share payloads carry required provenance', () => {
@@ -307,6 +320,9 @@ describe('generated web report payload provenance', () => {
 
     expect(guardianPassportText).toContain('MiloOS Support Provenance');
     expect(guardianPassportText).toContain('These are support and verification signals, not capability mastery.');
+    expect(guardianPassportText).toContain('Provenance:      1 evidence, mission-linked, rubric-linked');
+    expect(guardianPassportText).toContain('Rubric Score:    3/4');
     expect(guardianShareText).toContain('MiloOS support provenance: 2 opened, 2 used, 1 explain-back(s), 1 pending; not capability mastery.');
+    expect(guardianShareText).toContain('rubric-linked');
   });
 });

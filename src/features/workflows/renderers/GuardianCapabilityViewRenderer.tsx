@@ -45,6 +45,8 @@ interface GrowthEvent {
   educatorName: string;
   date: string;
   proofStatus: 'verified' | 'partial' | 'missing';
+  linkedEvidenceRecordIds: string[];
+  linkedPortfolioItemIds: string[];
   linkedEvidenceCount: number;
   linkedPortfolioCount: number;
   missionAttemptId: string | null;
@@ -67,6 +69,10 @@ interface ProcessDomainGrowthEvent {
   toLevel: string;
   educatorName: string;
   date: string | null;
+  linkedEvidenceRecordIds: string[];
+  missionAttemptId: string | null;
+  rubricApplicationId: string | null;
+  rubricScore: { raw: number; max: number } | null;
   evidenceCount: number;
 }
 
@@ -118,6 +124,9 @@ interface PassportClaim {
   level: string;
   evidenceCount: number;
   verifiedArtifactCount: number;
+  evidenceRecordIds: string[];
+  portfolioItemIds: string[];
+  missionAttemptIds: string[];
   portfolioItemCount: number;
   missionAttemptCount: number;
   proofStatus: 'verified' | 'partial' | 'missing';
@@ -359,6 +368,8 @@ function normalizeGrowthTimeline(summary: Record<string, unknown>): GrowthEvent[
         educatorName: asString(row.reviewingEducatorName, 'Educator review pending'),
         date: asString(row.occurredAt),
         proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
+        linkedEvidenceRecordIds: asStringArray(row.linkedEvidenceRecordIds),
+        linkedPortfolioItemIds: asStringArray(row.linkedPortfolioItemIds),
         linkedEvidenceCount: asStringArray(row.linkedEvidenceRecordIds).length,
         linkedPortfolioCount: asStringArray(row.linkedPortfolioItemIds).length,
         missionAttemptId: asString(row.missionAttemptId) || null,
@@ -432,6 +443,9 @@ function normalizeIdeationPassport(summary: Record<string, unknown>): IdeationPa
       level: formatLevel(row.latestLevel),
       evidenceCount: asNumber(row.evidenceCount) ?? 0,
       verifiedArtifactCount: asNumber(row.verifiedArtifactCount) ?? 0,
+      evidenceRecordIds: asStringArray(row.evidenceRecordIds),
+      portfolioItemIds: asStringArray(row.portfolioItemIds),
+      missionAttemptIds: asStringArray(row.missionAttemptIds),
       portfolioItemCount: asStringArray(row.portfolioItemIds).length,
       missionAttemptCount: asStringArray(row.missionAttemptIds).length,
       proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
@@ -494,7 +508,17 @@ function normalizeProcessDomainGrowthTimeline(summary: Record<string, unknown>):
         toLevel: formatLevel(row.toLevel),
         educatorName: asString(row.reviewingEducatorName, 'Educator review pending'),
         date: asString(row.createdAt) || null,
-        evidenceCount: asNumber(row.evidenceCount) ?? 0,
+        linkedEvidenceRecordIds: asStringArray(row.linkedEvidenceRecordIds),
+        missionAttemptId: asString(row.missionAttemptId) || null,
+        rubricApplicationId: asString(row.rubricApplicationId) || null,
+        rubricScore:
+          asNumber(row.rubricRawScore) != null && asNumber(row.rubricMaxScore) != null
+            ? {
+                raw: asNumber(row.rubricRawScore) ?? 0,
+                max: asNumber(row.rubricMaxScore) ?? 0,
+              }
+            : null,
+        evidenceCount: asStringArray(row.linkedEvidenceRecordIds).length || (asNumber(row.evidenceCount) ?? 0),
       };
     })
     .filter((entry): entry is ProcessDomainGrowthEvent => entry !== null);
@@ -639,7 +663,7 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
       lines.push(`  ${claim.capabilityTitle}`);
       lines.push(`    Level:           ${claim.level}`);
       lines.push(`    Evidence:        ${claim.evidenceCount} evidence, ${claim.verifiedArtifactCount} verified artifacts`);
-      lines.push(`    Provenance:      ${claim.portfolioItemCount} portfolio item(s), ${claim.missionAttemptCount} mission attempt(s)`);
+      lines.push(`    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio item(s), ${claim.missionAttemptIds.length} mission attempt(s)`);
       lines.push(`    Proof-of-Learn:  ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`);
       lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`);
       if (claim.reviewerName) {
@@ -689,7 +713,11 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
       lines.push(`  ${formatDate(event.date ?? new Date().toISOString())} · ${event.processDomainTitle}`);
       lines.push(`    Level change:    ${event.fromLevel} -> ${event.toLevel}`);
       lines.push(`    Reviewed by:     ${event.educatorName}`);
-      lines.push(`    Evidence:        ${event.evidenceCount}`);
+      lines.push(`    Evidence links:  ${event.linkedEvidenceRecordIds.length}`);
+      lines.push(`    Provenance:      ${event.linkedEvidenceRecordIds.length} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`);
+      if (event.rubricScore) {
+        lines.push(`    Rubric Score:    ${event.rubricScore.raw}/${event.rubricScore.max}`);
+      }
     }
   }
   lines.push('');
@@ -776,8 +804,9 @@ function formatGuardianFamilyShareClaimLine(claim: PassportClaim): string {
     `- ${claim.capabilityTitle}: ${claim.level}`,
     `${claim.evidenceCount} evidence record(s)`,
     `${claim.verifiedArtifactCount} verified artifact(s)`,
-    `${claim.portfolioItemCount} portfolio link(s)`,
-    `${claim.missionAttemptCount} mission link(s)`,
+    `${claim.evidenceRecordIds.length} evidence link(s)`,
+    `${claim.portfolioItemIds.length} portfolio link(s)`,
+    `${claim.missionAttemptIds.length} mission link(s)`,
     `proof ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`,
     `AI ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`,
     claim.rubricScore ? `rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}` : null,
@@ -793,8 +822,8 @@ function formatGuardianFamilyShareGrowthLine(event: GrowthEvent): string {
     `proof ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`,
     event.rubricScore ? `rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : null,
     event.educatorName ? `reviewed by ${event.educatorName}` : null,
-    `${event.linkedEvidenceCount} evidence link(s)`,
-    `${event.linkedPortfolioCount} portfolio link(s)`,
+    `${event.linkedEvidenceRecordIds.length} evidence link(s)`,
+    `${event.linkedPortfolioItemIds.length} portfolio link(s)`,
     event.missionAttemptId ? 'mission-linked' : null,
     `date ${formatDate(event.date)}`,
   ].filter(Boolean).join(' • ');
@@ -803,7 +832,10 @@ function formatGuardianFamilyShareGrowthLine(event: GrowthEvent): string {
 function formatGuardianFamilyShareProcessGrowthLine(event: ProcessDomainGrowthEvent): string {
   return [
     `- ${event.processDomainTitle}: ${event.fromLevel} -> ${event.toLevel}`,
-    `${event.evidenceCount} evidence link(s)`,
+    `${event.linkedEvidenceRecordIds.length} evidence link(s)`,
+    event.missionAttemptId ? 'mission-linked' : null,
+    event.rubricApplicationId ? 'rubric-linked' : null,
+    event.rubricScore ? `rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : null,
     event.educatorName ? `reviewed by ${event.educatorName}` : null,
     `date ${formatDate(event.date ?? new Date().toISOString())}`,
   ].filter(Boolean).join(' • ');
@@ -1443,7 +1475,10 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                           <p className="mt-1 text-xs text-app-muted">
                             Reviewed by {event.educatorName}
                             {event.date ? ` · ${formatDate(event.date)}` : ''}
-                            {event.evidenceCount > 0 ? ` · ${event.evidenceCount} evidence` : ''}
+                            {event.linkedEvidenceRecordIds.length > 0 ? ` · ${event.linkedEvidenceRecordIds.length} evidence` : ''}
+                            {event.missionAttemptId ? ' · mission-linked' : ''}
+                            {event.rubricApplicationId ? ' · rubric-linked' : ''}
+                            {event.rubricScore ? ` · ${event.rubricScore.raw}/${event.rubricScore.max}` : ''}
                           </p>
                         </li>
                       ))}

@@ -3521,6 +3521,15 @@ async function buildParentLearnerSummary(params: {
           toLevel: data.toLevel ?? data.level ?? null,
           educatorId,
           reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null,
+          linkedEvidenceRecordIds: evidenceIds,
+          missionAttemptId: typeof data.missionAttemptId === 'string' && data.missionAttemptId.trim()
+            ? data.missionAttemptId.trim()
+            : null,
+          rubricApplicationId: typeof data.rubricApplicationId === 'string' && data.rubricApplicationId.trim()
+            ? data.rubricApplicationId.trim()
+            : null,
+          rubricRawScore: typeof data.rawScore === 'number' && Number.isFinite(data.rawScore) ? data.rawScore : null,
+          rubricMaxScore: typeof data.maxScore === 'number' && Number.isFinite(data.maxScore) ? data.maxScore : null,
           evidenceCount: evidenceIds.length,
           createdAt: parseDateFromUnknown(data.createdAt)?.toISOString() ?? null,
         };
