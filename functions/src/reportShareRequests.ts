@@ -65,10 +65,7 @@ export interface ReportShareRequestWriteParams {
   collectionName?: string;
 }
 
-export function buildReportShareRequestRecord(
-  id: string,
-  params: ReportShareRequestWriteParams,
-) {
+export function buildReportShareRequestRecord(id: string, params: ReportShareRequestWriteParams) {
   return {
     id,
     siteId: params.siteId,
@@ -92,9 +89,51 @@ export function buildReportShareRequestRecord(
   };
 }
 
-export async function persistReportShareRequestRecord(
-  params: ReportShareRequestWriteParams,
-) {
+function readExpiryMillis(value: unknown): number | null {
+  if (value instanceof Date) return value.getTime();
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toMillis' in value &&
+    typeof value.toMillis === 'function'
+  ) {
+    const millis = value.toMillis();
+    return typeof millis === 'number' && Number.isFinite(millis) ? millis : null;
+  }
+  return null;
+}
+
+export function isActiveUnexpiredReportShareRequestRecord(
+  data: Record<string, unknown>,
+  now = new Date()
+): boolean {
+  if (data.status !== 'active') return false;
+  const expiresAtMillis = readExpiryMillis(data.expiresAt);
+  if (expiresAtMillis === null) return false;
+  return expiresAtMillis > now.getTime();
+}
+
+export function canCreateReportShareRequestForPolicy(params: {
+  actorId: string;
+  actorRole: ReportShareRequestRole;
+  learnerId: string;
+  audience: ReportShareRequestAudience;
+  visibility: ReportShareRequestVisibility;
+}): boolean {
+  if (params.actorRole === 'learner') {
+    return (
+      params.actorId === params.learnerId &&
+      params.audience === 'learner' &&
+      params.visibility === 'private'
+    );
+  }
+  if (params.actorRole === 'parent') {
+    return params.audience === 'guardian' && params.visibility === 'family';
+  }
+  return false;
+}
+
+export async function persistReportShareRequestRecord(params: ReportShareRequestWriteParams) {
   const collectionName = params.collectionName ?? 'reportShareRequests';
   const shareRef = admin.firestore().collection(collectionName).doc();
   await shareRef.set(buildReportShareRequestRecord(shareRef.id, params));
@@ -108,13 +147,17 @@ export async function revokeReportShareRequestRecord(params: {
   collectionName?: string;
 }) {
   const collectionName = params.collectionName ?? 'reportShareRequests';
-  await admin.firestore().collection(collectionName).doc(params.shareRequestId).update({
-    status: 'revoked',
-    revokedAt: FieldValue.serverTimestamp(),
-    revokedBy: params.actorId,
-    ...(params.reason ? { revocationReason: params.reason } : {}),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(collectionName)
+    .doc(params.shareRequestId)
+    .update({
+      status: 'revoked',
+      revokedAt: FieldValue.serverTimestamp(),
+      revokedBy: params.actorId,
+      ...(params.reason ? { revocationReason: params.reason } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 }
 
 export async function linkReportShareRequestDeliveryAuditRecord(params: {

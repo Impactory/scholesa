@@ -946,8 +946,9 @@ describe('recordReportDeliveryAudit callable', () => {
     expect(auditSection).toContain('shareRequestId');
     expect(auditSection).toContain('Report share request does not match this delivery audit.');
     expect(auditSection).toContain(
-      'Only active report share requests can be linked to delivery audit.'
+      'Only active, unexpired report share requests can be linked to delivery audit.'
     );
+    expect(auditSection).toContain('isActiveUnexpiredReportShareRequestRecord');
     expect(auditSection).toContain('validateReportShareLifecycleMetadata');
     expect(reportDeliveryAuditSource).toContain('Invalid report share lifecycle outcome.');
     expect(reportDeliveryAuditSource).toContain(
@@ -998,8 +999,15 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain(
       'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
     );
+    expect(functionsSource).toContain('canCreateReportShareRequestForPolicy');
+    expect(functionsSource).toContain(
+      'Active report share requests must be learner-created private exports or guardian-created family shares until explicit consent workflow support exists.'
+    );
     expect(functionsSource).toContain(
       'Only completed report deliveries can create active share requests.'
+    );
+    expect(functionsSource).toContain(
+      'Only active, unexpired report share requests can be revoked.'
     );
     expect(functionsSource).toContain('report.share_request_revoked');
   });

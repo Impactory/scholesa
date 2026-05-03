@@ -21,6 +21,8 @@ import {
   type ReportDeliveryAuditStatus,
 } from './reportDeliveryAudit';
 import {
+  canCreateReportShareRequestForPolicy,
+  isActiveUnexpiredReportShareRequestRecord,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
   revokeReportShareRequestRecord,
@@ -5338,10 +5340,10 @@ export const recordReportDeliveryAudit = onCall(
           'Report share request does not match this delivery audit.'
         );
       }
-      if (shareData.status !== 'active') {
+      if (!isActiveUnexpiredReportShareRequestRecord(shareData)) {
         throw new HttpsError(
           'failed-precondition',
-          'Only active report share requests can be linked to delivery audit.'
+          'Only active, unexpired report share requests can be linked to delivery audit.'
         );
       }
     }
@@ -5448,6 +5450,20 @@ export const createReportShareRequest = onCall(
       throw new HttpsError(
         'failed-precondition',
         'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
+      );
+    }
+    if (
+      !canCreateReportShareRequestForPolicy({
+        actorId: request.auth!.uid,
+        actorRole,
+        learnerId,
+        audience,
+        visibility,
+      })
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Active report share requests must be learner-created private exports or guardian-created family shares until explicit consent workflow support exists.'
       );
     }
 
@@ -5591,6 +5607,13 @@ export const revokeReportShareRequest = onCall(
       if (!linkedLearnerIds.includes(learnerId)) {
         throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
       }
+    }
+
+    if (!isActiveUnexpiredReportShareRequestRecord(shareData)) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Only active, unexpired report share requests can be revoked.'
+      );
     }
 
     const reason = readTrimmedField(data, 'reason');

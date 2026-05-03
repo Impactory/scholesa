@@ -1,5 +1,7 @@
 import {
   buildReportShareRequestRecord,
+  canCreateReportShareRequestForPolicy,
+  isActiveUnexpiredReportShareRequestRecord,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
   revokeReportShareRequestRecord,
@@ -127,6 +129,87 @@ describe('reportShareRequests', () => {
       audience: 'learner',
       visibility: 'private',
     });
+  });
+
+  it('identifies only active unexpired share request records as live lifecycle records', () => {
+    const now = new Date('2026-05-01T12:00:00.000Z');
+
+    expect(
+      isActiveUnexpiredReportShareRequestRecord(
+        {
+          status: 'active',
+          expiresAt: new Date('2026-05-02T12:00:00.000Z'),
+        },
+        now
+      )
+    ).toBe(true);
+    expect(
+      isActiveUnexpiredReportShareRequestRecord(
+        {
+          status: 'revoked',
+          expiresAt: new Date('2026-05-02T12:00:00.000Z'),
+        },
+        now
+      )
+    ).toBe(false);
+    expect(
+      isActiveUnexpiredReportShareRequestRecord(
+        {
+          status: 'active',
+          expiresAt: new Date('2026-04-30T12:00:00.000Z'),
+        },
+        now
+      )
+    ).toBe(false);
+    expect(isActiveUnexpiredReportShareRequestRecord({ status: 'active' }, now)).toBe(false);
+  });
+
+  it('limits active share request creation to learner/private and guardian/family ownership', () => {
+    expect(
+      canCreateReportShareRequestForPolicy({
+        actorId: 'learner-1',
+        actorRole: 'learner',
+        learnerId: 'learner-1',
+        audience: 'learner',
+        visibility: 'private',
+      })
+    ).toBe(true);
+    expect(
+      canCreateReportShareRequestForPolicy({
+        actorId: 'parent-1',
+        actorRole: 'parent',
+        learnerId: 'learner-1',
+        audience: 'guardian',
+        visibility: 'family',
+      })
+    ).toBe(true);
+    expect(
+      canCreateReportShareRequestForPolicy({
+        actorId: 'learner-1',
+        actorRole: 'learner',
+        learnerId: 'learner-1',
+        audience: 'guardian',
+        visibility: 'family',
+      })
+    ).toBe(false);
+    expect(
+      canCreateReportShareRequestForPolicy({
+        actorId: 'learner-2',
+        actorRole: 'learner',
+        learnerId: 'learner-1',
+        audience: 'learner',
+        visibility: 'private',
+      })
+    ).toBe(false);
+    expect(
+      canCreateReportShareRequestForPolicy({
+        actorId: 'educator-1',
+        actorRole: 'educator',
+        learnerId: 'learner-1',
+        audience: 'guardian',
+        visibility: 'family',
+      })
+    ).toBe(false);
   });
 
   it('revokes a share request without deleting the lifecycle record', async () => {
