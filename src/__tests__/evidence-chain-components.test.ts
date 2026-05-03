@@ -538,8 +538,9 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('miloosSupportSummary');
     expect(source).toContain('MiloOS support provenance');
     expect(source).toContain(
-      'support signals and explain-back verification gaps, not capability mastery'
+      'These are support signals and explain-back verification gaps, not capability'
     );
+    expect(source).toContain('mastery.');
     expect(source).toContain('data-testid={`guardian-miloos-support-${learner.learnerId}`}');
     expect(source).toContain('data-testid="guardian-miloos-support-opened"');
     expect(source).toContain('data-testid="guardian-miloos-support-used"');
