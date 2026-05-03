@@ -178,6 +178,14 @@ void main() {
           _doc('syntheticMiloOSGoldStates', 'latest');
       expect(manifest['siteId'], _siteId);
       expect(manifest['noMasteryWrites'], isTrue);
+      expect(
+        Map<String, dynamic>.from(manifest['sourceCounts'] as Map),
+        containsPair('miloosGoldLearnerStates', 5),
+      );
+      expect(
+        Map<String, dynamic>.from(manifest['sourceCounts'] as Map),
+        containsPair('miloosGoldInteractionEvents', 13),
+      );
       final Map<String, dynamic> states =
           Map<String, dynamic>.from(manifest['states'] as Map);
       expect(states['pendingExplainBackLearnerId'], _pendingLearnerId);

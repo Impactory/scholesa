@@ -548,6 +548,11 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
     minutesOffset: 35,
   });
 
+  const miloosGoldSourceCounts = {
+    miloosGoldLearnerStates: 5,
+    miloosGoldInteractionEvents: 13,
+  };
+
   upsertDoc(bundle, 'syntheticMiloOSGoldStates', 'latest', {
     id: 'latest',
     siteId,
@@ -561,13 +566,14 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
     },
     usage: 'Use these synthetic states for MiloOS demos, UAT, rules tests, and regression checks only.',
     noMasteryWrites: true,
+    sourceCounts: miloosGoldSourceCounts,
     synthetic: true,
     sourcePack: 'miloos-gold-readiness',
     importedAt: startedAt,
   });
 
-  incrementCount(bundle.sourceCounts, 'miloosGoldLearnerStates', 5);
-  incrementCount(bundle.sourceCounts, 'miloosGoldInteractionEvents', 13);
+  incrementCount(bundle.sourceCounts, 'miloosGoldLearnerStates', miloosGoldSourceCounts.miloosGoldLearnerStates);
+  incrementCount(bundle.sourceCounts, 'miloosGoldInteractionEvents', miloosGoldSourceCounts.miloosGoldInteractionEvents);
 }
 
 function starterContextForRow(row) {

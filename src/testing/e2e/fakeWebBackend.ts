@@ -168,6 +168,7 @@ type SyntheticMiloOSGoldStateRecord = {
   sourcePack: string;
   noMasteryWrites: boolean;
   states: Record<string, string>;
+  sourceCounts?: Record<string, number>;
   modeSupport?: string[];
   usage?: string;
 };

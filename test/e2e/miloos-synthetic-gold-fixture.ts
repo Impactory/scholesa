@@ -22,6 +22,7 @@ type CanonicalSyntheticManifest = {
   sourcePack?: string;
   states: Record<string, string>;
   noMasteryWrites: boolean;
+  sourceCounts?: Record<string, number>;
   modeSupport?: string[];
   usage?: string;
 };
@@ -118,7 +119,7 @@ export function canonicalMiloOSGoldWebSeed(): MiloOSGoldWebSeed {
     sourcePack: manifest.sourcePack || 'miloos-gold-readiness',
     noMasteryWrites: manifest.noMasteryWrites,
     states: mappedStates,
-    sourceCounts: bundle.summary?.sourceCounts,
+    sourceCounts: manifest.sourceCounts ?? bundle.summary?.sourceCounts,
     modeSupport: manifest.modeSupport,
     usage: manifest.usage,
   }];

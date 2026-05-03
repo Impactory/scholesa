@@ -20,6 +20,10 @@ describe('synthetic MiloOS gold-readiness states', () => {
       siteId: 'synthetic-site-miloos-gold',
       modeSupport: ['starter', 'full', 'all'],
       noMasteryWrites: true,
+      sourceCounts: {
+        miloosGoldLearnerStates: 5,
+        miloosGoldInteractionEvents: 13,
+      },
       sourcePack: 'miloos-gold-readiness',
     });
     expect(bundle.summary.miloosGoldReadinessStates).toMatchObject({

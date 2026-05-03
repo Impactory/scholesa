@@ -410,7 +410,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(fixtureSource).toContain('syntheticMiloOSGoldStates');
     expect(fixtureSource).toContain('canonicalMiloOSGoldWebSeed');
     expect(fixtureSource).toContain('seedSyntheticMiloOSGoldStates');
-    expect(fixtureSource).toContain('sourceCounts: bundle.summary?.sourceCounts');
+    expect(fixtureSource).toContain('sourceCounts: manifest.sourceCounts ?? bundle.summary?.sourceCounts');
     expect(fixtureSource).toContain('noMasteryWrites');
     expect(fixtureSource).toContain('pendingExplainBackLearnerId');
     expect(educatorE2ESource).toContain('seedCanonicalMiloOSGoldWebState');
