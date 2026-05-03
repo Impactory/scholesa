@@ -10,6 +10,7 @@ This document is the master certification queue. It does not replace the detaile
 | --- | --- |
 | `src/lib/routing/workflowRoutes.ts` | Canonical web protected workflow paths, role access, and data modes. |
 | `docs/ROUTE_MODULE_MATRIX.md` | Current web and Flutter route inventory plus routing drift notes. |
+| `docs/PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md` | Platform-wide route classification for blanket gold certification. |
 | `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` | Flutter route-level evidence-chain proof status. |
 | `docs/FLUTTER_MOBILE_GOLD_READINESS_PLAN_APRIL_30_2026.md` | Current mobile release-bundle and no-traffic rehearsal boundary. |
 | `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md` | Current MiloOS gold-candidate scope and truth boundary. |
@@ -36,7 +37,7 @@ This document is the master certification queue. It does not replace the detaile
 | System | Included scope | Current proof | Status | Gold blocker | Next proof task |
 | --- | --- | --- | --- | --- | --- |
 | MiloOS support provenance | Learner support loop, educator follow-up debt, guardian support provenance, site support health, canonical synthetic manifest, web and focused Flutter/mobile parity | `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md`, `test/e2e/miloos-*.spec.ts`, `test/synthetic_miloos_gold_states.test.js`, `synthetic_miloos_gold_states_mobile_test.dart` | Gold-candidate | None for the focused MiloOS slice; not a full-platform claim | Keep in final bundle and do not broaden support events into mastery. |
-| Web route inventory | 63 protected workflow paths, 30 custom evidence surfaces, 33 generic operational surfaces | `src/lib/routing/workflowRoutes.ts`, `docs/ROUTE_MODULE_MATRIX.md`, source-contract tests | Reusable with modification | Routes are inventoried, but blanket gold needs per-route certification status and proof bundle references in one matrix | Generate a route-by-route gold matrix from `WORKFLOW_ROUTE_DEFINITIONS` and mark each route as evidence-chain, ops-only, deferred, or blocked. |
+| Web route inventory | 63 protected workflow paths, 30 custom evidence surfaces, 33 generic operational surfaces | `src/lib/routing/workflowRoutes.ts`, `docs/ROUTE_MODULE_MATRIX.md`, `docs/PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md`, source-contract tests | Reusable with modification | Routes are classified, but blanket gold still needs exact per-route proof bundle references and one joined cross-role evidence-chain proof | Attach exact test/E2E references to each route row and implement the first HQ setup -> educator rubric -> guardian passport proof. |
 | Flutter/mobile route inventory | Learner, educator, guardian, site, HQ, partner, and shared mobile routes | `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`, full Flutter gate, no-traffic web rehearsal | Gold-candidate for validated mobile release bundle | Some routes remain reusable with modification for blanket claims, especially evidence coverage depth on session/analytics/ops surfaces | Promote the Flutter route matrix into the platform matrix and mark native-channel release proof as included or deferred. |
 | HQ capability and rubric setup | Capability frameworks, progression descriptors, curriculum alignment, rubric templates | Web custom renderers, Flutter HQ persistence tests, route proof matrix | Aligned and reusable | Needs one final cross-role proof that HQ setup feeds educator rubric application and guardian/passport outputs without manual setup | Build the HQ setup -> educator rubric -> growth -> portfolio -> guardian passport certification scenario. |
 | Educator live evidence workflow | Today, observations, evidence review, proof review, rubric apply, mission review | Web custom renderers, Flutter observation/proof/mission review tests, `applyRubricToEvidence` callable tests | Aligned and reusable | Under-10-second live class capture and rubric handoff must be proven in one current cross-role chain | Add or identify a single end-to-end proof from educator observation through server-owned growth. |
@@ -62,6 +63,8 @@ MiloOS support provenance is strong, but blanket platform gold depends on the ca
 ## Work Package 1 - Build The Route Gold Matrix
 
 Goal: no release-critical route remains unclassified.
+
+Current artifact: `docs/PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md`.
 
 Tasks:
 

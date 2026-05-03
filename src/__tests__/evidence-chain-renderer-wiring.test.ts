@@ -863,6 +863,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'docs', 'PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md'),
       'utf8'
     );
+    const routeMatrixSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md'),
+      'utf8'
+    );
     const auditSource = fs.readFileSync(
       path.join(process.cwd(), 'AUDIT_TODO_APRIL_2026.md'),
       'utf8'
@@ -878,7 +882,14 @@ describe('Renderers delegate to real evidence components', () => {
     expect(masterPlanSource).toContain('Work Package 1 - Build The Route Gold Matrix');
     expect(masterPlanSource).toContain('Work Package 2 - Certify The Full Evidence Chain');
     expect(masterPlanSource).toContain('Do not call the platform blanket gold-ready');
+    expect(masterPlanSource).toContain('PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md');
+    expect(routeMatrixSource).toContain('route coverage is classified, but blanket platform gold is still blocked');
+    expect(routeMatrixSource).toContain('/hq/capability-frameworks` -> `/hq/rubric-builder` -> `/educator/today`');
+    expect(routeMatrixSource).toContain('/educator/rubrics/apply` joined to `/parent/passport');
+    expect(routeMatrixSource).toContain('| `/partner/deliverables` | partner | generic | External evidence-facing deliverables | deferred |');
+    expect(routeMatrixSource).toContain('Work Package 1 is substantially started, not complete');
     expect(auditSource).toContain('PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md');
+    expect(auditSource).toContain('PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md');
     expect(auditSource).toContain('first gold-critical gap');
   });
 
