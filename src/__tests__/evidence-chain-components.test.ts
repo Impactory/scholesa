@@ -1014,6 +1014,12 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain(
       'Only active, unexpired report share requests can be revoked.'
     );
+    expect(functionsSource).toContain('isReportShareRevocationReasonAllowedForActor');
+    expect(functionsSource).toContain(
+      'Report share revocation reason must match the revoking actor.'
+    );
+    expect(functionsSource).toContain('buildReportShareRequestRevocationAuditDetails');
+    expect(functionsSource).toContain('revocationAuditDetails');
     expect(functionsSource).toContain('report.share_request_revoked');
   });
 
@@ -1025,6 +1031,12 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain("where('siteId', '==', siteId)");
     expect(managerSource).toContain("where('learnerId', '==', learnerId)");
     expect(managerSource).toContain("where('status', '==', 'active')");
+    expect(managerSource).toContain('Boolean(expiresAt && expiresAt.getTime() > Date.now())');
+    expect(managerSource).toContain(
+      "if (viewer === 'guardian') return request.visibility === 'family'"
+    );
+    expect(managerSource).toContain('isVisibleForViewer(request, viewer)');
+    expect(managerSource).toContain('.slice(0, 25)');
     expect(managerSource).toContain('revokeReportShareRequest');
     expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
     expect(managerSource).toContain('Share revocation failed. The active share is still listed.');

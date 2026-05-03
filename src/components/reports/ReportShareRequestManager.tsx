@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { getDocs, limit, query, where } from 'firebase/firestore';
+import { getDocs, query, where } from 'firebase/firestore';
 import { reportShareRequestsCollection } from '@/src/lib/firestore/collections';
 import { revokeReportShareRequest } from '@/src/lib/reports/reportShareRequests';
 import type { ReportShareRequest } from '@/src/types/schema';
@@ -37,7 +37,12 @@ function formatDate(value: unknown): string {
 
 function isUnexpiredShare(request: ReportShareRequestRow): boolean {
   const expiresAt = timestampToDate(request.expiresAt);
-  return !expiresAt || expiresAt.getTime() > Date.now();
+  return Boolean(expiresAt && expiresAt.getTime() > Date.now());
+}
+
+function isVisibleForViewer(request: ReportShareRequestRow, viewer: 'learner' | 'guardian') {
+  if (viewer === 'guardian') return request.visibility === 'family';
+  return request.visibility === 'family' || request.visibility === 'private';
 }
 
 function labelForAction(action: ReportShareRequest['reportAction']): string {
@@ -87,8 +92,7 @@ export function ReportShareRequestManager({
           reportShareRequestsCollection,
           where('siteId', '==', siteId),
           where('learnerId', '==', learnerId),
-          where('status', '==', 'active'),
-          limit(25)
+          where('status', '==', 'active')
         )
       );
       const activeRequests = snap.docs
@@ -97,14 +101,15 @@ export function ReportShareRequestManager({
           return { ...data, id: docSnap.id } as ReportShareRequestRow;
         })
         .filter(isUnexpiredShare)
-        .filter((request) => request.visibility === 'family' || request.visibility === 'private');
+        .filter((request) => isVisibleForViewer(request, viewer))
+        .slice(0, 25);
       setRequests(activeRequests);
     } catch {
       setFeedback('Active report shares could not be loaded.');
     } finally {
       setLoading(false);
     }
-  }, [learnerId, siteId]);
+  }, [learnerId, siteId, viewer]);
 
   useEffect(() => {
     void loadRequests();

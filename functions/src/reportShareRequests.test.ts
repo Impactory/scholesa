@@ -1,8 +1,11 @@
 import {
   buildReportShareRequestRecord,
+  buildReportShareRequestRevocationAuditDetails,
   canCreateReportShareRequestForPolicy,
   doesReportShareRequestMatchDeliveryAudit,
+  expectedReportShareRevocationReason,
   isActiveUnexpiredReportShareRequestRecord,
+  isReportShareRevocationReasonAllowedForActor,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
   revokeReportShareRequestRecord,
@@ -254,11 +257,89 @@ describe('reportShareRequests', () => {
     ).toBe(false);
   });
 
+  it('limits revocation reasons to the revoking actor role', () => {
+    expect(expectedReportShareRevocationReason('learner')).toBe('learner_revoked_report_share');
+    expect(expectedReportShareRevocationReason('parent')).toBe('guardian_revoked_report_share');
+    expect(expectedReportShareRevocationReason('educator')).toBe('educator_revoked_report_share');
+    expect(expectedReportShareRevocationReason('site')).toBe('site_revoked_report_share');
+    expect(expectedReportShareRevocationReason('hq')).toBe('hq_revoked_report_share');
+    expect(
+      isReportShareRevocationReasonAllowedForActor({
+        actorRole: 'parent',
+        reason: 'guardian_revoked_report_share',
+      })
+    ).toBe(true);
+    expect(
+      isReportShareRevocationReasonAllowedForActor({
+        actorRole: 'parent',
+        reason: 'learner_revoked_report_share',
+      })
+    ).toBe(false);
+  });
+
+  it('builds revocation audit details with lifecycle and policy provenance', () => {
+    const details = buildReportShareRequestRevocationAuditDetails({
+      reason: 'guardian_revoked_report_share',
+      data: {
+        status: 'active',
+        createdBy: 'parent-1',
+        createdByRole: 'parent',
+        audience: 'guardian',
+        visibility: 'family',
+        reportAction: 'share',
+        reportDelivery: 'copied',
+        deliveryAuditId: 'audit-1',
+        source: 'passport',
+        surface: 'guardian_capability_view',
+        cta: 'guardian_passport_share_family_summary',
+        fileName: 'family-passport.txt',
+        sharePolicy: {
+          requiresEvidenceProvenance: true,
+          requiresGuardianContext: true,
+          allowsExternalSharing: false,
+          includesLearnerIdentifiers: true,
+        },
+        provenance: {
+          meetsProvenanceContract: true,
+          meetsDeliveryContract: true,
+          sharePolicyDeclared: true,
+        },
+      },
+    });
+
+    expect(details).toMatchObject({
+      reason: 'guardian_revoked_report_share',
+      previousStatus: 'active',
+      createdBy: 'parent-1',
+      createdByRole: 'parent',
+      audience: 'guardian',
+      visibility: 'family',
+      reportAction: 'share',
+      reportDelivery: 'copied',
+      deliveryAuditId: 'audit-1',
+      source: 'passport',
+      surface: 'guardian_capability_view',
+      cta: 'guardian_passport_share_family_summary',
+      fileName: 'family-passport.txt',
+      sharePolicy: {
+        requiresEvidenceProvenance: true,
+        requiresGuardianContext: true,
+        allowsExternalSharing: false,
+        includesLearnerIdentifiers: true,
+      },
+      provenance: {
+        meetsProvenanceContract: true,
+        meetsDeliveryContract: true,
+        sharePolicyDeclared: true,
+      },
+    });
+  });
+
   it('revokes a share request without deleting the lifecycle record', async () => {
     await revokeReportShareRequestRecord({
       shareRequestId: 'share-request-1',
       actorId: 'learner-1',
-      reason: 'family request',
+      reason: 'learner_revoked_report_share',
     });
     const updates = mockUpdate.mock.calls as unknown as Array<[Record<string, unknown>]>;
 
@@ -268,7 +349,7 @@ describe('reportShareRequests', () => {
     expect(updates[0][0]).toMatchObject({
       status: 'revoked',
       revokedBy: 'learner-1',
-      revocationReason: 'family request',
+      revocationReason: 'learner_revoked_report_share',
     });
     expect(updates[0][0].revokedAt).toBeDefined();
     expect(updates[0][0].updatedAt).toBeDefined();

@@ -22,14 +22,18 @@ import {
 } from './reportDeliveryAudit';
 import {
   canCreateReportShareRequestForPolicy,
+  buildReportShareRequestRevocationAuditDetails,
   doesReportShareRequestMatchDeliveryAudit,
+  expectedReportShareRevocationReason,
   isActiveUnexpiredReportShareRequestRecord,
+  isReportShareRevocationReasonAllowedForActor,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
   revokeReportShareRequestRecord,
   type ReportShareRequestAction,
   type ReportShareRequestAudience,
   type ReportShareRequestDelivery,
+  type ReportShareRequestRevocationReason,
   type ReportShareRequestVisibility,
 } from './reportShareRequests';
 import {
@@ -5632,36 +5636,39 @@ export const revokeReportShareRequest = onCall(
       );
     }
 
-    const reason = readTrimmedField(data, 'reason');
+    const reason =
+      readTrimmedField(data, 'reason') ?? expectedReportShareRevocationReason(actorRole);
+    if (!reason || !isReportShareRevocationReasonAllowedForActor({ reason, actorRole })) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share revocation reason must match the revoking actor.'
+      );
+    }
+    const revocationReason = reason as ReportShareRequestRevocationReason;
+    const revocationAuditDetails = buildReportShareRequestRevocationAuditDetails({
+      data: shareData,
+      reason: revocationReason,
+    });
     await revokeReportShareRequestRecord({
       shareRequestId,
       actorId: request.auth.uid,
-      reason,
+      reason: revocationReason,
       collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
     });
-    await admin
-      .firestore()
-      .collection(AUDIT_COLLECTION)
-      .add({
-        actorId: request.auth.uid,
-        actorRole,
-        userId: request.auth.uid,
-        action: 'report.share_request_revoked',
-        entityType: 'reportShareRequest',
-        entityId: shareRequestId,
-        targetType: 'learner',
-        targetId: learnerId,
-        siteId,
-        details: {
-          reason: reason ?? null,
-          previousStatus: shareData.status ?? null,
-        },
-        metadata: {
-          reason: reason ?? null,
-          previousStatus: shareData.status ?? null,
-        },
-        createdAt: FieldValue.serverTimestamp(),
-      });
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth.uid,
+      actorRole,
+      userId: request.auth.uid,
+      action: 'report.share_request_revoked',
+      entityType: 'reportShareRequest',
+      entityId: shareRequestId,
+      targetType: 'learner',
+      targetId: learnerId,
+      siteId,
+      details: revocationAuditDetails,
+      metadata: revocationAuditDetails,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     return { status: 'ok', id: shareRequestId };
   }

@@ -35,6 +35,13 @@ export type ReportShareRequestVisibility =
   | 'external'
   | 'public';
 
+export type ReportShareRequestRevocationReason =
+  | 'learner_revoked_report_share'
+  | 'guardian_revoked_report_share'
+  | 'educator_revoked_report_share'
+  | 'site_revoked_report_share'
+  | 'hq_revoked_report_share';
+
 export interface ReportShareRequestWriteParams {
   actorId: string;
   actorRole: ReportShareRequestRole;
@@ -148,6 +155,72 @@ export function doesReportShareRequestMatchDeliveryAudit(params: {
     params.data.reportAction === params.reportAction &&
     params.data.reportDelivery === params.reportDelivery
   );
+}
+
+export function expectedReportShareRevocationReason(
+  actorRole: ReportShareRequestRole
+): ReportShareRequestRevocationReason | null {
+  if (actorRole === 'learner') return 'learner_revoked_report_share';
+  if (actorRole === 'parent') return 'guardian_revoked_report_share';
+  if (actorRole === 'educator') return 'educator_revoked_report_share';
+  if (actorRole === 'site' || actorRole === 'siteLead') return 'site_revoked_report_share';
+  if (actorRole === 'hq' || actorRole === 'admin') return 'hq_revoked_report_share';
+  return null;
+}
+
+export function isReportShareRevocationReasonAllowedForActor(params: {
+  reason: string;
+  actorRole: ReportShareRequestRole;
+}): boolean {
+  return params.reason === expectedReportShareRevocationReason(params.actorRole);
+}
+
+function readOptionalString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+export function buildReportShareRequestRevocationAuditDetails(params: {
+  data: Record<string, unknown>;
+  reason: ReportShareRequestRevocationReason;
+}): Record<string, unknown> {
+  const sharePolicy = readObject(params.data.sharePolicy);
+  const provenance = readObject(params.data.provenance);
+  return {
+    reason: params.reason,
+    previousStatus: readOptionalString(params.data.status),
+    createdBy: readOptionalString(params.data.createdBy),
+    createdByRole: readOptionalString(params.data.createdByRole),
+    audience: readOptionalString(params.data.audience),
+    visibility: readOptionalString(params.data.visibility),
+    reportAction: readOptionalString(params.data.reportAction),
+    reportDelivery: readOptionalString(params.data.reportDelivery),
+    deliveryAuditId: readOptionalString(params.data.deliveryAuditId),
+    source: readOptionalString(params.data.source),
+    surface: readOptionalString(params.data.surface),
+    cta: readOptionalString(params.data.cta),
+    fileName: readOptionalString(params.data.fileName),
+    sharePolicy: sharePolicy
+      ? {
+          requiresEvidenceProvenance: sharePolicy.requiresEvidenceProvenance === true,
+          requiresGuardianContext: sharePolicy.requiresGuardianContext === true,
+          allowsExternalSharing: sharePolicy.allowsExternalSharing === true,
+          includesLearnerIdentifiers: sharePolicy.includesLearnerIdentifiers === true,
+        }
+      : null,
+    provenance: provenance
+      ? {
+          meetsProvenanceContract: provenance.meetsProvenanceContract === true,
+          meetsDeliveryContract: provenance.meetsDeliveryContract === true,
+          sharePolicyDeclared: provenance.sharePolicyDeclared === true,
+        }
+      : null,
+  };
 }
 
 export async function persistReportShareRequestRecord(params: ReportShareRequestWriteParams) {
