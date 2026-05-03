@@ -11,7 +11,9 @@ describe('parent dashboard wording honesty', () => {
   it('keeps the passport empty summary tied to reviewed evidence instead of verified claims', () => {
     const indexSource = readFunctionsFile('index.ts');
 
-    expect(indexSource).toContain('No capability claims backed by reviewed evidence are available yet.');
+    expect(indexSource).toContain(
+      'No capability claims backed by reviewed evidence are available yet.'
+    );
     expect(indexSource).not.toContain('No verified capability claims are available yet.');
   });
 
@@ -19,11 +21,11 @@ describe('parent dashboard wording honesty', () => {
     const indexSource = readFunctionsFile('index.ts');
     const portfolioBlock = indexSource.slice(
       indexSource.indexOf('const portfolioItemsPreview = portfolioRows'),
-      indexSource.indexOf('const reflectionDates = reflectionRows'),
+      indexSource.indexOf('const reflectionDates = reflectionRows')
     );
     const passportBlock = indexSource.slice(
       indexSource.indexOf('const passportClaims = masteryRows'),
-      indexSource.indexOf('const ideationPassport: Record<string, unknown> = {'),
+      indexSource.indexOf('const ideationPassport: Record<string, unknown> = {')
     );
 
     expect(portfolioBlock).toContain('progressionDescriptors,');
@@ -36,15 +38,15 @@ describe('parent dashboard wording honesty', () => {
     const indexSource = readFunctionsFile('index.ts');
     const portfolioBlock = indexSource.slice(
       indexSource.indexOf('const portfolioItemsPreview = portfolioRows'),
-      indexSource.indexOf('const reflectionDates = reflectionRows'),
+      indexSource.indexOf('const reflectionDates = reflectionRows')
     );
     const passportBlock = indexSource.slice(
       indexSource.indexOf('const passportClaims = masteryRows'),
-      indexSource.indexOf('const ideationPassport: Record<string, unknown> = {'),
+      indexSource.indexOf('const ideationPassport: Record<string, unknown> = {')
     );
     const growthBlock = indexSource.slice(
       indexSource.indexOf('const growthTimeline = growthRows'),
-      indexSource.indexOf('const currentLevel = resolveParentCurrentLevel'),
+      indexSource.indexOf('const currentLevel = resolveParentCurrentLevel')
     );
 
     expect(portfolioBlock).toContain('evidenceRecordIds:');
@@ -65,7 +67,9 @@ describe('parent dashboard wording honesty', () => {
 
     expect(growthBlock).toContain('linkedEvidenceRecordIds:');
     expect(growthBlock).toContain('linkedPortfolioItemIds:');
-    expect(growthBlock).toContain('reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null');
+    expect(growthBlock).toContain(
+      'reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null'
+    );
     expect(growthBlock).toContain('rubricRawScore:');
     expect(growthBlock).toContain('missionAttemptId:');
 
@@ -76,8 +80,12 @@ describe('parent dashboard wording honesty', () => {
 
     expect(summaryTailBlock).toContain('processDomainSnapshot: pdMasterySnap.docs');
     expect(summaryTailBlock).toContain('processDomainGrowthTimeline: pdGrowthSnap.docs');
-    expect(summaryTailBlock).toContain('title: processDomainTitlesById.get(processDomainId) ?? processDomainId');
-    expect(summaryTailBlock).toContain('reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null');
+    expect(summaryTailBlock).toContain(
+      'title: processDomainTitlesById.get(processDomainId) ?? processDomainId'
+    );
+    expect(summaryTailBlock).toContain(
+      'reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null'
+    );
     expect(summaryTailBlock).toContain('linkedEvidenceRecordIds: evidenceIds');
     expect(summaryTailBlock).toContain('missionAttemptId: typeof data.missionAttemptId');
     expect(summaryTailBlock).toContain('rubricApplicationId: typeof data.rubricApplicationId');

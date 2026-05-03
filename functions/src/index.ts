@@ -7,10 +7,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { SCHOLESA_GEN2_REGION } from './gen2Runtime';
 import { guardedFetch } from './security/egressGuard';
-import {
-  buildExplainBackSubmittedEvent,
-  verifyExplainBack,
-} from './aiCoachExplainBack';
+import { buildExplainBackSubmittedEvent, verifyExplainBack } from './aiCoachExplainBack';
 import {
   enqueueLearnerGoalReminders,
   sendNotification as sendExternalNotification,
@@ -31,7 +28,10 @@ import {
   type ReportShareRequestDelivery,
   type ReportShareRequestVisibility,
 } from './reportShareRequests';
-import { ANALYTICS_REPAIR_AUDIT_ACTIONS, buildAnalyticsRepairRunRecord } from './analyticsRepairRuns';
+import {
+  ANALYTICS_REPAIR_AUDIT_ACTIONS,
+  buildAnalyticsRepairRunRecord,
+} from './analyticsRepairRuns';
 import { matchesAuditLogFilters, normalizeAuditLogFilters } from './auditLogFilters';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
 import { resolveParentCurrentLevel } from './parentDashboardSummary';
@@ -178,8 +178,12 @@ export {
 
 // Voice-first API surface (scholesa-api + scholesa-stt + scholesa-tts)
 export const voiceApi = onRequest({ cors: true }, async (req, res) => handleVoiceApi(req, res));
-export const copilotMessage = onRequest({ cors: true }, async (req, res) => handleCopilotMessage(req, res));
-export const voiceTranscribe = onRequest({ cors: true }, async (req, res) => handleVoiceTranscribe(req, res));
+export const copilotMessage = onRequest({ cors: true }, async (req, res) =>
+  handleCopilotMessage(req, res)
+);
+export const voiceTranscribe = onRequest({ cors: true }, async (req, res) =>
+  handleVoiceTranscribe(req, res)
+);
 export const ttsSpeak = onRequest({ cors: true }, async (req, res) => handleTtsSpeak(req, res));
 export const voiceAudio = onRequest({ cors: true }, async (req, res) => handleVoiceAudio(req, res));
 
@@ -189,7 +193,9 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 
 // Stripe price IDs / notification config — defineString for v2 runtime
 const stripePriceLearner = defineString('STRIPE_PRICE_LEARNER', { default: 'price_learner_seat' });
-const stripePriceEducator = defineString('STRIPE_PRICE_EDUCATOR', { default: 'price_educator_seat' });
+const stripePriceEducator = defineString('STRIPE_PRICE_EDUCATOR', {
+  default: 'price_educator_seat',
+});
 const stripePriceParent = defineString('STRIPE_PRICE_PARENT', { default: 'price_parent_seat' });
 const stripePriceSite = defineString('STRIPE_PRICE_SITE', { default: 'price_site_license' });
 const notifyEndpoint = defineString('NOTIFY_ENDPOINT', { default: '' });
@@ -270,7 +276,12 @@ const REPORT_SHARE_REQUESTS_COLLECTION = 'reportShareRequests';
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
-const LEVEL_FROM_NUMBER: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
+const LEVEL_FROM_NUMBER: Record<number, string> = {
+  1: 'emerging',
+  2: 'developing',
+  3: 'proficient',
+  4: 'advanced',
+};
 const FULFILLMENTS_COLLECTION = 'fulfillments';
 const NOTIFICATION_REQUESTS_COLLECTION = 'notificationRequests';
 const LEARNER_REMINDER_PREFERENCES_COLLECTION = 'learnerReminderPreferences';
@@ -401,10 +412,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
 ]);
 
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
-const PUBLIC_TELEMETRY_EVENTS: Set<string> = new Set([
-  'cms.page.viewed',
-  'cta.clicked',
-]);
+const PUBLIC_TELEMETRY_EVENTS: Set<string> = new Set(['cms.page.viewed', 'cta.clicked']);
 const TELEMETRY_CALLABLE_CORS: Array<string | RegExp> = [
   /^https:\/\/(?:[a-z0-9-]+\.)?scholesa\.com$/,
   /^http:\/\/localhost(?::\d+)?$/,
@@ -483,11 +491,11 @@ async function sendNotification(payload: {
   return sendExternalNotification(payload, {
     endpoint: notifyEndpoint.value(),
     apiKey: notifyApiKey.value(),
-    fetchImpl: (url, init) => guardedFetch(
-      url,
-      init,
-      { source: 'functions.sendNotification', mode: 'general' },
-    ) as Promise<any>,
+    fetchImpl: (url, init) =>
+      guardedFetch(url, init, {
+        source: 'functions.sendNotification',
+        mode: 'general',
+      }) as Promise<any>,
   });
 }
 
@@ -503,8 +511,13 @@ function toStringArray(value: unknown): string[] {
 
 // §4.2 Grade-band integrity thresholds
 const AI_M_DAGGER: Record<string, number> = {
-  G1_3: 0.55, G4_6: 0.60, G7_9: 0.65, G10_12: 0.70,
-  K_5: 0.58, G6_8: 0.62, G9_12: 0.70,
+  G1_3: 0.55,
+  G4_6: 0.6,
+  G7_9: 0.65,
+  G10_12: 0.7,
+  K_5: 0.58,
+  G6_8: 0.62,
+  G9_12: 0.7,
 };
 
 type CoppaBand = 'K_5' | 'G6_8' | 'G9_12';
@@ -562,7 +575,7 @@ function toCoppaBand(gradeBand: string): CoppaBand {
 
 function resolveGradeBandFromClaims(
   request: CallableRequest,
-  payloadGradeBand: unknown,
+  payloadGradeBand: unknown
 ): { gradeBand: string; coppaBand: CoppaBand; source: 'custom_claim' | 'payload' | 'default' } {
   const token = (request.auth?.token ?? {}) as Record<string, unknown>;
   const claimGradeBand = normalizeGradeBandValue(token.gradeBand);
@@ -573,7 +586,11 @@ function resolveGradeBandFromClaims(
   }
 
   if (claimGradeBand) {
-    return { gradeBand: claimGradeBand, coppaBand: toCoppaBand(claimGradeBand), source: 'custom_claim' };
+    return {
+      gradeBand: claimGradeBand,
+      coppaBand: toCoppaBand(claimGradeBand),
+      source: 'custom_claim',
+    };
   }
   if (reqGradeBand) {
     return { gradeBand: reqGradeBand, coppaBand: toCoppaBand(reqGradeBand), source: 'payload' };
@@ -585,7 +602,7 @@ function validateCoppaMode(mode: string, coppaBand: CoppaBand) {
   if (!COPPA_ALLOWED_MODES[coppaBand].includes(mode)) {
     throw new HttpsError(
       'failed-precondition',
-      `Mode "${mode}" is not allowed for grade band ${coppaBand}. Allowed modes: ${COPPA_ALLOWED_MODES[coppaBand].join(', ')}`,
+      `Mode "${mode}" is not allowed for grade band ${coppaBand}. Allowed modes: ${COPPA_ALLOWED_MODES[coppaBand].join(', ')}`
     );
   }
 }
@@ -596,20 +613,30 @@ function normalizeAttachments(raw: unknown): CoppaAttachment[] {
     .filter((entry) => typeof entry === 'object' && entry !== null)
     .map((entry) => {
       const value = entry as Record<string, unknown>;
-      const mimeType = typeof value.mimeType === 'string' ? value.mimeType.trim().toLowerCase() : undefined;
-      const sizeBytes = typeof value.sizeBytes === 'number' && Number.isFinite(value.sizeBytes)
-        ? value.sizeBytes
-        : undefined;
+      const mimeType =
+        typeof value.mimeType === 'string' ? value.mimeType.trim().toLowerCase() : undefined;
+      const sizeBytes =
+        typeof value.sizeBytes === 'number' && Number.isFinite(value.sizeBytes)
+          ? value.sizeBytes
+          : undefined;
       return { mimeType, sizeBytes };
     });
 }
 
 function validateCoppaAttachments(attachments: CoppaAttachment[], coppaBand: CoppaBand) {
   const maxCount = coppaBand === 'K_5' ? 3 : coppaBand === 'G6_8' ? 5 : 8;
-  const maxSize = coppaBand === 'K_5' ? 2 * 1024 * 1024 : coppaBand === 'G6_8' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
+  const maxSize =
+    coppaBand === 'K_5'
+      ? 2 * 1024 * 1024
+      : coppaBand === 'G6_8'
+        ? 5 * 1024 * 1024
+        : 10 * 1024 * 1024;
 
   if (attachments.length > maxCount) {
-    throw new HttpsError('invalid-argument', `Too many attachments for ${coppaBand}. Max allowed: ${maxCount}.`);
+    throw new HttpsError(
+      'invalid-argument',
+      `Too many attachments for ${coppaBand}. Max allowed: ${maxCount}.`
+    );
   }
 
   for (const attachment of attachments) {
@@ -626,7 +653,7 @@ function validateCoppaAttachments(attachments: CoppaAttachment[], coppaBand: Cop
     if (coppaBand === 'K_5' && mimeType && !COPPA_K5_ALLOWED_MIME_TYPES.has(mimeType)) {
       throw new HttpsError(
         'invalid-argument',
-        `Attachment type "${mimeType}" is not allowed for K-5. Allowed types: ${[...COPPA_K5_ALLOWED_MIME_TYPES].join(', ')}`,
+        `Attachment type "${mimeType}" is not allowed for K-5. Allowed types: ${[...COPPA_K5_ALLOWED_MIME_TYPES].join(', ')}`
       );
     }
   }
@@ -646,14 +673,18 @@ function validateCoppaInputText(input: unknown, coppaBand: CoppaBand) {
 async function assertActiveSchoolConsent(siteId: string) {
   const consentDoc = await admin.firestore().collection('coppaSchoolConsents').doc(siteId).get();
   if (!consentDoc.exists) {
-    throw new HttpsError('failed-precondition', 'School consent record is required before AI access.');
+    throw new HttpsError(
+      'failed-precondition',
+      'School consent record is required before AI access.'
+    );
   }
   const consent = consentDoc.data() as Record<string, unknown>;
-  const active = consent.active === true
-    && consent.agreementSigned === true
-    && consent.educationalUseOnly === true
-    && consent.parentNoticeProvided === true
-    && consent.noStudentMarketing === true;
+  const active =
+    consent.active === true &&
+    consent.agreementSigned === true &&
+    consent.educationalUseOnly === true &&
+    consent.parentNoticeProvided === true &&
+    consent.noStudentMarketing === true;
   if (!active) {
     throw new HttpsError('failed-precondition', 'School consent record is incomplete or inactive.');
   }
@@ -676,24 +707,24 @@ interface ReliabilityRiskResult {
 function computeReliabilityRisk(
   mode: string,
   xHat: { cognition: number; engagement: number; integrity: number } | null,
-  pSummary: { trace: number; confidence: number } | null,
+  pSummary: { trace: number; confidence: number } | null
 ): ReliabilityRiskResult {
   // Distributional entropy v1: Proxy risk from state uncertainty + mode
   const baseRisk = pSummary ? (1 - pSummary.confidence) * 0.5 : 0.25;
 
   // Higher risk for explain/debug modes (more complex output)
-  const modeMultiplier = (mode === 'explain' || mode === 'debug') ? 1.3 : 1.0;
+  const modeMultiplier = mode === 'explain' || mode === 'debug' ? 1.3 : 1.0;
 
   // Low cognition increases risk (model is less certain about learner state)
   const cognitionPenalty = xHat ? Math.max(0, 0.5 - xHat.cognition) * 0.4 : 0.1;
 
-  const riskScore = Math.min(1.0, (baseRisk * modeMultiplier + cognitionPenalty));
+  const riskScore = Math.min(1.0, baseRisk * modeMultiplier + cognitionPenalty);
 
   return {
     riskType: 'reliability',
     method: 'distributional_entropy_v1',
-    K: 1,   // V1: single response (no sampling)
-    M: 1,   // V1: single cluster
+    K: 1, // V1: single response (no sampling)
+    M: 1, // V1: single cluster
     H_sem: 0,
     riskScore: Math.round(riskScore * 1000) / 1000,
     threshold: 0.6,
@@ -716,7 +747,7 @@ async function computeAutonomyRisk(
   learnerId: string,
   sessionOccurrenceId: string | undefined,
   xHat: { cognition: number; engagement: number; integrity: number } | null,
-  gradeBand: string,
+  gradeBand: string
 ): Promise<AutonomyRiskResult> {
   const signals: string[] = [];
   let riskScore = 0;
@@ -726,14 +757,16 @@ async function computeAutonomyRisk(
   }
 
   // Query recent interaction events (last 20)
-  const recentEvents = await admin.firestore().collection('interactionEvents')
+  const recentEvents = await admin
+    .firestore()
+    .collection('interactionEvents')
     .where('actorId', '==', learnerId)
     .where('sessionOccurrenceId', '==', sessionOccurrenceId)
     .orderBy('timestamp', 'desc')
     .limit(20)
     .get();
 
-  const events = recentEvents.docs.map(d => d.data());
+  const events = recentEvents.docs.map((d) => d.data());
   const totalEvents = events.length;
 
   if (totalEvents < 3) {
@@ -741,8 +774,8 @@ async function computeAutonomyRisk(
   }
 
   // Signal 1: Heavy MiloOS use — >40% of events are ai_help_*
-  const aiEvents = events.filter(e =>
-    e.eventType === 'ai_help_used' || e.eventType === 'ai_help_opened'
+  const aiEvents = events.filter(
+    (e) => e.eventType === 'ai_help_used' || e.eventType === 'ai_help_opened'
   ).length;
   if (aiEvents / totalEvents > 0.4) {
     signals.push('heavy_ai_use');
@@ -752,7 +785,10 @@ async function computeAutonomyRisk(
   // Signal 2: Rapid submit after MiloOS — ai_help_used followed by checkpoint_submitted
   // within 30 seconds (approximated by consecutive order)
   for (let i = 0; i < events.length - 1; i++) {
-    if (events[i].eventType === 'checkpoint_submitted' && events[i + 1].eventType === 'ai_help_used') {
+    if (
+      events[i].eventType === 'checkpoint_submitted' &&
+      events[i + 1].eventType === 'ai_help_used'
+    ) {
       signals.push('rapid_submit');
       riskScore += 0.2;
       break;
@@ -760,7 +796,7 @@ async function computeAutonomyRisk(
   }
 
   // Signal 3: Verification gap — no explain_it_back_submitted events
-  const hasExplainBack = events.some(e => e.eventType === 'explain_it_back_submitted');
+  const hasExplainBack = events.some((e) => e.eventType === 'explain_it_back_submitted');
   const hasAiUse = aiEvents > 0;
   if (hasAiUse && !hasExplainBack) {
     signals.push('verification_gap');
@@ -768,9 +804,9 @@ async function computeAutonomyRisk(
   }
 
   // Signal 4: Repeated hints without independent attempt
-  const consecutiveHints = events.filter(e => e.eventType === 'ai_help_used');
-  const independentAttempts = events.filter(e =>
-    e.eventType === 'checkpoint_submitted' || e.eventType === 'artifact_submitted'
+  const consecutiveHints = events.filter((e) => e.eventType === 'ai_help_used');
+  const independentAttempts = events.filter(
+    (e) => e.eventType === 'checkpoint_submitted' || e.eventType === 'artifact_submitted'
   );
   if (consecutiveHints.length > 3 && independentAttempts.length === 0) {
     signals.push('repeated_hints_no_attempt');
@@ -814,11 +850,14 @@ async function checkAndMaybeCreateMvl(params: {
   reliabilityRisk: ReliabilityRiskResult;
   autonomyRisk: AutonomyRiskResult;
 }): Promise<MvlCheckResult> {
-  const { siteId, learnerId, sessionOccurrenceId, gradeBand, xHat, reliabilityRisk, autonomyRisk } = params;
+  const { siteId, learnerId, sessionOccurrenceId, gradeBand, xHat, reliabilityRisk, autonomyRisk } =
+    params;
 
   // Check for existing active MVL gate
   if (sessionOccurrenceId) {
-    const existing = await admin.firestore().collection('mvlEpisodes')
+    const existing = await admin
+      .firestore()
+      .collection('mvlEpisodes')
       .where('learnerId', '==', learnerId)
       .where('sessionOccurrenceId', '==', sessionOccurrenceId)
       .where('resolution', '==', null)
@@ -836,7 +875,7 @@ async function checkAndMaybeCreateMvl(params: {
 
   // Sensor fusion: count how many risk sources are elevated
   const riskSources: string[] = [];
-  const mDagger = AI_M_DAGGER[gradeBand] ?? 0.60;
+  const mDagger = AI_M_DAGGER[gradeBand] ?? 0.6;
 
   if (xHat && xHat.integrity < mDagger) {
     riskSources.push('integrity_below_threshold');
@@ -854,37 +893,43 @@ async function checkAndMaybeCreateMvl(params: {
   }
 
   // Create MVL episode
-  const mvlDoc = await admin.firestore().collection('mvlEpisodes').add({
-    siteId,
-    learnerId,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    triggerReason: riskSources.join(' + '),
-    riskSources,
-    reliability: reliabilityRisk,
-    autonomy: autonomyRisk,
-    evidenceEventIds: [],
-    resolution: null,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  const mvlDoc = await admin
+    .firestore()
+    .collection('mvlEpisodes')
+    .add({
+      siteId,
+      learnerId,
+      sessionOccurrenceId: sessionOccurrenceId || null,
+      triggerReason: riskSources.join(' + '),
+      riskSources,
+      reliability: reliabilityRisk,
+      autonomy: autonomyRisk,
+      evidenceEventIds: [],
+      resolution: null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   // Emit mvl_gate_triggered event
-  await admin.firestore().collection('interactionEvents').add({
-    eventType: 'mvl_gate_triggered',
-    siteId,
-    actorId: learnerId,
-    actorRole: 'system',
-    gradeBand,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    payload: {
-      episodeId: mvlDoc.id,
-      riskSources,
-      reliabilityScore: reliabilityRisk.riskScore,
-      autonomyScore: autonomyRisk.riskScore,
-      integrityState: xHat?.integrity ?? null,
-    },
-    timestamp: FieldValue.serverTimestamp(),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection('interactionEvents')
+    .add({
+      eventType: 'mvl_gate_triggered',
+      siteId,
+      actorId: learnerId,
+      actorRole: 'system',
+      gradeBand,
+      sessionOccurrenceId: sessionOccurrenceId || null,
+      payload: {
+        episodeId: mvlDoc.id,
+        riskSources,
+        reliabilityScore: reliabilityRisk.riskScore,
+        autonomyScore: autonomyRisk.riskScore,
+        integrityState: xHat?.integrity ?? null,
+      },
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   return {
     gateActive: true,
@@ -901,7 +946,7 @@ function generateMvlInterceptMessage(
   mode: string,
   displayName: string,
   reason: string | undefined,
-  tags: string[],
+  tags: string[]
 ): string {
   const tagNote = tags.length > 0 ? ` about ${tags.join(', ')}` : '';
   switch (mode) {
@@ -937,22 +982,36 @@ type AiCoachSafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
 
 const AI_COACH_POLICY_VERSION = 'gen-ai-coach-policy-2026-03-12';
 
-function extractInternalLlmPayload(data: unknown): {
-  text?: string;
-  modelVersion?: string;
-  toolSuggestions?: string[];
-  traceId?: string;
-  policyVersion?: string;
-  safetyOutcome?: AiCoachSafetyOutcome;
-  safetyReasonCode?: string;
-  understanding?: Partial<AiCoachUnderstandingSignal>;
-} | undefined {
-  const root = (data && typeof data === 'object') ? data as Record<string, unknown> : undefined;
+function extractInternalLlmPayload(data: unknown):
+  | {
+      text?: string;
+      modelVersion?: string;
+      toolSuggestions?: string[];
+      traceId?: string;
+      policyVersion?: string;
+      safetyOutcome?: AiCoachSafetyOutcome;
+      safetyReasonCode?: string;
+      understanding?: Partial<AiCoachUnderstandingSignal>;
+    }
+  | undefined {
+  const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : undefined;
   if (!root) return undefined;
-  const response = (root.response && typeof root.response === 'object') ? root.response as Record<string, unknown> : undefined;
-  const output = (response?.output && typeof response.output === 'object') ? response.output as Record<string, unknown> : undefined;
-  const result = (root.result && typeof root.result === 'object') ? root.result as Record<string, unknown> : undefined;
-  const metadata = (root.metadata && typeof root.metadata === 'object') ? root.metadata as Record<string, unknown> : undefined;
+  const response =
+    root.response && typeof root.response === 'object'
+      ? (root.response as Record<string, unknown>)
+      : undefined;
+  const output =
+    response?.output && typeof response.output === 'object'
+      ? (response.output as Record<string, unknown>)
+      : undefined;
+  const result =
+    root.result && typeof root.result === 'object'
+      ? (root.result as Record<string, unknown>)
+      : undefined;
+  const metadata =
+    root.metadata && typeof root.metadata === 'object'
+      ? (root.metadata as Record<string, unknown>)
+      : undefined;
 
   const text = [
     root.text,
@@ -980,7 +1039,9 @@ function extractInternalLlmPayload(data: unknown): {
 
   const toStringArray = (input: unknown): string[] | undefined => {
     if (!Array.isArray(input)) return undefined;
-    const values = input.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0);
+    const values = input.filter(
+      (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
+    );
     return values.length > 0 ? values : undefined;
   };
 
@@ -1000,31 +1061,48 @@ function extractInternalLlmPayload(data: unknown): {
 
   return {
     text: toOptionalString(text),
-    modelVersion: toOptionalString(root.modelVersion ?? result?.modelVersion ?? output?.modelVersion ?? metadata?.modelVersion),
+    modelVersion: toOptionalString(
+      root.modelVersion ?? result?.modelVersion ?? output?.modelVersion ?? metadata?.modelVersion
+    ),
     toolSuggestions: toStringArray(rawToolSuggestions),
-    traceId: toOptionalString(root.traceId ?? result?.traceId ?? output?.traceId ?? metadata?.traceId),
-    policyVersion: toOptionalString(root.policyVersion ?? result?.policyVersion ?? output?.policyVersion ?? metadata?.policyVersion),
+    traceId: toOptionalString(
+      root.traceId ?? result?.traceId ?? output?.traceId ?? metadata?.traceId
+    ),
+    policyVersion: toOptionalString(
+      root.policyVersion ??
+        result?.policyVersion ??
+        output?.policyVersion ??
+        metadata?.policyVersion
+    ),
     safetyOutcome: toOptionalSafetyOutcome(
-      root.safetyOutcome ?? result?.safetyOutcome ?? output?.safetyOutcome ?? metadata?.safetyOutcome,
+      root.safetyOutcome ??
+        result?.safetyOutcome ??
+        output?.safetyOutcome ??
+        metadata?.safetyOutcome
     ),
     safetyReasonCode: toOptionalString(
-      root.safetyReasonCode ?? result?.safetyReasonCode ?? output?.safetyReasonCode ?? metadata?.safetyReasonCode,
+      root.safetyReasonCode ??
+        result?.safetyReasonCode ??
+        output?.safetyReasonCode ??
+        metadata?.safetyReasonCode
     ),
-    understanding: understandingSource ? {
-      intent: toOptionalString(understandingSource.intent),
-      complexity: toOptionalString(understandingSource.complexity),
-      needsScaffold: toOptionalBoolean(understandingSource.needsScaffold),
-      emotionalState: toOptionalString(understandingSource.emotionalState),
-      confidence: toOptionalNumber(understandingSource.confidence),
-      responseMode: toOptionalString(understandingSource.responseMode),
-      topicTags: toStringArray(understandingSource.topicTags),
-    } : undefined,
+    understanding: understandingSource
+      ? {
+          intent: toOptionalString(understandingSource.intent),
+          complexity: toOptionalString(understandingSource.complexity),
+          needsScaffold: toOptionalBoolean(understandingSource.needsScaffold),
+          emotionalState: toOptionalString(understandingSource.emotionalState),
+          confidence: toOptionalNumber(understandingSource.confidence),
+          responseMode: toOptionalString(understandingSource.responseMode),
+          topicTags: toStringArray(understandingSource.topicTags),
+        }
+      : undefined,
   };
 }
 
 function mergeAiCoachUnderstanding(
   base: AiCoachUnderstandingSignal,
-  override?: Partial<AiCoachUnderstandingSignal>,
+  override?: Partial<AiCoachUnderstandingSignal>
 ): AiCoachUnderstandingSignal {
   if (!override) return base;
   return {
@@ -1034,7 +1112,10 @@ function mergeAiCoachUnderstanding(
     emotionalState: override.emotionalState ?? base.emotionalState,
     confidence: typeof override.confidence === 'number' ? override.confidence : base.confidence,
     responseMode: override.responseMode ?? base.responseMode,
-    topicTags: Array.isArray(override.topicTags) && override.topicTags.length > 0 ? override.topicTags : base.topicTags,
+    topicTags:
+      Array.isArray(override.topicTags) && override.topicTags.length > 0
+        ? override.topicTags
+        : base.topicTags,
   };
 }
 
@@ -1083,7 +1164,11 @@ function buildLearnerGuardNextSteps(locale: string): string[] {
     case 'th':
       return ['บอกขั้นตอนที่คุณลองไปแล้ว', 'บอกจุดที่คุณติดอยู่', 'ให้ครูช่วยดูขั้นต่อไปกับคุณ'];
     default:
-      return ['Tell me which step you already tried.', 'Point to the exact place you got stuck.', 'Ask your educator to review the next step with you.'];
+      return [
+        'Tell me which step you already tried.',
+        'Point to the exact place you got stuck.',
+        'Ask your educator to review the next step with you.',
+      ];
   }
 }
 
@@ -1091,7 +1176,7 @@ function buildAiCoachInput(
   coachMode: string,
   studentInput: string | undefined,
   tags: string[],
-  checkpointId?: string,
+  checkpointId?: string
 ): string {
   const trimmedInput = typeof studentInput === 'string' ? studentInput.trim() : '';
   const tagsSummary = tags.length > 0 ? `Focus concepts: ${tags.join(', ')}.` : '';
@@ -1099,7 +1184,9 @@ function buildAiCoachInput(
   if (trimmedInput) {
     return `${trimmedInput} ${tagsSummary} ${checkpointSummary}`.replace(/\s+/g, ' ').trim();
   }
-  return `The learner needs ${coachMode} support. ${tagsSummary} ${checkpointSummary}`.replace(/\s+/g, ' ').trim();
+  return `The learner needs ${coachMode} support. ${tagsSummary} ${checkpointSummary}`
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 async function generateCoachResponseWithInference(input: {
@@ -1130,7 +1217,8 @@ async function generateCoachResponseWithInference(input: {
     const normalized = text.replace(/\s+/g, ' ').trim();
     if (!normalized) return normalized;
     if (locale !== 'en') return normalized;
-    const hasEncouragement = /\b(great|good|nice|awesome|you can do this|you've got this|well done)\b/i.test(normalized);
+    const hasEncouragement =
+      /\b(great|good|nice|awesome|you can do this|you've got this|well done)\b/i.test(normalized);
     const hasQuestion = /\?/.test(normalized);
     let out = hasEncouragement ? normalized : `Nice effort. ${normalized}`;
     if (!hasQuestion) {
@@ -1143,7 +1231,7 @@ async function generateCoachResponseWithInference(input: {
     input.coachMode,
     input.studentInput,
     input.conceptTags,
-    input.checkpointId,
+    input.checkpointId
   );
   const heuristicUnderstanding = __voiceSystemInternals.deriveUnderstandingSignal({
     message: learnerMessage,
@@ -1156,7 +1244,10 @@ async function generateCoachResponseWithInference(input: {
     },
   });
 
-  const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+  const llmResult = await callInternalInferenceJson<
+    Record<string, unknown>,
+    Record<string, unknown>
+  >({
     service: 'llm',
     body: {
       message: learnerMessage,
@@ -1202,7 +1293,7 @@ async function generateCoachResponseWithInference(input: {
   const certifiedConfidence = clampLearnerConfidence(llmPayload.understanding?.confidence);
   const understanding = mergeAiCoachUnderstanding(
     heuristicUnderstanding as AiCoachUnderstandingSignal,
-    llmPayload?.understanding,
+    llmPayload?.understanding
   );
   if (certifiedConfidence < MIN_AUTONOMOUS_LEARNER_CONFIDENCE) {
     return {
@@ -1220,9 +1311,9 @@ async function generateCoachResponseWithInference(input: {
 
   const candidateText = applyLearnerConversationalTone(llmPayload.text.trim(), input.locale);
 
-  const suggestedNextSteps = llmPayload?.toolSuggestions?.slice(0, 3)
-    ?? [];
-  const requiresExplainBack = input.coachMode === 'verify' || input.coachMode === 'explain' || input.coppaBand === 'G9_12';
+  const suggestedNextSteps = llmPayload?.toolSuggestions?.slice(0, 3) ?? [];
+  const requiresExplainBack =
+    input.coachMode === 'verify' || input.coachMode === 'explain' || input.coppaBand === 'G9_12';
 
   return {
     message: candidateText,
@@ -1249,14 +1340,25 @@ export const genAiCoach = onCall(async (request) => {
 
   // ── A2) Hard schema validation ──────────────────
   const {
-    mode, siteId, gradeBand, sessionOccurrenceId, missionId, checkpointId,
-    conceptTags, studentInput, attachments, personaInstructions,
+    mode,
+    siteId,
+    gradeBand,
+    sessionOccurrenceId,
+    missionId,
+    checkpointId,
+    conceptTags,
+    studentInput,
+    attachments,
+    personaInstructions,
   } = request.data || {};
 
   const coachMode: string = mode || 'hint';
   const validModes = ['hint', 'verify', 'explain', 'debug'];
   if (!validModes.includes(coachMode)) {
-    throw new HttpsError('invalid-argument', `Invalid mode: ${coachMode}. Must be one of: ${validModes.join(', ')}`);
+    throw new HttpsError(
+      'invalid-argument',
+      `Invalid mode: ${coachMode}. Must be one of: ${validModes.join(', ')}`
+    );
   }
   if (!siteId) {
     throw new HttpsError('invalid-argument', 'siteId is required.');
@@ -1266,7 +1368,11 @@ export const genAiCoach = onCall(async (request) => {
   }
 
   await assertActiveSchoolConsent(siteId);
-  const { gradeBand: gb, coppaBand, source: gradeBandSource } = resolveGradeBandFromClaims(request, gradeBand);
+  const {
+    gradeBand: gb,
+    coppaBand,
+    source: gradeBandSource,
+  } = resolveGradeBandFromClaims(request, gradeBand);
   validateCoppaMode(coachMode, coppaBand);
   const normalizedAttachments = normalizeAttachments(attachments);
   validateCoppaAttachments(normalizedAttachments, coppaBand);
@@ -1281,11 +1387,17 @@ export const genAiCoach = onCall(async (request) => {
   let pSummary: { trace: number; confidence: number } | null = null;
   if (sessionOccurrenceId) {
     const stateDocId = `${userId}_${sessionOccurrenceId}`;
-    const stateDoc = await admin.firestore().collection('orchestrationStates').doc(stateDocId).get();
+    const stateDoc = await admin
+      .firestore()
+      .collection('orchestrationStates')
+      .doc(stateDocId)
+      .get();
     if (stateDoc.exists) {
       const stateData = stateDoc.data()!;
       xHat = stateData.x_hat || null;
-      pSummary = stateData.P ? { trace: stateData.P.trace, confidence: stateData.P.confidence } : null;
+      pSummary = stateData.P
+        ? { trace: stateData.P.trace, confidence: stateData.P.confidence }
+        : null;
     }
   }
 
@@ -1407,7 +1519,11 @@ export const genAiCoach = onCall(async (request) => {
       safetyReasonCode = generated.safetyReasonCode ?? 'none';
       responseConfidence = generated.confidence;
     } catch (error) {
-      console.warn('genAiCoach inference guard engaged', { coachMode, siteId, reason: error instanceof Error ? error.message : String(error) });
+      console.warn('genAiCoach inference guard engaged', {
+        coachMode,
+        siteId,
+        reason: error instanceof Error ? error.message : String(error),
+      });
       message = buildLearnerInferenceUnavailableMessage(displayName, 'en');
       requiresExplainBack = true;
       suggestedNextSteps = buildLearnerGuardNextSteps('en');
@@ -1425,78 +1541,84 @@ export const genAiCoach = onCall(async (request) => {
   });
 
   if (coppaBand === 'G6_8') {
-    suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Connect this response to your checkpoint submission.'])];
+    suggestedNextSteps = [
+      ...new Set([...suggestedNextSteps, 'Connect this response to your checkpoint submission.']),
+    ];
   }
   if (coppaBand === 'G9_12') {
     requiresExplainBack = true;
-    suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Provide an explain-back and cite your evidence.'])];
+    suggestedNextSteps = [
+      ...new Set([...suggestedNextSteps, 'Provide an explain-back and cite your evidence.']),
+    ];
   }
 
   // ── A1) Forbidden check: never give final answers for graded checkpoints ──
   // Internal inference responses stay inside BOS/MVL gating and COPPA mode checks.
 
   // ── Emit ai_help_used event ──────────────────
-  await admin.firestore().collection('interactionEvents').add({
-    eventType: 'ai_help_used',
-    siteId,
-    actorId: userId,
-    actorRole: 'learner',
-    gradeBand: gb,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    missionId: missionId || null,
-    checkpointId: checkpointId || null,
-    payload: {
-      mode: coachMode,
-      aiHelpOpenedEventId: aiHelpOpenedRef.id,
-      traceId: responseTraceId,
-      policyVersion: responsePolicyVersion,
-      safetyOutcome,
-      safetyReasonCode,
-      reliabilityRiskScore: reliabilityRisk.riskScore,
-      autonomyRiskScore: autonomyRisk.riskScore,
-      mvlGateActive: mvlResult.gateActive,
-      ...(responseConfidence != null
-        ? {responseConfidence}
-        : {}),
-      requiresExplainBack,
-      coppaBand,
-    },
-    timestamp: FieldValue.serverTimestamp(),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection('interactionEvents')
+    .add({
+      eventType: 'ai_help_used',
+      siteId,
+      actorId: userId,
+      actorRole: 'learner',
+      gradeBand: gb,
+      sessionOccurrenceId: sessionOccurrenceId || null,
+      missionId: missionId || null,
+      checkpointId: checkpointId || null,
+      payload: {
+        mode: coachMode,
+        aiHelpOpenedEventId: aiHelpOpenedRef.id,
+        traceId: responseTraceId,
+        policyVersion: responsePolicyVersion,
+        safetyOutcome,
+        safetyReasonCode,
+        reliabilityRiskScore: reliabilityRisk.riskScore,
+        autonomyRiskScore: autonomyRisk.riskScore,
+        mvlGateActive: mvlResult.gateActive,
+        ...(responseConfidence != null ? { responseConfidence } : {}),
+        requiresExplainBack,
+        coppaBand,
+      },
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   // ── Emit ai_coach_response event (audit trail) ──
-  await admin.firestore().collection('interactionEvents').add({
-    eventType: 'ai_coach_response',
-    siteId,
-    actorId: userId,
-    actorRole: 'learner',
-    gradeBand: gb,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    missionId: missionId || null,
-    checkpointId: checkpointId || null,
-    payload: {
-      mode: coachMode,
-      aiHelpOpenedEventId: aiHelpOpenedRef.id,
-      traceId: responseTraceId,
-      policyVersion: responsePolicyVersion,
-      safetyOutcome,
-      safetyReasonCode,
-      hasLearnerState: !!xHat,
-      reliabilityRisk: reliabilityRisk,
-      autonomyRisk: autonomyRisk,
-      mvlGateActive: mvlResult.gateActive,
-      mvlEpisodeId: mvlResult.episodeId || null,
-      coppaBand,
-      gradeBandSource,
-      ...(responseConfidence != null
-        ? {responseConfidence}
-        : {}),
-      aiResponseText: message.substring(0, 500),
-    },
-    timestamp: FieldValue.serverTimestamp(),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection('interactionEvents')
+    .add({
+      eventType: 'ai_coach_response',
+      siteId,
+      actorId: userId,
+      actorRole: 'learner',
+      gradeBand: gb,
+      sessionOccurrenceId: sessionOccurrenceId || null,
+      missionId: missionId || null,
+      checkpointId: checkpointId || null,
+      payload: {
+        mode: coachMode,
+        aiHelpOpenedEventId: aiHelpOpenedRef.id,
+        traceId: responseTraceId,
+        policyVersion: responsePolicyVersion,
+        safetyOutcome,
+        safetyReasonCode,
+        hasLearnerState: !!xHat,
+        reliabilityRisk: reliabilityRisk,
+        autonomyRisk: autonomyRisk,
+        mvlGateActive: mvlResult.gateActive,
+        mvlEpisodeId: mvlResult.episodeId || null,
+        coppaBand,
+        gradeBandSource,
+        ...(responseConfidence != null ? { responseConfidence } : {}),
+        aiResponseText: message.substring(0, 500),
+      },
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   // ── A2) Response contract ──────────────────
   return {
@@ -1546,19 +1668,15 @@ export const submitExplainBack = onCall(async (request) => {
   if (!profile || normalizeRoleValue(profile.role) !== 'learner') {
     throw new HttpsError(
       'permission-denied',
-      'Learner role required for explain-back submissions.',
+      'Learner role required for explain-back submissions.'
     );
   }
 
-  const siteId = typeof request.data?.siteId === 'string'
-    ? request.data.siteId.trim()
-    : '';
-  const interactionId = typeof request.data?.interactionId === 'string'
-    ? request.data.interactionId.trim()
-    : '';
-  const explainBack = typeof request.data?.explainBack === 'string'
-    ? request.data.explainBack.trim()
-    : '';
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  const interactionId =
+    typeof request.data?.interactionId === 'string' ? request.data.interactionId.trim() : '';
+  const explainBack =
+    typeof request.data?.explainBack === 'string' ? request.data.explainBack.trim() : '';
 
   if (!siteId) {
     throw new HttpsError('invalid-argument', 'siteId is required.');
@@ -1578,7 +1696,8 @@ export const submitExplainBack = onCall(async (request) => {
   let openedSnap = await admin.firestore().collection('interactionEvents').doc(interactionId).get();
   let openedEventId = interactionId;
   if (!openedSnap.exists) {
-    const traceMatchSnap = await admin.firestore()
+    const traceMatchSnap = await admin
+      .firestore()
       .collection('interactionEvents')
       .where('eventType', '==', 'ai_help_opened')
       .where('siteId', '==', siteId)
@@ -1597,10 +1716,7 @@ export const submitExplainBack = onCall(async (request) => {
 
   const openedData = openedSnap.data() as Record<string, unknown>;
   if (openedData.eventType !== 'ai_help_opened') {
-    throw new HttpsError(
-      'failed-precondition',
-      'interactionId must reference a MiloOS session.',
-    );
+    throw new HttpsError('failed-precondition', 'interactionId must reference a MiloOS session.');
   }
   if (openedData.actorId !== userId) {
     throw new HttpsError('permission-denied', 'MiloOS session ownership mismatch.');
@@ -1610,9 +1726,10 @@ export const submitExplainBack = onCall(async (request) => {
   }
 
   // Extract the AI response text from the opened event for copy-detection
-  const aiResponseText = typeof (openedData.payload as Record<string, unknown> | undefined)?.aiResponseText === 'string'
-    ? ((openedData.payload as Record<string, unknown>).aiResponseText as string)
-    : undefined;
+  const aiResponseText =
+    typeof (openedData.payload as Record<string, unknown> | undefined)?.aiResponseText === 'string'
+      ? ((openedData.payload as Record<string, unknown>).aiResponseText as string)
+      : undefined;
 
   // Verify the explain-back with heuristic checks
   const verification = verifyExplainBack(explainBack, aiResponseText);
@@ -1632,11 +1749,14 @@ export const submitExplainBack = onCall(async (request) => {
     verification,
   });
 
-  await admin.firestore().collection('interactionEvents').add({
-    ...explainBackEvent,
-    timestamp: FieldValue.serverTimestamp(),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection('interactionEvents')
+    .add({
+      ...explainBackEvent,
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   return {
     approved: verification.approved,
@@ -1649,7 +1769,11 @@ async function getUserProfile(uid: string) {
   return snap.data() as UserRecord | undefined;
 }
 
-async function requireRoleAndSite(authUid: string | undefined, allowedRoles: Role[], siteId?: string) {
+async function requireRoleAndSite(
+  authUid: string | undefined,
+  allowedRoles: Role[],
+  siteId?: string
+) {
   if (!authUid) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
@@ -1743,7 +1867,12 @@ function toCanonicalTelemetryGradeBand(rawValue: unknown): 'k5' | 'ms' | 'hs' {
 function normalizeTelemetryLocale(rawValue: unknown): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
   if (typeof rawValue !== 'string') return 'en';
   const normalized = rawValue.trim();
-  if (normalized === 'en' || normalized === 'zh-CN' || normalized === 'zh-TW' || normalized === 'th') {
+  if (
+    normalized === 'en' ||
+    normalized === 'zh-CN' ||
+    normalized === 'zh-TW' ||
+    normalized === 'th'
+  ) {
     return normalized;
   }
   const lowered = normalized.toLowerCase();
@@ -1763,13 +1892,15 @@ function resolveTelemetryService(metadata: Record<string, unknown> | undefined):
   return 'scholesa-api';
 }
 
-function resolveTelemetryLocale(metadata: Record<string, unknown> | undefined): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
+function resolveTelemetryLocale(
+  metadata: Record<string, unknown> | undefined
+): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
   return normalizeTelemetryLocale(metadata?.locale ?? metadata?.targetLocale);
 }
 
 function resolveTelemetryGradeBand(
   metadata: Record<string, unknown> | undefined,
-  role: TelemetryRole,
+  role: TelemetryRole
 ): 'k5' | 'ms' | 'hs' {
   const raw = metadata?.gradeBand ?? metadata?.grade ?? metadata?.grade_level;
   if (raw !== undefined) {
@@ -1799,7 +1930,7 @@ function sanitizeTelemetryValue(
   value: unknown,
   keyPath: string,
   depth: number,
-  redactedPaths: Set<string>,
+  redactedPaths: Set<string>
 ): unknown {
   if (depth > TELEMETRY_MAX_METADATA_DEPTH) {
     redactedPaths.add(`${keyPath}:depth_limit`);
@@ -1839,7 +1970,9 @@ function sanitizeTelemetryValue(
   if (Array.isArray(value)) {
     return value
       .slice(0, TELEMETRY_MAX_COLLECTION_LENGTH)
-      .map((item, index) => sanitizeTelemetryValue(item, `${keyPath}[${index}]`, depth + 1, redactedPaths));
+      .map((item, index) =>
+        sanitizeTelemetryValue(item, `${keyPath}[${index}]`, depth + 1, redactedPaths)
+      );
   }
 
   if (typeof value === 'object') {
@@ -1861,9 +1994,10 @@ function sanitizeTelemetryValue(
   return String(value);
 }
 
-function sanitizeTelemetryMetadata(
-  metadata: Record<string, unknown> | undefined,
-): { metadata: Record<string, unknown>; redactedPaths: string[] } {
+function sanitizeTelemetryMetadata(metadata: Record<string, unknown> | undefined): {
+  metadata: Record<string, unknown>;
+  redactedPaths: string[];
+} {
   const source = metadata ?? {};
   const redactedPaths = new Set<string>();
   const sanitized: Record<string, unknown> = {};
@@ -1897,7 +2031,8 @@ async function persistTelemetryEvent(params: {
   const { event, userId, role, siteId, metadata, requestId, traceId } = params;
   const { metadata: sanitizedMetadata, redactedPaths } = sanitizeTelemetryMetadata(metadata);
   const effectiveUserId = userId && userId.trim().length > 0 ? userId : 'system';
-  const effectiveSiteId = siteId && siteId.trim().length > 0 ? siteId.trim() : TELEMETRY_UNSCOPED_SITE_ID;
+  const effectiveSiteId =
+    siteId && siteId.trim().length > 0 ? siteId.trim() : TELEMETRY_UNSCOPED_SITE_ID;
   const normalizedRole = role === 'system' ? 'system' : normalizeRoleValue(role);
   const effectiveRole: TelemetryRole = normalizedRole ?? 'system';
   const effectiveRequestId = requestId ?? `telemetry-${randomUUID()}`;
@@ -1908,41 +2043,44 @@ async function persistTelemetryEvent(params: {
   const locale = resolveTelemetryLocale(sanitizedMetadata);
   const gradeBand = resolveTelemetryGradeBand(sanitizedMetadata, effectiveRole);
   const timestampIso = new Date().toISOString();
-  return admin.firestore().collection(TELEMETRY_COLLECTION).add({
-    event,
-    eventType: event,
-    userId: effectiveUserId,
-    role: schemaRole,
-    roleCanonical: schemaRole,
-    actorRole: effectiveRole,
-    service: telemetryService,
-    env: telemetryEnv,
-    siteId: effectiveSiteId,
-    gradeBand,
-    locale,
-    traceId: effectiveTraceId,
-    metadata: {
-      ...sanitizedMetadata,
-      requestId: effectiveRequestId,
-      traceId: effectiveTraceId,
+  return admin
+    .firestore()
+    .collection(TELEMETRY_COLLECTION)
+    .add({
+      event,
+      eventType: event,
+      userId: effectiveUserId,
+      role: schemaRole,
+      roleCanonical: schemaRole,
+      actorRole: effectiveRole,
       service: telemetryService,
       env: telemetryEnv,
       siteId: effectiveSiteId,
-      role: schemaRole,
-      requesterRole: effectiveRole,
-      locale,
       gradeBand,
-      roleCanonical: schemaRole,
-      eventType: event,
-      timestamp: timestampIso,
+      locale,
+      traceId: effectiveTraceId,
+      metadata: {
+        ...sanitizedMetadata,
+        requestId: effectiveRequestId,
+        traceId: effectiveTraceId,
+        service: telemetryService,
+        env: telemetryEnv,
+        siteId: effectiveSiteId,
+        role: schemaRole,
+        requesterRole: effectiveRole,
+        locale,
+        gradeBand,
+        roleCanonical: schemaRole,
+        eventType: event,
+        timestamp: timestampIso,
+        timestampIso,
+        redactionApplied: redactedPaths.length > 0,
+        redactedPathCount: redactedPaths.length,
+      },
+      timestamp: FieldValue.serverTimestamp(),
       timestampIso,
-      redactionApplied: redactedPaths.length > 0,
-      redactedPathCount: redactedPaths.length,
-    },
-    timestamp: FieldValue.serverTimestamp(),
-    timestampIso,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+      createdAt: FieldValue.serverTimestamp(),
+    });
 }
 
 async function handleTelemetry(request: CallableRequest) {
@@ -1958,7 +2096,9 @@ async function handleTelemetry(request: CallableRequest) {
 
   const metadataRecord = metadata as Record<string, unknown> | undefined;
   const requestId = toHeaderString(request.rawRequest?.headers?.['x-request-id']);
-  const traceId = extractTraceIdFromHeader(toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context']));
+  const traceId = extractTraceIdFromHeader(
+    toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context'])
+  );
   const origin = toHeaderString(request.rawRequest?.headers?.origin);
   const auth = request.auth;
   if (!auth) {
@@ -1995,17 +2135,24 @@ async function handleTelemetry(request: CallableRequest) {
     throw new HttpsError('permission-denied', 'User role is not allowed.');
   }
 
-  const siteFromRequest = typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
-    ? request.data.siteId.trim()
-    : undefined;
+  const siteFromRequest =
+    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+      ? request.data.siteId.trim()
+      : undefined;
   if (siteFromRequest) {
-    const allowed = (userProfile.siteIds ?? []).includes(siteFromRequest) || userProfile.activeSiteId === siteFromRequest;
+    const allowed =
+      (userProfile.siteIds ?? []).includes(siteFromRequest) ||
+      userProfile.activeSiteId === siteFromRequest;
     if (!allowed) {
       throw new HttpsError('permission-denied', 'Site access denied.');
     }
   }
 
-  const siteId = siteFromRequest ?? userProfile.activeSiteId ?? (userProfile.siteIds?.[0] ?? TELEMETRY_UNSCOPED_SITE_ID);
+  const siteId =
+    siteFromRequest ??
+    userProfile.activeSiteId ??
+    userProfile.siteIds?.[0] ??
+    TELEMETRY_UNSCOPED_SITE_ID;
   if (siteId === TELEMETRY_UNSCOPED_SITE_ID && role !== 'hq') {
     throw new HttpsError('permission-denied', 'No active site context available.');
   }
@@ -2023,10 +2170,16 @@ async function handleTelemetry(request: CallableRequest) {
   return { status: 'ok' };
 }
 
-export const logTelemetryEvent = onCall(TELEMETRY_CALLABLE_OPTIONS, async (request: CallableRequest) => handleTelemetry(request));
+export const logTelemetryEvent = onCall(
+  TELEMETRY_CALLABLE_OPTIONS,
+  async (request: CallableRequest) => handleTelemetry(request)
+);
 
 // Backwards compatibility: keep the old callable name pointing to telemetry pipeline.
-export const logAnalyticsEvent = onCall(TELEMETRY_CALLABLE_OPTIONS, async (request: CallableRequest) => handleTelemetry(request));
+export const logAnalyticsEvent = onCall(
+  TELEMETRY_CALLABLE_OPTIONS,
+  async (request: CallableRequest) => handleTelemetry(request)
+);
 
 type TelemetryDashboardPeriod = 'week' | 'month' | 'quarter' | 'year';
 
@@ -2097,218 +2250,231 @@ function applySiteFilter(query: FirebaseFirestore.Query, siteId?: string): Fireb
   return query.where('siteId', '==', siteId);
 }
 
-export const getTelemetryDashboardMetrics = onCall(async (request: CallableRequest<{
-  siteId?: string;
-  period?: string;
-}>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
+export const getTelemetryDashboardMetrics = onCall(
+  async (
+    request: CallableRequest<{
+      siteId?: string;
+      period?: string;
+    }>
+  ) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
 
-  const userProfile = await getUserProfile(authUid);
-  if (!userProfile || !userProfile.role) {
-    throw new HttpsError('permission-denied', 'User profile missing role.');
-  }
-  const profileRole = normalizeRoleValue(userProfile.role);
-  if (!profileRole) {
-    throw new HttpsError('permission-denied', 'Insufficient role.');
-  }
+    const userProfile = await getUserProfile(authUid);
+    if (!userProfile || !userProfile.role) {
+      throw new HttpsError('permission-denied', 'User profile missing role.');
+    }
+    const profileRole = normalizeRoleValue(userProfile.role);
+    if (!profileRole) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
+    }
 
-  const allowedRoles: Role[] = ['hq', 'site', 'educator'];
-  if (!allowedRoles.includes(profileRole)) {
-    throw new HttpsError('permission-denied', 'Insufficient role.');
-  }
+    const allowedRoles: Role[] = ['hq', 'site', 'educator'];
+    if (!allowedRoles.includes(profileRole)) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
+    }
 
-  const requestedSiteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
-  let effectiveSiteId: string | undefined;
+    const requestedSiteId =
+      typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+    let effectiveSiteId: string | undefined;
 
-  if (requestedSiteId.length > 0) {
-    if (profileRole === 'hq') {
-      effectiveSiteId = requestedSiteId;
-    } else {
-      const hasSiteAccess = (userProfile.siteIds ?? []).includes(requestedSiteId) || userProfile.activeSiteId === requestedSiteId;
-      if (!hasSiteAccess) {
-        throw new HttpsError('permission-denied', 'Site access denied.');
+    if (requestedSiteId.length > 0) {
+      if (profileRole === 'hq') {
+        effectiveSiteId = requestedSiteId;
+      } else {
+        const hasSiteAccess =
+          (userProfile.siteIds ?? []).includes(requestedSiteId) ||
+          userProfile.activeSiteId === requestedSiteId;
+        if (!hasSiteAccess) {
+          throw new HttpsError('permission-denied', 'Site access denied.');
+        }
+        effectiveSiteId = requestedSiteId;
       }
-      effectiveSiteId = requestedSiteId;
-    }
-  } else if (profileRole !== 'hq') {
-    effectiveSiteId = userProfile.activeSiteId ?? userProfile.siteIds?.[0];
-    if (!effectiveSiteId) {
-      throw new HttpsError('permission-denied', 'No active site context available.');
-    }
-  }
-
-  const period = normalizeDashboardPeriod(request.data?.period);
-  const periodDays = DASHBOARD_PERIOD_DAYS[period];
-
-  const now = new Date();
-  const periodStart = startOfUtcDay(now);
-  periodStart.setUTCDate(periodStart.getUTCDate() - (periodDays - 1));
-  const periodStartTimestamp = Timestamp.fromDate(periodStart);
-
-  const accountabilityStart = startOfUtcDay(now);
-  accountabilityStart.setUTCDate(accountabilityStart.getUTCDate() - 6);
-  const accountabilityStartTimestamp = Timestamp.fromDate(accountabilityStart);
-
-  const telemetryCollection = admin.firestore().collection(TELEMETRY_COLLECTION);
-
-  let attendanceQuery: FirebaseFirestore.Query = telemetryCollection
-    .where('event', '==', 'attendance.recorded')
-    .where('createdAt', '>=', periodStartTimestamp);
-  attendanceQuery = applySiteFilter(attendanceQuery, effectiveSiteId);
-
-  let accountabilityQuery: FirebaseFirestore.Query = telemetryCollection
-    .where('event', 'in', [...ACCOUNTABILITY_EVENT_TYPES])
-    .where('createdAt', '>=', accountabilityStartTimestamp);
-  accountabilityQuery = applySiteFilter(accountabilityQuery, effectiveSiteId);
-
-  let reviewQuery: FirebaseFirestore.Query = telemetryCollection
-    .where('event', '==', 'educator.review.completed')
-    .where('createdAt', '>=', periodStartTimestamp);
-  reviewQuery = applySiteFilter(reviewQuery, effectiveSiteId);
-
-  let interventionQuery: FirebaseFirestore.Query = telemetryCollection
-    .where('event', '==', 'support.outcome.logged')
-    .where('createdAt', '>=', periodStartTimestamp);
-  interventionQuery = applySiteFilter(interventionQuery, effectiveSiteId);
-
-  const [attendanceSnapshot, accountabilitySnapshot, reviewSnapshot, interventionSnapshot] = await Promise.all([
-    attendanceQuery.get(),
-    accountabilityQuery.get(),
-    reviewQuery.get(),
-    interventionQuery.get(),
-  ]);
-
-  const attendanceByDate = new Map<string, { events: number; records: number; present: number; total: number }>();
-
-  for (const doc of attendanceSnapshot.docs) {
-    const data = doc.data() as Record<string, unknown>;
-    const createdAt = asTimestamp(data.createdAt);
-    if (!createdAt) continue;
-
-    const dateKey = createdAt.toDate().toISOString().slice(0, 10);
-    const bucket = attendanceByDate.get(dateKey) ?? { events: 0, records: 0, present: 0, total: 0 };
-
-    bucket.events += 1;
-
-    const metadata = asRecord(data.metadata);
-    const recordsCount = asNumber(metadata.records_count);
-    if (recordsCount !== null && recordsCount > 0) {
-      const roundedRecords = Math.round(recordsCount);
-      bucket.records += roundedRecords;
-      bucket.total += roundedRecords;
+    } else if (profileRole !== 'hq') {
+      effectiveSiteId = userProfile.activeSiteId ?? userProfile.siteIds?.[0];
+      if (!effectiveSiteId) {
+        throw new HttpsError('permission-denied', 'No active site context available.');
+      }
     }
 
-    const statusCounts = asRecord(metadata.status_counts);
-    const presentCount = asNumber(statusCounts.present);
-    if (presentCount !== null && presentCount > 0) {
-      bucket.present += Math.round(presentCount);
+    const period = normalizeDashboardPeriod(request.data?.period);
+    const periodDays = DASHBOARD_PERIOD_DAYS[period];
+
+    const now = new Date();
+    const periodStart = startOfUtcDay(now);
+    periodStart.setUTCDate(periodStart.getUTCDate() - (periodDays - 1));
+    const periodStartTimestamp = Timestamp.fromDate(periodStart);
+
+    const accountabilityStart = startOfUtcDay(now);
+    accountabilityStart.setUTCDate(accountabilityStart.getUTCDate() - 6);
+    const accountabilityStartTimestamp = Timestamp.fromDate(accountabilityStart);
+
+    const telemetryCollection = admin.firestore().collection(TELEMETRY_COLLECTION);
+
+    let attendanceQuery: FirebaseFirestore.Query = telemetryCollection
+      .where('event', '==', 'attendance.recorded')
+      .where('createdAt', '>=', periodStartTimestamp);
+    attendanceQuery = applySiteFilter(attendanceQuery, effectiveSiteId);
+
+    let accountabilityQuery: FirebaseFirestore.Query = telemetryCollection
+      .where('event', 'in', [...ACCOUNTABILITY_EVENT_TYPES])
+      .where('createdAt', '>=', accountabilityStartTimestamp);
+    accountabilityQuery = applySiteFilter(accountabilityQuery, effectiveSiteId);
+
+    let reviewQuery: FirebaseFirestore.Query = telemetryCollection
+      .where('event', '==', 'educator.review.completed')
+      .where('createdAt', '>=', periodStartTimestamp);
+    reviewQuery = applySiteFilter(reviewQuery, effectiveSiteId);
+
+    let interventionQuery: FirebaseFirestore.Query = telemetryCollection
+      .where('event', '==', 'support.outcome.logged')
+      .where('createdAt', '>=', periodStartTimestamp);
+    interventionQuery = applySiteFilter(interventionQuery, effectiveSiteId);
+
+    const [attendanceSnapshot, accountabilitySnapshot, reviewSnapshot, interventionSnapshot] =
+      await Promise.all([
+        attendanceQuery.get(),
+        accountabilityQuery.get(),
+        reviewQuery.get(),
+        interventionQuery.get(),
+      ]);
+
+    const attendanceByDate = new Map<
+      string,
+      { events: number; records: number; present: number; total: number }
+    >();
+
+    for (const doc of attendanceSnapshot.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const createdAt = asTimestamp(data.createdAt);
+      if (!createdAt) continue;
+
+      const dateKey = createdAt.toDate().toISOString().slice(0, 10);
+      const bucket = attendanceByDate.get(dateKey) ?? {
+        events: 0,
+        records: 0,
+        present: 0,
+        total: 0,
+      };
+
+      bucket.events += 1;
+
+      const metadata = asRecord(data.metadata);
+      const recordsCount = asNumber(metadata.records_count);
+      if (recordsCount !== null && recordsCount > 0) {
+        const roundedRecords = Math.round(recordsCount);
+        bucket.records += roundedRecords;
+        bucket.total += roundedRecords;
+      }
+
+      const statusCounts = asRecord(metadata.status_counts);
+      const presentCount = asNumber(statusCounts.present);
+      if (presentCount !== null && presentCount > 0) {
+        bucket.present += Math.round(presentCount);
+      }
+
+      attendanceByDate.set(dateKey, bucket);
     }
 
-    attendanceByDate.set(dateKey, bucket);
-  }
+    const attendanceTrend = buildUtcDateKeys(periodStart, periodDays).map((dateKey) => {
+      const bucket = attendanceByDate.get(dateKey);
+      const total = bucket?.total ?? null;
+      const presentRate =
+        total != null && total > 0 ? roundTo(((bucket?.present ?? 0) / total) * 100, 1) : null;
+      return {
+        date: dateKey,
+        records: bucket?.records ?? null,
+        events: bucket?.events ?? null,
+        presentRate,
+      };
+    });
 
-  const attendanceTrend = buildUtcDateKeys(periodStart, periodDays).map((dateKey) => {
-    const bucket = attendanceByDate.get(dateKey);
-    const total = bucket?.total ?? null;
-    const presentRate = total != null && total > 0
-      ? roundTo(((bucket?.present ?? 0) / total) * 100, 1)
-      : null;
+    const accountabilityByDate = new Map<string, Set<string>>();
+
+    for (const doc of accountabilitySnapshot.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const createdAt = asTimestamp(data.createdAt);
+      const event = typeof data.event === 'string' ? data.event : '';
+      if (!createdAt || !event) continue;
+
+      const dateKey = createdAt.toDate().toISOString().slice(0, 10);
+      const eventSet = accountabilityByDate.get(dateKey) ?? new Set<string>();
+      eventSet.add(event);
+      accountabilityByDate.set(dateKey, eventSet);
+    }
+
+    const accountabilityDateKeys = buildUtcDateKeys(accountabilityStart, 7);
+    let adherenceAccumulator = 0;
+    for (const dateKey of accountabilityDateKeys) {
+      const observedEvents = accountabilityByDate.get(dateKey)?.size ?? 0;
+      adherenceAccumulator += observedEvents / ACCOUNTABILITY_EVENT_TYPES.length;
+    }
+    const weeklyAccountabilityAdherenceRate =
+      accountabilityByDate.size > 0
+        ? roundTo((adherenceAccumulator / accountabilityDateKeys.length) * 100, 1)
+        : null;
+
+    let reviewCount = 0;
+    let reviewWithinSlaCount = 0;
+    let turnaroundMinutesTotal = 0;
+
+    for (const doc of reviewSnapshot.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const metadata = asRecord(data.metadata);
+      const turnaroundMinutes = asNumber(metadata.turnaround_minutes);
+      if (turnaroundMinutes === null || turnaroundMinutes < 0) continue;
+
+      reviewCount += 1;
+      turnaroundMinutesTotal += turnaroundMinutes;
+      if (turnaroundMinutes <= EDUCATOR_REVIEW_SLA_HOURS * 60) {
+        reviewWithinSlaCount += 1;
+      }
+    }
+
+    const educatorReviewTurnaroundHoursAvg =
+      reviewCount > 0 ? roundTo(turnaroundMinutesTotal / reviewCount / 60, 2) : null;
+
+    const educatorReviewWithinSlaRate =
+      reviewCount > 0 ? roundTo((reviewWithinSlaCount / reviewCount) * 100, 1) : null;
+
+    let interventionTotal = 0;
+    let interventionHelpedTotal = 0;
+
+    for (const doc of interventionSnapshot.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const metadata = asRecord(data.metadata);
+      const outcome =
+        typeof metadata.outcome === 'string' ? metadata.outcome.trim().toLowerCase() : '';
+      if (!outcome) continue;
+
+      interventionTotal += 1;
+      if (outcome === 'helped') {
+        interventionHelpedTotal += 1;
+      }
+    }
+
+    const interventionHelpedRate =
+      interventionTotal > 0
+        ? roundTo((interventionHelpedTotal / interventionTotal) * 100, 1)
+        : null;
+
     return {
-      date: dateKey,
-      records: bucket?.records ?? null,
-      events: bucket?.events ?? null,
-      presentRate,
+      metrics: {
+        weeklyAccountabilityAdherenceRate,
+        educatorReviewTurnaroundHoursAvg,
+        educatorReviewWithinSlaRate,
+        educatorReviewSlaHours: EDUCATOR_REVIEW_SLA_HOURS,
+        interventionHelpedRate,
+        interventionTotal,
+        attendanceTrend,
+      },
+      period,
+      siteId: effectiveSiteId ?? null,
     };
-  });
-
-  const accountabilityByDate = new Map<string, Set<string>>();
-
-  for (const doc of accountabilitySnapshot.docs) {
-    const data = doc.data() as Record<string, unknown>;
-    const createdAt = asTimestamp(data.createdAt);
-    const event = typeof data.event === 'string' ? data.event : '';
-    if (!createdAt || !event) continue;
-
-    const dateKey = createdAt.toDate().toISOString().slice(0, 10);
-    const eventSet = accountabilityByDate.get(dateKey) ?? new Set<string>();
-    eventSet.add(event);
-    accountabilityByDate.set(dateKey, eventSet);
   }
-
-  const accountabilityDateKeys = buildUtcDateKeys(accountabilityStart, 7);
-  let adherenceAccumulator = 0;
-  for (const dateKey of accountabilityDateKeys) {
-    const observedEvents = accountabilityByDate.get(dateKey)?.size ?? 0;
-    adherenceAccumulator += observedEvents / ACCOUNTABILITY_EVENT_TYPES.length;
-  }
-  const weeklyAccountabilityAdherenceRate = accountabilityByDate.size > 0
-    ? roundTo(
-        (adherenceAccumulator / accountabilityDateKeys.length) * 100,
-        1,
-      )
-    : null;
-
-  let reviewCount = 0;
-  let reviewWithinSlaCount = 0;
-  let turnaroundMinutesTotal = 0;
-
-  for (const doc of reviewSnapshot.docs) {
-    const data = doc.data() as Record<string, unknown>;
-    const metadata = asRecord(data.metadata);
-    const turnaroundMinutes = asNumber(metadata.turnaround_minutes);
-    if (turnaroundMinutes === null || turnaroundMinutes < 0) continue;
-
-    reviewCount += 1;
-    turnaroundMinutesTotal += turnaroundMinutes;
-    if (turnaroundMinutes <= EDUCATOR_REVIEW_SLA_HOURS * 60) {
-      reviewWithinSlaCount += 1;
-    }
-  }
-
-  const educatorReviewTurnaroundHoursAvg = reviewCount > 0
-    ? roundTo((turnaroundMinutesTotal / reviewCount) / 60, 2)
-    : null;
-
-  const educatorReviewWithinSlaRate = reviewCount > 0
-    ? roundTo((reviewWithinSlaCount / reviewCount) * 100, 1)
-    : null;
-
-  let interventionTotal = 0;
-  let interventionHelpedTotal = 0;
-
-  for (const doc of interventionSnapshot.docs) {
-    const data = doc.data() as Record<string, unknown>;
-    const metadata = asRecord(data.metadata);
-    const outcome = typeof metadata.outcome === 'string' ? metadata.outcome.trim().toLowerCase() : '';
-    if (!outcome) continue;
-
-    interventionTotal += 1;
-    if (outcome === 'helped') {
-      interventionHelpedTotal += 1;
-    }
-  }
-
-  const interventionHelpedRate = interventionTotal > 0
-    ? roundTo((interventionHelpedTotal / interventionTotal) * 100, 1)
-    : null;
-
-  return {
-    metrics: {
-      weeklyAccountabilityAdherenceRate,
-      educatorReviewTurnaroundHoursAvg,
-      educatorReviewWithinSlaRate,
-      educatorReviewSlaHours: EDUCATOR_REVIEW_SLA_HOURS,
-      interventionHelpedRate,
-      interventionTotal,
-      attendanceTrend,
-    },
-    period,
-    siteId: effectiveSiteId ?? null,
-  };
-});
+);
 
 function parseDateFromUnknown(value: unknown): Date | null {
   if (value instanceof Timestamp) return value.toDate();
@@ -2336,11 +2502,24 @@ function stringListFromUnknown(value: unknown): string[] {
 function checkpointMappingsFromUnknown(value: unknown): Array<Record<string, string>> {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .filter(
+      (entry): entry is Record<string, unknown> =>
+        !!entry && typeof entry === 'object' && !Array.isArray(entry)
+    )
     .map((entry) => ({
       // Support both field conventions: label/description (CapabilityFrameworkEditor) and phase/guidance (legacy)
-      label: typeof entry.label === 'string' ? entry.label.trim() : (typeof entry.phase === 'string' ? entry.phase.trim() : ''),
-      description: typeof entry.description === 'string' ? entry.description.trim() : (typeof entry.guidance === 'string' ? entry.guidance.trim() : ''),
+      label:
+        typeof entry.label === 'string'
+          ? entry.label.trim()
+          : typeof entry.phase === 'string'
+            ? entry.phase.trim()
+            : '',
+      description:
+        typeof entry.description === 'string'
+          ? entry.description.trim()
+          : typeof entry.guidance === 'string'
+            ? entry.guidance.trim()
+            : '',
       checkpointId: typeof entry.checkpointId === 'string' ? entry.checkpointId.trim() : '',
     }))
     .filter((entry) => entry.label.length > 0 || entry.description.length > 0);
@@ -2411,7 +2590,7 @@ function hasSiteAccess(profile: UserRecord, siteId: string): boolean {
 function resolveRoleSiteId(
   profile: UserRecord,
   actorRole: Role,
-  requestedSiteId: string | undefined,
+  requestedSiteId: string | undefined
 ): string | undefined {
   if (requestedSiteId && requestedSiteId.trim().length > 0) {
     if (actorRole === 'hq' || hasSiteAccess(profile, requestedSiteId)) {
@@ -2429,11 +2608,15 @@ function resolveRoleSiteId(
   return siteId;
 }
 
-async function fetchUsersByIds(userIds: string[]): Promise<Array<{ id: string; data: UserRecord }>> {
-  const uniqueIds = Array.from(new Set(userIds.filter((id) => typeof id === 'string' && id.trim().length > 0)));
+async function fetchUsersByIds(
+  userIds: string[]
+): Promise<Array<{ id: string; data: UserRecord }>> {
+  const uniqueIds = Array.from(
+    new Set(userIds.filter((id) => typeof id === 'string' && id.trim().length > 0))
+  );
   if (uniqueIds.length === 0) return [];
   const docs = await Promise.all(
-    uniqueIds.map((id) => admin.firestore().collection(USERS_COLLECTION).doc(id).get()),
+    uniqueIds.map((id) => admin.firestore().collection(USERS_COLLECTION).doc(id).get())
   );
   return docs
     .filter((doc) => doc.exists)
@@ -2441,11 +2624,12 @@ async function fetchUsersByIds(userIds: string[]): Promise<Array<{ id: string; d
 }
 
 function toRosterItem(id: string, data: UserRecord): Record<string, unknown> {
-  const displayName = typeof data.displayName === 'string' && data.displayName.trim().length > 0
-    ? data.displayName.trim()
-    : typeof data.email === 'string' && data.email.trim().length > 0
-    ? data.email.trim()
-    : null;
+  const displayName =
+    typeof data.displayName === 'string' && data.displayName.trim().length > 0
+      ? data.displayName.trim()
+      : typeof data.email === 'string' && data.email.trim().length > 0
+        ? data.email.trim()
+        : null;
   return {
     id,
     uid: id,
@@ -2510,9 +2694,7 @@ async function collectParentLinkedLearnerIds(params: {
   }
 
   const linkedUsers = await fetchUsersByIds(Array.from(learnerIds.values()));
-  return linkedUsers
-    .filter(({ data }) => hasSiteAccess(data, siteId))
-    .map(({ id }) => id);
+  return linkedUsers.filter(({ data }) => hasSiteAccess(data, siteId)).map(({ id }) => id);
 }
 
 async function buildParentLearnerSummary(params: {
@@ -2528,9 +2710,7 @@ async function buildParentLearnerSummary(params: {
 
   const now = new Date();
   const progressDoc = await admin.firestore().collection('learnerProgress').doc(learnerId).get();
-  const progressData = progressDoc.exists
-    ? (progressDoc.data() as Record<string, unknown>)
-    : {};
+  const progressData = progressDoc.exists ? (progressDoc.data() as Record<string, unknown>) : {};
 
   let recentActivities: Array<Record<string, unknown>> = [];
   try {
@@ -2574,24 +2754,99 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = null;
   }
 
-  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap, processDomainsSnap, pdMasterySnap, pdGrowthSnap] =
-    await Promise.all([
-      admin.firestore().collection('portfolioItems').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('evidenceRecords').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('capabilityMastery').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('capabilityGrowthEvents').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('learnerReflections').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('missionAttempts').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('interactionEvents').where('actorId', '==', learnerId).limit(400).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      siteId
-        ? admin.firestore().collection('capabilities').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
-        : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
-      siteId
-        ? admin.firestore().collection('processDomains').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
-        : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
-      admin.firestore().collection('processDomainMastery').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-      admin.firestore().collection('processDomainGrowthEvents').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
-    ]);
+  const [
+    portfolioSnap,
+    evidenceSnap,
+    masterySnap,
+    growthSnap,
+    reflectionsSnap,
+    missionAttemptsSnap,
+    interactionEventsSnap,
+    capabilitiesSnap,
+    processDomainsSnap,
+    pdMasterySnap,
+    pdGrowthSnap,
+  ] = await Promise.all([
+    admin
+      .firestore()
+      .collection('portfolioItems')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('evidenceRecords')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('capabilityMastery')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('capabilityGrowthEvents')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('learnerReflections')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('missionAttempts')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('interactionEvents')
+      .where('actorId', '==', learnerId)
+      .limit(400)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    siteId
+      ? admin
+          .firestore()
+          .collection('capabilities')
+          .where('siteId', '==', siteId)
+          .get()
+          .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
+      : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
+    siteId
+      ? admin
+          .firestore()
+          .collection('processDomains')
+          .where('siteId', '==', siteId)
+          .get()
+          .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
+      : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
+    admin
+      .firestore()
+      .collection('processDomainMastery')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin
+      .firestore()
+      .collection('processDomainGrowthEvents')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+  ]);
 
   const includeForSite = (data: Record<string, unknown>): boolean => {
     if (!siteId) return true;
@@ -2640,7 +2895,7 @@ async function buildParentLearnerSummary(params: {
   const miloosExplainBackSubmitted = countMiloOSSupportEvents('explain_it_back_submitted');
   const miloosPendingExplainBack = Math.max(
     Math.max(miloosSupportOpened, miloosSupportUsed) - miloosExplainBackSubmitted,
-    0,
+    0
   );
   const miloosSupportDates = miloosSupportEvents
     .map((row) => parseDateFromUnknown(row.createdAt ?? row.timestamp))
@@ -2657,8 +2912,8 @@ async function buildParentLearnerSummary(params: {
       miloosSupportOpened === 0 && miloosSupportUsed === 0
         ? 'no-support-yet'
         : miloosPendingExplainBack > 0
-        ? 'pending-explain-back'
-        : 'support-verified',
+          ? 'pending-explain-back'
+          : 'support-verified',
     isMasteryEvidence: false,
   };
 
@@ -2680,36 +2935,47 @@ async function buildParentLearnerSummary(params: {
   const reviewerIds = Array.from(
     new Set(
       [
-        ...growthRows.map((row) => (typeof row.educatorId === 'string' ? row.educatorId.trim() : '')),
-        ...portfolioRows.map((row) => (typeof row.educatorId === 'string' ? row.educatorId.trim() : '')),
-        ...missionAttemptRows.map((row) => (typeof row.reviewedBy === 'string' ? row.reviewedBy.trim() : '')),
-      ].filter(Boolean),
-    ),
+        ...growthRows.map((row) =>
+          typeof row.educatorId === 'string' ? row.educatorId.trim() : ''
+        ),
+        ...portfolioRows.map((row) =>
+          typeof row.educatorId === 'string' ? row.educatorId.trim() : ''
+        ),
+        ...missionAttemptRows.map((row) =>
+          typeof row.reviewedBy === 'string' ? row.reviewedBy.trim() : ''
+        ),
+      ].filter(Boolean)
+    )
   );
   const reviewerNameEntries = await Promise.all(
     reviewerIds.map(async (reviewerId) => {
       try {
         const reviewerSnap = await admin.firestore().collection('users').doc(reviewerId).get();
         const reviewerData = reviewerSnap.data() as Record<string, unknown> | undefined;
-        const displayName = typeof reviewerData?.displayName === 'string' ? reviewerData.displayName.trim() : '';
+        const displayName =
+          typeof reviewerData?.displayName === 'string' ? reviewerData.displayName.trim() : '';
         const email = typeof reviewerData?.email === 'string' ? reviewerData.email.trim() : '';
         return [reviewerId, displayName || email] as const;
       } catch {
         return [reviewerId, ''] as const;
       }
-    }),
+    })
   );
   const reviewerNames = Object.fromEntries(
-    reviewerNameEntries.filter((entry) => Boolean(entry[1])),
+    reviewerNameEntries.filter((entry) => Boolean(entry[1]))
   ) as Record<string, string>;
 
   const proofBundleIds = Array.from(
     new Set(
       [
-        ...missionAttemptRows.map((row) => (typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : '')),
-        ...portfolioRows.map((row) => (typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : '')),
-      ].filter(Boolean),
-    ),
+        ...missionAttemptRows.map((row) =>
+          typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : ''
+        ),
+        ...portfolioRows.map((row) =>
+          typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : ''
+        ),
+      ].filter(Boolean)
+    )
   );
   const proofBundleEntries = await Promise.all(
     proofBundleIds.map(async (proofBundleId) => {
@@ -2722,32 +2988,50 @@ async function buildParentLearnerSummary(params: {
         if (!proofBundleSnap.exists) {
           return [proofBundleId, null] as const;
         }
-        return [proofBundleId, { id: proofBundleSnap.id, ...(proofBundleSnap.data() as Record<string, unknown>) }] as const;
+        return [
+          proofBundleId,
+          { id: proofBundleSnap.id, ...(proofBundleSnap.data() as Record<string, unknown>) },
+        ] as const;
       } catch {
         return [proofBundleId, null] as const;
       }
-    }),
+    })
   );
   const proofBundleDetails = Object.fromEntries(
-    proofBundleEntries.filter((entry) => entry[1] != null),
+    proofBundleEntries.filter((entry) => entry[1] != null)
   ) as Record<string, Record<string, unknown>>;
 
   const buildProofCheckpoints = (
-    proofBundle: Record<string, unknown> | undefined,
+    proofBundle: Record<string, unknown> | undefined
   ): Array<Record<string, unknown>> => {
-    const versionHistory = Array.isArray(proofBundle?.versionHistory) ? proofBundle.versionHistory : [];
+    const versionHistory = Array.isArray(proofBundle?.versionHistory)
+      ? proofBundle.versionHistory
+      : [];
     return versionHistory
-      .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
+      .filter(
+        (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object'
+      )
       .map((entry) => ({
         id: typeof entry.id === 'string' ? entry.id.trim() : '',
         summary: typeof entry.summary === 'string' ? entry.summary.trim() : '',
-        artifactNote: typeof entry.artifactNote === 'string' && entry.artifactNote.trim() ? entry.artifactNote.trim() : null,
-        actorId: typeof entry.actorId === 'string' && entry.actorId.trim() ? entry.actorId.trim() : null,
-        actorRole: typeof entry.actorRole === 'string' && entry.actorRole.trim() ? entry.actorRole.trim() : null,
+        artifactNote:
+          typeof entry.artifactNote === 'string' && entry.artifactNote.trim()
+            ? entry.artifactNote.trim()
+            : null,
+        actorId:
+          typeof entry.actorId === 'string' && entry.actorId.trim() ? entry.actorId.trim() : null,
+        actorRole:
+          typeof entry.actorRole === 'string' && entry.actorRole.trim()
+            ? entry.actorRole.trim()
+            : null,
         createdAt: parseDateFromUnknown(entry.createdAt)?.toISOString() ?? null,
       }))
       .filter((entry) => Boolean(entry.id) || Boolean(entry.summary))
-      .sort((left, right) => Date.parse(String(left.createdAt ?? '1970-01-01')) - Date.parse(String(right.createdAt ?? '1970-01-01')));
+      .sort(
+        (left, right) =>
+          Date.parse(String(left.createdAt ?? '1970-01-01')) -
+          Date.parse(String(right.createdAt ?? '1970-01-01'))
+      );
   };
 
   const firstBoolean = (...values: unknown[]): boolean | null => {
@@ -2776,17 +3060,28 @@ async function buildParentLearnerSummary(params: {
     .filter((value): value is Date => value instanceof Date)
     .sort((left, right) => right.getTime() - left.getTime());
   const reviewedEvidenceCount = evidenceRows.filter((row) => {
-    const rubricStatus = typeof row.rubricStatus === 'string' ? row.rubricStatus.trim().toLowerCase() : '';
-    const growthStatus = typeof row.growthStatus === 'string' ? row.growthStatus.trim().toLowerCase() : '';
-    return rubricStatus === 'linked' || rubricStatus === 'applied' || growthStatus === 'updated' || growthStatus === 'recorded';
+    const rubricStatus =
+      typeof row.rubricStatus === 'string' ? row.rubricStatus.trim().toLowerCase() : '';
+    const growthStatus =
+      typeof row.growthStatus === 'string' ? row.growthStatus.trim().toLowerCase() : '';
+    return (
+      rubricStatus === 'linked' ||
+      rubricStatus === 'applied' ||
+      growthStatus === 'updated' ||
+      growthStatus === 'recorded'
+    );
   }).length;
   const portfolioLinkedEvidenceCount = evidenceRows.filter((row) => {
-    const linkedPortfolioItemId = typeof row.linkedPortfolioItemId === 'string' ? row.linkedPortfolioItemId.trim() : '';
-    const portfolioStatus = typeof row.portfolioStatus === 'string' ? row.portfolioStatus.trim().toLowerCase() : '';
+    const linkedPortfolioItemId =
+      typeof row.linkedPortfolioItemId === 'string' ? row.linkedPortfolioItemId.trim() : '';
+    const portfolioStatus =
+      typeof row.portfolioStatus === 'string' ? row.portfolioStatus.trim().toLowerCase() : '';
     return Boolean(linkedPortfolioItemId) || portfolioStatus === 'linked';
   }).length;
   const verificationPromptCount = evidenceRows.filter((row) => {
-    return typeof row.nextVerificationPrompt === 'string' && row.nextVerificationPrompt.trim().length > 0;
+    return (
+      typeof row.nextVerificationPrompt === 'string' && row.nextVerificationPrompt.trim().length > 0
+    );
   }).length;
   const evidenceSummary: Record<string, unknown> = {
     recordCount: evidenceRows.length,
@@ -2797,7 +3092,11 @@ async function buildParentLearnerSummary(params: {
   };
 
   const latestLevels = masteryRows
-    .map((row) => (typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel) ? row.latestLevel : null))
+    .map((row) =>
+      typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
+        ? row.latestLevel
+        : null
+    )
     .filter((value): value is number => value != null && value > 0);
   const averageLevel = latestLevels.length
     ? latestLevels.reduce((sum, value) => sum + value, 0) / latestLevels.length
@@ -2806,15 +3105,18 @@ async function buildParentLearnerSummary(params: {
     .map((row) => parseDateFromUnknown(row.createdAt))
     .filter((value): value is Date => value instanceof Date)
     .sort((left, right) => right.getTime() - left.getTime());
-  const latestGrowthLevel = growthRows
-    .map((row) => (typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : null))
-    .find((value): value is number => value != null && value > 0) ?? null;
+  const latestGrowthLevel =
+    growthRows
+      .map((row) =>
+        typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : null
+      )
+      .find((value): value is number => value != null && value > 0) ?? null;
   const growthSummary: Record<string, unknown> = {
     capabilityCount: masteryRows.length,
     updatedCapabilityCount: new Set(
       growthRows
         .map((row) => (typeof row.capabilityId === 'string' ? row.capabilityId.trim() : ''))
-        .filter(Boolean),
+        .filter(Boolean)
     ).size,
     averageLevel,
     latestLevel: latestGrowthLevel,
@@ -2828,7 +3130,8 @@ async function buildParentLearnerSummary(params: {
   };
   masteryRows.forEach((row) => {
     const pillarKey = normalizeParentPillarKey(row.pillarCode);
-    const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel) ? row.latestLevel : 0;
+    const latestLevel =
+      typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel) ? row.latestLevel : 0;
     if (pillarKey && latestLevel > 0) {
       pillarBuckets[pillarKey].push(Math.max(0, Math.min(1, latestLevel / 4)));
     }
@@ -2840,27 +3143,34 @@ async function buildParentLearnerSummary(params: {
   const futureSkills = averageBucket(pillarBuckets.futureSkills);
   const leadership = averageBucket(pillarBuckets.leadership);
   const impact = averageBucket(pillarBuckets.impact);
-  const nonZeroCapabilityValues = [futureSkills, leadership, impact].filter((value): value is number => value != null && value > 0);
+  const nonZeroCapabilityValues = [futureSkills, leadership, impact].filter(
+    (value): value is number => value != null && value > 0
+  );
   const capabilityOverall = nonZeroCapabilityValues.length
-    ? nonZeroCapabilityValues.reduce((sum, value) => sum + value, 0) / nonZeroCapabilityValues.length
+    ? nonZeroCapabilityValues.reduce((sum, value) => sum + value, 0) /
+      nonZeroCapabilityValues.length
     : null;
-  const capabilityBand = capabilityOverall == null
-    ? null
-    : capabilityOverall >= 0.75
-    ? 'strong'
-    : capabilityOverall >= 0.45
-    ? 'developing'
-    : 'emerging';
+  const capabilityBand =
+    capabilityOverall == null
+      ? null
+      : capabilityOverall >= 0.75
+        ? 'strong'
+        : capabilityOverall >= 0.45
+          ? 'developing'
+          : 'emerging';
 
   const portfolioDates = portfolioRows
     .map((row) => parseDateFromUnknown(row.updatedAt ?? row.createdAt))
     .filter((value): value is Date => value instanceof Date)
     .sort((left, right) => right.getTime() - left.getTime());
   const verifiedArtifactCount = portfolioRows.filter((row) => {
-    const verificationStatus = typeof row.verificationStatus === 'string' ? row.verificationStatus.trim().toLowerCase() : '';
+    const verificationStatus =
+      typeof row.verificationStatus === 'string' ? row.verificationStatus.trim().toLowerCase() : '';
     return verificationStatus === 'reviewed' || verificationStatus === 'verified';
   }).length;
-  const evidenceLinkedArtifactCount = portfolioRows.filter((row) => Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0).length;
+  const evidenceLinkedArtifactCount = portfolioRows.filter(
+    (row) => Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0
+  ).length;
   const badgeCount = portfolioRows.filter((row) => {
     const title = typeof row.title === 'string' ? row.title.trim().toLowerCase() : '';
     const mediaType = typeof row.mediaType === 'string' ? row.mediaType.trim().toLowerCase() : '';
@@ -2877,96 +3187,120 @@ async function buildParentLearnerSummary(params: {
   };
   const portfolioItemsPreview = portfolioRows
     .map((row) => {
-      const missionAttemptId = typeof row.missionAttemptId === 'string' ? row.missionAttemptId.trim() : '';
+      const missionAttemptId =
+        typeof row.missionAttemptId === 'string' ? row.missionAttemptId.trim() : '';
       const matchingMissionAttempt = missionAttemptId
-        ? missionAttemptRows.find((attempt) => typeof attempt.id === 'string' && attempt.id === missionAttemptId)
+        ? missionAttemptRows.find(
+            (attempt) => typeof attempt.id === 'string' && attempt.id === missionAttemptId
+          )
         : undefined;
-      const sessionOccurrenceId = typeof matchingMissionAttempt?.sessionOccurrenceId === 'string'
-        ? matchingMissionAttempt.sessionOccurrenceId.trim()
-        : '';
+      const sessionOccurrenceId =
+        typeof matchingMissionAttempt?.sessionOccurrenceId === 'string'
+          ? matchingMissionAttempt.sessionOccurrenceId.trim()
+          : '';
       const matchingInteractionEvents = sessionOccurrenceId
-        ? interactionEventRows.filter((entry) =>
-            typeof entry.sessionOccurrenceId === 'string' && entry.sessionOccurrenceId.trim() === sessionOccurrenceId,
+        ? interactionEventRows.filter(
+            (entry) =>
+              typeof entry.sessionOccurrenceId === 'string' &&
+              entry.sessionOccurrenceId.trim() === sessionOccurrenceId
           )
         : [];
-      const proofBundleSummary = matchingMissionAttempt?.proofBundleSummary as Record<string, unknown> | undefined;
-      const proofBundleId = typeof row.proofBundleId === 'string' && row.proofBundleId.trim()
-        ? row.proofBundleId.trim()
-        : typeof matchingMissionAttempt?.proofBundleId === 'string' && matchingMissionAttempt.proofBundleId.trim()
-        ? matchingMissionAttempt.proofBundleId.trim()
-        : '';
+      const proofBundleSummary = matchingMissionAttempt?.proofBundleSummary as
+        | Record<string, unknown>
+        | undefined;
+      const proofBundleId =
+        typeof row.proofBundleId === 'string' && row.proofBundleId.trim()
+          ? row.proofBundleId.trim()
+          : typeof matchingMissionAttempt?.proofBundleId === 'string' &&
+              matchingMissionAttempt.proofBundleId.trim()
+            ? matchingMissionAttempt.proofBundleId.trim()
+            : '';
       const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
       const proofCheckpoints = buildProofCheckpoints(proofBundle);
-      const hasExplainItBack = firstBoolean(
-        row.proofHasExplainItBack,
-        proofBundleSummary?.hasExplainItBack,
-        proofBundle?.hasExplainItBack,
-      ) ?? false;
-      const hasOralCheck = firstBoolean(
-        row.proofHasOralCheck,
-        proofBundleSummary?.hasOralCheck,
-        proofBundle?.hasOralCheck,
-      ) ?? false;
-      const hasMiniRebuild = firstBoolean(
-        row.proofHasMiniRebuild,
-        proofBundleSummary?.hasMiniRebuild,
-        proofBundle?.hasMiniRebuild,
-      ) ?? false;
-      const proofCheckpointCount = firstNumber(
-        row.proofCheckpointCount,
-        proofBundleSummary?.checkpointCount,
-        proofCheckpoints.length,
-      ) ?? 0;
+      const hasExplainItBack =
+        firstBoolean(
+          row.proofHasExplainItBack,
+          proofBundleSummary?.hasExplainItBack,
+          proofBundle?.hasExplainItBack
+        ) ?? false;
+      const hasOralCheck =
+        firstBoolean(
+          row.proofHasOralCheck,
+          proofBundleSummary?.hasOralCheck,
+          proofBundle?.hasOralCheck
+        ) ?? false;
+      const hasMiniRebuild =
+        firstBoolean(
+          row.proofHasMiniRebuild,
+          proofBundleSummary?.hasMiniRebuild,
+          proofBundle?.hasMiniRebuild
+        ) ?? false;
+      const proofCheckpointCount =
+        firstNumber(
+          row.proofCheckpointCount,
+          proofBundleSummary?.checkpointCount,
+          proofCheckpoints.length
+        ) ?? 0;
       const hasLearnerAiDisclosure = proofBundleSummary?.hasLearnerAiDisclosure === true;
       const learnerAiDeclaredUsed = proofBundleSummary?.aiAssistanceUsed === true;
-      const directProofOfLearningStatus = typeof row.proofOfLearningStatus === 'string'
-        ? row.proofOfLearningStatus.trim()
-        : '';
+      const directProofOfLearningStatus =
+        typeof row.proofOfLearningStatus === 'string' ? row.proofOfLearningStatus.trim() : '';
       const proofOfLearningStatus = directProofOfLearningStatus
         ? directProofOfLearningStatus
         : !matchingMissionAttempt
-        ? 'not-available'
-        : hasExplainItBack && hasOralCheck && hasMiniRebuild
-        ? 'verified'
-        : hasExplainItBack || hasOralCheck || hasMiniRebuild
-        ? 'partial'
-        : 'missing';
+          ? 'not-available'
+          : hasExplainItBack && hasOralCheck && hasMiniRebuild
+            ? 'verified'
+            : hasExplainItBack || hasOralCheck || hasMiniRebuild
+              ? 'partial'
+              : 'missing';
       const learnerAiEventCount = matchingInteractionEvents.filter((entry) => {
-        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        const eventType =
+          typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'ai_help_used' || eventType === 'ai_help_opened';
       }).length;
       const hasLearnerExplainBackEvent = matchingInteractionEvents.some((entry) => {
-        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        const eventType =
+          typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'explain_it_back_submitted';
       });
-      const hasAiFeedbackSignal = (typeof row.aiFeedbackDraft === 'string'
-        && row.aiFeedbackDraft.trim().length > 0)
-        || (typeof row.aiFeedbackBy === 'string'
-        && row.aiFeedbackBy.trim().length > 0)
-        || parseDateFromUnknown(row.aiFeedbackAt) != null
-        || (typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
-        && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0)
-        || (typeof matchingMissionAttempt?.aiFeedbackBy === 'string'
-        && matchingMissionAttempt.aiFeedbackBy.trim().length > 0)
-        || parseDateFromUnknown(matchingMissionAttempt?.aiFeedbackAt) != null;
-      const directAiDisclosureStatus = typeof row.aiDisclosureStatus === 'string'
-        ? row.aiDisclosureStatus.trim()
-        : '';
-      const aiAssistanceDetails = typeof row.aiAssistanceDetails === 'string' && row.aiAssistanceDetails.trim()
-        ? row.aiAssistanceDetails.trim()
-        : typeof matchingMissionAttempt?.aiAssistanceDetails === 'string' && matchingMissionAttempt.aiAssistanceDetails.trim()
-        ? matchingMissionAttempt.aiAssistanceDetails.trim()
-        : typeof proofBundle?.aiAssistanceDetails === 'string' && proofBundle.aiAssistanceDetails.trim()
-        ? proofBundle.aiAssistanceDetails.trim()
-        : null;
+      const hasAiFeedbackSignal =
+        (typeof row.aiFeedbackDraft === 'string' && row.aiFeedbackDraft.trim().length > 0) ||
+        (typeof row.aiFeedbackBy === 'string' && row.aiFeedbackBy.trim().length > 0) ||
+        parseDateFromUnknown(row.aiFeedbackAt) != null ||
+        (typeof matchingMissionAttempt?.aiFeedbackDraft === 'string' &&
+          matchingMissionAttempt.aiFeedbackDraft.trim().length > 0) ||
+        (typeof matchingMissionAttempt?.aiFeedbackBy === 'string' &&
+          matchingMissionAttempt.aiFeedbackBy.trim().length > 0) ||
+        parseDateFromUnknown(matchingMissionAttempt?.aiFeedbackAt) != null;
+      const directAiDisclosureStatus =
+        typeof row.aiDisclosureStatus === 'string' ? row.aiDisclosureStatus.trim() : '';
+      const aiAssistanceDetails =
+        typeof row.aiAssistanceDetails === 'string' && row.aiAssistanceDetails.trim()
+          ? row.aiAssistanceDetails.trim()
+          : typeof matchingMissionAttempt?.aiAssistanceDetails === 'string' &&
+              matchingMissionAttempt.aiAssistanceDetails.trim()
+            ? matchingMissionAttempt.aiAssistanceDetails.trim()
+            : typeof proofBundle?.aiAssistanceDetails === 'string' &&
+                proofBundle.aiAssistanceDetails.trim()
+              ? proofBundle.aiAssistanceDetails.trim()
+              : null;
       const growthEventIds = Array.isArray(row.growthEventIds)
-        ? row.growthEventIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0).map((value) => value.trim())
+        ? row.growthEventIds
+            .filter(
+              (value): value is string => typeof value === 'string' && value.trim().length > 0
+            )
+            .map((value) => value.trim())
         : [];
       const matchingGrowth = growthRows
         .filter((entry) => {
           const growthId = typeof entry.id === 'string' ? entry.id.trim() : '';
-          const growthMissionAttemptId = typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '';
-          return (growthId && growthEventIds.includes(growthId)) || (missionAttemptId && growthMissionAttemptId === missionAttemptId);
+          const growthMissionAttemptId =
+            typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '';
+          return (
+            (growthId && growthEventIds.includes(growthId)) ||
+            (missionAttemptId && growthMissionAttemptId === missionAttemptId)
+          );
         })
         .sort((left, right) => {
           const leftTime = parseDateFromUnknown(left.createdAt)?.getTime() ?? 0;
@@ -2975,75 +3309,98 @@ async function buildParentLearnerSummary(params: {
         });
       const latestGrowth = matchingGrowth[0];
       const reviewerId = latestGrowth
-        ? (typeof latestGrowth.educatorId === 'string' ? latestGrowth.educatorId.trim() : '')
+        ? typeof latestGrowth.educatorId === 'string'
+          ? latestGrowth.educatorId.trim()
+          : ''
         : typeof row.educatorId === 'string' && row.educatorId.trim()
-        ? row.educatorId.trim()
-        : typeof matchingMissionAttempt?.reviewedBy === 'string' && matchingMissionAttempt.reviewedBy.trim()
-        ? matchingMissionAttempt.reviewedBy.trim()
-        : '';
-      const reviewerName = reviewerId ? reviewerNames[reviewerId] ?? null : null;
+          ? row.educatorId.trim()
+          : typeof matchingMissionAttempt?.reviewedBy === 'string' &&
+              matchingMissionAttempt.reviewedBy.trim()
+            ? matchingMissionAttempt.reviewedBy.trim()
+            : '';
+      const reviewerName = reviewerId ? (reviewerNames[reviewerId] ?? null) : null;
       const reviewedAt = latestGrowth
-        ? parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null
-        : parseDateFromUnknown(row.updatedAt ?? row.reviewedAt ?? matchingMissionAttempt?.reviewedAt)?.toISOString() ?? null;
+        ? (parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null)
+        : (parseDateFromUnknown(
+            row.updatedAt ?? row.reviewedAt ?? matchingMissionAttempt?.reviewedAt
+          )?.toISOString() ?? null);
       const rubricRawScore = latestGrowth
-        ? (typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore) ? latestGrowth.rawScore : null)
+        ? typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore)
+          ? latestGrowth.rawScore
+          : null
         : typeof row.rubricTotalScore === 'number' && Number.isFinite(row.rubricTotalScore)
-        ? row.rubricTotalScore
-        : typeof matchingMissionAttempt?.rubricTotalScore === 'number' && Number.isFinite(matchingMissionAttempt.rubricTotalScore)
-        ? matchingMissionAttempt.rubricTotalScore
-        : null;
+          ? row.rubricTotalScore
+          : typeof matchingMissionAttempt?.rubricTotalScore === 'number' &&
+              Number.isFinite(matchingMissionAttempt.rubricTotalScore)
+            ? matchingMissionAttempt.rubricTotalScore
+            : null;
       const rubricMaxScore = latestGrowth
-        ? (typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore) ? latestGrowth.maxScore : null)
+        ? typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore)
+          ? latestGrowth.maxScore
+          : null
         : typeof row.rubricMaxScore === 'number' && Number.isFinite(row.rubricMaxScore)
-        ? row.rubricMaxScore
-        : typeof matchingMissionAttempt?.rubricMaxScore === 'number' && Number.isFinite(matchingMissionAttempt.rubricMaxScore)
-        ? matchingMissionAttempt.rubricMaxScore
-        : null;
-      const rubricLevel = latestGrowth && typeof latestGrowth.level === 'number' && Number.isFinite(latestGrowth.level)
-        ? latestGrowth.level
-        : null;
-      const aiFeedbackEducatorId = typeof row.aiFeedbackBy === 'string' && row.aiFeedbackBy.trim()
-        ? row.aiFeedbackBy.trim()
-        : typeof matchingMissionAttempt?.aiFeedbackBy === 'string' && matchingMissionAttempt.aiFeedbackBy.trim()
-        ? matchingMissionAttempt.aiFeedbackBy.trim()
-        : '';
+          ? row.rubricMaxScore
+          : typeof matchingMissionAttempt?.rubricMaxScore === 'number' &&
+              Number.isFinite(matchingMissionAttempt.rubricMaxScore)
+            ? matchingMissionAttempt.rubricMaxScore
+            : null;
+      const rubricLevel =
+        latestGrowth &&
+        typeof latestGrowth.level === 'number' &&
+        Number.isFinite(latestGrowth.level)
+          ? latestGrowth.level
+          : null;
+      const aiFeedbackEducatorId =
+        typeof row.aiFeedbackBy === 'string' && row.aiFeedbackBy.trim()
+          ? row.aiFeedbackBy.trim()
+          : typeof matchingMissionAttempt?.aiFeedbackBy === 'string' &&
+              matchingMissionAttempt.aiFeedbackBy.trim()
+            ? matchingMissionAttempt.aiFeedbackBy.trim()
+            : '';
       const aiFeedbackEducatorName = aiFeedbackEducatorId
-        ? reviewerNames[aiFeedbackEducatorId] ?? reviewerName
+        ? (reviewerNames[aiFeedbackEducatorId] ?? reviewerName)
         : hasAiFeedbackSignal
-        ? reviewerName
-        : null;
-      const aiFeedbackAt = parseDateFromUnknown(row.aiFeedbackAt ?? matchingMissionAttempt?.aiFeedbackAt)?.toISOString()
-        ?? (hasAiFeedbackSignal ? reviewedAt : null);
+          ? reviewerName
+          : null;
+      const aiFeedbackAt =
+        parseDateFromUnknown(
+          row.aiFeedbackAt ?? matchingMissionAttempt?.aiFeedbackAt
+        )?.toISOString() ?? (hasAiFeedbackSignal ? reviewedAt : null);
       const aiDisclosureStatus = directAiDisclosureStatus
         ? directAiDisclosureStatus
         : hasLearnerAiDisclosure
-        ? learnerAiDeclaredUsed
-          ? hasExplainItBack
-            ? 'learner-ai-verified'
-            : 'learner-ai-verification-gap'
-          : 'learner-ai-not-used'
-        : learnerAiEventCount > 0
-        ? hasLearnerExplainBackEvent
-          ? 'learner-ai-verified'
-          : 'learner-ai-verification-gap'
-        : hasAiFeedbackSignal
-        ? 'educator-feedback-ai'
-        : matchingMissionAttempt
-        ? 'no-learner-ai-signal'
-        : 'not-available';
-      const progressionDescriptors = stringListFromUnknown(row.progressionDescriptors).length > 0
-        ? stringListFromUnknown(row.progressionDescriptors)
-        : latestGrowth
-        ? stringListFromUnknown(latestGrowth.progressionDescriptors)
-        : [];
-      const checkpointMappings = checkpointMappingsFromUnknown(row.checkpointMappings).length > 0
-        ? checkpointMappingsFromUnknown(row.checkpointMappings)
-        : latestGrowth
-        ? checkpointMappingsFromUnknown(latestGrowth.checkpointMappings)
-        : [];
+          ? learnerAiDeclaredUsed
+            ? hasExplainItBack
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : 'learner-ai-not-used'
+          : learnerAiEventCount > 0
+            ? hasLearnerExplainBackEvent
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : hasAiFeedbackSignal
+              ? 'educator-feedback-ai'
+              : matchingMissionAttempt
+                ? 'no-learner-ai-signal'
+                : 'not-available';
+      const progressionDescriptors =
+        stringListFromUnknown(row.progressionDescriptors).length > 0
+          ? stringListFromUnknown(row.progressionDescriptors)
+          : latestGrowth
+            ? stringListFromUnknown(latestGrowth.progressionDescriptors)
+            : [];
+      const checkpointMappings =
+        checkpointMappingsFromUnknown(row.checkpointMappings).length > 0
+          ? checkpointMappingsFromUnknown(row.checkpointMappings)
+          : latestGrowth
+            ? checkpointMappingsFromUnknown(latestGrowth.checkpointMappings)
+            : [];
       return {
         id: typeof row.id === 'string' ? row.id : randomUUID(),
-        title: typeof row.title === 'string' && row.title.trim() ? row.title.trim() : 'Portfolio artifact',
+        title:
+          typeof row.title === 'string' && row.title.trim()
+            ? row.title.trim()
+            : 'Portfolio artifact',
         description:
           typeof row.description === 'string' && row.description.trim()
             ? row.description.trim()
@@ -3054,15 +3411,25 @@ async function buildParentLearnerSummary(params: {
           (typeof row.mediaType === 'string' && row.mediaType.trim().toLowerCase() === 'badge')
             ? 'badge'
             : 'project',
-        completedAt: parseDateFromUnknown(row.updatedAt ?? row.createdAt)?.toISOString() ?? now.toISOString(),
-        verificationStatus: typeof row.verificationStatus === 'string' ? row.verificationStatus.trim() : null,
+        completedAt:
+          parseDateFromUnknown(row.updatedAt ?? row.createdAt)?.toISOString() ?? now.toISOString(),
+        verificationStatus:
+          typeof row.verificationStatus === 'string' ? row.verificationStatus.trim() : null,
         evidenceLinked: Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0,
         capabilityTitles: Array.isArray(row.capabilityIds)
-          ? row.capabilityIds.filter((v): v is string => typeof v === 'string').map((id) => capabilityTitlesById.get(id.trim()) ?? id.trim()).filter(Boolean)
+          ? row.capabilityIds
+              .filter((v): v is string => typeof v === 'string')
+              .map((id) => capabilityTitlesById.get(id.trim()) ?? id.trim())
+              .filter(Boolean)
           : [],
-        evidenceRecordIds: Array.isArray(row.evidenceRecordIds) ? row.evidenceRecordIds.filter((value) => typeof value === 'string') : [],
+        evidenceRecordIds: Array.isArray(row.evidenceRecordIds)
+          ? row.evidenceRecordIds.filter((value) => typeof value === 'string')
+          : [],
         missionAttemptId: missionAttemptId || null,
-        verificationPrompt: typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim() ? row.verificationPrompt.trim() : null,
+        verificationPrompt:
+          typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim()
+            ? row.verificationPrompt.trim()
+            : null,
         progressionDescriptors,
         checkpointMappings,
         proofOfLearningStatus,
@@ -3074,17 +3441,17 @@ async function buildParentLearnerSummary(params: {
         proofExplainItBackExcerpt: firstTrimmedString(
           row.proofExplainItBackExcerpt,
           proofBundle?.explainItBackExcerpt,
-          proofBundle?.explainItBack,
+          proofBundle?.explainItBack
         ),
         proofOralCheckExcerpt: firstTrimmedString(
           row.proofOralCheckExcerpt,
           proofBundle?.oralCheckExcerpt,
-          proofBundle?.oralCheckResponse,
+          proofBundle?.oralCheckResponse
         ),
         proofMiniRebuildExcerpt: firstTrimmedString(
           row.proofMiniRebuildExcerpt,
           proofBundle?.miniRebuildExcerpt,
-          proofBundle?.miniRebuildPlan,
+          proofBundle?.miniRebuildPlan
         ),
         proofCheckpoints,
         aiHasLearnerDisclosure: hasLearnerAiDisclosure,
@@ -3103,7 +3470,9 @@ async function buildParentLearnerSummary(params: {
         aiFeedbackAt,
       };
     })
-    .sort((left, right) => Date.parse(String(right.completedAt)) - Date.parse(String(left.completedAt)));
+    .sort(
+      (left, right) => Date.parse(String(right.completedAt)) - Date.parse(String(left.completedAt))
+    );
 
   const reflectionDates = reflectionRows
     .map((row) => parseDateFromUnknown(row.createdAt))
@@ -3113,49 +3482,67 @@ async function buildParentLearnerSummary(params: {
     .map((row) => {
       const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
       if (!capabilityId) return null;
-      const matchingEvidence: Array<Record<string, unknown>> = evidenceRows.filter((entry) =>
-        typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
+      const matchingEvidence: Array<Record<string, unknown>> = evidenceRows.filter(
+        (entry) =>
+          typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId
       );
-      const matchingPortfolio: Array<Record<string, unknown>> = portfolioRows.filter((entry) =>
-        Array.isArray(entry.capabilityIds) && entry.capabilityIds.includes(capabilityId),
+      const matchingPortfolio: Array<Record<string, unknown>> = portfolioRows.filter(
+        (entry) => Array.isArray(entry.capabilityIds) && entry.capabilityIds.includes(capabilityId)
       );
-      const matchingGrowth: Array<Record<string, unknown>> = growthRows.filter((entry) =>
-        typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
+      const matchingGrowth: Array<Record<string, unknown>> = growthRows.filter(
+        (entry) =>
+          typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId
       );
       const missionAttemptIds = new Set<string>([
         typeof row.latestMissionAttemptId === 'string' ? row.latestMissionAttemptId.trim() : '',
-        ...matchingEvidence.map((entry) => (typeof entry.linkedMissionAttemptId === 'string' ? entry.linkedMissionAttemptId.trim() : '')),
-        ...matchingGrowth.map((entry) => (typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '')),
-        ...matchingPortfolio.map((entry) => (typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '')),
+        ...matchingEvidence.map((entry) =>
+          typeof entry.linkedMissionAttemptId === 'string'
+            ? entry.linkedMissionAttemptId.trim()
+            : ''
+        ),
+        ...matchingGrowth.map((entry) =>
+          typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : ''
+        ),
+        ...matchingPortfolio.map((entry) =>
+          typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : ''
+        ),
       ]);
       missionAttemptIds.delete('');
-      const matchingMissionAttempts: Array<Record<string, unknown>> = missionAttemptRows.filter((entry) =>
-        typeof entry.id === 'string' && missionAttemptIds.has(entry.id),
+      const matchingMissionAttempts: Array<Record<string, unknown>> = missionAttemptRows.filter(
+        (entry) => typeof entry.id === 'string' && missionAttemptIds.has(entry.id)
       );
       const sessionOccurrenceIds = new Set<string>(
         matchingMissionAttempts
-          .map((entry) => (typeof entry.sessionOccurrenceId === 'string' ? entry.sessionOccurrenceId.trim() : ''))
-          .filter(Boolean),
+          .map((entry) =>
+            typeof entry.sessionOccurrenceId === 'string' ? entry.sessionOccurrenceId.trim() : ''
+          )
+          .filter(Boolean)
       );
-      const matchingInteractionEvents: Array<Record<string, unknown>> = interactionEventRows.filter((entry) =>
-        typeof entry.sessionOccurrenceId === 'string' && sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim()),
+      const matchingInteractionEvents: Array<Record<string, unknown>> = interactionEventRows.filter(
+        (entry) =>
+          typeof entry.sessionOccurrenceId === 'string' &&
+          sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim())
       );
-      const title = (capabilityTitlesById.get(capabilityId) ?? capabilityId) || 'Capability title unavailable';
-      const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
-        ? Math.round(row.latestLevel)
-        : null;
+      const title =
+        (capabilityTitlesById.get(capabilityId) ?? capabilityId) || 'Capability title unavailable';
+      const latestLevel =
+        typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
+          ? Math.round(row.latestLevel)
+          : null;
       const verifiedArtifactCount = matchingPortfolio.filter((entry) => {
-        const verificationStatus = typeof entry.verificationStatus === 'string'
-          ? entry.verificationStatus.trim().toLowerCase()
-          : '';
+        const verificationStatus =
+          typeof entry.verificationStatus === 'string'
+            ? entry.verificationStatus.trim().toLowerCase()
+            : '';
         return verificationStatus === 'reviewed' || verificationStatus === 'verified';
       }).length;
-      const latestEvidenceAt = [
-        ...matchingEvidence.map((entry) => parseDateFromUnknown(entry.observedAt)),
-        ...matchingGrowth.map((entry) => parseDateFromUnknown(entry.createdAt)),
-      ]
-        .filter((value): value is Date => value instanceof Date)
-        .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
+      const latestEvidenceAt =
+        [
+          ...matchingEvidence.map((entry) => parseDateFromUnknown(entry.observedAt)),
+          ...matchingGrowth.map((entry) => parseDateFromUnknown(entry.createdAt)),
+        ]
+          .filter((value): value is Date => value instanceof Date)
+          .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
       const hasExplainItBack = matchingMissionAttempts.some((entry) => {
         const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
         return summary?.hasExplainItBack === true;
@@ -3176,31 +3563,40 @@ async function buildParentLearnerSummary(params: {
         const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
         return summary?.aiAssistanceUsed === true;
       });
-      const proofOfLearningStatus = hasExplainItBack && hasOralCheck && hasMiniRebuild
-        ? 'verified'
-        : hasExplainItBack || hasOralCheck || hasMiniRebuild
-        ? 'partial'
-        : 'missing';
-      const hasAiFeedbackSignal = matchingMissionAttempts.some((entry) =>
-        (typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0)
-        || (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0)
-        || parseDateFromUnknown(entry.aiFeedbackAt) != null,
-      ) || matchingPortfolio.some((entry) =>
-        (typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0)
-        || (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0)
-        || parseDateFromUnknown(entry.aiFeedbackAt) != null,
-      );
+      const proofOfLearningStatus =
+        hasExplainItBack && hasOralCheck && hasMiniRebuild
+          ? 'verified'
+          : hasExplainItBack || hasOralCheck || hasMiniRebuild
+            ? 'partial'
+            : 'missing';
+      const hasAiFeedbackSignal =
+        matchingMissionAttempts.some(
+          (entry) =>
+            (typeof entry.aiFeedbackDraft === 'string' &&
+              entry.aiFeedbackDraft.trim().length > 0) ||
+            (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0) ||
+            parseDateFromUnknown(entry.aiFeedbackAt) != null
+        ) ||
+        matchingPortfolio.some(
+          (entry) =>
+            (typeof entry.aiFeedbackDraft === 'string' &&
+              entry.aiFeedbackDraft.trim().length > 0) ||
+            (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0) ||
+            parseDateFromUnknown(entry.aiFeedbackAt) != null
+        );
       const learnerAiEventCount = matchingInteractionEvents.filter((entry) => {
-        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        const eventType =
+          typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'ai_help_used' || eventType === 'ai_help_opened';
       }).length;
       const hasLearnerExplainBackEvent = matchingInteractionEvents.some((entry) => {
-        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        const eventType =
+          typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'explain_it_back_submitted';
       });
       const directAiDisclosureStatus = firstTrimmedString(
         ...matchingPortfolio.map((entry) => entry.aiDisclosureStatus),
-        ...matchingEvidence.map((entry) => entry.aiDisclosureStatus),
+        ...matchingEvidence.map((entry) => entry.aiDisclosureStatus)
       );
       const aiDisclosureStatus = hasLearnerAiDisclosure
         ? learnerAiDeclaredUsed
@@ -3209,16 +3605,18 @@ async function buildParentLearnerSummary(params: {
             : 'learner-ai-verification-gap'
           : 'learner-ai-not-used'
         : directAiDisclosureStatus
-        ? directAiDisclosureStatus
-        : learnerAiEventCount > 0
-        ? hasLearnerExplainBackEvent
-          ? 'learner-ai-verified'
-          : 'learner-ai-verification-gap'
-        : hasAiFeedbackSignal
-        ? 'educator-feedback-ai'
-        : matchingMissionAttempts.length > 0 || matchingPortfolio.length > 0 || matchingEvidence.length > 0
-        ? 'no-learner-ai-signal'
-        : 'not-available';
+          ? directAiDisclosureStatus
+          : learnerAiEventCount > 0
+            ? hasLearnerExplainBackEvent
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : hasAiFeedbackSignal
+              ? 'educator-feedback-ai'
+              : matchingMissionAttempts.length > 0 ||
+                  matchingPortfolio.length > 0 ||
+                  matchingEvidence.length > 0
+                ? 'no-learner-ai-signal'
+                : 'not-available';
       const matchingGrowthByRecency = [...matchingGrowth].sort((left, right) => {
         const leftTime = parseDateFromUnknown(left.createdAt)?.getTime() ?? 0;
         const rightTime = parseDateFromUnknown(right.createdAt)?.getTime() ?? 0;
@@ -3231,74 +3629,104 @@ async function buildParentLearnerSummary(params: {
         const rightTime = parseDateFromUnknown(right.updatedAt ?? right.createdAt)?.getTime() ?? 0;
         return rightTime - leftTime;
       })[0];
-      const proofBundleId = typeof latestPortfolio?.proofBundleId === 'string' && latestPortfolio.proofBundleId.trim()
-        ? latestPortfolio.proofBundleId.trim()
-        : typeof latestMissionAttempt?.proofBundleId === 'string' && latestMissionAttempt.proofBundleId.trim()
-        ? latestMissionAttempt.proofBundleId.trim()
-        : '';
+      const proofBundleId =
+        typeof latestPortfolio?.proofBundleId === 'string' && latestPortfolio.proofBundleId.trim()
+          ? latestPortfolio.proofBundleId.trim()
+          : typeof latestMissionAttempt?.proofBundleId === 'string' &&
+              latestMissionAttempt.proofBundleId.trim()
+            ? latestMissionAttempt.proofBundleId.trim()
+            : '';
       const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
       const proofCheckpoints = buildProofCheckpoints(proofBundle);
-      const latestProofBundleSummary = latestMissionAttempt?.proofBundleSummary as Record<string, unknown> | undefined;
-      const proofCheckpointCount = firstNumber(
-        latestPortfolio?.proofCheckpointCount,
-        latestProofBundleSummary?.checkpointCount,
-        matchingMissionAttempts
-          .map((entry) => {
-            const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
-            return typeof summary?.checkpointCount === 'number' ? summary.checkpointCount : 0;
-          })
-          .reduce((max, value) => Math.max(max, value), 0),
-      ) ?? 0;
+      const latestProofBundleSummary = latestMissionAttempt?.proofBundleSummary as
+        | Record<string, unknown>
+        | undefined;
+      const proofCheckpointCount =
+        firstNumber(
+          latestPortfolio?.proofCheckpointCount,
+          latestProofBundleSummary?.checkpointCount,
+          matchingMissionAttempts
+            .map((entry) => {
+              const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+              return typeof summary?.checkpointCount === 'number' ? summary.checkpointCount : 0;
+            })
+            .reduce((max, value) => Math.max(max, value), 0)
+        ) ?? 0;
       const reviewerId = latestGrowth
-        ? (typeof latestGrowth.educatorId === 'string' ? latestGrowth.educatorId.trim() : '')
+        ? typeof latestGrowth.educatorId === 'string'
+          ? latestGrowth.educatorId.trim()
+          : ''
         : typeof latestPortfolio?.educatorId === 'string' && latestPortfolio.educatorId.trim()
-        ? latestPortfolio.educatorId.trim()
-        : typeof latestMissionAttempt?.reviewedBy === 'string' && latestMissionAttempt.reviewedBy.trim()
-        ? latestMissionAttempt.reviewedBy.trim()
-        : '';
-      const reviewerName = reviewerId ? reviewerNames[reviewerId] ?? null : null;
+          ? latestPortfolio.educatorId.trim()
+          : typeof latestMissionAttempt?.reviewedBy === 'string' &&
+              latestMissionAttempt.reviewedBy.trim()
+            ? latestMissionAttempt.reviewedBy.trim()
+            : '';
+      const reviewerName = reviewerId ? (reviewerNames[reviewerId] ?? null) : null;
       const reviewedAt = latestGrowth
-        ? parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null
-        : parseDateFromUnknown(latestPortfolio?.updatedAt ?? latestPortfolio?.reviewedAt ?? latestMissionAttempt?.reviewedAt)?.toISOString() ?? null;
+        ? (parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null)
+        : (parseDateFromUnknown(
+            latestPortfolio?.updatedAt ??
+              latestPortfolio?.reviewedAt ??
+              latestMissionAttempt?.reviewedAt
+          )?.toISOString() ?? null);
       const rubricRawScore = latestGrowth
-        ? (typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore) ? latestGrowth.rawScore : null)
-        : typeof latestPortfolio?.rubricTotalScore === 'number' && Number.isFinite(latestPortfolio.rubricTotalScore)
-        ? latestPortfolio.rubricTotalScore
-        : typeof latestMissionAttempt?.rubricTotalScore === 'number' && Number.isFinite(latestMissionAttempt.rubricTotalScore)
-        ? latestMissionAttempt.rubricTotalScore
-        : null;
+        ? typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore)
+          ? latestGrowth.rawScore
+          : null
+        : typeof latestPortfolio?.rubricTotalScore === 'number' &&
+            Number.isFinite(latestPortfolio.rubricTotalScore)
+          ? latestPortfolio.rubricTotalScore
+          : typeof latestMissionAttempt?.rubricTotalScore === 'number' &&
+              Number.isFinite(latestMissionAttempt.rubricTotalScore)
+            ? latestMissionAttempt.rubricTotalScore
+            : null;
       const rubricMaxScore = latestGrowth
-        ? (typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore) ? latestGrowth.maxScore : null)
-        : typeof latestPortfolio?.rubricMaxScore === 'number' && Number.isFinite(latestPortfolio.rubricMaxScore)
-        ? latestPortfolio.rubricMaxScore
-        : typeof latestMissionAttempt?.rubricMaxScore === 'number' && Number.isFinite(latestMissionAttempt.rubricMaxScore)
-        ? latestMissionAttempt.rubricMaxScore
-        : null;
-      const aiFeedbackEducatorId = typeof latestPortfolio?.aiFeedbackBy === 'string' && latestPortfolio.aiFeedbackBy.trim()
-        ? latestPortfolio.aiFeedbackBy.trim()
-        : typeof latestMissionAttempt?.aiFeedbackBy === 'string' && latestMissionAttempt.aiFeedbackBy.trim()
-        ? latestMissionAttempt.aiFeedbackBy.trim()
-        : '';
+        ? typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore)
+          ? latestGrowth.maxScore
+          : null
+        : typeof latestPortfolio?.rubricMaxScore === 'number' &&
+            Number.isFinite(latestPortfolio.rubricMaxScore)
+          ? latestPortfolio.rubricMaxScore
+          : typeof latestMissionAttempt?.rubricMaxScore === 'number' &&
+              Number.isFinite(latestMissionAttempt.rubricMaxScore)
+            ? latestMissionAttempt.rubricMaxScore
+            : null;
+      const aiFeedbackEducatorId =
+        typeof latestPortfolio?.aiFeedbackBy === 'string' && latestPortfolio.aiFeedbackBy.trim()
+          ? latestPortfolio.aiFeedbackBy.trim()
+          : typeof latestMissionAttempt?.aiFeedbackBy === 'string' &&
+              latestMissionAttempt.aiFeedbackBy.trim()
+            ? latestMissionAttempt.aiFeedbackBy.trim()
+            : '';
       const aiFeedbackEducatorName = aiFeedbackEducatorId
-        ? reviewerNames[aiFeedbackEducatorId] ?? reviewerName
+        ? (reviewerNames[aiFeedbackEducatorId] ?? reviewerName)
         : hasAiFeedbackSignal
-        ? reviewerName
-        : null;
-      const aiFeedbackAt = parseDateFromUnknown(latestPortfolio?.aiFeedbackAt ?? latestMissionAttempt?.aiFeedbackAt)?.toISOString()
-        ?? (hasAiFeedbackSignal ? reviewedAt : null);
-      const aiAssistanceDetails = typeof latestPortfolio?.aiAssistanceDetails === 'string' && latestPortfolio.aiAssistanceDetails.trim()
-        ? latestPortfolio.aiAssistanceDetails.trim()
-        : typeof latestMissionAttempt?.aiAssistanceDetails === 'string' && latestMissionAttempt.aiAssistanceDetails.trim()
-        ? latestMissionAttempt.aiAssistanceDetails.trim()
-        : typeof proofBundle?.aiAssistanceDetails === 'string' && proofBundle.aiAssistanceDetails.trim()
-        ? proofBundle.aiAssistanceDetails.trim()
-        : null;
-      const progressionDescriptors = stringListFromUnknown(latestPortfolio?.progressionDescriptors).length > 0
-        ? stringListFromUnknown(latestPortfolio?.progressionDescriptors)
-        : stringListFromUnknown(latestGrowth?.progressionDescriptors);
-      const checkpointMappings = checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings).length > 0
-        ? checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings)
-        : checkpointMappingsFromUnknown(latestGrowth?.checkpointMappings);
+          ? reviewerName
+          : null;
+      const aiFeedbackAt =
+        parseDateFromUnknown(
+          latestPortfolio?.aiFeedbackAt ?? latestMissionAttempt?.aiFeedbackAt
+        )?.toISOString() ?? (hasAiFeedbackSignal ? reviewedAt : null);
+      const aiAssistanceDetails =
+        typeof latestPortfolio?.aiAssistanceDetails === 'string' &&
+        latestPortfolio.aiAssistanceDetails.trim()
+          ? latestPortfolio.aiAssistanceDetails.trim()
+          : typeof latestMissionAttempt?.aiAssistanceDetails === 'string' &&
+              latestMissionAttempt.aiAssistanceDetails.trim()
+            ? latestMissionAttempt.aiAssistanceDetails.trim()
+            : typeof proofBundle?.aiAssistanceDetails === 'string' &&
+                proofBundle.aiAssistanceDetails.trim()
+              ? proofBundle.aiAssistanceDetails.trim()
+              : null;
+      const progressionDescriptors =
+        stringListFromUnknown(latestPortfolio?.progressionDescriptors).length > 0
+          ? stringListFromUnknown(latestPortfolio?.progressionDescriptors)
+          : stringListFromUnknown(latestGrowth?.progressionDescriptors);
+      const checkpointMappings =
+        checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings).length > 0
+          ? checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings)
+          : checkpointMappingsFromUnknown(latestGrowth?.checkpointMappings);
       return {
         capabilityId,
         title: String(title),
@@ -3315,43 +3743,49 @@ async function buildParentLearnerSummary(params: {
         missionAttemptIds: Array.from(missionAttemptIds),
         progressionDescriptors,
         checkpointMappings,
-        proofOfLearningStatus: firstTrimmedString(latestPortfolio?.proofOfLearningStatus, proofOfLearningStatus) ?? 'missing',
+        proofOfLearningStatus:
+          firstTrimmedString(latestPortfolio?.proofOfLearningStatus, proofOfLearningStatus) ??
+          'missing',
         aiDisclosureStatus,
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
-        verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
-        proofHasExplainItBack: firstBoolean(
-          latestPortfolio?.proofHasExplainItBack,
-          latestProofBundleSummary?.hasExplainItBack,
-          proofBundle?.hasExplainItBack,
-          hasExplainItBack,
-        ) ?? false,
-        proofHasOralCheck: firstBoolean(
-          latestPortfolio?.proofHasOralCheck,
-          latestProofBundleSummary?.hasOralCheck,
-          proofBundle?.hasOralCheck,
-          hasOralCheck,
-        ) ?? false,
-        proofHasMiniRebuild: firstBoolean(
-          latestPortfolio?.proofHasMiniRebuild,
-          latestProofBundleSummary?.hasMiniRebuild,
-          proofBundle?.hasMiniRebuild,
-          hasMiniRebuild,
-        ) ?? false,
+        verificationStatus:
+          verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
+        proofHasExplainItBack:
+          firstBoolean(
+            latestPortfolio?.proofHasExplainItBack,
+            latestProofBundleSummary?.hasExplainItBack,
+            proofBundle?.hasExplainItBack,
+            hasExplainItBack
+          ) ?? false,
+        proofHasOralCheck:
+          firstBoolean(
+            latestPortfolio?.proofHasOralCheck,
+            latestProofBundleSummary?.hasOralCheck,
+            proofBundle?.hasOralCheck,
+            hasOralCheck
+          ) ?? false,
+        proofHasMiniRebuild:
+          firstBoolean(
+            latestPortfolio?.proofHasMiniRebuild,
+            latestProofBundleSummary?.hasMiniRebuild,
+            proofBundle?.hasMiniRebuild,
+            hasMiniRebuild
+          ) ?? false,
         proofCheckpointCount,
         proofExplainItBackExcerpt: firstTrimmedString(
           latestPortfolio?.proofExplainItBackExcerpt,
           proofBundle?.explainItBackExcerpt,
-          proofBundle?.explainItBack,
+          proofBundle?.explainItBack
         ),
         proofOralCheckExcerpt: firstTrimmedString(
           latestPortfolio?.proofOralCheckExcerpt,
           proofBundle?.oralCheckExcerpt,
-          proofBundle?.oralCheckResponse,
+          proofBundle?.oralCheckResponse
         ),
         proofMiniRebuildExcerpt: firstTrimmedString(
           latestPortfolio?.proofMiniRebuildExcerpt,
           proofBundle?.miniRebuildExcerpt,
-          proofBundle?.miniRebuildPlan,
+          proofBundle?.miniRebuildPlan
         ),
         proofCheckpoints,
         aiHasLearnerDisclosure: hasLearnerAiDisclosure,
@@ -3361,8 +3795,10 @@ async function buildParentLearnerSummary(params: {
           (firstBoolean(
             latestPortfolio?.proofHasExplainItBack,
             latestProofBundleSummary?.hasExplainItBack,
-            proofBundle?.hasExplainItBack,
-          ) ?? false) || hasLearnerExplainBackEvent,
+            proofBundle?.hasExplainItBack
+          ) ??
+            false) ||
+          hasLearnerExplainBackEvent,
         aiHasEducatorAiFeedback: hasAiFeedbackSignal,
         aiAssistanceDetails,
         reviewingEducatorName: reviewerName,
@@ -3391,7 +3827,8 @@ async function buildParentLearnerSummary(params: {
       return summary?.hasOralCheck === true;
     }).length,
     collaborationSignals: reflectionRows.filter((row) => {
-      const reflectionType = typeof row.reflectionType === 'string' ? row.reflectionType.trim().toLowerCase() : '';
+      const reflectionType =
+        typeof row.reflectionType === 'string' ? row.reflectionType.trim().toLowerCase() : '';
       return reflectionType === 'shout_out' || reflectionType === 'weekly_review';
     }).length,
     lastReflectionAt: reflectionDates[0]?.toISOString() ?? null,
@@ -3415,7 +3852,9 @@ async function buildParentLearnerSummary(params: {
         pillar: parentPillarLabelFromCodes([row.pillarCode]),
         level: typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : 0,
         linkedEvidenceRecordIds: Array.isArray(row.linkedEvidenceRecordIds)
-          ? row.linkedEvidenceRecordIds.filter((value): value is string => typeof value === 'string')
+          ? row.linkedEvidenceRecordIds.filter(
+              (value): value is string => typeof value === 'string'
+            )
           : [],
         linkedPortfolioItemIds: Array.isArray(row.linkedPortfolioItemIds)
           ? row.linkedPortfolioItemIds.filter((value): value is string => typeof value === 'string')
@@ -3425,14 +3864,23 @@ async function buildParentLearnerSummary(params: {
             ? row.proofOfLearningStatus.trim()
             : null,
         occurredAt: parseDateFromUnknown(row.createdAt)?.toISOString() ?? null,
-        reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null,
-        rubricRawScore: typeof row.rawScore === 'number' && Number.isFinite(row.rawScore) ? row.rawScore : null,
-        rubricMaxScore: typeof row.maxScore === 'number' && Number.isFinite(row.maxScore) ? row.maxScore : null,
-        missionAttemptId: typeof row.missionAttemptId === 'string' && row.missionAttemptId.trim() ? row.missionAttemptId.trim() : null,
+        reviewingEducatorName: reviewerId ? (reviewerNames[reviewerId] ?? null) : null,
+        rubricRawScore:
+          typeof row.rawScore === 'number' && Number.isFinite(row.rawScore) ? row.rawScore : null,
+        rubricMaxScore:
+          typeof row.maxScore === 'number' && Number.isFinite(row.maxScore) ? row.maxScore : null,
+        missionAttemptId:
+          typeof row.missionAttemptId === 'string' && row.missionAttemptId.trim()
+            ? row.missionAttemptId.trim()
+            : null,
       };
     })
     .filter((value): value is NonNullable<typeof value> => value !== null)
-    .sort((left, right) => Date.parse(String(right.occurredAt ?? now.toISOString())) - Date.parse(String(left.occurredAt ?? now.toISOString())));
+    .sort(
+      (left, right) =>
+        Date.parse(String(right.occurredAt ?? now.toISOString())) -
+        Date.parse(String(left.occurredAt ?? now.toISOString()))
+    );
 
   const currentLevel = resolveParentCurrentLevel(averageLevel);
   const totalXp =
@@ -3442,9 +3890,10 @@ async function buildParentLearnerSummary(params: {
   const missionsCompleted =
     typeof ideationPassport.completedMissions === 'number'
       ? ideationPassport.completedMissions
-      : typeof progressData.missionsCompleted === 'number' && Number.isFinite(progressData.missionsCompleted)
-      ? Math.round(progressData.missionsCompleted)
-      : null;
+      : typeof progressData.missionsCompleted === 'number' &&
+          Number.isFinite(progressData.missionsCompleted)
+        ? Math.round(progressData.missionsCompleted)
+        : null;
   const currentStreak =
     typeof progressData.currentStreak === 'number' && Number.isFinite(progressData.currentStreak)
       ? Math.round(progressData.currentStreak)
@@ -3456,8 +3905,8 @@ async function buildParentLearnerSummary(params: {
       typeof learnerData.displayName === 'string' && learnerData.displayName.trim().length > 0
         ? learnerData.displayName.trim()
         : typeof learnerData.email === 'string' && learnerData.email.trim().length > 0
-        ? learnerData.email.trim()
-        : null,
+          ? learnerData.email.trim()
+          : null,
     photoUrl: null,
     currentLevel,
     totalXp,
@@ -3493,7 +3942,8 @@ async function buildParentLearnerSummary(params: {
     processDomainSnapshot: pdMasterySnap.docs
       .map((d) => {
         const data = d.data() as Record<string, unknown>;
-        const processDomainId = typeof data.processDomainId === 'string' ? data.processDomainId : d.id;
+        const processDomainId =
+          typeof data.processDomainId === 'string' ? data.processDomainId : d.id;
         return {
           processDomainId,
           title: processDomainTitlesById.get(processDomainId) ?? processDomainId,
@@ -3507,29 +3957,42 @@ async function buildParentLearnerSummary(params: {
     processDomainGrowthTimeline: pdGrowthSnap.docs
       .map((d) => {
         const data = d.data() as Record<string, unknown>;
-        const processDomainId = typeof data.processDomainId === 'string' ? data.processDomainId : '';
+        const processDomainId =
+          typeof data.processDomainId === 'string' ? data.processDomainId : '';
         const educatorId = typeof data.educatorId === 'string' ? data.educatorId : '';
         const evidenceIds = Array.isArray(data.linkedEvidenceRecordIds)
-          ? data.linkedEvidenceRecordIds.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          ? data.linkedEvidenceRecordIds.filter(
+              (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
+            )
           : Array.isArray(data.evidenceIds)
-          ? data.evidenceIds.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
-          : [];
+            ? data.evidenceIds.filter(
+                (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
+              )
+            : [];
         return {
           processDomainId,
           title: processDomainTitlesById.get(processDomainId) ?? processDomainId,
           fromLevel: data.fromLevel ?? null,
           toLevel: data.toLevel ?? data.level ?? null,
           educatorId,
-          reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null,
+          reviewingEducatorName: educatorId ? (reviewerNames[educatorId] ?? null) : null,
           linkedEvidenceRecordIds: evidenceIds,
-          missionAttemptId: typeof data.missionAttemptId === 'string' && data.missionAttemptId.trim()
-            ? data.missionAttemptId.trim()
-            : null,
-          rubricApplicationId: typeof data.rubricApplicationId === 'string' && data.rubricApplicationId.trim()
-            ? data.rubricApplicationId.trim()
-            : null,
-          rubricRawScore: typeof data.rawScore === 'number' && Number.isFinite(data.rawScore) ? data.rawScore : null,
-          rubricMaxScore: typeof data.maxScore === 'number' && Number.isFinite(data.maxScore) ? data.maxScore : null,
+          missionAttemptId:
+            typeof data.missionAttemptId === 'string' && data.missionAttemptId.trim()
+              ? data.missionAttemptId.trim()
+              : null,
+          rubricApplicationId:
+            typeof data.rubricApplicationId === 'string' && data.rubricApplicationId.trim()
+              ? data.rubricApplicationId.trim()
+              : null,
+          rubricRawScore:
+            typeof data.rawScore === 'number' && Number.isFinite(data.rawScore)
+              ? data.rawScore
+              : null,
+          rubricMaxScore:
+            typeof data.maxScore === 'number' && Number.isFinite(data.maxScore)
+              ? data.maxScore
+              : null,
           evidenceCount: evidenceIds.length,
           createdAt: parseDateFromUnknown(data.createdAt)?.toISOString() ?? null,
         };
@@ -3560,9 +4023,11 @@ async function loadParentUpcomingEvents(params: {
     const sessionIds = Array.from(
       new Set(
         enrollmentsSnap.docs
-          .map((doc) => (typeof doc.data().sessionId === 'string' ? doc.data().sessionId.trim() : ''))
-          .filter((sessionId) => sessionId.length > 0),
-      ),
+          .map((doc) =>
+            typeof doc.data().sessionId === 'string' ? doc.data().sessionId.trim() : ''
+          )
+          .filter((sessionId) => sessionId.length > 0)
+      )
     );
 
     const occurrenceEvents: Array<Record<string, unknown> & { timestamp: number }> = [];
@@ -3586,8 +4051,8 @@ async function loadParentUpcomingEvents(params: {
             typeof data.title === 'string' && data.title.trim().length > 0
               ? data.title
               : typeof data.sessionTitle === 'string' && data.sessionTitle.trim().length > 0
-              ? data.sessionTitle
-              : 'Session',
+                ? data.sessionTitle
+                : 'Session',
           description: typeof data.description === 'string' ? data.description : null,
           dateTime: start.toISOString(),
           type: 'session',
@@ -3595,8 +4060,8 @@ async function loadParentUpcomingEvents(params: {
             typeof data.roomName === 'string' && data.roomName.trim().length > 0
               ? data.roomName
               : typeof data.location === 'string'
-              ? data.location
-              : null,
+                ? data.location
+                : null,
           timestamp: start.getTime(),
         });
       }
@@ -3637,95 +4102,103 @@ async function loadParentUpcomingEvents(params: {
   }
 }
 
-export const getParentDashboardBundle = onCall(async (request: CallableRequest<{
-  siteId?: string;
-  locale?: string;
-  range?: string;
-  parentId?: string;
-}>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
+export const getParentDashboardBundle = onCall(
+  async (
+    request: CallableRequest<{
+      siteId?: string;
+      locale?: string;
+      range?: string;
+      parentId?: string;
+    }>
+  ) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+
+    const actorProfile = await getUserProfile(authUid);
+    const actorRole = normalizeRoleValue(actorProfile?.role);
+    if (!actorProfile || !actorRole || !['parent', 'site', 'hq'].includes(actorRole)) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
+    }
+
+    const requestedSiteId =
+      typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+        ? request.data.siteId.trim()
+        : undefined;
+    const siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
+
+    const parentIdInput =
+      typeof request.data?.parentId === 'string' && request.data.parentId.trim().length > 0
+        ? request.data.parentId.trim()
+        : undefined;
+    const parentId = actorRole === 'parent' ? authUid : parentIdInput;
+    if (!parentId) {
+      throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
+    }
+
+    const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
+    const learnerSummaries = (
+      await Promise.all(
+        learnerIds.map((learnerId) => buildParentLearnerSummary({ learnerId, siteId }))
+      )
+    ).filter((summary): summary is Record<string, unknown> => summary !== null);
+
+    return {
+      parentId,
+      siteId: siteId ?? null,
+      locale: normalizeTelemetryLocale(request.data?.locale),
+      range:
+        typeof request.data?.range === 'string' && request.data.range.trim().length > 0
+          ? request.data.range.trim()
+          : 'week',
+      linkedLearnerCount: learnerSummaries.length,
+      learners: learnerSummaries,
+    };
   }
+);
 
-  const actorProfile = await getUserProfile(authUid);
-  const actorRole = normalizeRoleValue(actorProfile?.role);
-  if (!actorProfile || !actorRole || !['parent', 'site', 'hq'].includes(actorRole)) {
-    throw new HttpsError('permission-denied', 'Insufficient role.');
+export const getLearnerPassportBundle = onCall(
+  async (
+    request: CallableRequest<{
+      siteId?: string;
+      locale?: string;
+      range?: string;
+    }>
+  ) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+
+    const requestedSiteId =
+      typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+        ? request.data.siteId.trim()
+        : undefined;
+    const { profile } = await requireRoleAndSite(authUid, ['learner'], requestedSiteId);
+    const siteId = resolveRoleSiteId(profile, 'learner', requestedSiteId);
+
+    const learnerSummary = await buildParentLearnerSummary({
+      learnerId: authUid,
+      siteId,
+    });
+
+    if (!learnerSummary) {
+      throw new HttpsError('not-found', 'Learner passport data unavailable.');
+    }
+
+    return {
+      learnerId: authUid,
+      siteId: siteId ?? null,
+      locale: normalizeTelemetryLocale(request.data?.locale),
+      range:
+        typeof request.data?.range === 'string' && request.data.range.trim().length > 0
+          ? request.data.range.trim()
+          : 'all',
+      learners: [learnerSummary],
+    };
   }
-
-  const requestedSiteId =
-    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
-      ? request.data.siteId.trim()
-      : undefined;
-  const siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
-
-  const parentIdInput =
-    typeof request.data?.parentId === 'string' && request.data.parentId.trim().length > 0
-      ? request.data.parentId.trim()
-      : undefined;
-  const parentId = actorRole === 'parent' ? authUid : parentIdInput;
-  if (!parentId) {
-    throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
-  }
-
-  const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
-  const learnerSummaries = (
-    await Promise.all(
-      learnerIds.map((learnerId) => buildParentLearnerSummary({ learnerId, siteId })),
-    )
-  ).filter((summary): summary is Record<string, unknown> => summary !== null);
-
-  return {
-    parentId,
-    siteId: siteId ?? null,
-    locale: normalizeTelemetryLocale(request.data?.locale),
-    range:
-      typeof request.data?.range === 'string' && request.data.range.trim().length > 0
-        ? request.data.range.trim()
-        : 'week',
-    linkedLearnerCount: learnerSummaries.length,
-    learners: learnerSummaries,
-  };
-});
-
-export const getLearnerPassportBundle = onCall(async (request: CallableRequest<{
-  siteId?: string;
-  locale?: string;
-  range?: string;
-}>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-
-  const requestedSiteId =
-    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
-      ? request.data.siteId.trim()
-      : undefined;
-  const { profile } = await requireRoleAndSite(authUid, ['learner'], requestedSiteId);
-  const siteId = resolveRoleSiteId(profile, 'learner', requestedSiteId);
-
-  const learnerSummary = await buildParentLearnerSummary({
-    learnerId: authUid,
-    siteId,
-  });
-
-  if (!learnerSummary) {
-    throw new HttpsError('not-found', 'Learner passport data unavailable.');
-  }
-
-  return {
-    learnerId: authUid,
-    siteId: siteId ?? null,
-    locale: normalizeTelemetryLocale(request.data?.locale),
-    range:
-      typeof request.data?.range === 'string' && request.data.range.trim().length > 0
-        ? request.data.range.trim()
-        : 'all',
-    learners: [learnerSummary],
-  };
-});
+);
 
 async function computeRoleDashboardStats(params: {
   role: Role;
@@ -3813,10 +4286,7 @@ async function computeRoleDashboardStats(params: {
     }
 
     try {
-      const attempts = await db
-        .collection('missionAttempts')
-        .where('educatorId', '==', uid)
-        .get();
+      const attempts = await db.collection('missionAttempts').where('educatorId', '==', uid).get();
       toReview = attempts.docs.filter((doc) => {
         const status = typeof doc.data().status === 'string' ? doc.data().status : '';
         return status === 'submitted' || status === 'pending_review';
@@ -3848,7 +4318,9 @@ async function computeRoleDashboardStats(params: {
         let query: FirebaseFirestore.Query = db.collection('events');
         query = query.where('dateTime', '>=', Timestamp.fromDate(now));
         const events = await query.get();
-        upcomingSessions = events.docs.filter((doc) => learnerIds.includes(String(doc.data().learnerId || ''))).length;
+        upcomingSessions = events.docs.filter((doc) =>
+          learnerIds.includes(String(doc.data().learnerId || ''))
+        ).length;
       }
     } catch {
       upcomingSessions = 0;
@@ -3857,7 +4329,8 @@ async function computeRoleDashboardStats(params: {
     let pendingVerifications = 0;
     try {
       if (learnerIds.length > 0) {
-        const proofSnap = await db.collection('portfolioItems')
+        const proofSnap = await db
+          .collection('portfolioItems')
           .where('learnerId', 'in', learnerIds.slice(0, 10))
           .where('verificationStatus', '==', 'pending')
           .get();
@@ -3868,9 +4341,19 @@ async function computeRoleDashboardStats(params: {
     }
 
     return [
-      { label: 'Linked Learners', value: String(learnerIds.length), icon: 'people', color: 'primary' },
+      {
+        label: 'Linked Learners',
+        value: String(learnerIds.length),
+        icon: 'people',
+        color: 'primary',
+      },
       { label: 'Upcoming Sessions', value: String(upcomingSessions), icon: 'event', color: 'info' },
-      { label: 'Pending Verifications', value: String(pendingVerifications), icon: 'assignment', color: pendingVerifications > 0 ? 'warning' : 'success' },
+      {
+        label: 'Pending Verifications',
+        value: String(pendingVerifications),
+        icon: 'assignment',
+        color: pendingVerifications > 0 ? 'warning' : 'success',
+      },
     ];
   }
 
@@ -3935,15 +4418,32 @@ async function computeRoleDashboardStats(params: {
         .collection(USERS_COLLECTION)
         .where('siteIds', 'array-contains-any', partnerSiteIds.slice(0, 10))
         .get();
-      learnersSupported = users.docs.filter((doc) => normalizeRoleValue(doc.data().role) === 'learner').length;
+      learnersSupported = users.docs.filter(
+        (doc) => normalizeRoleValue(doc.data().role) === 'learner'
+      ).length;
     } catch {
       learnersSupported = 0;
     }
 
     return [
-      { label: 'Associated Sites', value: String(partnerSiteIds.length), icon: 'business', color: 'primary' },
-      { label: 'Learners Supported', value: formatCompactCount(learnersSupported), icon: 'people', color: 'info' },
-      { label: 'Active Programs', value: String(partnerSiteIds.length), icon: 'event', color: 'success' },
+      {
+        label: 'Associated Sites',
+        value: String(partnerSiteIds.length),
+        icon: 'business',
+        color: 'primary',
+      },
+      {
+        label: 'Learners Supported',
+        value: formatCompactCount(learnersSupported),
+        icon: 'people',
+        color: 'info',
+      },
+      {
+        label: 'Active Programs',
+        value: String(partnerSiteIds.length),
+        icon: 'event',
+        color: 'success',
+      },
     ];
   }
 
@@ -3952,7 +4452,9 @@ async function computeRoleDashboardStats(params: {
   let pending = 0;
   try {
     const sites = await db.collection('sites').get();
-    activeSites = sites.docs.filter((doc) => String(doc.data().status || 'active') !== 'inactive').length;
+    activeSites = sites.docs.filter(
+      (doc) => String(doc.data().status || 'active') !== 'inactive'
+    ).length;
   } catch {
     activeSites = 0;
   }
@@ -3974,186 +4476,201 @@ async function computeRoleDashboardStats(params: {
   ];
 }
 
-export const getRoleDashboardSnapshot = onCall(async (request: CallableRequest<{
-  role?: string;
-  siteId?: string;
-  period?: string;
-}>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-
-  const profile = await getUserProfile(authUid);
-  const actorRole = normalizeRoleValue(profile?.role);
-  if (!profile || !actorRole) {
-    throw new HttpsError('permission-denied', 'User profile missing role.');
-  }
-
-  const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
-  if (actorRole !== 'hq' && requestedRole !== actorRole) {
-    throw new HttpsError('permission-denied', 'Cannot request dashboard for another role.');
-  }
-
-  const requestedSiteId =
-    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
-      ? request.data.siteId.trim()
-      : undefined;
-  const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
-  const stats = await computeRoleDashboardStats({
-    role: requestedRole,
-    uid: authUid,
-    siteId,
-    profile,
-  });
-
-  return {
-    role: requestedRole,
-    siteId: siteId ?? null,
-    period:
-      typeof request.data?.period === 'string' && request.data.period.trim().length > 0
-        ? request.data.period.trim()
-        : 'week',
-    stats,
-  };
-});
-
-export const getRoleLinkedRoster = onCall(async (request: CallableRequest<{
-  role?: string;
-  siteId?: string;
-  parentId?: string;
-  educatorId?: string;
-}>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-
-  const profile = await getUserProfile(authUid);
-  const actorRole = normalizeRoleValue(profile?.role);
-  if (!profile || !actorRole) {
-    throw new HttpsError('permission-denied', 'User profile missing role.');
-  }
-
-  const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
-  if (actorRole !== 'hq' && requestedRole !== actorRole) {
-    throw new HttpsError('permission-denied', 'Cannot request roster for another role.');
-  }
-
-  const requestedSiteId =
-    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
-      ? request.data.siteId.trim()
-      : undefined;
-  const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
-  const db = admin.firestore();
-
-  let learners: Array<Record<string, unknown>> = [];
-  let parents: Array<Record<string, unknown>> = [];
-  let educators: Array<Record<string, unknown>> = [];
-
-  if (requestedRole === 'parent') {
-    const parentId =
-      actorRole === 'parent'
-        ? authUid
-        : typeof request.data?.parentId === 'string'
-        ? request.data.parentId.trim()
-        : '';
-    if (!parentId) {
-      throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
-    }
-    const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
-    learners = (await fetchUsersByIds(learnerIds)).map((item) => toRosterItem(item.id, item.data));
-    const parentDoc = await db.collection(USERS_COLLECTION).doc(parentId).get();
-    if (parentDoc.exists) {
-      parents = [toRosterItem(parentDoc.id, parentDoc.data() as UserRecord)];
-    }
-  } else if (requestedRole === 'educator') {
-    const educatorId =
-      actorRole === 'educator'
-        ? authUid
-        : typeof request.data?.educatorId === 'string'
-        ? request.data.educatorId.trim()
-        : '';
-    if (!educatorId) {
-      throw new HttpsError('invalid-argument', 'educatorId is required for non-educator actors.');
+export const getRoleDashboardSnapshot = onCall(
+  async (
+    request: CallableRequest<{
+      role?: string;
+      siteId?: string;
+      period?: string;
+    }>
+  ) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
     }
 
-    const learnerIdSet = new Set<string>();
-    try {
-      let linksQuery: FirebaseFirestore.Query = db
-        .collection('educatorLearnerLinks')
-        .where('educatorId', '==', educatorId);
-      if (siteId) {
-        linksQuery = linksQuery.where('siteId', '==', siteId);
+    const profile = await getUserProfile(authUid);
+    const actorRole = normalizeRoleValue(profile?.role);
+    if (!profile || !actorRole) {
+      throw new HttpsError('permission-denied', 'User profile missing role.');
+    }
+
+    const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
+    if (actorRole !== 'hq' && requestedRole !== actorRole) {
+      throw new HttpsError('permission-denied', 'Cannot request dashboard for another role.');
+    }
+
+    const requestedSiteId =
+      typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+        ? request.data.siteId.trim()
+        : undefined;
+    const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
+    const stats = await computeRoleDashboardStats({
+      role: requestedRole,
+      uid: authUid,
+      siteId,
+      profile,
+    });
+
+    return {
+      role: requestedRole,
+      siteId: siteId ?? null,
+      period:
+        typeof request.data?.period === 'string' && request.data.period.trim().length > 0
+          ? request.data.period.trim()
+          : 'week',
+      stats,
+    };
+  }
+);
+
+export const getRoleLinkedRoster = onCall(
+  async (
+    request: CallableRequest<{
+      role?: string;
+      siteId?: string;
+      parentId?: string;
+      educatorId?: string;
+    }>
+  ) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+
+    const profile = await getUserProfile(authUid);
+    const actorRole = normalizeRoleValue(profile?.role);
+    if (!profile || !actorRole) {
+      throw new HttpsError('permission-denied', 'User profile missing role.');
+    }
+
+    const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
+    if (actorRole !== 'hq' && requestedRole !== actorRole) {
+      throw new HttpsError('permission-denied', 'Cannot request roster for another role.');
+    }
+
+    const requestedSiteId =
+      typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+        ? request.data.siteId.trim()
+        : undefined;
+    const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
+    const db = admin.firestore();
+
+    let learners: Array<Record<string, unknown>> = [];
+    let parents: Array<Record<string, unknown>> = [];
+    let educators: Array<Record<string, unknown>> = [];
+
+    if (requestedRole === 'parent') {
+      const parentId =
+        actorRole === 'parent'
+          ? authUid
+          : typeof request.data?.parentId === 'string'
+            ? request.data.parentId.trim()
+            : '';
+      if (!parentId) {
+        throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
       }
-      const links = await linksQuery.get();
-      for (const doc of links.docs) {
-        const learnerId = typeof doc.data().learnerId === 'string' ? doc.data().learnerId.trim() : '';
-        if (learnerId) learnerIdSet.add(learnerId);
+      const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
+      learners = (await fetchUsersByIds(learnerIds)).map((item) =>
+        toRosterItem(item.id, item.data)
+      );
+      const parentDoc = await db.collection(USERS_COLLECTION).doc(parentId).get();
+      if (parentDoc.exists) {
+        parents = [toRosterItem(parentDoc.id, parentDoc.data() as UserRecord)];
       }
-    } catch {
-      // Continue with fallback sources.
-    }
+    } else if (requestedRole === 'educator') {
+      const educatorId =
+        actorRole === 'educator'
+          ? authUid
+          : typeof request.data?.educatorId === 'string'
+            ? request.data.educatorId.trim()
+            : '';
+      if (!educatorId) {
+        throw new HttpsError('invalid-argument', 'educatorId is required for non-educator actors.');
+      }
 
-    try {
-      const usersByEducator = await db
-        .collection(USERS_COLLECTION)
-        .where('educatorIds', 'array-contains', educatorId)
-        .get();
-      for (const doc of usersByEducator.docs) {
-        if (normalizeRoleValue(doc.data().role) === 'learner') {
-          learnerIdSet.add(doc.id);
+      const learnerIdSet = new Set<string>();
+      try {
+        let linksQuery: FirebaseFirestore.Query = db
+          .collection('educatorLearnerLinks')
+          .where('educatorId', '==', educatorId);
+        if (siteId) {
+          linksQuery = linksQuery.where('siteId', '==', siteId);
         }
+        const links = await linksQuery.get();
+        for (const doc of links.docs) {
+          const learnerId =
+            typeof doc.data().learnerId === 'string' ? doc.data().learnerId.trim() : '';
+          if (learnerId) learnerIdSet.add(learnerId);
+        }
+      } catch {
+        // Continue with fallback sources.
       }
-    } catch {
-      // Keep deterministic output.
+
+      try {
+        const usersByEducator = await db
+          .collection(USERS_COLLECTION)
+          .where('educatorIds', 'array-contains', educatorId)
+          .get();
+        for (const doc of usersByEducator.docs) {
+          if (normalizeRoleValue(doc.data().role) === 'learner') {
+            learnerIdSet.add(doc.id);
+          }
+        }
+      } catch {
+        // Keep deterministic output.
+      }
+
+      learners = (await fetchUsersByIds(Array.from(learnerIdSet.values()))).map((item) =>
+        toRosterItem(item.id, item.data)
+      );
+      const educatorDoc = await db.collection(USERS_COLLECTION).doc(educatorId).get();
+      if (educatorDoc.exists) {
+        educators = [toRosterItem(educatorDoc.id, educatorDoc.data() as UserRecord)];
+      }
+    } else {
+      if (!siteId) {
+        throw new HttpsError('invalid-argument', 'siteId is required for this roster view.');
+      }
+      const users = await db
+        .collection(USERS_COLLECTION)
+        .where('siteIds', 'array-contains', siteId)
+        .get();
+      for (const doc of users.docs) {
+        const userData = doc.data() as UserRecord;
+        const normalizedRole = normalizeRoleValue(userData.role);
+        if (normalizedRole === 'learner') learners.push(toRosterItem(doc.id, userData));
+        if (normalizedRole === 'parent') parents.push(toRosterItem(doc.id, userData));
+        if (normalizedRole === 'educator') educators.push(toRosterItem(doc.id, userData));
+      }
     }
 
-    learners = (await fetchUsersByIds(Array.from(learnerIdSet.values()))).map((item) =>
-      toRosterItem(item.id, item.data),
-    );
-    const educatorDoc = await db.collection(USERS_COLLECTION).doc(educatorId).get();
-    if (educatorDoc.exists) {
-      educators = [toRosterItem(educatorDoc.id, educatorDoc.data() as UserRecord)];
-    }
-  } else {
-    if (!siteId) {
-      throw new HttpsError('invalid-argument', 'siteId is required for this roster view.');
-    }
-    const users = await db
-      .collection(USERS_COLLECTION)
-      .where('siteIds', 'array-contains', siteId)
-      .get();
-    for (const doc of users.docs) {
-      const userData = doc.data() as UserRecord;
-      const normalizedRole = normalizeRoleValue(userData.role);
-      if (normalizedRole === 'learner') learners.push(toRosterItem(doc.id, userData));
-      if (normalizedRole === 'parent') parents.push(toRosterItem(doc.id, userData));
-      if (normalizedRole === 'educator') educators.push(toRosterItem(doc.id, userData));
-    }
+    return {
+      role: requestedRole,
+      siteId: siteId ?? null,
+      learners,
+      parents,
+      educators,
+      counts: {
+        learners: learners.length,
+        parents: parents.length,
+        educators: educators.length,
+      },
+    };
   }
-
-  return {
-    role: requestedRole,
-    siteId: siteId ?? null,
-    learners,
-    parents,
-    educators,
-    counts: {
-      learners: learners.length,
-      parents: parents.length,
-      educators: educators.length,
-    },
-  };
-});
+);
 
 export const listUsers = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
 
   const role = normalizeRoleValue(request.data?.role);
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId : undefined;
-  const searchEmail = typeof request.data?.email === 'string' ? request.data.email.toLowerCase() : undefined;
-  const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100 ? request.data.limit : 50;
+  const searchEmail =
+    typeof request.data?.email === 'string' ? request.data.email.toLowerCase() : undefined;
+  const limit =
+    typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+      ? request.data.limit
+      : 50;
 
   let query: FirebaseFirestore.Query = admin.firestore().collection(USERS_COLLECTION).limit(limit);
 
@@ -4182,7 +4699,8 @@ export const updateUserRoles = onCall(async (request: CallableRequest) => {
 
   const nextRole = normalizeRoleValue(request.data?.role) ?? undefined;
   const siteIds = toStringArray(request.data?.siteIds);
-  const activeSiteId = typeof request.data?.activeSiteId === 'string' ? request.data.activeSiteId : undefined;
+  const activeSiteId =
+    typeof request.data?.activeSiteId === 'string' ? request.data.activeSiteId : undefined;
   const isActive = typeof request.data?.isActive === 'boolean' ? request.data.isActive : undefined;
 
   const updates: Partial<UserRecord> = {};
@@ -4225,10 +4743,13 @@ export const updateUserRoles = onCall(async (request: CallableRequest) => {
 export const processCheckout = onCall(async (request: CallableRequest) => {
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
-  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
+  const productId =
+    typeof request.data?.productId === 'string' ? request.data.productId.trim() : ('' as ProductId);
 
-  if (!siteId || !targetUserId) throw new HttpsError('invalid-argument', 'siteId and userId are required');
-  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
+  if (!siteId || !targetUserId)
+    throw new HttpsError('invalid-argument', 'siteId and userId are required');
+  if (!(productId in PRODUCT_CATALOG))
+    throw new HttpsError('invalid-argument', 'Unknown productId');
 
   const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], siteId);
 
@@ -4258,7 +4779,13 @@ export const processCheckout = onCall(async (request: CallableRequest) => {
     userId: actor.uid,
     role: actor.role,
     siteId,
-    metadata: { orderId: orderRef.id, productId, targetUserId, amount: product.amount, currency: product.currency },
+    metadata: {
+      orderId: orderRef.id,
+      productId,
+      targetUserId,
+      amount: product.amount,
+      currency: product.currency,
+    },
   });
 
   return { orderId: orderRef.id, amount: product.amount, currency: product.currency, roles };
@@ -4267,7 +4794,8 @@ export const processCheckout = onCall(async (request: CallableRequest) => {
 export const requestNotificationSend = onCall(async (request: CallableRequest) => {
   const channel = typeof request.data?.channel === 'string' ? request.data.channel.trim() : '';
   const threadId = typeof request.data?.threadId === 'string' ? request.data.threadId.trim() : '';
-  const messageId = typeof request.data?.messageId === 'string' ? request.data.messageId.trim() : '';
+  const messageId =
+    typeof request.data?.messageId === 'string' ? request.data.messageId.trim() : '';
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
 
   const allowedChannels = new Set(['email', 'sms', 'push']);
@@ -4309,9 +4837,12 @@ export const syncLearnerReminderPreference = onCall(async (request: CallableRequ
   const schedule = typeof request.data?.schedule === 'string' ? request.data.schedule.trim() : '';
   const weeklyTargetMinutes =
     typeof request.data?.weeklyTargetMinutes === 'number' ? request.data.weeklyTargetMinutes : 0;
-  const localeCode = typeof request.data?.localeCode === 'string' ? request.data.localeCode.trim() : 'en';
-  const timeZone = typeof request.data?.timeZone === 'string' ? request.data.timeZone.trim() : 'auto';
-  const valuePrompt = typeof request.data?.valuePrompt === 'string' ? request.data.valuePrompt.trim() : '';
+  const localeCode =
+    typeof request.data?.localeCode === 'string' ? request.data.localeCode.trim() : 'en';
+  const timeZone =
+    typeof request.data?.timeZone === 'string' ? request.data.timeZone.trim() : 'auto';
+  const valuePrompt =
+    typeof request.data?.valuePrompt === 'string' ? request.data.valuePrompt.trim() : '';
 
   if (!siteId) {
     throw new HttpsError('invalid-argument', 'siteId is required');
@@ -4320,23 +4851,31 @@ export const syncLearnerReminderPreference = onCall(async (request: CallableRequ
     throw new HttpsError('invalid-argument', 'Invalid schedule');
   }
 
-  const actor = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'site', 'hq'], siteId);
-  const docRef = admin.firestore()
+  const actor = await requireRoleAndSite(
+    request.auth?.uid,
+    ['learner', 'educator', 'site', 'hq'],
+    siteId
+  );
+  const docRef = admin
+    .firestore()
     .collection(LEARNER_REMINDER_PREFERENCES_COLLECTION)
     .doc(`${siteId}_${actor.uid}`);
   const enabled = schedule !== 'off' && weeklyTargetMinutes > 0;
-  await docRef.set({
-    learnerId: actor.uid,
-    siteId,
-    schedule,
-    weeklyTargetMinutes,
-    localeCode,
-    timeZone,
-    valuePrompt,
-    enabled,
-    updatedAt: FieldValue.serverTimestamp(),
-    createdAt: FieldValue.serverTimestamp(),
-  }, { merge: true });
+  await docRef.set(
+    {
+      learnerId: actor.uid,
+      siteId,
+      schedule,
+      weeklyTargetMinutes,
+      localeCode,
+      timeZone,
+      valuePrompt,
+      enabled,
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
 
   await persistTelemetryEvent({
     event: 'notification.requested',
@@ -4366,7 +4905,10 @@ export const resetUserPassword = onCall(async (request: CallableRequest) => {
 
 export const listAuditLogs = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
-  const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100 ? request.data.limit : 50;
+  const limit =
+    typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+      ? request.data.limit
+      : 50;
   const filters = normalizeAuditLogFilters((request.data || {}) as Record<string, unknown>);
 
   const applyFilters = (baseQuery: FirebaseFirestore.Query): FirebaseFirestore.Query => {
@@ -4403,12 +4945,17 @@ export const listAuditLogs = onCall(async (request: CallableRequest) => {
 
 export const listAnalyticsRepairRuns = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
-  const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120 ? request.data.limit : 60;
+  const limit =
+    typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+      ? request.data.limit
+      : 60;
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
 
   let logs: Array<Record<string, unknown>>;
   try {
-    let query: FirebaseFirestore.Query = admin.firestore().collection(AUDIT_COLLECTION)
+    let query: FirebaseFirestore.Query = admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
       .where('action', 'in', [...ANALYTICS_REPAIR_AUDIT_ACTIONS])
       .orderBy('createdAt', 'desc')
       .limit(limit);
@@ -4416,20 +4963,29 @@ export const listAnalyticsRepairRuns = onCall(async (request: CallableRequest) =
       query = query.where('siteId', '==', siteId);
     }
     const snap = await query.get();
-    logs = snap.docs.map((doc): Record<string, unknown> => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }));
+    logs = snap.docs.map(
+      (doc): Record<string, unknown> => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) })
+    );
   } catch {
-    const snap = await admin.firestore().collection(AUDIT_COLLECTION)
+    const snap = await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
       .orderBy('createdAt', 'desc')
       .limit(Math.min(limit * 5, 500))
       .get();
     logs = snap.docs
-      .map((doc): Record<string, unknown> => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .map(
+        (doc): Record<string, unknown> => ({
+          id: doc.id,
+          ...(doc.data() as Record<string, unknown>),
+        })
+      )
       .filter((entry) => {
         if (typeof entry.action !== 'string') {
           return false;
         }
         return ANALYTICS_REPAIR_AUDIT_ACTIONS.includes(
-          entry.action as typeof ANALYTICS_REPAIR_AUDIT_ACTIONS[number],
+          entry.action as (typeof ANALYTICS_REPAIR_AUDIT_ACTIONS)[number]
         );
       })
       .filter((entry) => !siteId || entry.siteId === siteId)
@@ -4438,28 +4994,30 @@ export const listAnalyticsRepairRuns = onCall(async (request: CallableRequest) =
 
   return {
     runs: logs
-      .map((entry) => buildAnalyticsRepairRunRecord(entry as { id: string; [key: string]: unknown }))
+      .map((entry) =>
+        buildAnalyticsRepairRunRecord(entry as { id: string; [key: string]: unknown })
+      )
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
   };
 });
 
 export const recordLogoutAudit = onCall(async (request: CallableRequest) => {
-  const requestedSiteId = typeof request.data?.siteId === 'string'
-    ? request.data.siteId.trim()
-    : '';
+  const requestedSiteId =
+    typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const actor = await requireRoleAndSite(
     request.auth?.uid,
     ['learner', 'educator', 'parent', 'site', 'partner', 'hq'],
-    requestedSiteId || undefined,
+    requestedSiteId || undefined
   );
-  const source = typeof request.data?.source === 'string'
-    && request.data.source.trim().length > 0
-    ? request.data.source.trim()
-    : 'unknown';
-  const impersonatingRole = typeof request.data?.impersonatingRole === 'string'
-    && request.data.impersonatingRole.trim().length > 0
-    ? request.data.impersonatingRole.trim().toLowerCase()
-    : undefined;
+  const source =
+    typeof request.data?.source === 'string' && request.data.source.trim().length > 0
+      ? request.data.source.trim()
+      : 'unknown';
+  const impersonatingRole =
+    typeof request.data?.impersonatingRole === 'string' &&
+    request.data.impersonatingRole.trim().length > 0
+      ? request.data.impersonatingRole.trim().toLowerCase()
+      : undefined;
   const siteId = requestedSiteId || actor.profile.activeSiteId || undefined;
 
   const id = await persistLogoutAuditRecord({
@@ -4517,7 +5075,10 @@ const REPORT_SHARE_VISIBILITIES = new Set<ReportShareRequestVisibility>([
 
 const REPORT_SHARE_MAX_EXPIRY_DAYS = 30;
 
-function readTrimmedField(data: Record<string, unknown> | undefined, key: string): string | undefined {
+function readTrimmedField(
+  data: Record<string, unknown> | undefined,
+  key: string
+): string | undefined {
   const value = data?.[key];
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 }
@@ -4576,9 +5137,10 @@ function readStringArrayField(value: unknown): string[] {
 }
 
 function resolveShareExpiry(data: Record<string, unknown>): Date {
-  const rawDays = typeof data.expiresInDays === 'number' && Number.isFinite(data.expiresInDays)
-    ? data.expiresInDays
-    : 7;
+  const rawDays =
+    typeof data.expiresInDays === 'number' && Number.isFinite(data.expiresInDays)
+      ? data.expiresInDays
+      : 7;
   const days = Math.max(1, Math.min(REPORT_SHARE_MAX_EXPIRY_DAYS, Math.floor(rawDays)));
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
@@ -4594,7 +5156,11 @@ async function requireReportShareContext(params: {
 
   const actorProfile = await getUserProfile(authUid);
   const actorRole = normalizeRoleValue(actorProfile?.role);
-  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
+  if (
+    !actorProfile ||
+    !actorRole ||
+    !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)
+  ) {
     throw new HttpsError('permission-denied', 'Insufficient role.');
   }
 
@@ -4633,7 +5199,10 @@ async function requireReportShareContext(params: {
   return { actorProfile, actorRole, learnerProfile, learnerId, siteId };
 }
 
-function resolveReportBlockReason(metadata: Record<string, unknown>, provided?: string): string | undefined {
+function resolveReportBlockReason(
+  metadata: Record<string, unknown>,
+  provided?: string
+): string | undefined {
   if (provided) return provided;
   const missingFields = Array.isArray(metadata.report_missing_delivery_contract_fields)
     ? metadata.report_missing_delivery_contract_fields
@@ -4646,313 +5215,395 @@ function resolveReportBlockReason(metadata: Record<string, unknown>, provided?: 
   return undefined;
 }
 
-export const recordReportDeliveryAudit = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
-  const authUid = request.auth?.uid;
-  if (!authUid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-
-  const actorProfile = await getUserProfile(authUid);
-  const actorRole = normalizeRoleValue(actorProfile?.role);
-  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
-    throw new HttpsError('permission-denied', 'Insufficient role.');
-  }
-
-  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
-    throw new HttpsError('invalid-argument', 'Request data must be an object.');
-  }
-  const data = request.data ?? {};
-  const learnerId = readTrimmedField(data, 'learnerId');
-  if (!learnerId) {
-    throw new HttpsError('invalid-argument', 'learnerId is required.');
-  }
-
-  const requestedSiteId = readTrimmedField(data, 'siteId');
-  const learnerProfile = await getUserProfile(learnerId);
-  if (!learnerProfile || normalizeRoleValue(learnerProfile.role) !== 'learner') {
-    throw new HttpsError('not-found', 'Learner not found.');
-  }
-
-  let siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
-  siteId ??= learnerProfile.activeSiteId ?? learnerProfile.siteIds?.[0] ?? learnerProfile.studioId;
-  if (!siteId) {
-    throw new HttpsError('invalid-argument', 'siteId is required for report delivery audit.');
-  }
-  if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
-    throw new HttpsError('permission-denied', 'Site access denied.');
-  }
-  if (!hasSiteAccess(learnerProfile, siteId)) {
-    throw new HttpsError('permission-denied', 'Learner is not linked to this site.');
-  }
-
-  if (actorRole === 'learner' && learnerId !== authUid) {
-    throw new HttpsError('permission-denied', 'Learners can only audit their own report delivery.');
-  }
-  if (actorRole === 'parent') {
-    const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: authUid, siteId });
-    if (!linkedLearnerIds.includes(learnerId)) {
-      throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+export const recordReportDeliveryAudit = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    const authUid = request.auth?.uid;
+    if (!authUid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
     }
-  }
 
-  const reportAction = normalizeReportDeliveryAction(data.reportAction);
-  const reportDelivery = normalizeReportDeliveryStatus(data.reportDelivery);
-  const metadataInput = data.metadata;
-  if (metadataInput !== undefined && (typeof metadataInput !== 'object' || Array.isArray(metadataInput))) {
-    throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
-  }
-
-  const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
-    metadataInput as Record<string, unknown> | undefined,
-  );
-  const meetsDeliveryContract = metadata.report_meets_delivery_contract === true;
-  const hasSharePolicy = metadata.report_share_policy_declared === true;
-  if (reportDelivery !== 'contract-failed' && (!meetsDeliveryContract || !hasSharePolicy)) {
-    throw new HttpsError('failed-precondition', 'Delivered reports must meet the delivery contract.');
-  }
-  if (reportDelivery === 'contract-failed' && meetsDeliveryContract) {
-    throw new HttpsError('failed-precondition', 'Blocked report audit requires a failed delivery contract.');
-  }
-
-  const shareRequestId = readTrimmedField(data, 'shareRequestId');
-  if (shareRequestId) {
-    if (reportDelivery === 'contract-failed') {
-      throw new HttpsError('failed-precondition', 'Blocked report audits cannot link active share requests.');
+    const actorProfile = await getUserProfile(authUid);
+    const actorRole = normalizeRoleValue(actorProfile?.role);
+    if (
+      !actorProfile ||
+      !actorRole ||
+      !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)
+    ) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
     }
-    const shareSnap = await admin
+
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const learnerId = readTrimmedField(data, 'learnerId');
+    if (!learnerId) {
+      throw new HttpsError('invalid-argument', 'learnerId is required.');
+    }
+
+    const requestedSiteId = readTrimmedField(data, 'siteId');
+    const learnerProfile = await getUserProfile(learnerId);
+    if (!learnerProfile || normalizeRoleValue(learnerProfile.role) !== 'learner') {
+      throw new HttpsError('not-found', 'Learner not found.');
+    }
+
+    let siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
+    siteId ??=
+      learnerProfile.activeSiteId ?? learnerProfile.siteIds?.[0] ?? learnerProfile.studioId;
+    if (!siteId) {
+      throw new HttpsError('invalid-argument', 'siteId is required for report delivery audit.');
+    }
+    if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+      throw new HttpsError('permission-denied', 'Site access denied.');
+    }
+    if (!hasSiteAccess(learnerProfile, siteId)) {
+      throw new HttpsError('permission-denied', 'Learner is not linked to this site.');
+    }
+
+    if (actorRole === 'learner' && learnerId !== authUid) {
+      throw new HttpsError(
+        'permission-denied',
+        'Learners can only audit their own report delivery.'
+      );
+    }
+    if (actorRole === 'parent') {
+      const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: authUid, siteId });
+      if (!linkedLearnerIds.includes(learnerId)) {
+        throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+      }
+    }
+
+    const reportAction = normalizeReportDeliveryAction(data.reportAction);
+    const reportDelivery = normalizeReportDeliveryStatus(data.reportDelivery);
+    const metadataInput = data.metadata;
+    if (
+      metadataInput !== undefined &&
+      (typeof metadataInput !== 'object' || Array.isArray(metadataInput))
+    ) {
+      throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
+    }
+
+    const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
+      metadataInput as Record<string, unknown> | undefined
+    );
+    const meetsDeliveryContract = metadata.report_meets_delivery_contract === true;
+    const hasSharePolicy = metadata.report_share_policy_declared === true;
+    if (reportDelivery !== 'contract-failed' && (!meetsDeliveryContract || !hasSharePolicy)) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Delivered reports must meet the delivery contract.'
+      );
+    }
+    if (reportDelivery === 'contract-failed' && meetsDeliveryContract) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Blocked report audit requires a failed delivery contract.'
+      );
+    }
+
+    const shareRequestId = readTrimmedField(data, 'shareRequestId');
+    if (shareRequestId) {
+      if (reportDelivery === 'contract-failed') {
+        throw new HttpsError(
+          'failed-precondition',
+          'Blocked report audits cannot link active share requests.'
+        );
+      }
+      const shareSnap = await admin
+        .firestore()
+        .collection(REPORT_SHARE_REQUESTS_COLLECTION)
+        .doc(shareRequestId)
+        .get();
+      if (!shareSnap.exists) {
+        throw new HttpsError('not-found', 'Report share request not found.');
+      }
+      const shareData = shareSnap.data() ?? {};
+      if (shareData.learnerId !== learnerId || shareData.siteId !== siteId) {
+        throw new HttpsError(
+          'permission-denied',
+          'Report share request does not match this delivery audit.'
+        );
+      }
+      if (shareData.status !== 'active') {
+        throw new HttpsError(
+          'failed-precondition',
+          'Only active report share requests can be linked to delivery audit.'
+        );
+      }
+    }
+
+    const reportBlockReason =
+      reportDelivery === 'contract-failed'
+        ? resolveReportBlockReason(metadata, readTrimmedField(data, 'reportBlockReason'))
+        : undefined;
+    const id = await persistReportDeliveryAuditRecord({
+      actorId: authUid,
+      actorRole,
+      learnerId,
+      reportAction,
+      reportDelivery,
+      siteId,
+      reportBlockReason,
+      details: {
+        module: readTrimmedField(data, 'module') ?? null,
+        surface: readTrimmedField(data, 'surface') ?? null,
+        cta: readTrimmedField(data, 'cta') ?? null,
+        fileName: readTrimmedField(data, 'fileName') ?? null,
+        shareRequestId: shareRequestId ?? null,
+        ...metadata,
+        redactionApplied: redactedPaths.length > 0,
+        redactedPathCount: redactedPaths.length,
+      },
+      collectionName: AUDIT_COLLECTION,
+    });
+
+    if (shareRequestId) {
+      await linkReportShareRequestDeliveryAuditRecord({
+        shareRequestId,
+        deliveryAuditId: id,
+        reportDelivery: reportDelivery as ReportShareRequestDelivery,
+        collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+      });
+    }
+
+    return { status: 'ok', id };
+  }
+);
+
+export const createReportShareRequest = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const { actorRole, learnerId, siteId } = await requireReportShareContext({
+      authUid: request.auth?.uid,
+      data,
+    });
+
+    const metadataInput = data.metadata;
+    if (
+      metadataInput !== undefined &&
+      (typeof metadataInput !== 'object' || Array.isArray(metadataInput))
+    ) {
+      throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
+    }
+    const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
+      metadataInput as Record<string, unknown> | undefined
+    );
+
+    if (
+      metadata.report_meets_delivery_contract !== true ||
+      metadata.report_share_policy_declared !== true
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share requests require a passing delivery contract.'
+      );
+    }
+
+    const audience = normalizeReportShareAudience(
+      readTrimmedField(data, 'audience') ?? metadata.report_share_audience
+    );
+    const visibility = normalizeReportShareVisibility(
+      readTrimmedField(data, 'visibility') ?? metadata.report_share_visibility
+    );
+    const allowsExternalSharing = metadata.report_share_allows_external_sharing === true;
+    if (
+      allowsExternalSharing ||
+      audience === 'external' ||
+      audience === 'partner' ||
+      visibility === 'external' ||
+      visibility === 'public'
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'External and partner report sharing requires explicit consent workflow support.'
+      );
+    }
+
+    const reportAction = normalizeReportDeliveryAction(
+      data.reportAction
+    ) as ReportShareRequestAction;
+    const reportDelivery =
+      data.reportDelivery === undefined
+        ? undefined
+        : (normalizeReportDeliveryStatus(data.reportDelivery) as ReportShareRequestDelivery);
+    if (reportDelivery && !REPORT_COMPLETED_DELIVERY_STATUSES.has(reportDelivery)) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Only completed report deliveries can create active share requests.'
+      );
+    }
+
+    const id = await persistReportShareRequestRecord({
+      actorId: request.auth!.uid,
+      actorRole,
+      learnerId,
+      siteId,
+      reportAction,
+      reportDelivery,
+      audience,
+      visibility,
+      source: readTrimmedField(data, 'source') ?? readTrimmedField(data, 'module'),
+      surface: readTrimmedField(data, 'surface'),
+      cta: readTrimmedField(data, 'cta'),
+      fileName: readTrimmedField(data, 'fileName'),
+      expiresAt: resolveShareExpiry(data),
+      sharePolicy: {
+        requiresEvidenceProvenance: metadata.report_share_requires_evidence_provenance === true,
+        requiresGuardianContext: metadata.report_share_requires_guardian_context === true,
+        allowsExternalSharing,
+        includesLearnerIdentifiers: metadata.report_share_includes_learner_identifiers === true,
+      },
+      provenance: {
+        expectedSignals: readStringArrayField(metadata.report_expected_provenance_signals),
+        missingSignals: readStringArrayField(metadata.report_missing_provenance_signals),
+        meetsProvenanceContract: metadata.report_meets_provenance_contract === true,
+        meetsDeliveryContract: metadata.report_meets_delivery_contract === true,
+        sharePolicyDeclared: metadata.report_share_policy_declared === true,
+      },
+      collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+    });
+
+    await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
+      .add({
+        actorId: request.auth!.uid,
+        actorRole,
+        userId: request.auth!.uid,
+        action: 'report.share_request_created',
+        entityType: 'reportShareRequest',
+        entityId: id,
+        targetType: 'learner',
+        targetId: learnerId,
+        siteId,
+        details: {
+          audience,
+          visibility,
+          reportAction,
+          reportDelivery: reportDelivery ?? null,
+          redactionApplied: redactedPaths.length > 0,
+          redactedPathCount: redactedPaths.length,
+        },
+        metadata: {
+          audience,
+          visibility,
+          reportAction,
+          reportDelivery: reportDelivery ?? null,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    return { status: 'ok', id };
+  }
+);
+
+export const revokeReportShareRequest = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const shareRequestId = readTrimmedField(data, 'shareRequestId');
+    if (!shareRequestId) {
+      throw new HttpsError('invalid-argument', 'shareRequestId is required.');
+    }
+
+    const actorProfile = await getUserProfile(request.auth.uid);
+    const actorRole = normalizeRoleValue(actorProfile?.role);
+    if (
+      !actorProfile ||
+      !actorRole ||
+      !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)
+    ) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
+    }
+
+    const shareRef = admin
       .firestore()
       .collection(REPORT_SHARE_REQUESTS_COLLECTION)
-      .doc(shareRequestId)
-      .get();
+      .doc(shareRequestId);
+    const shareSnap = await shareRef.get();
     if (!shareSnap.exists) {
       throw new HttpsError('not-found', 'Report share request not found.');
     }
     const shareData = shareSnap.data() ?? {};
-    if (shareData.learnerId !== learnerId || shareData.siteId !== siteId) {
-      throw new HttpsError('permission-denied', 'Report share request does not match this delivery audit.');
+    const learnerId = typeof shareData.learnerId === 'string' ? shareData.learnerId : '';
+    const siteId = typeof shareData.siteId === 'string' ? shareData.siteId : '';
+    if (!learnerId || !siteId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share request is missing learner or site linkage.'
+      );
     }
-    if (shareData.status !== 'active') {
-      throw new HttpsError('failed-precondition', 'Only active report share requests can be linked to delivery audit.');
+
+    if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+      throw new HttpsError('permission-denied', 'Site access denied.');
     }
-  }
+    if (actorRole === 'learner' && learnerId !== request.auth.uid) {
+      throw new HttpsError(
+        'permission-denied',
+        'Learners can only revoke their own report shares.'
+      );
+    }
+    if (actorRole === 'parent') {
+      const linkedLearnerIds = await collectParentLinkedLearnerIds({
+        parentId: request.auth.uid,
+        siteId,
+      });
+      if (!linkedLearnerIds.includes(learnerId)) {
+        throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+      }
+    }
 
-  const reportBlockReason = reportDelivery === 'contract-failed'
-    ? resolveReportBlockReason(metadata, readTrimmedField(data, 'reportBlockReason'))
-    : undefined;
-  const id = await persistReportDeliveryAuditRecord({
-    actorId: authUid,
-    actorRole,
-    learnerId,
-    reportAction,
-    reportDelivery,
-    siteId,
-    reportBlockReason,
-    details: {
-      module: readTrimmedField(data, 'module') ?? null,
-      surface: readTrimmedField(data, 'surface') ?? null,
-      cta: readTrimmedField(data, 'cta') ?? null,
-      fileName: readTrimmedField(data, 'fileName') ?? null,
-      shareRequestId: shareRequestId ?? null,
-      ...metadata,
-      redactionApplied: redactedPaths.length > 0,
-      redactedPathCount: redactedPaths.length,
-    },
-    collectionName: AUDIT_COLLECTION,
-  });
-
-  if (shareRequestId) {
-    await linkReportShareRequestDeliveryAuditRecord({
+    const reason = readTrimmedField(data, 'reason');
+    await revokeReportShareRequestRecord({
       shareRequestId,
-      deliveryAuditId: id,
-      reportDelivery: reportDelivery as ReportShareRequestDelivery,
+      actorId: request.auth.uid,
+      reason,
       collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
     });
-  }
+    await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
+      .add({
+        actorId: request.auth.uid,
+        actorRole,
+        userId: request.auth.uid,
+        action: 'report.share_request_revoked',
+        entityType: 'reportShareRequest',
+        entityId: shareRequestId,
+        targetType: 'learner',
+        targetId: learnerId,
+        siteId,
+        details: {
+          reason: reason ?? null,
+          previousStatus: shareData.status ?? null,
+        },
+        metadata: {
+          reason: reason ?? null,
+          previousStatus: shareData.status ?? null,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
 
-  return { status: 'ok', id };
-});
-
-export const createReportShareRequest = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
-  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
-    throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    return { status: 'ok', id: shareRequestId };
   }
-  const data = request.data ?? {};
-  const { actorRole, learnerId, siteId } = await requireReportShareContext({
-    authUid: request.auth?.uid,
-    data,
-  });
-
-  const metadataInput = data.metadata;
-  if (metadataInput !== undefined && (typeof metadataInput !== 'object' || Array.isArray(metadataInput))) {
-    throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
-  }
-  const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
-    metadataInput as Record<string, unknown> | undefined,
-  );
-
-  if (metadata.report_meets_delivery_contract !== true || metadata.report_share_policy_declared !== true) {
-    throw new HttpsError('failed-precondition', 'Report share requests require a passing delivery contract.');
-  }
-
-  const audience = normalizeReportShareAudience(
-    readTrimmedField(data, 'audience') ?? metadata.report_share_audience,
-  );
-  const visibility = normalizeReportShareVisibility(
-    readTrimmedField(data, 'visibility') ?? metadata.report_share_visibility,
-  );
-  const allowsExternalSharing = metadata.report_share_allows_external_sharing === true;
-  if (
-    allowsExternalSharing ||
-    audience === 'external' ||
-    audience === 'partner' ||
-    visibility === 'external' ||
-    visibility === 'public'
-  ) {
-    throw new HttpsError('failed-precondition', 'External and partner report sharing requires explicit consent workflow support.');
-  }
-
-  const reportAction = normalizeReportDeliveryAction(data.reportAction) as ReportShareRequestAction;
-  const reportDelivery = data.reportDelivery === undefined
-    ? undefined
-    : (normalizeReportDeliveryStatus(data.reportDelivery) as ReportShareRequestDelivery);
-  if (reportDelivery && !REPORT_COMPLETED_DELIVERY_STATUSES.has(reportDelivery)) {
-    throw new HttpsError('failed-precondition', 'Only completed report deliveries can create active share requests.');
-  }
-
-  const id = await persistReportShareRequestRecord({
-    actorId: request.auth!.uid,
-    actorRole,
-    learnerId,
-    siteId,
-    reportAction,
-    reportDelivery,
-    audience,
-    visibility,
-    source: readTrimmedField(data, 'source') ?? readTrimmedField(data, 'module'),
-    surface: readTrimmedField(data, 'surface'),
-    cta: readTrimmedField(data, 'cta'),
-    fileName: readTrimmedField(data, 'fileName'),
-    expiresAt: resolveShareExpiry(data),
-    sharePolicy: {
-      requiresEvidenceProvenance: metadata.report_share_requires_evidence_provenance === true,
-      requiresGuardianContext: metadata.report_share_requires_guardian_context === true,
-      allowsExternalSharing,
-      includesLearnerIdentifiers: metadata.report_share_includes_learner_identifiers === true,
-    },
-    provenance: {
-      expectedSignals: readStringArrayField(metadata.report_expected_provenance_signals),
-      missingSignals: readStringArrayField(metadata.report_missing_provenance_signals),
-      meetsProvenanceContract: metadata.report_meets_provenance_contract === true,
-      meetsDeliveryContract: metadata.report_meets_delivery_contract === true,
-      sharePolicyDeclared: metadata.report_share_policy_declared === true,
-    },
-    collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
-  });
-
-  await admin.firestore().collection(AUDIT_COLLECTION).add({
-    actorId: request.auth!.uid,
-    actorRole,
-    userId: request.auth!.uid,
-    action: 'report.share_request_created',
-    entityType: 'reportShareRequest',
-    entityId: id,
-    targetType: 'learner',
-    targetId: learnerId,
-    siteId,
-    details: {
-      audience,
-      visibility,
-      reportAction,
-      reportDelivery: reportDelivery ?? null,
-      redactionApplied: redactedPaths.length > 0,
-      redactedPathCount: redactedPaths.length,
-    },
-    metadata: {
-      audience,
-      visibility,
-      reportAction,
-      reportDelivery: reportDelivery ?? null,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  return { status: 'ok', id };
-});
-
-export const revokeReportShareRequest = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
-  if (!request.auth?.uid) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
-    throw new HttpsError('invalid-argument', 'Request data must be an object.');
-  }
-  const data = request.data ?? {};
-  const shareRequestId = readTrimmedField(data, 'shareRequestId');
-  if (!shareRequestId) {
-    throw new HttpsError('invalid-argument', 'shareRequestId is required.');
-  }
-
-  const actorProfile = await getUserProfile(request.auth.uid);
-  const actorRole = normalizeRoleValue(actorProfile?.role);
-  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
-    throw new HttpsError('permission-denied', 'Insufficient role.');
-  }
-
-  const shareRef = admin.firestore().collection(REPORT_SHARE_REQUESTS_COLLECTION).doc(shareRequestId);
-  const shareSnap = await shareRef.get();
-  if (!shareSnap.exists) {
-    throw new HttpsError('not-found', 'Report share request not found.');
-  }
-  const shareData = shareSnap.data() ?? {};
-  const learnerId = typeof shareData.learnerId === 'string' ? shareData.learnerId : '';
-  const siteId = typeof shareData.siteId === 'string' ? shareData.siteId : '';
-  if (!learnerId || !siteId) {
-    throw new HttpsError('failed-precondition', 'Report share request is missing learner or site linkage.');
-  }
-
-  if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
-    throw new HttpsError('permission-denied', 'Site access denied.');
-  }
-  if (actorRole === 'learner' && learnerId !== request.auth.uid) {
-    throw new HttpsError('permission-denied', 'Learners can only revoke their own report shares.');
-  }
-  if (actorRole === 'parent') {
-    const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: request.auth.uid, siteId });
-    if (!linkedLearnerIds.includes(learnerId)) {
-      throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
-    }
-  }
-
-  const reason = readTrimmedField(data, 'reason');
-  await revokeReportShareRequestRecord({
-    shareRequestId,
-    actorId: request.auth.uid,
-    reason,
-    collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
-  });
-  await admin.firestore().collection(AUDIT_COLLECTION).add({
-    actorId: request.auth.uid,
-    actorRole,
-    userId: request.auth.uid,
-    action: 'report.share_request_revoked',
-    entityType: 'reportShareRequest',
-    entityId: shareRequestId,
-    targetType: 'learner',
-    targetId: learnerId,
-    siteId,
-    details: {
-      reason: reason ?? null,
-      previousStatus: shareData.status ?? null,
-    },
-    metadata: {
-      reason: reason ?? null,
-      previousStatus: shareData.status ?? null,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  return { status: 'ok', id: shareRequestId };
-});
+);
 
 export const processNotificationRequests = onSchedule('every 5 minutes', async () => {
   const db = admin.firestore();
@@ -4970,7 +5621,9 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
     const rateKey = (data.rateKey as string | undefined) ?? 'global';
     const rateRef = db.collection(NOTIFICATION_RATE_COLLECTION).doc(rateKey);
     const rateSnap = await rateRef.get();
-    const last = rateSnap.exists ? (rateSnap.data()?.lastProcessedAt as Timestamp | undefined) : undefined;
+    const last = rateSnap.exists
+      ? (rateSnap.data()?.lastProcessedAt as Timestamp | undefined)
+      : undefined;
     if (last && now.toMillis() - last.toMillis() < 60_000) {
       // Skip due to rate limit
       continue;
@@ -4987,7 +5640,10 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
         type: data.type as string | undefined,
         data: data.data as Record<string, unknown> | undefined,
       });
-      await docSnap.ref.set({ status: 'sent', processedAt: now, providerMessageId: result.providerMessageId }, { merge: true });
+      await docSnap.ref.set(
+        { status: 'sent', processedAt: now, providerMessageId: result.providerMessageId },
+        { merge: true }
+      );
       await persistTelemetryEvent({
         event: 'notification.requested',
         userId: (data.requestedBy as string | undefined) ?? 'system',
@@ -5020,7 +5676,10 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
         createdAt: now,
       });
     } catch (e) {
-      await docSnap.ref.set({ status: 'error', processedAt: now, error: (e as Error).message }, { merge: true });
+      await docSnap.ref.set(
+        { status: 'error', processedAt: now, error: (e as Error).message },
+        { merge: true }
+      );
     }
   }
 });
@@ -5038,13 +5697,19 @@ export const scheduleLearnerGoalReminders = onSchedule('every 6 hours', async ()
 export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
-  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
-  const listingId = typeof request.data?.listingId === 'string' ? request.data.listingId.trim() : '';
-  const idempotencyKey = typeof request.data?.idempotencyKey === 'string' ? request.data.idempotencyKey.trim() : '';
+  const productId =
+    typeof request.data?.productId === 'string' ? request.data.productId.trim() : ('' as ProductId);
+  const listingId =
+    typeof request.data?.listingId === 'string' ? request.data.listingId.trim() : '';
+  const idempotencyKey =
+    typeof request.data?.idempotencyKey === 'string' ? request.data.idempotencyKey.trim() : '';
 
-  if (!siteId || !targetUserId) throw new HttpsError('invalid-argument', 'siteId and userId are required');
-  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
-  if (!idempotencyKey || idempotencyKey.length < 8) throw new HttpsError('invalid-argument', 'idempotencyKey required');
+  if (!siteId || !targetUserId)
+    throw new HttpsError('invalid-argument', 'siteId and userId are required');
+  if (!(productId in PRODUCT_CATALOG))
+    throw new HttpsError('invalid-argument', 'Unknown productId');
+  if (!idempotencyKey || idempotencyKey.length < 8)
+    throw new HttpsError('invalid-argument', 'idempotencyKey required');
 
   const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], siteId);
 
@@ -5106,12 +5771,17 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
 export const completeCheckout = onCall(async (request: CallableRequest) => {
   const intentId = typeof request.data?.intentId === 'string' ? request.data.intentId.trim() : '';
   const amountPaid = typeof request.data?.amount === 'string' ? request.data.amount.trim() : '';
-  const currencyPaid = typeof request.data?.currency === 'string' ? request.data.currency.trim() : '';
+  const currencyPaid =
+    typeof request.data?.currency === 'string' ? request.data.currency.trim() : '';
   if (!intentId) throw new HttpsError('invalid-argument', 'intentId required');
 
   const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], undefined);
 
-  const intentSnap = await admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId).get();
+  const intentSnap = await admin
+    .firestore()
+    .collection(CHECKOUT_INTENTS_COLLECTION)
+    .doc(intentId)
+    .get();
   if (!intentSnap.exists) throw new HttpsError('not-found', 'Intent not found');
   const intent = intentSnap.data() as any;
   if (intent.status === 'paid') {
@@ -5119,10 +5789,13 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
   }
 
   const productId = intent.productId as ProductId;
-  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('failed-precondition', 'Intent product missing');
+  if (!(productId in PRODUCT_CATALOG))
+    throw new HttpsError('failed-precondition', 'Intent product missing');
   const product = PRODUCT_CATALOG[productId];
-  if (amountPaid && amountPaid != product.amount) throw new HttpsError('invalid-argument', 'Amount mismatch');
-  if (currencyPaid && currencyPaid != product.currency) throw new HttpsError('invalid-argument', 'Currency mismatch');
+  if (amountPaid && amountPaid != product.amount)
+    throw new HttpsError('invalid-argument', 'Amount mismatch');
+  if (currencyPaid && currencyPaid != product.currency)
+    throw new HttpsError('invalid-argument', 'Currency mismatch');
 
   const orderRef = admin.firestore().collection(ORDERS_COLLECTION).doc(intentId);
   const entitlementRef = admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc();
@@ -5134,26 +5807,34 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
     if (!current) throw new HttpsError('not-found', 'Intent missing');
     if (current.status === 'paid') return;
 
-    tx.set(intentSnap.ref, {
-      status: 'paid',
-      paidAt: FieldValue.serverTimestamp(),
-      entitlementId: entitlementRef.id,
-    }, { merge: true });
+    tx.set(
+      intentSnap.ref,
+      {
+        status: 'paid',
+        paidAt: FieldValue.serverTimestamp(),
+        entitlementId: entitlementRef.id,
+      },
+      { merge: true }
+    );
 
-    tx.set(orderRef, {
-      siteId: current.siteId,
-      userId: current.userId,
-      productId,
-      amount: product.amount,
-      currency: product.currency,
-      status: 'paid',
-      entitlementRoles: product.roles,
-      actorId: actor.uid,
-      actorRole: actor.role,
-      listingId: current.listingId ?? null,
-      createdAt: FieldValue.serverTimestamp(),
-      paidAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
+    tx.set(
+      orderRef,
+      {
+        siteId: current.siteId,
+        userId: current.userId,
+        productId,
+        amount: product.amount,
+        currency: product.currency,
+        status: 'paid',
+        entitlementRoles: product.roles,
+        actorId: actor.uid,
+        actorRole: actor.role,
+        listingId: current.listingId ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     tx.set(entitlementRef, {
       userId: current.userId,
@@ -5176,7 +5857,10 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       });
     }
 
-    const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
+    const userRef = admin
+      .firestore()
+      .collection(USERS_COLLECTION)
+      .doc(current.userId as string);
     tx.set(
       userRef,
       {
@@ -5186,7 +5870,7 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
         primarySiteId: current.siteId,
         updatedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
 
     const auditRef = admin.firestore().collection(AUDIT_COLLECTION).doc();
@@ -5197,7 +5881,12 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       entityType: 'order',
       entityId: intentId,
       siteId: current.siteId,
-      details: { productId, amount: product.amount, currency: product.currency, roles: product.roles },
+      details: {
+        productId,
+        amount: product.amount,
+        currency: product.currency,
+        roles: product.roles,
+      },
       createdAt: FieldValue.serverTimestamp(),
     });
   });
@@ -5213,11 +5902,9 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       targetUserId: intent.userId,
       amount: product.amount,
       currency: product.currency,
-      ...(
-        typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
-            ? { listingId: intent.listingId }
-            : {}
-      ),
+      ...(typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+        ? { listingId: intent.listingId }
+        : {}),
     },
   });
 
@@ -5236,7 +5923,9 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
   const signature = req.headers['x-webhook-signature'];
   const payload = JSON.stringify(req.body ?? {});
   const webhookSecretVal = stripeWebhookSecret.value();
-  const expectedSig = webhookSecretVal ? createHmac('sha256', webhookSecretVal).update(payload).digest('hex') : '';
+  const expectedSig = webhookSecretVal
+    ? createHmac('sha256', webhookSecretVal).update(payload).digest('hex')
+    : '';
   if (!webhookSecretVal || secret !== webhookSecretVal || signature !== expectedSig) {
     res.status(401).send('unauthorized');
     return;
@@ -5251,14 +5940,20 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
   }
 
   try {
-    const intentSnap = await admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId).get();
+    const intentSnap = await admin
+      .firestore()
+      .collection(CHECKOUT_INTENTS_COLLECTION)
+      .doc(intentId)
+      .get();
     if (!intentSnap.exists) {
       res.status(404).send('intent not found');
       return;
     }
     const intent = intentSnap.data() as any;
     if (intent.status === 'paid') {
-      res.status(200).send({ status: 'paid', orderId: intentId, entitlementId: intent.entitlementId });
+      res
+        .status(200)
+        .send({ status: 'paid', orderId: intentId, entitlementId: intent.entitlementId });
       return;
     }
 
@@ -5278,26 +5973,34 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
       if (!current) throw new Error('Intent missing');
       if (current.status === 'paid') return;
 
-      tx.set(intentSnap.ref, {
-        status: 'paid',
-        paidAt: FieldValue.serverTimestamp(),
-        entitlementId: entitlementRef.id,
-      }, { merge: true });
+      tx.set(
+        intentSnap.ref,
+        {
+          status: 'paid',
+          paidAt: FieldValue.serverTimestamp(),
+          entitlementId: entitlementRef.id,
+        },
+        { merge: true }
+      );
 
-      tx.set(orderRef, {
-        siteId: current.siteId,
-        userId: current.userId,
-        productId,
-        amount: product.amount,
-        currency: product.currency,
-        status: 'paid',
-        entitlementRoles: product.roles,
-        actorId: current.actorId ?? 'webhook',
-        actorRole: current.actorRole ?? 'hq',
-        listingId: current.listingId ?? null,
-        createdAt: FieldValue.serverTimestamp(),
-        paidAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      tx.set(
+        orderRef,
+        {
+          siteId: current.siteId,
+          userId: current.userId,
+          productId,
+          amount: product.amount,
+          currency: product.currency,
+          status: 'paid',
+          entitlementRoles: product.roles,
+          actorId: current.actorId ?? 'webhook',
+          actorRole: current.actorRole ?? 'hq',
+          listingId: current.listingId ?? null,
+          createdAt: FieldValue.serverTimestamp(),
+          paidAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       tx.set(entitlementRef, {
         userId: current.userId,
@@ -5320,7 +6023,10 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         });
       }
 
-      const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
+      const userRef = admin
+        .firestore()
+        .collection(USERS_COLLECTION)
+        .doc(current.userId as string);
       tx.set(
         userRef,
         {
@@ -5330,7 +6036,7 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
           primarySiteId: current.siteId,
           updatedAt: FieldValue.serverTimestamp(),
         },
-        { merge: true },
+        { merge: true }
       );
 
       const auditRef = admin.firestore().collection(AUDIT_COLLECTION).doc();
@@ -5341,7 +6047,13 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         entityType: 'order',
         entityId: intentId,
         siteId: current.siteId,
-        details: { productId, amount: product.amount, currency: product.currency, roles: product.roles, via: 'webhook' },
+        details: {
+          productId,
+          amount: product.amount,
+          currency: product.currency,
+          roles: product.roles,
+          via: 'webhook',
+        },
         createdAt: FieldValue.serverTimestamp(),
       });
     });
@@ -5358,11 +6070,9 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         amount: product.amount,
         currency: product.currency,
         via: 'webhook',
-        ...(
-          typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
-              ? { listingId: intent.listingId }
-              : {}
-        ),
+        ...(typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+          ? { listingId: intent.listingId }
+          : {}),
       },
     });
 
@@ -5384,7 +6094,12 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
 /**
  * Get or create a Stripe customer for a user
  */
-async function getOrCreateStripeCustomer(userId: string, email: string, name?: string, stripeInstance?: Stripe): Promise<string> {
+async function getOrCreateStripeCustomer(
+  userId: string,
+  email: string,
+  name?: string,
+  stripeInstance?: Stripe
+): Promise<string> {
   const stripeClient = stripeInstance || getStripe();
   if (!stripeClient) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
@@ -5420,181 +6135,206 @@ async function getOrCreateStripeCustomer(userId: string, email: string, name?: s
 /**
  * Create a Stripe Checkout Session for purchasing a product
  */
-export const createStripeCheckoutSession = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const createStripeCheckoutSession = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
-  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
-  const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
-  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
-  const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
-  const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
+    const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+    const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
+    const productId =
+      typeof request.data?.productId === 'string'
+        ? request.data.productId.trim()
+        : ('' as ProductId);
+    const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
+    const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
 
-  if (!siteId || !targetUserId) throw new HttpsError('invalid-argument', 'siteId and userId are required');
-  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
-  if (!successUrl || !cancelUrl) throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
+    if (!siteId || !targetUserId)
+      throw new HttpsError('invalid-argument', 'siteId and userId are required');
+    if (!(productId in PRODUCT_CATALOG))
+      throw new HttpsError('invalid-argument', 'Unknown productId');
+    if (!successUrl || !cancelUrl)
+      throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
 
-  const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site', 'parent', 'learner'], siteId);
+    const actor = await requireRoleAndSite(
+      request.auth?.uid,
+      ['hq', 'site', 'parent', 'learner'],
+      siteId
+    );
 
-  // Get target user email
-  const targetUserSnap = await admin.firestore().collection(USERS_COLLECTION).doc(targetUserId).get();
-  if (!targetUserSnap.exists) throw new HttpsError('not-found', 'Target user not found');
-  const targetUser = targetUserSnap.data() as UserRecord;
-  if (!targetUser.email) throw new HttpsError('failed-precondition', 'Target user has no email');
+    // Get target user email
+    const targetUserSnap = await admin
+      .firestore()
+      .collection(USERS_COLLECTION)
+      .doc(targetUserId)
+      .get();
+    if (!targetUserSnap.exists) throw new HttpsError('not-found', 'Target user not found');
+    const targetUser = targetUserSnap.data() as UserRecord;
+    if (!targetUser.email) throw new HttpsError('failed-precondition', 'Target user has no email');
 
-  const product = PRODUCT_CATALOG[productId as ProductId];
-  const priceId = getStripePriceIds()[productId as ProductId];
+    const product = PRODUCT_CATALOG[productId as ProductId];
+    const priceId = getStripePriceIds()[productId as ProductId];
 
-  // Get or create Stripe customer
-  const stripeCustomerId = await getOrCreateStripeCustomer(
-    targetUserId,
-    targetUser.email,
-    targetUser.displayName,
-    stripeInstance
-  );
-
-  // Create checkout intent record for tracking
-  const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc();
-  await intentRef.set({
-    siteId,
-    userId: targetUserId,
-    productId,
-    amount: product.amount,
-    currency: product.currency,
-    status: 'pending_stripe',
-    actorId: actor.uid,
-    actorRole: actor.role,
-    stripeCustomerId,
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  // Create Stripe Checkout Session
-  const session = await stripeInstance.checkout.sessions.create({
-    customer: stripeCustomerId,
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    mode: 'payment', // Use 'subscription' for recurring
-    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&intent_id=${intentRef.id}`,
-    cancel_url: cancelUrl,
-    metadata: {
-      firebaseIntentId: intentRef.id,
-      siteId,
+    // Get or create Stripe customer
+    const stripeCustomerId = await getOrCreateStripeCustomer(
       targetUserId,
+      targetUser.email,
+      targetUser.displayName,
+      stripeInstance
+    );
+
+    // Create checkout intent record for tracking
+    const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc();
+    await intentRef.set({
+      siteId,
+      userId: targetUserId,
       productId,
+      amount: product.amount,
+      currency: product.currency,
+      status: 'pending_stripe',
       actorId: actor.uid,
-    },
-    client_reference_id: intentRef.id,
-  });
+      actorRole: actor.role,
+      stripeCustomerId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
-  // Update intent with session ID
-  await intentRef.update({
-    stripeSessionId: session.id,
-    stripeSessionUrl: session.url,
-  });
+    // Create Stripe Checkout Session
+    const session = await stripeInstance.checkout.sessions.create({
+      customer: stripeCustomerId,
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'payment', // Use 'subscription' for recurring
+      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&intent_id=${intentRef.id}`,
+      cancel_url: cancelUrl,
+      metadata: {
+        firebaseIntentId: intentRef.id,
+        siteId,
+        targetUserId,
+        productId,
+        actorId: actor.uid,
+      },
+      client_reference_id: intentRef.id,
+    });
 
-  await persistTelemetryEvent({
-    event: 'order.intent',
-    userId: actor.uid,
-    role: actor.role,
-    siteId,
-    metadata: { productId, targetUserId, stripeSessionId: session.id },
-  });
+    // Update intent with session ID
+    await intentRef.update({
+      stripeSessionId: session.id,
+      stripeSessionUrl: session.url,
+    });
 
-  return {
-    sessionId: session.id,
-    sessionUrl: session.url,
-    intentId: intentRef.id,
-    amount: product.amount,
-    currency: product.currency,
-  };
-});
+    await persistTelemetryEvent({
+      event: 'order.intent',
+      userId: actor.uid,
+      role: actor.role,
+      siteId,
+      metadata: { productId, targetUserId, stripeSessionId: session.id },
+    });
+
+    return {
+      sessionId: session.id,
+      sessionUrl: session.url,
+      intentId: intentRef.id,
+      amount: product.amount,
+      currency: product.currency,
+    };
+  }
+);
 
 /**
  * Create a Stripe Checkout Session for subscriptions
  */
-export const createStripeSubscription = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const createStripeSubscription = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
-  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
-  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
-  const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
-  const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
+    const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+    const productId =
+      typeof request.data?.productId === 'string'
+        ? request.data.productId.trim()
+        : ('' as ProductId);
+    const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
+    const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
 
-  if (!siteId) throw new HttpsError('invalid-argument', 'siteId is required');
-  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
-  if (!successUrl || !cancelUrl) throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
+    if (!siteId) throw new HttpsError('invalid-argument', 'siteId is required');
+    if (!(productId in PRODUCT_CATALOG))
+      throw new HttpsError('invalid-argument', 'Unknown productId');
+    if (!successUrl || !cancelUrl)
+      throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
 
-  const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], siteId);
+    const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], siteId);
 
-  const actorProfile = await getUserProfile(actor.uid);
-  if (!actorProfile?.email) throw new HttpsError('failed-precondition', 'User has no email');
+    const actorProfile = await getUserProfile(actor.uid);
+    if (!actorProfile?.email) throw new HttpsError('failed-precondition', 'User has no email');
 
-  const product = PRODUCT_CATALOG[productId as ProductId];
-  const priceId = getStripePriceIds()[productId as ProductId];
+    const product = PRODUCT_CATALOG[productId as ProductId];
+    const priceId = getStripePriceIds()[productId as ProductId];
 
-  const stripeCustomerId = await getOrCreateStripeCustomer(
-    actor.uid,
-    actorProfile.email,
-    actorProfile.displayName
-  );
+    const stripeCustomerId = await getOrCreateStripeCustomer(
+      actor.uid,
+      actorProfile.email,
+      actorProfile.displayName
+    );
 
-  // Create subscription record
-  const subRef = admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc();
-  await subRef.set({
-    siteId,
-    userId: actor.uid,
-    productId,
-    status: 'pending',
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  const session = await stripeInstance.checkout.sessions.create({
-    customer: stripeCustomerId,
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    mode: 'subscription',
-    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&subscription_id=${subRef.id}`,
-    cancel_url: cancelUrl,
-    metadata: {
-      firebaseSubscriptionId: subRef.id,
+    // Create subscription record
+    const subRef = admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc();
+    await subRef.set({
       siteId,
       userId: actor.uid,
       productId,
-    },
-    client_reference_id: subRef.id,
-  });
+      status: 'pending',
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
-  await subRef.update({
-    stripeSessionId: session.id,
-  });
+    const session = await stripeInstance.checkout.sessions.create({
+      customer: stripeCustomerId,
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&subscription_id=${subRef.id}`,
+      cancel_url: cancelUrl,
+      metadata: {
+        firebaseSubscriptionId: subRef.id,
+        siteId,
+        userId: actor.uid,
+        productId,
+      },
+      client_reference_id: subRef.id,
+    });
 
-  return {
-    sessionId: session.id,
-    sessionUrl: session.url,
-    subscriptionId: subRef.id,
-    amount: product.amount,
-    currency: product.currency,
-  };
-});
+    await subRef.update({
+      stripeSessionId: session.id,
+    });
+
+    return {
+      sessionId: session.id,
+      sessionUrl: session.url,
+      subscriptionId: subRef.id,
+      amount: product.amount,
+      currency: product.currency,
+    };
+  }
+);
 
 /**
  * Stripe Webhook Handler - processes all payment events comprehensively
- * 
+ *
  * Supported Events:
  * - checkout.session.completed: One-time payment or subscription checkout completed
  * - checkout.session.expired: Checkout session expired without completion
@@ -5613,197 +6353,203 @@ export const createStripeSubscription = onCall({
  * - charge.dispute.created: Customer disputed a charge
  * - charge.dispute.closed: Dispute was resolved
  */
-export const stripeWebhook = onRequest({ 
-  cors: false,
-  secrets: [stripeSecretKey, stripeWebhookSecret],
-}, async (req, res) => {
-  if (req.method !== 'POST') {
-    res.status(405).send('Method not allowed');
-    return;
-  }
-
-  const stripeInstance = getStripe();
-  const webhookSecret = stripeWebhookSecret.value();
-
-  if (!stripeInstance || !webhookSecret) {
-    console.error('Stripe not configured - missing secrets');
-    res.status(500).send('Stripe not configured');
-    return;
-  }
-
-  const sig = req.headers['stripe-signature'];
-  if (!sig) {
-    res.status(400).send('Missing stripe-signature header');
-    return;
-  }
-
-  let event: Stripe.Event;
-  try {
-    const rawBody = req.rawBody;
-    event = stripeInstance.webhooks.constructEvent(rawBody, sig, webhookSecret);
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
-    return;
-  }
-
-  // Log all webhook events for audit trail
-  await logWebhookEvent(event);
-
-  try {
-    switch (event.type) {
-      // ============= CHECKOUT EVENTS =============
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutSessionCompleted(session);
-        break;
-      }
-
-      case 'checkout.session.expired': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutSessionExpired(session);
-        break;
-      }
-
-      // ============= INVOICE EVENTS =============
-      case 'invoice.paid': {
-        const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoicePaid(invoice);
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoicePaymentFailed(invoice);
-        break;
-      }
-
-      case 'invoice.upcoming': {
-        const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoiceUpcoming(invoice);
-        break;
-      }
-
-      case 'invoice.finalized': {
-        const invoice = event.data.object as Stripe.Invoice;
-        console.log('Invoice finalized:', invoice.id);
-        break;
-      }
-
-      // ============= SUBSCRIPTION EVENTS =============
-      case 'customer.subscription.created': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionCreated(subscription);
-        break;
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionUpdated(subscription);
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionDeleted(subscription);
-        break;
-      }
-
-      case 'customer.subscription.trial_will_end': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleTrialWillEnd(subscription);
-        break;
-      }
-
-      // ============= PAYMENT INTENT EVENTS =============
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await handlePaymentIntentSucceeded(paymentIntent);
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await handlePaymentIntentFailed(paymentIntent);
-        break;
-      }
-
-      case 'payment_intent.canceled': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log('Payment intent canceled:', paymentIntent.id);
-        break;
-      }
-
-      // ============= PAYMENT METHOD EVENTS =============
-      case 'payment_method.attached': {
-        const paymentMethod = event.data.object as Stripe.PaymentMethod;
-        await handlePaymentMethodAttached(paymentMethod);
-        break;
-      }
-
-      case 'payment_method.detached': {
-        const paymentMethod = event.data.object as Stripe.PaymentMethod;
-        await handlePaymentMethodDetached(paymentMethod);
-        break;
-      }
-
-      // ============= CHARGE/REFUND EVENTS =============
-      case 'charge.refunded': {
-        const charge = event.data.object as Stripe.Charge;
-        await handleChargeRefunded(charge);
-        break;
-      }
-
-      case 'charge.dispute.created': {
-        const dispute = event.data.object as Stripe.Dispute;
-        await handleDisputeCreated(dispute);
-        break;
-      }
-
-      case 'charge.dispute.closed': {
-        const dispute = event.data.object as Stripe.Dispute;
-        await handleDisputeClosed(dispute);
-        break;
-      }
-
-      // ============= CUSTOMER EVENTS =============
-      case 'customer.updated': {
-        const customer = event.data.object as Stripe.Customer;
-        await handleCustomerUpdated(customer);
-        break;
-      }
-
-      case 'customer.deleted': {
-        const customer = event.data.object as unknown as Stripe.DeletedCustomer;
-        await handleCustomerDeleted(customer);
-        break;
-      }
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+export const stripeWebhook = onRequest(
+  {
+    cors: false,
+    secrets: [stripeSecretKey, stripeWebhookSecret],
+  },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).send('Method not allowed');
+      return;
     }
 
-    res.status(200).json({ received: true, type: event.type });
-  } catch (err: any) {
-    console.error('Error processing webhook:', err);
-    // Return 500 for transient errors so Stripe retries
-    res.status(500).json({ received: false, error: err.message });
+    const stripeInstance = getStripe();
+    const webhookSecret = stripeWebhookSecret.value();
+
+    if (!stripeInstance || !webhookSecret) {
+      console.error('Stripe not configured - missing secrets');
+      res.status(500).send('Stripe not configured');
+      return;
+    }
+
+    const sig = req.headers['stripe-signature'];
+    if (!sig) {
+      res.status(400).send('Missing stripe-signature header');
+      return;
+    }
+
+    let event: Stripe.Event;
+    try {
+      const rawBody = req.rawBody;
+      event = stripeInstance.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    // Log all webhook events for audit trail
+    await logWebhookEvent(event);
+
+    try {
+      switch (event.type) {
+        // ============= CHECKOUT EVENTS =============
+        case 'checkout.session.completed': {
+          const session = event.data.object as Stripe.Checkout.Session;
+          await handleCheckoutSessionCompleted(session);
+          break;
+        }
+
+        case 'checkout.session.expired': {
+          const session = event.data.object as Stripe.Checkout.Session;
+          await handleCheckoutSessionExpired(session);
+          break;
+        }
+
+        // ============= INVOICE EVENTS =============
+        case 'invoice.paid': {
+          const invoice = event.data.object as Stripe.Invoice;
+          await handleInvoicePaid(invoice);
+          break;
+        }
+
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object as Stripe.Invoice;
+          await handleInvoicePaymentFailed(invoice);
+          break;
+        }
+
+        case 'invoice.upcoming': {
+          const invoice = event.data.object as Stripe.Invoice;
+          await handleInvoiceUpcoming(invoice);
+          break;
+        }
+
+        case 'invoice.finalized': {
+          const invoice = event.data.object as Stripe.Invoice;
+          console.log('Invoice finalized:', invoice.id);
+          break;
+        }
+
+        // ============= SUBSCRIPTION EVENTS =============
+        case 'customer.subscription.created': {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleSubscriptionCreated(subscription);
+          break;
+        }
+
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleSubscriptionUpdated(subscription);
+          break;
+        }
+
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleSubscriptionDeleted(subscription);
+          break;
+        }
+
+        case 'customer.subscription.trial_will_end': {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleTrialWillEnd(subscription);
+          break;
+        }
+
+        // ============= PAYMENT INTENT EVENTS =============
+        case 'payment_intent.succeeded': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          await handlePaymentIntentSucceeded(paymentIntent);
+          break;
+        }
+
+        case 'payment_intent.payment_failed': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          await handlePaymentIntentFailed(paymentIntent);
+          break;
+        }
+
+        case 'payment_intent.canceled': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          console.log('Payment intent canceled:', paymentIntent.id);
+          break;
+        }
+
+        // ============= PAYMENT METHOD EVENTS =============
+        case 'payment_method.attached': {
+          const paymentMethod = event.data.object as Stripe.PaymentMethod;
+          await handlePaymentMethodAttached(paymentMethod);
+          break;
+        }
+
+        case 'payment_method.detached': {
+          const paymentMethod = event.data.object as Stripe.PaymentMethod;
+          await handlePaymentMethodDetached(paymentMethod);
+          break;
+        }
+
+        // ============= CHARGE/REFUND EVENTS =============
+        case 'charge.refunded': {
+          const charge = event.data.object as Stripe.Charge;
+          await handleChargeRefunded(charge);
+          break;
+        }
+
+        case 'charge.dispute.created': {
+          const dispute = event.data.object as Stripe.Dispute;
+          await handleDisputeCreated(dispute);
+          break;
+        }
+
+        case 'charge.dispute.closed': {
+          const dispute = event.data.object as Stripe.Dispute;
+          await handleDisputeClosed(dispute);
+          break;
+        }
+
+        // ============= CUSTOMER EVENTS =============
+        case 'customer.updated': {
+          const customer = event.data.object as Stripe.Customer;
+          await handleCustomerUpdated(customer);
+          break;
+        }
+
+        case 'customer.deleted': {
+          const customer = event.data.object as unknown as Stripe.DeletedCustomer;
+          await handleCustomerDeleted(customer);
+          break;
+        }
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      res.status(200).json({ received: true, type: event.type });
+    } catch (err: any) {
+      console.error('Error processing webhook:', err);
+      // Return 500 for transient errors so Stripe retries
+      res.status(500).json({ received: false, error: err.message });
+    }
   }
-});
+);
 
 /**
  * Log all webhook events for audit and debugging
  */
 async function logWebhookEvent(event: Stripe.Event) {
   try {
-    await admin.firestore().collection('stripeWebhookLogs').add({
-      eventId: event.id,
-      eventType: event.type,
-      livemode: event.livemode,
-      created: new Date(event.created * 1000),
-      receivedAt: FieldValue.serverTimestamp(),
-      objectId: (event.data.object as any).id,
-    });
+    await admin
+      .firestore()
+      .collection('stripeWebhookLogs')
+      .add({
+        eventId: event.id,
+        eventType: event.type,
+        livemode: event.livemode,
+        created: new Date(event.created * 1000),
+        receivedAt: FieldValue.serverTimestamp(),
+        objectId: (event.data.object as any).id,
+      });
   } catch (err) {
     console.error('Failed to log webhook event:', err);
   }
@@ -5818,7 +6564,7 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
 
   const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId);
   const intentSnap = await intentRef.get();
-  
+
   if (intentSnap.exists && intentSnap.data()?.status === 'pending') {
     await intentRef.update({
       status: 'expired',
@@ -5833,11 +6579,13 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
  */
 async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
   const invoiceData = invoice as any;
-  const customerId = typeof invoiceData.customer === 'string' ? invoiceData.customer : invoiceData.customer?.id;
+  const customerId =
+    typeof invoiceData.customer === 'string' ? invoiceData.customer : invoiceData.customer?.id;
   if (!customerId) return;
 
   // Find user by Stripe customer ID
-  const customerSnap = await admin.firestore()
+  const customerSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .where('stripeCustomerId', '==', customerId)
     .limit(1)
@@ -5848,19 +6596,22 @@ async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
   const userId = customerSnap.docs[0].id;
 
   // Create notification for upcoming invoice
-  await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
-    userId,
-    type: 'invoice_upcoming',
-    channel: 'email',
-    status: 'pending',
-    data: {
-      amount: invoiceData.amount_due,
-      currency: invoiceData.currency,
-      dueDate: invoiceData.due_date ? new Date(invoiceData.due_date * 1000) : null,
-      invoiceUrl: invoiceData.hosted_invoice_url,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(NOTIFICATION_REQUESTS_COLLECTION)
+    .add({
+      userId,
+      type: 'invoice_upcoming',
+      channel: 'email',
+      status: 'pending',
+      data: {
+        amount: invoiceData.amount_due,
+        currency: invoiceData.currency,
+        dueDate: invoiceData.due_date ? new Date(invoiceData.due_date * 1000) : null,
+        invoiceUrl: invoiceData.hosted_invoice_url,
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   console.log('Upcoming invoice notification created for user:', userId);
 }
@@ -5874,7 +6625,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   if (!customerId) return;
 
   // Check if we already have this subscription
-  const existingSnap = await admin.firestore()
+  const existingSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscription.id)
     .limit(1)
@@ -5886,7 +6638,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   }
 
   // Find user by Stripe customer ID
-  const customerSnap = await admin.firestore()
+  const customerSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .where('stripeCustomerId', '==', customerId)
     .limit(1)
@@ -5902,18 +6655,25 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const siteId = subscription.metadata?.siteId || '';
 
   // Create subscription record
-  await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).add({
-    userId,
-    siteId,
-    productId,
-    stripeSubscriptionId: subscription.id,
-    stripeCustomerId: customerId,
-    status: subscription.status,
-    currentPeriodStart: subData.current_period_start ? new Date(subData.current_period_start * 1000) : null,
-    currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
-    cancelAtPeriodEnd: subData.cancel_at_period_end,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .add({
+      userId,
+      siteId,
+      productId,
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: customerId,
+      status: subscription.status,
+      currentPeriodStart: subData.current_period_start
+        ? new Date(subData.current_period_start * 1000)
+        : null,
+      currentPeriodEnd: subData.current_period_end
+        ? new Date(subData.current_period_end * 1000)
+        : null,
+      cancelAtPeriodEnd: subData.cancel_at_period_end,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   console.log('Subscription created:', subscription.id, 'for user:', userId);
 }
@@ -5923,7 +6683,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
  */
 async function handleTrialWillEnd(subscription: Stripe.Subscription) {
   const subData = subscription as any;
-  const subSnap = await admin.firestore()
+  const subSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscription.id)
     .limit(1)
@@ -5935,17 +6696,20 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
   const sub = subDoc.data();
 
   // Create notification for trial ending
-  await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
-    userId: sub.userId,
-    type: 'trial_ending',
-    channel: 'email',
-    status: 'pending',
-    data: {
-      trialEnd: subData.trial_end ? new Date(subData.trial_end * 1000) : null,
-      productId: sub.productId,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(NOTIFICATION_REQUESTS_COLLECTION)
+    .add({
+      userId: sub.userId,
+      type: 'trial_ending',
+      channel: 'email',
+      status: 'pending',
+      data: {
+        trialEnd: subData.trial_end ? new Date(subData.trial_end * 1000) : null,
+        productId: sub.productId,
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   console.log('Trial ending notification created for subscription:', subscription.id);
 }
@@ -6001,18 +6765,21 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   // Create notification for failed payment
   const intent = intentSnap.data() as any;
   if (intent.userId) {
-    await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
-      userId: intent.userId,
-      type: 'payment_failed',
-      channel: 'email',
-      status: 'pending',
-      data: {
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        reason: piData.last_payment_error?.message,
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    await admin
+      .firestore()
+      .collection(NOTIFICATION_REQUESTS_COLLECTION)
+      .add({
+        userId: intent.userId,
+        type: 'payment_failed',
+        channel: 'email',
+        status: 'pending',
+        data: {
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          reason: piData.last_payment_error?.message,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
   }
 
   console.log('Payment intent failed:', paymentIntent.id);
@@ -6026,7 +6793,8 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) 
   const customerId = typeof pmData.customer === 'string' ? pmData.customer : pmData.customer?.id;
   if (!customerId) return;
 
-  const customerSnap = await admin.firestore()
+  const customerSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .where('stripeCustomerId', '==', customerId)
     .limit(1)
@@ -6054,12 +6822,14 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) 
  */
 async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) {
   // Use Stripe customer ID to find the right customer doc directly (avoid full collection scan)
-  const stripeCustomerId = typeof paymentMethod.customer === 'string'
-    ? paymentMethod.customer
-    : paymentMethod.customer?.id;
+  const stripeCustomerId =
+    typeof paymentMethod.customer === 'string'
+      ? paymentMethod.customer
+      : paymentMethod.customer?.id;
 
   if (stripeCustomerId) {
-    const customerSnap = await admin.firestore()
+    const customerSnap = await admin
+      .firestore()
       .collection(STRIPE_CUSTOMERS_COLLECTION)
       .where('stripeCustomerId', '==', stripeCustomerId)
       .limit(1)
@@ -6083,7 +6853,8 @@ async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) 
 
   // Fallback: scan with limit if no customer ID (should be rare)
   console.warn('handlePaymentMethodDetached: no stripeCustomerId, scanning with limit');
-  const fallbackSnap = await admin.firestore()
+  const fallbackSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .limit(200)
     .get();
@@ -6108,12 +6879,14 @@ async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) 
  */
 async function handleChargeRefunded(charge: Stripe.Charge) {
   const chargeData = charge as any;
-  const paymentIntentId = typeof chargeData.payment_intent === 'string' 
-    ? chargeData.payment_intent 
-    : chargeData.payment_intent?.id;
+  const paymentIntentId =
+    typeof chargeData.payment_intent === 'string'
+      ? chargeData.payment_intent
+      : chargeData.payment_intent?.id;
 
   // Find the order/intent by payment intent ID
-  const intentSnap = await admin.firestore()
+  const intentSnap = await admin
+    .firestore()
     .collection(CHECKOUT_INTENTS_COLLECTION)
     .where('stripePaymentIntentId', '==', paymentIntentId)
     .limit(1)
@@ -6134,21 +6907,24 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   });
 
   // Log audit event
-  await admin.firestore().collection(AUDIT_COLLECTION).add({
-    actorId: 'stripe_webhook',
-    actorRole: 'system',
-    action: 'stripe.charge.refunded',
-    entityType: 'order',
-    entityId: intentDoc.id,
-    siteId: intent.siteId,
-    details: {
-      chargeId: charge.id,
-      amountRefunded: chargeData.amount_refunded,
-      currency: charge.currency,
-      refundReason: chargeData.refunds?.data?.[0]?.reason || 'unknown',
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(AUDIT_COLLECTION)
+    .add({
+      actorId: 'stripe_webhook',
+      actorRole: 'system',
+      action: 'stripe.charge.refunded',
+      entityType: 'order',
+      entityId: intentDoc.id,
+      siteId: intent.siteId,
+      details: {
+        chargeId: charge.id,
+        amountRefunded: chargeData.amount_refunded,
+        currency: charge.currency,
+        refundReason: chargeData.refunds?.data?.[0]?.reason || 'unknown',
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   // Optionally revoke entitlements on full refund
   if (charge.refunded && intent.entitlementId) {
@@ -6166,34 +6942,43 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
  */
 async function handleDisputeCreated(dispute: Stripe.Dispute) {
   const disputeData = dispute as any;
-  const chargeId = typeof disputeData.charge === 'string' ? disputeData.charge : disputeData.charge?.id;
+  const chargeId =
+    typeof disputeData.charge === 'string' ? disputeData.charge : disputeData.charge?.id;
 
-  await admin.firestore().collection('stripeDisputes').add({
-    disputeId: dispute.id,
-    chargeId,
-    amount: dispute.amount,
-    currency: dispute.currency,
-    reason: dispute.reason,
-    status: dispute.status,
-    evidenceDueBy: disputeData.evidence_details?.due_by ? new Date(disputeData.evidence_details.due_by * 1000) : null,
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  // Alert HQ about the dispute
-  await admin.firestore().collection(AUDIT_COLLECTION).add({
-    actorId: 'stripe_webhook',
-    actorRole: 'system',
-    action: 'stripe.dispute.created',
-    entityType: 'dispute',
-    entityId: dispute.id,
-    details: {
+  await admin
+    .firestore()
+    .collection('stripeDisputes')
+    .add({
+      disputeId: dispute.id,
       chargeId,
       amount: dispute.amount,
       currency: dispute.currency,
       reason: dispute.reason,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
+      status: dispute.status,
+      evidenceDueBy: disputeData.evidence_details?.due_by
+        ? new Date(disputeData.evidence_details.due_by * 1000)
+        : null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+  // Alert HQ about the dispute
+  await admin
+    .firestore()
+    .collection(AUDIT_COLLECTION)
+    .add({
+      actorId: 'stripe_webhook',
+      actorRole: 'system',
+      action: 'stripe.dispute.created',
+      entityType: 'dispute',
+      entityId: dispute.id,
+      details: {
+        chargeId,
+        amount: dispute.amount,
+        currency: dispute.currency,
+        reason: dispute.reason,
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   console.log('Dispute created:', dispute.id, 'reason:', dispute.reason);
 }
@@ -6202,7 +6987,8 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
  * Handle dispute closed
  */
 async function handleDisputeClosed(dispute: Stripe.Dispute) {
-  const disputeSnap = await admin.firestore()
+  const disputeSnap = await admin
+    .firestore()
     .collection('stripeDisputes')
     .where('disputeId', '==', dispute.id)
     .limit(1)
@@ -6216,18 +7002,21 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
   });
 
   // Log outcome
-  await admin.firestore().collection(AUDIT_COLLECTION).add({
-    actorId: 'stripe_webhook',
-    actorRole: 'system',
-    action: 'stripe.dispute.closed',
-    entityType: 'dispute',
-    entityId: dispute.id,
-    details: {
-      status: dispute.status,
-      won: dispute.status === 'won',
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await admin
+    .firestore()
+    .collection(AUDIT_COLLECTION)
+    .add({
+      actorId: 'stripe_webhook',
+      actorRole: 'system',
+      action: 'stripe.dispute.closed',
+      entityType: 'dispute',
+      entityId: dispute.id,
+      details: {
+        status: dispute.status,
+        won: dispute.status === 'won',
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
   console.log('Dispute closed:', dispute.id, 'status:', dispute.status);
 }
@@ -6236,7 +7025,8 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
  * Handle customer updated
  */
 async function handleCustomerUpdated(customer: Stripe.Customer) {
-  const customerSnap = await admin.firestore()
+  const customerSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .where('stripeCustomerId', '==', customer.id)
     .limit(1)
@@ -6258,7 +7048,8 @@ async function handleCustomerUpdated(customer: Stripe.Customer) {
  * Handle customer deleted
  */
 async function handleCustomerDeleted(customer: Stripe.DeletedCustomer) {
-  const customerSnap = await admin.firestore()
+  const customerSnap = await admin
+    .firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
     .where('stripeCustomerId', '==', customer.id)
     .limit(1)
@@ -6285,7 +7076,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     return;
   }
 
-  const intentSnap = await admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId).get();
+  const intentSnap = await admin
+    .firestore()
+    .collection(CHECKOUT_INTENTS_COLLECTION)
+    .doc(intentId)
+    .get();
   if (!intentSnap.exists) {
     console.error('Intent not found:', intentId);
     return;
@@ -6314,30 +7109,38 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     if (!current || current.status === 'paid') return;
 
     // Update intent
-    tx.set(intentSnap.ref, {
-      status: 'paid',
-      paidAt: FieldValue.serverTimestamp(),
-      entitlementId: entitlementRef.id,
-      stripePaymentIntentId: session.payment_intent,
-      stripePaymentStatus: session.payment_status,
-    }, { merge: true });
+    tx.set(
+      intentSnap.ref,
+      {
+        status: 'paid',
+        paidAt: FieldValue.serverTimestamp(),
+        entitlementId: entitlementRef.id,
+        stripePaymentIntentId: session.payment_intent,
+        stripePaymentStatus: session.payment_status,
+      },
+      { merge: true }
+    );
 
-    tx.set(orderRef, {
-      siteId: current.siteId,
-      userId: current.userId,
-      productId,
-      amount: product.amount,
-      currency: product.currency,
-      status: 'paid',
-      entitlementRoles: product.roles,
-      actorId: current.actorId ?? 'stripe_webhook',
-      actorRole: current.actorRole ?? 'system',
-      listingId: current.listingId ?? null,
-      stripeSessionId: session.id,
-      stripePaymentIntentId: session.payment_intent,
-      createdAt: FieldValue.serverTimestamp(),
-      paidAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
+    tx.set(
+      orderRef,
+      {
+        siteId: current.siteId,
+        userId: current.userId,
+        productId,
+        amount: product.amount,
+        currency: product.currency,
+        status: 'paid',
+        entitlementRoles: product.roles,
+        actorId: current.actorId ?? 'stripe_webhook',
+        actorRole: current.actorRole ?? 'system',
+        listingId: current.listingId ?? null,
+        stripeSessionId: session.id,
+        stripePaymentIntentId: session.payment_intent,
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     // Create entitlement
     tx.set(entitlementRef, {
@@ -6363,7 +7166,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
 
     // Update user roles
-    const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
+    const userRef = admin
+      .firestore()
+      .collection(USERS_COLLECTION)
+      .doc(current.userId as string);
     tx.set(
       userRef,
       {
@@ -6373,7 +7179,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         primarySiteId: current.siteId,
         updatedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
 
     // Audit log
@@ -6410,11 +7216,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       currency: session.currency,
       via: 'stripe_webhook',
       stripeSessionId: session.id,
-      ...(
-        typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
-            ? { listingId: intent.listingId }
-            : {}
-      ),
+      ...(typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+        ? { listingId: intent.listingId }
+        : {}),
     },
   });
 
@@ -6426,12 +7230,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const invoiceData = invoice as any;
-  const subscriptionId = typeof invoiceData.subscription === 'string' 
-    ? invoiceData.subscription 
-    : invoiceData.subscription?.id;
+  const subscriptionId =
+    typeof invoiceData.subscription === 'string'
+      ? invoiceData.subscription
+      : invoiceData.subscription?.id;
   if (!subscriptionId) return;
 
-  const subSnap = await admin.firestore()
+  const subSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscriptionId)
     .limit(1)
@@ -6458,12 +7264,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const invoiceData = invoice as any;
-  const subscriptionId = typeof invoiceData.subscription === 'string' 
-    ? invoiceData.subscription 
-    : invoiceData.subscription?.id;
+  const subscriptionId =
+    typeof invoiceData.subscription === 'string'
+      ? invoiceData.subscription
+      : invoiceData.subscription?.id;
   if (!subscriptionId) return;
 
-  const subSnap = await admin.firestore()
+  const subSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscriptionId)
     .limit(1)
@@ -6473,7 +7281,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   const subDoc = subSnap.docs[0];
   const subData = subDoc.data();
-  
+
   await subDoc.ref.update({
     status: 'past_due',
     lastPaymentError: invoice.last_finalization_error?.message ?? 'Payment failed',
@@ -6483,39 +7291,45 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   // Send notification to user about failed payment
   if (subData.userId) {
-    await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
-      userId: subData.userId,
-      type: 'subscription_payment_failed',
-      channel: 'email',
-      status: 'pending',
-      data: {
-        subscriptionId: subDoc.id,
-        productId: subData.productId,
-        amount: invoiceData.amount_due,
-        currency: invoiceData.currency,
-        invoiceUrl: invoiceData.hosted_invoice_url,
-        errorMessage: invoice.last_finalization_error?.message ?? 'Payment failed',
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    await admin
+      .firestore()
+      .collection(NOTIFICATION_REQUESTS_COLLECTION)
+      .add({
+        userId: subData.userId,
+        type: 'subscription_payment_failed',
+        channel: 'email',
+        status: 'pending',
+        data: {
+          subscriptionId: subDoc.id,
+          productId: subData.productId,
+          amount: invoiceData.amount_due,
+          currency: invoiceData.currency,
+          invoiceUrl: invoiceData.hosted_invoice_url,
+          errorMessage: invoice.last_finalization_error?.message ?? 'Payment failed',
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
 
     // Log audit event for payment failure
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: 'stripe_webhook',
-      actorRole: 'system',
-      action: 'subscription.payment_failed',
-      entityType: 'subscription',
-      entityId: subDoc.id,
-      siteId: subData.siteId,
-      details: {
-        stripeSubscriptionId: subscriptionId,
-        invoiceId: invoice.id,
-        amount: invoiceData.amount_due,
-        currency: invoiceData.currency,
-        error: invoice.last_finalization_error?.message,
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
+      .add({
+        actorId: 'stripe_webhook',
+        actorRole: 'system',
+        action: 'subscription.payment_failed',
+        entityType: 'subscription',
+        entityId: subDoc.id,
+        siteId: subData.siteId,
+        details: {
+          stripeSubscriptionId: subscriptionId,
+          invoiceId: invoice.id,
+          amount: invoiceData.amount_due,
+          currency: invoiceData.currency,
+          error: invoice.last_finalization_error?.message,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
   }
 
   console.log('Subscription payment failed:', subscriptionId);
@@ -6526,7 +7340,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const subData = subscription as any;
-  const subSnap = await admin.firestore()
+  const subSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscription.id)
     .limit(1)
@@ -6536,12 +7351,18 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     // This might be a new subscription from checkout
     const sessionId = subscription.metadata?.firebaseSubscriptionId;
     if (sessionId) {
-      const intentSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(sessionId).get();
+      const intentSnap = await admin
+        .firestore()
+        .collection(SUBSCRIPTIONS_COLLECTION)
+        .doc(sessionId)
+        .get();
       if (intentSnap.exists) {
         await intentSnap.ref.update({
           stripeSubscriptionId: subscription.id,
           status: subscription.status,
-          currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
+          currentPeriodEnd: subData.current_period_end
+            ? new Date(subData.current_period_end * 1000)
+            : null,
           updatedAt: FieldValue.serverTimestamp(),
         });
       }
@@ -6552,7 +7373,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const subDoc = subSnap.docs[0];
   await subDoc.ref.update({
     status: subscription.status,
-    currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
+    currentPeriodEnd: subData.current_period_end
+      ? new Date(subData.current_period_end * 1000)
+      : null,
     cancelAtPeriodEnd: subData.cancel_at_period_end,
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -6564,7 +7387,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
  * Handle subscription deleted/cancelled
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const subSnap = await admin.firestore()
+  const subSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('stripeSubscriptionId', '==', subscription.id)
     .limit(1)
@@ -6585,7 +7409,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   if (subData.productId) {
     const product = PRODUCT_CATALOG[subData.productId as ProductId];
     if (product && subData.userId) {
-      const entitlementSnap = await admin.firestore()
+      const entitlementSnap = await admin
+        .firestore()
         .collection(ENTITLEMENTS_COLLECTION)
         .where('userId', '==', subData.userId)
         .where('productId', '==', subData.productId)
@@ -6612,29 +7437,36 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 /**
  * Get Stripe Customer Portal URL for managing subscriptions
  */
-export const createStripePortalSession = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const createStripePortalSession = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const returnUrl = typeof request.data?.returnUrl === 'string' ? request.data.returnUrl : '';
-  if (!returnUrl) throw new HttpsError('invalid-argument', 'returnUrl is required');
+    const returnUrl = typeof request.data?.returnUrl === 'string' ? request.data.returnUrl : '';
+    if (!returnUrl) throw new HttpsError('invalid-argument', 'returnUrl is required');
 
-  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
-  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+    const customerSnap = await admin
+      .firestore()
+      .collection(STRIPE_CUSTOMERS_COLLECTION)
+      .doc(request.auth.uid)
+      .get();
+    if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
 
-  const stripeCustomerId = customerSnap.data()?.stripeCustomerId;
-  if (!stripeCustomerId) throw new HttpsError('not-found', 'No Stripe customer ID');
+    const stripeCustomerId = customerSnap.data()?.stripeCustomerId;
+    if (!stripeCustomerId) throw new HttpsError('not-found', 'No Stripe customer ID');
 
-  const portalSession = await stripeInstance.billingPortal.sessions.create({
-    customer: stripeCustomerId,
-    return_url: returnUrl,
-  });
+    const portalSession = await stripeInstance.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: returnUrl,
+    });
 
-  return { url: portalSession.url };
-});
+    return { url: portalSession.url };
+  }
+);
 
 /**
  * Get user's active subscriptions
@@ -6649,13 +7481,14 @@ export const getUserSubscriptions = onCall(async (request: CallableRequest) => {
     await requireHq(request.auth.uid);
   }
 
-  const subsSnap = await admin.firestore()
+  const subsSnap = await admin
+    .firestore()
     .collection(SUBSCRIPTIONS_COLLECTION)
     .where('userId', '==', userId)
     .where('status', 'in', ['active', 'trialing', 'past_due'])
     .get();
 
-  const subscriptions = subsSnap.docs.map(doc => ({
+  const subscriptions = subsSnap.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
@@ -6676,12 +7509,13 @@ export const getUserEntitlements = onCall(async (request: CallableRequest) => {
     await requireHq(request.auth.uid);
   }
 
-  const entSnap = await admin.firestore()
+  const entSnap = await admin
+    .firestore()
     .collection(ENTITLEMENTS_COLLECTION)
     .where('userId', '==', userId)
     .get();
 
-  const entitlements = entSnap.docs.map(doc => ({
+  const entitlements = entSnap.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
@@ -6696,65 +7530,68 @@ export const getUserEntitlements = onCall(async (request: CallableRequest) => {
 /**
  * Health check endpoint for load balancers and monitoring
  */
-export const healthCheck = onRequest({ 
-  cors: true,
-  secrets: [stripeSecretKey],
-}, async (_req, res) => {
-  try {
-    // Check Stripe configuration first since that's the main concern
-    const stripeInstance = getStripe();
-    let stripeStatus = 'not_configured';
-    if (stripeInstance) {
+export const healthCheck = onRequest(
+  {
+    cors: true,
+    secrets: [stripeSecretKey],
+  },
+  async (_req, res) => {
+    try {
+      // Check Stripe configuration first since that's the main concern
+      const stripeInstance = getStripe();
+      let stripeStatus = 'not_configured';
+      if (stripeInstance) {
+        try {
+          // Verify Stripe connectivity with a simple API call
+          await stripeInstance.balance.retrieve();
+          stripeStatus = 'connected';
+        } catch (stripeErr: any) {
+          stripeStatus = `error: ${stripeErr.message}`;
+        }
+      }
+
+      // Try to verify Firestore connectivity (non-critical)
+      let firestoreStatus = 'unknown';
       try {
-        // Verify Stripe connectivity with a simple API call
-        await stripeInstance.balance.retrieve();
-        stripeStatus = 'connected';
-      } catch (stripeErr: any) {
-        stripeStatus = `error: ${stripeErr.message}`;
+        await admin.firestore().listCollections();
+        firestoreStatus = 'ok';
+      } catch {
+        firestoreStatus = 'limited';
       }
-    }
 
-    // Try to verify Firestore connectivity (non-critical)
-    let firestoreStatus = 'unknown';
-    try {
-      await admin.firestore().listCollections();
-      firestoreStatus = 'ok';
-    } catch {
-      firestoreStatus = 'limited';
-    }
-    
-    // Verify Auth connectivity
-    let authStatus = 'unknown';
-    try {
-      await admin.auth().getUser('health-check-dummy');
-      authStatus = 'ok';
-    } catch (authErr: any) {
-      // auth/user-not-found means Auth service is working (expected for dummy user)
-      if (authErr?.code === 'auth/user-not-found') {
+      // Verify Auth connectivity
+      let authStatus = 'unknown';
+      try {
+        await admin.auth().getUser('health-check-dummy');
         authStatus = 'ok';
-      } else {
-        authStatus = `error: ${authErr?.message ?? 'auth unavailable'}`;
+      } catch (authErr: any) {
+        // auth/user-not-found means Auth service is working (expected for dummy user)
+        if (authErr?.code === 'auth/user-not-found') {
+          authStatus = 'ok';
+        } else {
+          authStatus = `error: ${authErr?.message ?? 'auth unavailable'}`;
+        }
       }
-    }
 
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: process.env.K_REVISION || 'local',
-      services: {
-        firestore: firestoreStatus,
-        auth: authStatus,
-        stripe: stripeStatus === 'connected' ? 'connected' : 'unavailable',
-      },
-    });
-  } catch (err: any) {
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: err.message,
-    });
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: process.env.K_REVISION || 'local',
+        services: {
+          firestore: firestoreStatus,
+          auth: authStatus,
+          stripe: stripeStatus === 'connected' ? 'connected' : 'unavailable',
+        },
+      });
+    } catch (err: any) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: err.message,
+      });
+    }
   }
-});
+);
 
 /**
  * Scheduled job to check for expiring subscriptions and send reminders
@@ -6778,8 +7615,10 @@ export const checkExpiringSubscriptions = onSchedule('0 9 * * *', async () => {
     const periodEnd = sub.currentPeriodEnd?.toDate?.() ?? sub.currentPeriodEnd;
     if (!periodEnd || !sub.userId) continue;
 
-    const daysUntilExpiry = Math.ceil((periodEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-    
+    const daysUntilExpiry = Math.ceil(
+      (periodEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
     // Check if we already sent a reminder for this period
     const existingReminder = await db
       .collection(NOTIFICATION_REQUESTS_COLLECTION)
@@ -6808,7 +7647,9 @@ export const checkExpiringSubscriptions = onSchedule('0 9 * * *', async () => {
         createdAt: FieldValue.serverTimestamp(),
       });
 
-      console.log(`Sent expiring subscription reminder to user ${sub.userId}, expires in ${daysUntilExpiry} days`);
+      console.log(
+        `Sent expiring subscription reminder to user ${sub.userId}, expires in ${daysUntilExpiry} days`
+      );
     }
   }
 });
@@ -6889,257 +7730,305 @@ export const cleanupExpiredIntents = onSchedule('0 */6 * * *', async () => {
 /**
  * Cancel a subscription (user-initiated)
  */
-export const cancelSubscription = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const cancelSubscription = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
-  const cancelAtPeriodEnd = request.data?.cancelAtPeriodEnd !== false; // Default to cancel at period end
+    const subscriptionId =
+      typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
+    const cancelAtPeriodEnd = request.data?.cancelAtPeriodEnd !== false; // Default to cancel at period end
 
-  if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
+    if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
 
-  // Get the subscription from Firestore
-  const subSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId).get();
-  if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
+    // Get the subscription from Firestore
+    const subSnap = await admin
+      .firestore()
+      .collection(SUBSCRIPTIONS_COLLECTION)
+      .doc(subscriptionId)
+      .get();
+    if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
 
-  const sub = subSnap.data() as any;
-  
-  // Verify user owns this subscription or is HQ
-  if (sub.userId !== request.auth.uid) {
-    await requireHq(request.auth.uid);
-  }
+    const sub = subSnap.data() as any;
 
-  if (!sub.stripeSubscriptionId) {
-    throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
-  }
+    // Verify user owns this subscription or is HQ
+    if (sub.userId !== request.auth.uid) {
+      await requireHq(request.auth.uid);
+    }
 
-  try {
-    // Cancel in Stripe
-    const stripeSubscription = await stripeInstance.subscriptions.update(sub.stripeSubscriptionId, {
-      cancel_at_period_end: cancelAtPeriodEnd,
-    });
+    if (!sub.stripeSubscriptionId) {
+      throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
+    }
 
-    // Update local record
-    await subSnap.ref.update({
-      cancelAtPeriodEnd,
-      cancelledAt: cancelAtPeriodEnd ? null : FieldValue.serverTimestamp(),
-      status: cancelAtPeriodEnd ? 'active' : 'cancelled',
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    try {
+      // Cancel in Stripe
+      const stripeSubscription = await stripeInstance.subscriptions.update(
+        sub.stripeSubscriptionId,
+        {
+          cancel_at_period_end: cancelAtPeriodEnd,
+        }
+      );
 
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth.uid,
-      actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
-      action: cancelAtPeriodEnd ? 'subscription.scheduled_cancel' : 'subscription.cancelled',
-      entityType: 'subscription',
-      entityId: subscriptionId,
-      siteId: sub.siteId,
-      details: {
-        stripeSubscriptionId: sub.stripeSubscriptionId,
+      // Update local record
+      await subSnap.ref.update({
         cancelAtPeriodEnd,
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+        cancelledAt: cancelAtPeriodEnd ? null : FieldValue.serverTimestamp(),
+        status: cancelAtPeriodEnd ? 'active' : 'cancelled',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
 
-    return {
-      success: true,
-      cancelAtPeriodEnd,
-      currentPeriodEnd: stripeSubscription.items?.data?.[0]?.current_period_end
-        ? new Date(stripeSubscription.items.data[0].current_period_end * 1000).toISOString()
-        : null,
-    };
-  } catch (err: any) {
-    console.error('Error cancelling subscription:', err);
-    throw new HttpsError('internal', err.message || 'Failed to cancel subscription');
+      // Audit log
+      await admin
+        .firestore()
+        .collection(AUDIT_COLLECTION)
+        .add({
+          actorId: request.auth.uid,
+          actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
+          action: cancelAtPeriodEnd ? 'subscription.scheduled_cancel' : 'subscription.cancelled',
+          entityType: 'subscription',
+          entityId: subscriptionId,
+          siteId: sub.siteId,
+          details: {
+            stripeSubscriptionId: sub.stripeSubscriptionId,
+            cancelAtPeriodEnd,
+          },
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+      return {
+        success: true,
+        cancelAtPeriodEnd,
+        currentPeriodEnd: stripeSubscription.items?.data?.[0]?.current_period_end
+          ? new Date(stripeSubscription.items.data[0].current_period_end * 1000).toISOString()
+          : null,
+      };
+    } catch (err: any) {
+      console.error('Error cancelling subscription:', err);
+      throw new HttpsError('internal', err.message || 'Failed to cancel subscription');
+    }
   }
-});
+);
 
 /**
  * Resume a cancelled subscription (if cancelled with cancel_at_period_end)
  */
-export const resumeSubscription = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const resumeSubscription = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
-  if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
+    const subscriptionId =
+      typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
+    if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
 
-  const subSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId).get();
-  if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
+    const subSnap = await admin
+      .firestore()
+      .collection(SUBSCRIPTIONS_COLLECTION)
+      .doc(subscriptionId)
+      .get();
+    if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
 
-  const sub = subSnap.data() as any;
+    const sub = subSnap.data() as any;
 
-  if (sub.userId !== request.auth.uid) {
-    await requireHq(request.auth.uid);
+    if (sub.userId !== request.auth.uid) {
+      await requireHq(request.auth.uid);
+    }
+
+    if (!sub.stripeSubscriptionId) {
+      throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
+    }
+
+    if (!sub.cancelAtPeriodEnd) {
+      throw new HttpsError('failed-precondition', 'Subscription is not scheduled for cancellation');
+    }
+
+    try {
+      await stripeInstance.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: false,
+      });
+
+      await subSnap.ref.update({
+        cancelAtPeriodEnd: false,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      await admin
+        .firestore()
+        .collection(AUDIT_COLLECTION)
+        .add({
+          actorId: request.auth.uid,
+          actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
+          action: 'subscription.resumed',
+          entityType: 'subscription',
+          entityId: subscriptionId,
+          siteId: sub.siteId,
+          details: { stripeSubscriptionId: sub.stripeSubscriptionId },
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error resuming subscription:', err);
+      throw new HttpsError('internal', err.message || 'Failed to resume subscription');
+    }
   }
-
-  if (!sub.stripeSubscriptionId) {
-    throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
-  }
-
-  if (!sub.cancelAtPeriodEnd) {
-    throw new HttpsError('failed-precondition', 'Subscription is not scheduled for cancellation');
-  }
-
-  try {
-    await stripeInstance.subscriptions.update(sub.stripeSubscriptionId, {
-      cancel_at_period_end: false,
-    });
-
-    await subSnap.ref.update({
-      cancelAtPeriodEnd: false,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth.uid,
-      actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
-      action: 'subscription.resumed',
-      entityType: 'subscription',
-      entityId: subscriptionId,
-      siteId: sub.siteId,
-      details: { stripeSubscriptionId: sub.stripeSubscriptionId },
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return { success: true };
-  } catch (err: any) {
-    console.error('Error resuming subscription:', err);
-    throw new HttpsError('internal', err.message || 'Failed to resume subscription');
-  }
-});
+);
 
 /**
  * Update payment method for a subscription
  */
-export const updateSubscriptionPaymentMethod = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const updateSubscriptionPaymentMethod = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const paymentMethodId = typeof request.data?.paymentMethodId === 'string' ? request.data.paymentMethodId : '';
-  if (!paymentMethodId) throw new HttpsError('invalid-argument', 'paymentMethodId is required');
+    const paymentMethodId =
+      typeof request.data?.paymentMethodId === 'string' ? request.data.paymentMethodId : '';
+    if (!paymentMethodId) throw new HttpsError('invalid-argument', 'paymentMethodId is required');
 
-  // Get user's Stripe customer
-  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
-  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+    // Get user's Stripe customer
+    const customerSnap = await admin
+      .firestore()
+      .collection(STRIPE_CUSTOMERS_COLLECTION)
+      .doc(request.auth.uid)
+      .get();
+    if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
 
-  const customerId = customerSnap.data()?.stripeCustomerId;
-  if (!customerId) throw new HttpsError('not-found', 'No Stripe customer ID');
+    const customerId = customerSnap.data()?.stripeCustomerId;
+    if (!customerId) throw new HttpsError('not-found', 'No Stripe customer ID');
 
-  try {
-    // Attach payment method to customer
-    await stripeInstance.paymentMethods.attach(paymentMethodId, { customer: customerId });
+    try {
+      // Attach payment method to customer
+      await stripeInstance.paymentMethods.attach(paymentMethodId, { customer: customerId });
 
-    // Set as default payment method
-    await stripeInstance.customers.update(customerId, {
-      invoice_settings: { default_payment_method: paymentMethodId },
-    });
+      // Set as default payment method
+      await stripeInstance.customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      });
 
-    return { success: true };
-  } catch (err: any) {
-    console.error('Error updating payment method:', err);
-    throw new HttpsError('internal', err.message || 'Failed to update payment method');
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error updating payment method:', err);
+      throw new HttpsError('internal', err.message || 'Failed to update payment method');
+    }
   }
-});
+);
 
 /**
  * Get invoice history for a user
  */
-export const getInvoiceHistory = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const getInvoiceHistory = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const userId = typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
+    const userId =
+      typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
 
-  if (userId !== request.auth.uid) {
-    await requireHq(request.auth.uid);
+    if (userId !== request.auth.uid) {
+      await requireHq(request.auth.uid);
+    }
+
+    const customerSnap = await admin
+      .firestore()
+      .collection(STRIPE_CUSTOMERS_COLLECTION)
+      .doc(userId)
+      .get();
+    if (!customerSnap.exists) return { invoices: [] };
+
+    const customerId = customerSnap.data()?.stripeCustomerId;
+    if (!customerId) return { invoices: [] };
+
+    try {
+      const invoices = await stripeInstance.invoices.list({
+        customer: customerId,
+        limit: 50,
+      });
+
+      return {
+        invoices: invoices.data.map((inv) => ({
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          amount: inv.amount_paid,
+          currency: inv.currency,
+          created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
+          hostedInvoiceUrl: inv.hosted_invoice_url,
+          invoicePdf: inv.invoice_pdf,
+        })),
+      };
+    } catch (err: any) {
+      console.error('Error fetching invoices:', err);
+      throw new HttpsError('internal', err.message || 'Failed to fetch invoices');
+    }
   }
-
-  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(userId).get();
-  if (!customerSnap.exists) return { invoices: [] };
-
-  const customerId = customerSnap.data()?.stripeCustomerId;
-  if (!customerId) return { invoices: [] };
-
-  try {
-    const invoices = await stripeInstance.invoices.list({
-      customer: customerId,
-      limit: 50,
-    });
-
-    return {
-      invoices: invoices.data.map(inv => ({
-        id: inv.id,
-        number: inv.number,
-        status: inv.status,
-        amount: inv.amount_paid,
-        currency: inv.currency,
-        created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
-        hostedInvoiceUrl: inv.hosted_invoice_url,
-        invoicePdf: inv.invoice_pdf,
-      })),
-    };
-  } catch (err: any) {
-    console.error('Error fetching invoices:', err);
-    throw new HttpsError('internal', err.message || 'Failed to fetch invoices');
-  }
-});
+);
 
 /**
  * Retry a failed invoice payment
  */
-export const retryInvoicePayment = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  const stripeInstance = getStripe();
-  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+export const retryInvoicePayment = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    const stripeInstance = getStripe();
+    if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
+    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-  const invoiceId = typeof request.data?.invoiceId === 'string' ? request.data.invoiceId : '';
-  if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
+    const invoiceId = typeof request.data?.invoiceId === 'string' ? request.data.invoiceId : '';
+    if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
 
-  // Verify user owns this invoice
-  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
-  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+    // Verify user owns this invoice
+    const customerSnap = await admin
+      .firestore()
+      .collection(STRIPE_CUSTOMERS_COLLECTION)
+      .doc(request.auth.uid)
+      .get();
+    if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
 
-  const customerId = customerSnap.data()?.stripeCustomerId;
+    const customerId = customerSnap.data()?.stripeCustomerId;
 
-  try {
-    const invoice = await stripeInstance.invoices.retrieve(invoiceId);
-    
-    if (invoice.customer !== customerId) {
-      await requireHq(request.auth.uid);
+    try {
+      const invoice = await stripeInstance.invoices.retrieve(invoiceId);
+
+      if (invoice.customer !== customerId) {
+        await requireHq(request.auth.uid);
+      }
+
+      if (invoice.status !== 'open') {
+        throw new HttpsError('failed-precondition', 'Invoice is not payable');
+      }
+
+      const paidInvoice = await stripeInstance.invoices.pay(invoiceId);
+
+      return {
+        success: true,
+        status: paidInvoice.status,
+        amountPaid: paidInvoice.amount_paid,
+      };
+    } catch (err: any) {
+      console.error('Error retrying payment:', err);
+      throw new HttpsError('internal', err.message || 'Failed to retry payment');
     }
-
-    if (invoice.status !== 'open') {
-      throw new HttpsError('failed-precondition', 'Invoice is not payable');
-    }
-
-    const paidInvoice = await stripeInstance.invoices.pay(invoiceId);
-
-    return {
-      success: true,
-      status: paidInvoice.status,
-      amountPaid: paidInvoice.amount_paid,
-    };
-  } catch (err: any) {
-    console.error('Error retrying payment:', err);
-    throw new HttpsError('internal', err.message || 'Failed to retry payment');
   }
-});
+);
 
 /**
  * Monitor webhook failures - runs daily at 9 AM UTC
@@ -7150,22 +8039,24 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
   oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
   // Get recent webhook logs (field name matches logWebhookEvent which writes 'receivedAt')
-  const logsSnap = await admin.firestore()
+  const logsSnap = await admin
+    .firestore()
     .collection('stripeWebhookLogs')
     .where('receivedAt', '>=', Timestamp.fromDate(oneDayAgo))
     .get();
 
-  const logs = logsSnap.docs.map(doc => doc.data());
-  const failedEvents = logs.filter(log => log.status === 'error' || log.status === 'failed');
-  const successfulEvents = logs.filter(log => log.status === 'success' || log.status === 'processed');
+  const logs = logsSnap.docs.map((doc) => doc.data());
+  const failedEvents = logs.filter((log) => log.status === 'error' || log.status === 'failed');
+  const successfulEvents = logs.filter(
+    (log) => log.status === 'success' || log.status === 'processed'
+  );
 
   const summary = {
     totalEvents: logs.length,
     successfulEvents: successfulEvents.length,
     failedEvents: failedEvents.length,
-    successRate: logs.length > 0 
-      ? ((successfulEvents.length / logs.length) * 100).toFixed(2) + '%'
-      : 'N/A',
+    successRate:
+      logs.length > 0 ? ((successfulEvents.length / logs.length) * 100).toFixed(2) + '%' : 'N/A',
     failuresByType: failedEvents.reduce((acc: Record<string, number>, log) => {
       acc[log.eventType || 'unknown'] = (acc[log.eventType || 'unknown'] || 0) + 1;
       return acc;
@@ -7184,16 +8075,19 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
   });
 
   // If failure rate is high, create an alert
-  if (failedEvents.length > 0 && (failedEvents.length / logs.length) > 0.1) {
-    await admin.firestore().collection('alerts').add({
-      type: 'webhook_failures',
-      severity: 'high',
-      title: 'High Stripe Webhook Failure Rate',
-      message: `${failedEvents.length} of ${logs.length} webhook events failed in the last 24 hours`,
-      details: summary,
-      acknowledged: false,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+  if (failedEvents.length > 0 && failedEvents.length / logs.length > 0.1) {
+    await admin
+      .firestore()
+      .collection('alerts')
+      .add({
+        type: 'webhook_failures',
+        severity: 'high',
+        title: 'High Stripe Webhook Failure Rate',
+        message: `${failedEvents.length} of ${logs.length} webhook events failed in the last 24 hours`,
+        details: summary,
+        acknowledged: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
   }
 
   console.log('Webhook health report:', JSON.stringify(summary));
@@ -7202,553 +8096,610 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
 /**
  * Process refund requests - callable by HQ only
  */
-export const processRefund = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  paymentIntentId: string;
-  amount?: number;
-  reason?: string;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const processRefund = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      paymentIntentId: string;
+      amount?: number;
+      reason?: string;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
-  }
-
-  const { paymentIntentId, amount, reason } = request.data;
-
-  if (!paymentIntentId) {
-    throw new HttpsError('invalid-argument', 'paymentIntentId is required');
-  }
-
-  try {
-    // Create the refund
-    const refundParams: Stripe.RefundCreateParams = {
-      payment_intent: paymentIntentId,
-      reason: (reason as Stripe.RefundCreateParams.Reason) || 'requested_by_customer',
-    };
-
-    if (amount) {
-      refundParams.amount = amount; // Amount in cents
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
     }
 
-    const refund = await stripeInstance.refunds.create(refundParams);
+    const { paymentIntentId, amount, reason } = request.data;
 
-    // Log the refund
-    await admin.firestore().collection('refunds').add({
-      stripeRefundId: refund.id,
-      paymentIntentId,
-      amount: refund.amount,
-      currency: refund.currency,
-      status: refund.status,
-      reason: reason || 'requested_by_customer',
-      processedBy: request.auth!.uid,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    if (!paymentIntentId) {
+      throw new HttpsError('invalid-argument', 'paymentIntentId is required');
+    }
 
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'refund.processed',
-      entityType: 'payment',
-      entityId: paymentIntentId,
-      details: {
+    try {
+      // Create the refund
+      const refundParams: Stripe.RefundCreateParams = {
+        payment_intent: paymentIntentId,
+        reason: (reason as Stripe.RefundCreateParams.Reason) || 'requested_by_customer',
+      };
+
+      if (amount) {
+        refundParams.amount = amount; // Amount in cents
+      }
+
+      const refund = await stripeInstance.refunds.create(refundParams);
+
+      // Log the refund
+      await admin
+        .firestore()
+        .collection('refunds')
+        .add({
+          stripeRefundId: refund.id,
+          paymentIntentId,
+          amount: refund.amount,
+          currency: refund.currency,
+          status: refund.status,
+          reason: reason || 'requested_by_customer',
+          processedBy: request.auth!.uid,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+      // Audit log
+      await admin
+        .firestore()
+        .collection(AUDIT_COLLECTION)
+        .add({
+          actorId: request.auth!.uid,
+          actorRole: 'hq',
+          action: 'refund.processed',
+          entityType: 'payment',
+          entityId: paymentIntentId,
+          details: {
+            refundId: refund.id,
+            amount: refund.amount,
+            reason,
+          },
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+      return {
+        success: true,
         refundId: refund.id,
+        status: refund.status,
         amount: refund.amount,
-        reason,
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return {
-      success: true,
-      refundId: refund.id,
-      status: refund.status,
-      amount: refund.amount,
-    };
-  } catch (err: any) {
-    console.error('Error processing refund:', err);
-    throw new HttpsError('internal', err.message || 'Failed to process refund');
+      };
+    } catch (err: any) {
+      console.error('Error processing refund:', err);
+      throw new HttpsError('internal', err.message || 'Failed to process refund');
+    }
   }
-});
+);
 
 /**
  * Get webhook logs for monitoring dashboard - HQ only
  */
-export const getWebhookLogs = onCall(async (request: CallableRequest<{
-  limit?: number;
-  status?: string;
-  eventType?: string;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const getWebhookLogs = onCall(
+  async (
+    request: CallableRequest<{
+      limit?: number;
+      status?: string;
+      eventType?: string;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const { limit = 50, status, eventType } = request.data;
+    const { limit = 50, status, eventType } = request.data;
 
-  let query = admin.firestore()
-    .collection('stripeWebhookLogs')
-    .orderBy('timestamp', 'desc')
-    .limit(limit);
+    let query = admin
+      .firestore()
+      .collection('stripeWebhookLogs')
+      .orderBy('timestamp', 'desc')
+      .limit(limit);
 
-  if (status) {
-    query = query.where('status', '==', status);
+    if (status) {
+      query = query.where('status', '==', status);
+    }
+
+    if (eventType) {
+      query = query.where('eventType', '==', eventType);
+    }
+
+    const snapshot = await query.get();
+    const logs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate?.()?.toISOString(),
+    }));
+
+    return { logs };
   }
-
-  if (eventType) {
-    query = query.where('eventType', '==', eventType);
-  }
-
-  const snapshot = await query.get();
-  const logs = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    timestamp: doc.data().timestamp?.toDate?.()?.toISOString(),
-  }));
-
-  return { logs };
-});
+);
 
 /**
  * Get Stripe dashboard metrics - HQ only
  */
-export const getStripeMetrics = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  await requireHq(request.auth?.uid);
+export const getStripeMetrics = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
+    }
+
+    try {
+      // Get subscription counts
+      const subscriptionsSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).get();
+
+      const subscriptions = subscriptionsSnap.docs.map((doc) => doc.data());
+
+      const metrics = {
+        totalSubscriptions: subscriptions.length,
+        activeSubscriptions: subscriptions.filter((s) => s.status === 'active').length,
+        trialingSubscriptions: subscriptions.filter((s) => s.status === 'trialing').length,
+        canceledSubscriptions: subscriptions.filter((s) => s.status === 'cancelled').length,
+        pendingCancellations: subscriptions.filter((s) => s.cancelAtPeriodEnd).length,
+        byProduct: subscriptions.reduce((acc: Record<string, number>, s) => {
+          acc[s.productId || 'unknown'] = (acc[s.productId || 'unknown'] || 0) + 1;
+          return acc;
+        }, {}),
+      };
+
+      // Get recent revenue from Stripe (last 30 days)
+      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+      const charges = await stripeInstance.charges.list({
+        created: { gte: thirtyDaysAgo },
+        limit: 100,
+      });
+
+      const revenue = charges.data
+        .filter((c) => c.paid && !c.refunded)
+        .reduce((sum, c) => sum + c.amount, 0);
+
+      return {
+        ...metrics,
+        last30DaysRevenue: revenue,
+        last30DaysRevenueFormatted: `$${(revenue / 100).toFixed(2)}`,
+      };
+    } catch (err: any) {
+      console.error('Error getting Stripe metrics:', err);
+      throw new HttpsError('internal', err.message || 'Failed to get metrics');
+    }
   }
-
-  try {
-    // Get subscription counts
-    const subscriptionsSnap = await admin.firestore()
-      .collection(SUBSCRIPTIONS_COLLECTION)
-      .get();
-
-    const subscriptions = subscriptionsSnap.docs.map(doc => doc.data());
-    
-    const metrics = {
-      totalSubscriptions: subscriptions.length,
-      activeSubscriptions: subscriptions.filter(s => s.status === 'active').length,
-      trialingSubscriptions: subscriptions.filter(s => s.status === 'trialing').length,
-      canceledSubscriptions: subscriptions.filter(s => s.status === 'cancelled').length,
-      pendingCancellations: subscriptions.filter(s => s.cancelAtPeriodEnd).length,
-      byProduct: subscriptions.reduce((acc: Record<string, number>, s) => {
-        acc[s.productId || 'unknown'] = (acc[s.productId || 'unknown'] || 0) + 1;
-        return acc;
-      }, {}),
-    };
-
-    // Get recent revenue from Stripe (last 30 days)
-    const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-    const charges = await stripeInstance.charges.list({
-      created: { gte: thirtyDaysAgo },
-      limit: 100,
-    });
-
-    const revenue = charges.data
-      .filter(c => c.paid && !c.refunded)
-      .reduce((sum, c) => sum + c.amount, 0);
-
-    return {
-      ...metrics,
-      last30DaysRevenue: revenue,
-      last30DaysRevenueFormatted: `$${(revenue / 100).toFixed(2)}`,
-    };
-  } catch (err: any) {
-    console.error('Error getting Stripe metrics:', err);
-    throw new HttpsError('internal', err.message || 'Failed to get metrics');
-  }
-});
+);
 
 /**
  * Get all Stripe products and prices - HQ only
  */
-export const getStripeProducts = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest) => {
-  await requireHq(request.auth?.uid);
+export const getStripeProducts = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (request: CallableRequest) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
+    }
+
+    try {
+      // Get all products
+      const products = await stripeInstance.products.list({
+        limit: 100,
+        active: undefined, // Get both active and inactive
+      });
+
+      // Get all prices
+      const prices = await stripeInstance.prices.list({
+        limit: 100,
+        active: undefined,
+      });
+
+      // Map prices to products
+      const productsWithPrices = products.data.map((product) => {
+        const productPrices = prices.data.filter((p) => p.product === product.id);
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          active: product.active,
+          metadata: product.metadata,
+          images: product.images,
+          created: product.created,
+          updated: product.updated,
+          prices: productPrices.map((price) => ({
+            id: price.id,
+            active: price.active,
+            currency: price.currency,
+            unitAmount: price.unit_amount,
+            unitAmountFormatted: price.unit_amount
+              ? `$${(price.unit_amount / 100).toFixed(2)}`
+              : 'Free',
+            recurring: price.recurring
+              ? {
+                  interval: price.recurring.interval,
+                  intervalCount: price.recurring.interval_count,
+                }
+              : null,
+            type: price.type,
+            nickname: price.nickname,
+            metadata: price.metadata,
+          })),
+        };
+      });
+
+      return { products: productsWithPrices };
+    } catch (err: any) {
+      console.error('Error getting Stripe products:', err);
+      throw new HttpsError('internal', err.message || 'Failed to get products');
+    }
   }
-
-  try {
-    // Get all products
-    const products = await stripeInstance.products.list({
-      limit: 100,
-      active: undefined, // Get both active and inactive
-    });
-
-    // Get all prices
-    const prices = await stripeInstance.prices.list({
-      limit: 100,
-      active: undefined,
-    });
-
-    // Map prices to products
-    const productsWithPrices = products.data.map(product => {
-      const productPrices = prices.data.filter(p => p.product === product.id);
-      return {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        active: product.active,
-        metadata: product.metadata,
-        images: product.images,
-        created: product.created,
-        updated: product.updated,
-        prices: productPrices.map(price => ({
-          id: price.id,
-          active: price.active,
-          currency: price.currency,
-          unitAmount: price.unit_amount,
-          unitAmountFormatted: price.unit_amount 
-            ? `$${(price.unit_amount / 100).toFixed(2)}`
-            : 'Free',
-          recurring: price.recurring ? {
-            interval: price.recurring.interval,
-            intervalCount: price.recurring.interval_count,
-          } : null,
-          type: price.type,
-          nickname: price.nickname,
-          metadata: price.metadata,
-        })),
-      };
-    });
-
-    return { products: productsWithPrices };
-  } catch (err: any) {
-    console.error('Error getting Stripe products:', err);
-    throw new HttpsError('internal', err.message || 'Failed to get products');
-  }
-});
+);
 
 /**
  * Create a new Stripe product - HQ only
  */
-export const createStripeProduct = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  name: string;
-  description?: string;
-  metadata?: Record<string, string>;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const createStripeProduct = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      name: string;
+      description?: string;
+      metadata?: Record<string, string>;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
+    }
+
+    const { name, description, metadata } = request.data;
+
+    if (!name) {
+      throw new HttpsError('invalid-argument', 'Product name is required');
+    }
+
+    try {
+      const product = await stripeInstance.products.create({
+        name,
+        description: description || undefined,
+        metadata: metadata || undefined,
+      });
+
+      // Audit log
+      await admin.firestore().collection(AUDIT_COLLECTION).add({
+        actorId: request.auth!.uid,
+        actorRole: 'hq',
+        action: 'stripe.product.created',
+        entityType: 'stripeProduct',
+        entityId: product.id,
+        details: { name, description },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        product: {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          active: product.active,
+        },
+      };
+    } catch (err: any) {
+      console.error('Error creating Stripe product:', err);
+      throw new HttpsError('internal', err.message || 'Failed to create product');
+    }
   }
-
-  const { name, description, metadata } = request.data;
-
-  if (!name) {
-    throw new HttpsError('invalid-argument', 'Product name is required');
-  }
-
-  try {
-    const product = await stripeInstance.products.create({
-      name,
-      description: description || undefined,
-      metadata: metadata || undefined,
-    });
-
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'stripe.product.created',
-      entityType: 'stripeProduct',
-      entityId: product.id,
-      details: { name, description },
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return {
-      success: true,
-      product: {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        active: product.active,
-      },
-    };
-  } catch (err: any) {
-    console.error('Error creating Stripe product:', err);
-    throw new HttpsError('internal', err.message || 'Failed to create product');
-  }
-});
+);
 
 /**
  * Update a Stripe product - HQ only
  */
-export const updateStripeProduct = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  productId: string;
-  name?: string;
-  description?: string;
-  active?: boolean;
-  metadata?: Record<string, string>;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const updateStripeProduct = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      productId: string;
+      name?: string;
+      description?: string;
+      active?: boolean;
+      metadata?: Record<string, string>;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
+    }
+
+    const { productId, name, description, active, metadata } = request.data;
+
+    if (!productId) {
+      throw new HttpsError('invalid-argument', 'Product ID is required');
+    }
+
+    try {
+      const updateParams: Stripe.ProductUpdateParams = {};
+      if (name !== undefined) updateParams.name = name;
+      if (description !== undefined) updateParams.description = description;
+      if (active !== undefined) updateParams.active = active;
+      if (metadata !== undefined) updateParams.metadata = metadata;
+
+      const product = await stripeInstance.products.update(productId, updateParams);
+
+      // Audit log
+      await admin.firestore().collection(AUDIT_COLLECTION).add({
+        actorId: request.auth!.uid,
+        actorRole: 'hq',
+        action: 'stripe.product.updated',
+        entityType: 'stripeProduct',
+        entityId: productId,
+        details: updateParams,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        product: {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          active: product.active,
+        },
+      };
+    } catch (err: any) {
+      console.error('Error updating Stripe product:', err);
+      throw new HttpsError('internal', err.message || 'Failed to update product');
+    }
   }
-
-  const { productId, name, description, active, metadata } = request.data;
-
-  if (!productId) {
-    throw new HttpsError('invalid-argument', 'Product ID is required');
-  }
-
-  try {
-    const updateParams: Stripe.ProductUpdateParams = {};
-    if (name !== undefined) updateParams.name = name;
-    if (description !== undefined) updateParams.description = description;
-    if (active !== undefined) updateParams.active = active;
-    if (metadata !== undefined) updateParams.metadata = metadata;
-
-    const product = await stripeInstance.products.update(productId, updateParams);
-
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'stripe.product.updated',
-      entityType: 'stripeProduct',
-      entityId: productId,
-      details: updateParams,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return {
-      success: true,
-      product: {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        active: product.active,
-      },
-    };
-  } catch (err: any) {
-    console.error('Error updating Stripe product:', err);
-    throw new HttpsError('internal', err.message || 'Failed to update product');
-  }
-});
+);
 
 /**
  * Create a new price for a product - HQ only
  */
-export const createStripePrice = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  productId: string;
-  unitAmount: number;
-  currency?: string;
-  recurring?: {
-    interval: 'day' | 'week' | 'month' | 'year';
-    intervalCount?: number;
-  };
-  nickname?: string;
-  metadata?: Record<string, string>;
-}>) => {
-  await requireHq(request.auth?.uid);
-
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
-  }
-
-  const { productId, unitAmount, currency = 'usd', recurring, nickname, metadata } = request.data;
-
-  if (!productId) {
-    throw new HttpsError('invalid-argument', 'Product ID is required');
-  }
-
-  if (unitAmount === undefined || unitAmount < 0) {
-    throw new HttpsError('invalid-argument', 'Valid unit amount is required (in cents)');
-  }
-
-  try {
-    const priceParams: Stripe.PriceCreateParams = {
-      product: productId,
-      unit_amount: unitAmount,
-      currency,
-      nickname: nickname || undefined,
-      metadata: metadata || undefined,
-    };
-
-    if (recurring) {
-      priceParams.recurring = {
-        interval: recurring.interval,
-        interval_count: recurring.intervalCount || 1,
+export const createStripePrice = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      productId: string;
+      unitAmount: number;
+      currency?: string;
+      recurring?: {
+        interval: 'day' | 'week' | 'month' | 'year';
+        intervalCount?: number;
       };
+      nickname?: string;
+      metadata?: Record<string, string>;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
+
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
     }
 
-    const price = await stripeInstance.prices.create(priceParams);
+    const { productId, unitAmount, currency = 'usd', recurring, nickname, metadata } = request.data;
 
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'stripe.price.created',
-      entityType: 'stripePrice',
-      entityId: price.id,
-      details: { productId, unitAmount, currency, recurring, nickname },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    if (!productId) {
+      throw new HttpsError('invalid-argument', 'Product ID is required');
+    }
 
-    return {
-      success: true,
-      price: {
-        id: price.id,
-        active: price.active,
-        unitAmount: price.unit_amount,
-        currency: price.currency,
-        recurring: price.recurring,
-        nickname: price.nickname,
-      },
-    };
-  } catch (err: any) {
-    console.error('Error creating Stripe price:', err);
-    throw new HttpsError('internal', err.message || 'Failed to create price');
+    if (unitAmount === undefined || unitAmount < 0) {
+      throw new HttpsError('invalid-argument', 'Valid unit amount is required (in cents)');
+    }
+
+    try {
+      const priceParams: Stripe.PriceCreateParams = {
+        product: productId,
+        unit_amount: unitAmount,
+        currency,
+        nickname: nickname || undefined,
+        metadata: metadata || undefined,
+      };
+
+      if (recurring) {
+        priceParams.recurring = {
+          interval: recurring.interval,
+          interval_count: recurring.intervalCount || 1,
+        };
+      }
+
+      const price = await stripeInstance.prices.create(priceParams);
+
+      // Audit log
+      await admin.firestore().collection(AUDIT_COLLECTION).add({
+        actorId: request.auth!.uid,
+        actorRole: 'hq',
+        action: 'stripe.price.created',
+        entityType: 'stripePrice',
+        entityId: price.id,
+        details: { productId, unitAmount, currency, recurring, nickname },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        price: {
+          id: price.id,
+          active: price.active,
+          unitAmount: price.unit_amount,
+          currency: price.currency,
+          recurring: price.recurring,
+          nickname: price.nickname,
+        },
+      };
+    } catch (err: any) {
+      console.error('Error creating Stripe price:', err);
+      throw new HttpsError('internal', err.message || 'Failed to create price');
+    }
   }
-});
+);
 
 /**
  * Update a price (can only deactivate, cannot change amount) - HQ only
  */
-export const updateStripePrice = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  priceId: string;
-  active?: boolean;
-  nickname?: string;
-  metadata?: Record<string, string>;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const updateStripePrice = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      priceId: string;
+      active?: boolean;
+      nickname?: string;
+      metadata?: Record<string, string>;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
+    }
+
+    const { priceId, active, nickname, metadata } = request.data;
+
+    if (!priceId) {
+      throw new HttpsError('invalid-argument', 'Price ID is required');
+    }
+
+    try {
+      const updateParams: Stripe.PriceUpdateParams = {};
+      if (active !== undefined) updateParams.active = active;
+      if (nickname !== undefined) updateParams.nickname = nickname;
+      if (metadata !== undefined) updateParams.metadata = metadata;
+
+      const price = await stripeInstance.prices.update(priceId, updateParams);
+
+      // Audit log
+      await admin.firestore().collection(AUDIT_COLLECTION).add({
+        actorId: request.auth!.uid,
+        actorRole: 'hq',
+        action: 'stripe.price.updated',
+        entityType: 'stripePrice',
+        entityId: priceId,
+        details: updateParams,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        price: {
+          id: price.id,
+          active: price.active,
+          unitAmount: price.unit_amount,
+          currency: price.currency,
+          nickname: price.nickname,
+        },
+      };
+    } catch (err: any) {
+      console.error('Error updating Stripe price:', err);
+      throw new HttpsError('internal', err.message || 'Failed to update price');
+    }
   }
-
-  const { priceId, active, nickname, metadata } = request.data;
-
-  if (!priceId) {
-    throw new HttpsError('invalid-argument', 'Price ID is required');
-  }
-
-  try {
-    const updateParams: Stripe.PriceUpdateParams = {};
-    if (active !== undefined) updateParams.active = active;
-    if (nickname !== undefined) updateParams.nickname = nickname;
-    if (metadata !== undefined) updateParams.metadata = metadata;
-
-    const price = await stripeInstance.prices.update(priceId, updateParams);
-
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'stripe.price.updated',
-      entityType: 'stripePrice',
-      entityId: priceId,
-      details: updateParams,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return {
-      success: true,
-      price: {
-        id: price.id,
-        active: price.active,
-        unitAmount: price.unit_amount,
-        currency: price.currency,
-        nickname: price.nickname,
-      },
-    };
-  } catch (err: any) {
-    console.error('Error updating Stripe price:', err);
-    throw new HttpsError('internal', err.message || 'Failed to update price');
-  }
-});
+);
 
 /**
  * Archive (deactivate) a Stripe product - HQ only
  */
-export const archiveStripeProduct = onCall({
-  secrets: [stripeSecretKey],
-}, async (request: CallableRequest<{
-  productId: string;
-}>) => {
-  await requireHq(request.auth?.uid);
+export const archiveStripeProduct = onCall(
+  {
+    secrets: [stripeSecretKey],
+  },
+  async (
+    request: CallableRequest<{
+      productId: string;
+    }>
+  ) => {
+    await requireHq(request.auth?.uid);
 
-  const stripeInstance = getStripe();
-  if (!stripeInstance) {
-    throw new HttpsError('unavailable', 'Stripe is not configured');
-  }
-
-  const { productId } = request.data;
-
-  if (!productId) {
-    throw new HttpsError('invalid-argument', 'Product ID is required');
-  }
-
-  try {
-    // First deactivate all prices for this product
-    const prices = await stripeInstance.prices.list({
-      product: productId,
-      active: true,
-    });
-
-    for (const price of prices.data) {
-      await stripeInstance.prices.update(price.id, { active: false });
+    const stripeInstance = getStripe();
+    if (!stripeInstance) {
+      throw new HttpsError('unavailable', 'Stripe is not configured');
     }
 
-    // Then deactivate the product
-    const product = await stripeInstance.products.update(productId, { active: false });
+    const { productId } = request.data;
 
-    // Audit log
-    await admin.firestore().collection(AUDIT_COLLECTION).add({
-      actorId: request.auth!.uid,
-      actorRole: 'hq',
-      action: 'stripe.product.archived',
-      entityType: 'stripeProduct',
-      entityId: productId,
-      details: { pricesArchived: prices.data.length },
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    if (!productId) {
+      throw new HttpsError('invalid-argument', 'Product ID is required');
+    }
 
-    return {
-      success: true,
-      product: {
-        id: product.id,
-        name: product.name,
-        active: product.active,
-      },
-      pricesArchived: prices.data.length,
-    };
-  } catch (err: any) {
-    console.error('Error archiving Stripe product:', err);
-    throw new HttpsError('internal', err.message || 'Failed to archive product');
+    try {
+      // First deactivate all prices for this product
+      const prices = await stripeInstance.prices.list({
+        product: productId,
+        active: true,
+      });
+
+      for (const price of prices.data) {
+        await stripeInstance.prices.update(price.id, { active: false });
+      }
+
+      // Then deactivate the product
+      const product = await stripeInstance.products.update(productId, { active: false });
+
+      // Audit log
+      await admin
+        .firestore()
+        .collection(AUDIT_COLLECTION)
+        .add({
+          actorId: request.auth!.uid,
+          actorRole: 'hq',
+          action: 'stripe.product.archived',
+          entityType: 'stripeProduct',
+          entityId: productId,
+          details: { pricesArchived: prices.data.length },
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+      return {
+        success: true,
+        product: {
+          id: product.id,
+          name: product.name,
+          active: product.active,
+        },
+        pricesArchived: prices.data.length,
+      };
+    } catch (err: any) {
+      console.error('Error archiving Stripe product:', err);
+      throw new HttpsError('internal', err.message || 'Failed to archive product');
+    }
   }
-});
+);
 
 // ============================================================================
 // MOTIVATION & PERSONALIZATION ENGINE
 // ============================================================================
 
 // Motivation types and their characteristics
-type MotivationType = 'achievement' | 'social' | 'mastery' | 'autonomy' | 'purpose' | 'competition' | 'creativity';
+type MotivationType =
+  | 'achievement'
+  | 'social'
+  | 'mastery'
+  | 'autonomy'
+  | 'purpose'
+  | 'competition'
+  | 'creativity';
 type EngagementLevel = 'thriving' | 'engaged' | 'coasting' | 'struggling' | 'at-risk';
 
 const MOTIVATION_COLLECTIONS = {
@@ -7763,72 +8714,83 @@ const MOTIVATION_COLLECTIONS = {
 /**
  * Submit educator feedback about a learner's engagement and motivation
  */
-export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  sessionOccurrenceId?: string;
-  engagementLevel: 1 | 2 | 3 | 4 | 5;
-  participationType: 'leader' | 'active' | 'quiet' | 'observer' | 'reluctant';
-  respondedWellTo: MotivationType[];
-  struggledWith?: string;
-  effectiveStrategies?: Array<{ type: MotivationType; strategy: string }>;
-  notes?: string;
-  highlights?: string[];
-}>) => {
-  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+export const submitEducatorFeedback = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      sessionOccurrenceId?: string;
+      engagementLevel: 1 | 2 | 3 | 4 | 5;
+      participationType: 'leader' | 'active' | 'quiet' | 'observer' | 'reluctant';
+      respondedWellTo: MotivationType[];
+      struggledWith?: string;
+      effectiveStrategies?: Array<{ type: MotivationType; strategy: string }>;
+      notes?: string;
+      highlights?: string[];
+    }>
+  ) => {
+    const { uid, role } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['educator', 'hq'],
+      request.data.siteId
+    );
 
-  const {
-    learnerId,
-    siteId,
-    sessionOccurrenceId,
-    engagementLevel,
-    participationType,
-    respondedWellTo,
-    struggledWith,
-    effectiveStrategies,
-    notes,
-    highlights,
-  } = request.data;
+    const {
+      learnerId,
+      siteId,
+      sessionOccurrenceId,
+      engagementLevel,
+      participationType,
+      respondedWellTo,
+      struggledWith,
+      effectiveStrategies,
+      notes,
+      highlights,
+    } = request.data;
 
-  if (!learnerId || !siteId || !engagementLevel || !participationType) {
-    throw new HttpsError('invalid-argument', 'Missing required fields');
+    if (!learnerId || !siteId || !engagementLevel || !participationType) {
+      throw new HttpsError('invalid-argument', 'Missing required fields');
+    }
+
+    // Create the feedback document
+    const feedbackRef = await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
+      .add({
+        learnerId,
+        educatorId: uid,
+        siteId,
+        sessionOccurrenceId: sessionOccurrenceId || null,
+        engagementLevel,
+        participationType,
+        respondedWellTo: respondedWellTo || [],
+        struggledWith: struggledWith || null,
+        effectiveStrategies: (effectiveStrategies || []).map((s) => ({
+          type: s.type,
+          strategy: s.strategy,
+          effectiveness: 0.5, // Default, will be updated based on outcomes
+          usageCount: 1,
+        })),
+        notes: notes || null,
+        highlights: highlights || [],
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    // Log telemetry
+    await persistTelemetryEvent({
+      event: 'educator.feedback.submitted',
+      userId: uid,
+      role,
+      siteId,
+      metadata: { learnerId, feedbackId: feedbackRef.id },
+    });
+
+    // Trigger async profile update
+    await updateLearnerMotivationProfile(learnerId, siteId);
+
+    return { success: true, feedbackId: feedbackRef.id };
   }
-
-  // Create the feedback document
-  const feedbackRef = await admin.firestore().collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK).add({
-    learnerId,
-    educatorId: uid,
-    siteId,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    engagementLevel,
-    participationType,
-    respondedWellTo: respondedWellTo || [],
-    struggledWith: struggledWith || null,
-    effectiveStrategies: (effectiveStrategies || []).map(s => ({
-      type: s.type,
-      strategy: s.strategy,
-      effectiveness: 0.5, // Default, will be updated based on outcomes
-      usageCount: 1,
-    })),
-    notes: notes || null,
-    highlights: highlights || [],
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  // Log telemetry
-  await persistTelemetryEvent({
-    event: 'educator.feedback.submitted',
-    userId: uid,
-    role,
-    siteId,
-    metadata: { learnerId, feedbackId: feedbackRef.id },
-  });
-
-  // Trigger async profile update
-  await updateLearnerMotivationProfile(learnerId, siteId);
-
-  return { success: true, feedbackId: feedbackRef.id };
-});
+);
 
 /**
  * Submit a learner reflection (metacognitive growth capture)
@@ -7837,306 +8799,362 @@ export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
  * interaction event for BOS scoring.  Firestore rules enforce learner-only
  * create, so the callable validates `uid === data.learnerId`.
  */
-export const submitReflection = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  proudOf?: string;
-  nextIWill?: string;
-  prompt?: string;
-  response?: string;
-  sprintSessionId?: string;
-  sessionId?: string;
-  missionId?: string;
-  effortLevel?: 1 | 2 | 3 | 4 | 5;
-  enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
-  engagementRating?: 1 | 2 | 3 | 4 | 5;
-  confidenceRating?: 1 | 2 | 3 | 4 | 5;
-  effectiveStrategy?: string;
-  aiAssistanceUsed?: boolean;
-  aiAssistanceDetails?: string;
-}>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+export const submitReflection = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      proudOf?: string;
+      nextIWill?: string;
+      prompt?: string;
+      response?: string;
+      sprintSessionId?: string;
+      sessionId?: string;
+      missionId?: string;
+      effortLevel?: 1 | 2 | 3 | 4 | 5;
+      enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
+      engagementRating?: 1 | 2 | 3 | 4 | 5;
+      confidenceRating?: 1 | 2 | 3 | 4 | 5;
+      effectiveStrategy?: string;
+      aiAssistanceUsed?: boolean;
+      aiAssistanceDetails?: string;
+    }>
+  ) => {
+    const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
 
-  const {
-    learnerId,
-    siteId,
-    proudOf,
-    nextIWill,
-    prompt,
-    response,
-    sprintSessionId,
-    sessionId,
-    missionId,
-    effortLevel,
-    enjoymentLevel,
-    engagementRating,
-    confidenceRating,
-    effectiveStrategy,
-    aiAssistanceUsed,
-    aiAssistanceDetails,
-  } = request.data;
+    const {
+      learnerId,
+      siteId,
+      proudOf,
+      nextIWill,
+      prompt,
+      response,
+      sprintSessionId,
+      sessionId,
+      missionId,
+      effortLevel,
+      enjoymentLevel,
+      engagementRating,
+      confidenceRating,
+      effectiveStrategy,
+      aiAssistanceUsed,
+      aiAssistanceDetails,
+    } = request.data;
 
-  const normalizedPrompt = typeof prompt === 'string' && prompt.trim().length > 0
-    ? prompt.trim()
-    : typeof proudOf === 'string'
-      ? proudOf.trim()
-      : '';
-  const normalizedResponse = typeof response === 'string' && response.trim().length > 0
-    ? response.trim()
-    : typeof nextIWill === 'string'
-      ? nextIWill.trim()
-      : '';
-  const normalizedSessionId = typeof sessionId === 'string' && sessionId.trim().length > 0
-    ? sessionId.trim()
-    : typeof sprintSessionId === 'string'
-      ? sprintSessionId.trim()
-      : '';
-  const hasPromptResponseShape = typeof prompt === 'string' || typeof response === 'string';
+    const normalizedPrompt =
+      typeof prompt === 'string' && prompt.trim().length > 0
+        ? prompt.trim()
+        : typeof proudOf === 'string'
+          ? proudOf.trim()
+          : '';
+    const normalizedResponse =
+      typeof response === 'string' && response.trim().length > 0
+        ? response.trim()
+        : typeof nextIWill === 'string'
+          ? nextIWill.trim()
+          : '';
+    const normalizedSessionId =
+      typeof sessionId === 'string' && sessionId.trim().length > 0
+        ? sessionId.trim()
+        : typeof sprintSessionId === 'string'
+          ? sprintSessionId.trim()
+          : '';
+    const hasPromptResponseShape = typeof prompt === 'string' || typeof response === 'string';
 
-  if (!learnerId || !siteId || !normalizedPrompt || !normalizedResponse) {
-    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, and a reflection prompt/response pair');
-  }
+    if (!learnerId || !siteId || !normalizedPrompt || !normalizedResponse) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Missing required fields: learnerId, siteId, and a reflection prompt/response pair'
+      );
+    }
 
-  if (uid !== learnerId) {
-    throw new HttpsError('permission-denied', 'Learners can only submit their own reflections');
-  }
+    if (uid !== learnerId) {
+      throw new HttpsError('permission-denied', 'Learners can only submit their own reflections');
+    }
 
-  const db = admin.firestore();
-  const reflectionRef = db.collection('learnerReflections').doc();
-  const portfolioRef = db.collection('portfolioItems').doc();
-  const evidenceRef = db.collection('evidenceRecords').doc();
-  const interactionRef = db.collection('interactionEvents').doc();
-  const reflectionType = normalizedSessionId ? 'session_reflection' : missionId ? 'mission_reflection' : 'free_reflection';
-  const reflectionContent = [
-    hasPromptResponseShape ? `Prompt: ${normalizedPrompt}` : `Proud of: ${normalizedPrompt}`,
-    hasPromptResponseShape ? `Reflection: ${normalizedResponse}` : `Next I will: ${normalizedResponse}`,
-    effectiveStrategy ? `Strategy that helped: ${effectiveStrategy.trim()}` : null,
-  ].filter((value): value is string => Boolean(value && value.trim().length > 0)).join('\n');
-  const reflectionTitle = `Reflection: ${normalizedPrompt.slice(0, 60)}${normalizedPrompt.length > 60 ? '…' : ''}`;
-  const aiDisclosureStatus = aiAssistanceUsed === true
-    ? 'learner-ai-verified'
-    : aiAssistanceUsed === false
-      ? 'learner-ai-not-used'
-      : 'not-available';
+    const db = admin.firestore();
+    const reflectionRef = db.collection('learnerReflections').doc();
+    const portfolioRef = db.collection('portfolioItems').doc();
+    const evidenceRef = db.collection('evidenceRecords').doc();
+    const interactionRef = db.collection('interactionEvents').doc();
+    const reflectionType = normalizedSessionId
+      ? 'session_reflection'
+      : missionId
+        ? 'mission_reflection'
+        : 'free_reflection';
+    const reflectionContent = [
+      hasPromptResponseShape ? `Prompt: ${normalizedPrompt}` : `Proud of: ${normalizedPrompt}`,
+      hasPromptResponseShape
+        ? `Reflection: ${normalizedResponse}`
+        : `Next I will: ${normalizedResponse}`,
+      effectiveStrategy ? `Strategy that helped: ${effectiveStrategy.trim()}` : null,
+    ]
+      .filter((value): value is string => Boolean(value && value.trim().length > 0))
+      .join('\n');
+    const reflectionTitle = `Reflection: ${normalizedPrompt.slice(0, 60)}${normalizedPrompt.length > 60 ? '…' : ''}`;
+    const aiDisclosureStatus =
+      aiAssistanceUsed === true
+        ? 'learner-ai-verified'
+        : aiAssistanceUsed === false
+          ? 'learner-ai-not-used'
+          : 'not-available';
 
-  const reflectionDoc: Record<string, unknown> = {
-    learnerId,
-    siteId,
-    content: reflectionContent,
-    proudOf: normalizedPrompt,
-    nextIWill: normalizedResponse,
-    prompt: normalizedPrompt,
-    response: normalizedResponse,
-    sprintSessionId: normalizedSessionId || null,
-    sessionId: normalizedSessionId || null,
-    missionId: missionId || null,
-    reflectionType,
-    portfolioItemId: portfolioRef.id,
-    createdAt: FieldValue.serverTimestamp(),
-  };
-
-  if (effortLevel) reflectionDoc.effortLevel = effortLevel;
-  if (enjoymentLevel) reflectionDoc.enjoymentLevel = enjoymentLevel;
-  if (engagementRating) reflectionDoc.engagementRating = engagementRating;
-  if (confidenceRating) reflectionDoc.confidenceRating = confidenceRating;
-  if (effectiveStrategy) reflectionDoc.effectiveStrategy = effectiveStrategy;
-  if (typeof aiAssistanceUsed === 'boolean') {
-    reflectionDoc.aiAssistanceUsed = aiAssistanceUsed;
-  }
-  if (aiAssistanceDetails) reflectionDoc.aiAssistanceDetails = aiAssistanceDetails;
-
-  const portfolioDoc: Record<string, unknown> = {
-    learnerId,
-    siteId,
-    title: reflectionTitle,
-    description: reflectionContent,
-    pillarCodes: [],
-    artifacts: [],
-    reflectionIds: [reflectionRef.id],
-    aiDisclosureStatus,
-    verificationStatus: 'pending',
-    proofOfLearningStatus: 'not-available',
-    source: 'reflection',
-    createdAt: FieldValue.serverTimestamp(),
-  };
-  if (typeof aiAssistanceUsed === 'boolean') {
-    portfolioDoc.aiAssistanceUsed = aiAssistanceUsed;
-  }
-  if (aiAssistanceDetails) {
-    portfolioDoc.aiAssistanceDetails = aiAssistanceDetails;
-  }
-
-  const evidenceRecordDoc: Record<string, unknown> = {
-    learnerId,
-    siteId,
-    educatorId: null,
-    description: `Reflection: ${normalizedPrompt.slice(0, 200)}`,
-    sourceType: 'reflection',
-    sourceId: reflectionRef.id,
-    linkedPortfolioItemId: portfolioRef.id,
-    linkedPortfolioItemIds: [portfolioRef.id],
-    portfolioStatus: 'linked',
-    portfolioCandidate: true,
-    aiDisclosureStatus,
-    aiAssistanceNoted: aiAssistanceUsed === true,
-    rubricStatus: 'pending',
-    growthStatus: 'pending',
-    reflectionNote: reflectionContent,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  };
-
-  const interactionEventDoc: Record<string, unknown> = {
-    eventType: 'reflection.submitted',
-    siteId,
-    actorId: learnerId,
-    actorRole: 'learner',
-    sessionOccurrenceId: normalizedSessionId || null,
-    payload: {
-      reflectionId: reflectionRef.id,
-      portfolioItemId: portfolioRef.id,
+    const reflectionDoc: Record<string, unknown> = {
+      learnerId,
+      siteId,
+      content: reflectionContent,
+      proudOf: normalizedPrompt,
+      nextIWill: normalizedResponse,
+      prompt: normalizedPrompt,
+      response: normalizedResponse,
+      sprintSessionId: normalizedSessionId || null,
+      sessionId: normalizedSessionId || null,
       missionId: missionId || null,
-      hasEffort: !!effortLevel || !!confidenceRating,
-      hasEnjoyment: !!enjoymentLevel || !!engagementRating,
-      hasStrategy: !!effectiveStrategy,
+      reflectionType,
+      portfolioItemId: portfolioRef.id,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    if (effortLevel) reflectionDoc.effortLevel = effortLevel;
+    if (enjoymentLevel) reflectionDoc.enjoymentLevel = enjoymentLevel;
+    if (engagementRating) reflectionDoc.engagementRating = engagementRating;
+    if (confidenceRating) reflectionDoc.confidenceRating = confidenceRating;
+    if (effectiveStrategy) reflectionDoc.effectiveStrategy = effectiveStrategy;
+    if (typeof aiAssistanceUsed === 'boolean') {
+      reflectionDoc.aiAssistanceUsed = aiAssistanceUsed;
+    }
+    if (aiAssistanceDetails) reflectionDoc.aiAssistanceDetails = aiAssistanceDetails;
+
+    const portfolioDoc: Record<string, unknown> = {
+      learnerId,
+      siteId,
+      title: reflectionTitle,
+      description: reflectionContent,
+      pillarCodes: [],
+      artifacts: [],
+      reflectionIds: [reflectionRef.id],
       aiDisclosureStatus,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  };
+      verificationStatus: 'pending',
+      proofOfLearningStatus: 'not-available',
+      source: 'reflection',
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    if (typeof aiAssistanceUsed === 'boolean') {
+      portfolioDoc.aiAssistanceUsed = aiAssistanceUsed;
+    }
+    if (aiAssistanceDetails) {
+      portfolioDoc.aiAssistanceDetails = aiAssistanceDetails;
+    }
 
-  const batch = db.batch();
-  batch.set(portfolioRef, portfolioDoc);
-  batch.set(reflectionRef, reflectionDoc);
-  batch.set(evidenceRef, evidenceRecordDoc);
-  batch.set(interactionRef, interactionEventDoc);
-  await batch.commit();
+    const evidenceRecordDoc: Record<string, unknown> = {
+      learnerId,
+      siteId,
+      educatorId: null,
+      description: `Reflection: ${normalizedPrompt.slice(0, 200)}`,
+      sourceType: 'reflection',
+      sourceId: reflectionRef.id,
+      linkedPortfolioItemId: portfolioRef.id,
+      linkedPortfolioItemIds: [portfolioRef.id],
+      portfolioStatus: 'linked',
+      portfolioCandidate: true,
+      aiDisclosureStatus,
+      aiAssistanceNoted: aiAssistanceUsed === true,
+      rubricStatus: 'pending',
+      growthStatus: 'pending',
+      reflectionNote: reflectionContent,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
 
-  // Log interaction event for BOS scoring
-  // Log telemetry
-  await persistTelemetryEvent({
-    event: 'learner.reflection.submitted',
-    userId: uid,
-    role: 'learner',
-    siteId,
-    metadata: { reflectionId: reflectionRef.id, portfolioItemId: portfolioRef.id, missionId: missionId || null },
-  });
+    const interactionEventDoc: Record<string, unknown> = {
+      eventType: 'reflection.submitted',
+      siteId,
+      actorId: learnerId,
+      actorRole: 'learner',
+      sessionOccurrenceId: normalizedSessionId || null,
+      payload: {
+        reflectionId: reflectionRef.id,
+        portfolioItemId: portfolioRef.id,
+        missionId: missionId || null,
+        hasEffort: !!effortLevel || !!confidenceRating,
+        hasEnjoyment: !!enjoymentLevel || !!engagementRating,
+        hasStrategy: !!effectiveStrategy,
+        aiDisclosureStatus,
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    };
 
-  return { reflectionId: reflectionRef.id, portfolioItemId: portfolioRef.id };
-});
+    const batch = db.batch();
+    batch.set(portfolioRef, portfolioDoc);
+    batch.set(reflectionRef, reflectionDoc);
+    batch.set(evidenceRef, evidenceRecordDoc);
+    batch.set(interactionRef, interactionEventDoc);
+    await batch.commit();
+
+    // Log interaction event for BOS scoring
+    // Log telemetry
+    await persistTelemetryEvent({
+      event: 'learner.reflection.submitted',
+      userId: uid,
+      role: 'learner',
+      siteId,
+      metadata: {
+        reflectionId: reflectionRef.id,
+        portfolioItemId: portfolioRef.id,
+        missionId: missionId || null,
+      },
+    });
+
+    return { reflectionId: reflectionRef.id, portfolioItemId: portfolioRef.id };
+  }
+);
 
 /**
  * Update a learner's interest profile for autonomy-driven mission selection
  */
-export const updateLearnerInterests = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  interests: string[];
-}>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+export const updateLearnerInterests = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      interests: string[];
+    }>
+  ) => {
+    const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
 
-  const { learnerId, siteId, interests } = request.data;
+    const { learnerId, siteId, interests } = request.data;
 
-  if (!learnerId || !siteId || !Array.isArray(interests)) {
-    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, interests');
+    if (!learnerId || !siteId || !Array.isArray(interests)) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Missing required fields: learnerId, siteId, interests'
+      );
+    }
+
+    if (uid !== learnerId) {
+      throw new HttpsError('permission-denied', 'Learners can only update their own interests');
+    }
+
+    const profileRef = admin.firestore().collection('learnerInterestProfiles').doc(learnerId);
+    await profileRef.set(
+      {
+        learnerId,
+        siteId,
+        interests,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await persistTelemetryEvent({
+      event: 'learner.interests.updated',
+      userId: uid,
+      role: 'learner',
+      siteId,
+      metadata: { interestCount: interests.length },
+    });
+
+    return { success: true };
   }
-
-  if (uid !== learnerId) {
-    throw new HttpsError('permission-denied', 'Learners can only update their own interests');
-  }
-
-  const profileRef = admin.firestore().collection('learnerInterestProfiles').doc(learnerId);
-  await profileRef.set({
-    learnerId,
-    siteId,
-    interests,
-    updatedAt: FieldValue.serverTimestamp(),
-  }, { merge: true });
-
-  await persistTelemetryEvent({
-    event: 'learner.interests.updated',
-    userId: uid,
-    role: 'learner',
-    siteId,
-    metadata: { interestCount: interests.length },
-  });
-
-  return { success: true };
-});
+);
 
 /**
  * Give recognition to a peer's showcase submission
  */
-export const giveRecognition = onCall(async (request: CallableRequest<{
-  fromLearnerId: string;
-  toLearnerId: string;
-  siteId: string;
-  showcaseId: string;
-  recognitionType: string;
-  comment?: string;
-}>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+export const giveRecognition = onCall(
+  async (
+    request: CallableRequest<{
+      fromLearnerId: string;
+      toLearnerId: string;
+      siteId: string;
+      showcaseId: string;
+      recognitionType: string;
+      comment?: string;
+    }>
+  ) => {
+    const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
 
-  const { fromLearnerId, toLearnerId, siteId, showcaseId, recognitionType, comment } = request.data;
+    const { fromLearnerId, toLearnerId, siteId, showcaseId, recognitionType, comment } =
+      request.data;
 
-  if (!fromLearnerId || !toLearnerId || !siteId || !showcaseId || !recognitionType) {
-    throw new HttpsError('invalid-argument', 'Missing required fields');
-  }
+    if (!fromLearnerId || !toLearnerId || !siteId || !showcaseId || !recognitionType) {
+      throw new HttpsError('invalid-argument', 'Missing required fields');
+    }
 
-  if (uid !== fromLearnerId) {
-    throw new HttpsError('permission-denied', 'Learners can only give recognition from their own account');
-  }
+    if (uid !== fromLearnerId) {
+      throw new HttpsError(
+        'permission-denied',
+        'Learners can only give recognition from their own account'
+      );
+    }
 
-  if (fromLearnerId === toLearnerId) {
-    throw new HttpsError('invalid-argument', 'Cannot give recognition to yourself');
-  }
+    if (fromLearnerId === toLearnerId) {
+      throw new HttpsError('invalid-argument', 'Cannot give recognition to yourself');
+    }
 
-  // Verify showcase exists
-  const showcaseSnap = await admin.firestore().collection('showcaseSubmissions').doc(showcaseId).get();
-  if (!showcaseSnap.exists) {
-    throw new HttpsError('not-found', 'Showcase submission not found');
-  }
+    // Verify showcase exists
+    const showcaseSnap = await admin
+      .firestore()
+      .collection('showcaseSubmissions')
+      .doc(showcaseId)
+      .get();
+    if (!showcaseSnap.exists) {
+      throw new HttpsError('not-found', 'Showcase submission not found');
+    }
 
-  // Add recognition to showcase
-  const recognitionRef = await admin.firestore().collection('showcaseSubmissions')
-    .doc(showcaseId).collection('recognitions').add({
-      fromLearnerId,
-      toLearnerId,
+    // Add recognition to showcase
+    const recognitionRef = await admin
+      .firestore()
+      .collection('showcaseSubmissions')
+      .doc(showcaseId)
+      .collection('recognitions')
+      .add({
+        fromLearnerId,
+        toLearnerId,
+        siteId,
+        recognitionType,
+        comment: comment || null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    // Update recognition count on showcase
+    await admin
+      .firestore()
+      .collection('showcaseSubmissions')
+      .doc(showcaseId)
+      .update({
+        [`recognitionCounts.${recognitionType}`]: FieldValue.increment(1),
+      });
+
+    // Log interaction event for BOS scoring
+    await admin
+      .firestore()
+      .collection('interactionEvents')
+      .add({
+        eventType: 'recognition.given',
+        siteId,
+        actorId: fromLearnerId,
+        actorRole: 'learner',
+        payload: {
+          recognitionId: recognitionRef.id,
+          toLearnerId,
+          showcaseId,
+          recognitionType,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    await persistTelemetryEvent({
+      event: 'learner.recognition.given',
+      userId: uid,
+      role: 'learner',
       siteId,
-      recognitionType,
-      comment: comment || null,
-      createdAt: FieldValue.serverTimestamp(),
+      metadata: { toLearnerId, showcaseId, recognitionType },
     });
 
-  // Update recognition count on showcase
-  await admin.firestore().collection('showcaseSubmissions').doc(showcaseId).update({
-    [`recognitionCounts.${recognitionType}`]: FieldValue.increment(1),
-  });
-
-  // Log interaction event for BOS scoring
-  await admin.firestore().collection('interactionEvents').add({
-    eventType: 'recognition.given',
-    siteId,
-    actorId: fromLearnerId,
-    actorRole: 'learner',
-    payload: {
-      recognitionId: recognitionRef.id,
-      toLearnerId,
-      showcaseId,
-      recognitionType,
-    },
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  await persistTelemetryEvent({
-    event: 'learner.recognition.given',
-    userId: uid,
-    role: 'learner',
-    siteId,
-    metadata: { toLearnerId, showcaseId, recognitionType },
-  });
-
-  return { success: true, recognitionId: recognitionRef.id };
-});
+    return { success: true, recognitionId: recognitionRef.id };
+  }
+);
 
 /**
  * Get learner dashboard data for today.
@@ -8144,143 +9162,149 @@ export const giveRecognition = onCall(async (request: CallableRequest<{
  * Aggregates from missions, missionAttempts, checkpointHistory, learnerReflections,
  * and interactionEvents to build the SDT-driven daily view.
  */
-export const getLearnerDashboard = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-}>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
-  const { learnerId, siteId } = request.data;
+export const getLearnerDashboard = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+    }>
+  ) => {
+    const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+    const { learnerId, siteId } = request.data;
 
-  if (!learnerId || !siteId) {
-    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
-  }
-  if (uid !== learnerId) {
-    throw new HttpsError('permission-denied', 'Learners can only view their own dashboard');
-  }
-
-  const db = admin.firestore();
-
-  // Parallel queries
-  const [
-    attemptsSnap,
-    checkpointsSnap,
-    reflectionsSnap,
-    eventsSnap,
-    missionsSnap,
-  ] = await Promise.all([
-    db.collection('missionAttempts')
-      .where('learnerId', '==', learnerId)
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get(),
-    db.collection('checkpointHistory')
-      .where('learnerId', '==', learnerId)
-      .orderBy('createdAt', 'desc')
-      .limit(20)
-      .get(),
-    db.collection('learnerReflections')
-      .where('learnerId', '==', learnerId)
-      .orderBy('createdAt', 'desc')
-      .limit(30)
-      .get(),
-    db.collection('interactionEvents')
-      .where('actorId', '==', learnerId)
-      .where('siteId', '==', siteId)
-      .orderBy('createdAt', 'desc')
-      .limit(100)
-      .get(),
-    db.collection('missions')
-      .where('siteId', '==', siteId)
-      .where('status', '==', 'active')
-      .limit(50)
-      .get(),
-  ]);
-
-  // Find today's active mission (most recent in-progress attempt)
-  const inProgressAttempt = attemptsSnap.docs.find(d => d.data().status === 'in_progress');
-  let todaysMission = undefined;
-  if (inProgressAttempt) {
-    const attemptData = inProgressAttempt.data();
-    const missionDoc = missionsSnap.docs.find(m => m.id === attemptData.missionId);
-    if (missionDoc) {
-      todaysMission = {
-        id: missionDoc.id,
-        title: missionDoc.data().title ?? 'Mission',
-        difficultyLevel: missionDoc.data().difficultyLevel ?? 'developing',
-        progress: typeof attemptData.progress === 'number' ? attemptData.progress : 0,
-      };
+    if (!learnerId || !siteId) {
+      throw new HttpsError('invalid-argument', 'learnerId and siteId required');
     }
-  }
-
-  // Compute streaks from interaction events
-  const eventDates = new Set<string>();
-  eventsSnap.docs.forEach(d => {
-    const ts = d.data().createdAt;
-    if (ts?.toDate) eventDates.add(ts.toDate().toISOString().slice(0, 10));
-  });
-  const sortedDates = [...eventDates].sort().reverse();
-  let currentStreak = 0;
-  const today = new Date().toISOString().slice(0, 10);
-  for (let i = 0; i < sortedDates.length; i++) {
-    const expected = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    if (sortedDates[i] === expected || (i === 0 && sortedDates[i] === today)) {
-      currentStreak++;
-    } else break;
-  }
-
-  // Effort streak: consecutive days with reflection that includes effortLevel
-  const effortDates = new Set<string>();
-  reflectionsSnap.docs.forEach(d => {
-    const data = d.data();
-    if (data.effortLevel && data.createdAt?.toDate) {
-      effortDates.add(data.createdAt.toDate().toISOString().slice(0, 10));
+    if (uid !== learnerId) {
+      throw new HttpsError('permission-denied', 'Learners can only view their own dashboard');
     }
-  });
-  let effortStreak = 0;
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    if (effortDates.has(date)) effortStreak++;
-    else if (i > 0) break;
+
+    const db = admin.firestore();
+
+    // Parallel queries
+    const [attemptsSnap, checkpointsSnap, reflectionsSnap, eventsSnap, missionsSnap] =
+      await Promise.all([
+        db
+          .collection('missionAttempts')
+          .where('learnerId', '==', learnerId)
+          .orderBy('createdAt', 'desc')
+          .limit(50)
+          .get(),
+        db
+          .collection('checkpointHistory')
+          .where('learnerId', '==', learnerId)
+          .orderBy('createdAt', 'desc')
+          .limit(20)
+          .get(),
+        db
+          .collection('learnerReflections')
+          .where('learnerId', '==', learnerId)
+          .orderBy('createdAt', 'desc')
+          .limit(30)
+          .get(),
+        db
+          .collection('interactionEvents')
+          .where('actorId', '==', learnerId)
+          .where('siteId', '==', siteId)
+          .orderBy('createdAt', 'desc')
+          .limit(100)
+          .get(),
+        db
+          .collection('missions')
+          .where('siteId', '==', siteId)
+          .where('status', '==', 'active')
+          .limit(50)
+          .get(),
+      ]);
+
+    // Find today's active mission (most recent in-progress attempt)
+    const inProgressAttempt = attemptsSnap.docs.find((d) => d.data().status === 'in_progress');
+    let todaysMission = undefined;
+    if (inProgressAttempt) {
+      const attemptData = inProgressAttempt.data();
+      const missionDoc = missionsSnap.docs.find((m) => m.id === attemptData.missionId);
+      if (missionDoc) {
+        todaysMission = {
+          id: missionDoc.id,
+          title: missionDoc.data().title ?? 'Mission',
+          difficultyLevel: missionDoc.data().difficultyLevel ?? 'developing',
+          progress: typeof attemptData.progress === 'number' ? attemptData.progress : 0,
+        };
+      }
+    }
+
+    // Compute streaks from interaction events
+    const eventDates = new Set<string>();
+    eventsSnap.docs.forEach((d) => {
+      const ts = d.data().createdAt;
+      if (ts?.toDate) eventDates.add(ts.toDate().toISOString().slice(0, 10));
+    });
+    const sortedDates = [...eventDates].sort().reverse();
+    let currentStreak = 0;
+    const today = new Date().toISOString().slice(0, 10);
+    for (let i = 0; i < sortedDates.length; i++) {
+      const expected = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      if (sortedDates[i] === expected || (i === 0 && sortedDates[i] === today)) {
+        currentStreak++;
+      } else break;
+    }
+
+    // Effort streak: consecutive days with reflection that includes effortLevel
+    const effortDates = new Set<string>();
+    reflectionsSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.effortLevel && data.createdAt?.toDate) {
+        effortDates.add(data.createdAt.toDate().toISOString().slice(0, 10));
+      }
+    });
+    let effortStreak = 0;
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      if (effortDates.has(date)) effortStreak++;
+      else if (i > 0) break;
+    }
+
+    // Next checkpoint
+    const completedCheckpoints = checkpointsSnap.docs.filter((d) => d.data().passed === true);
+    const nextCheckpointNumber = completedCheckpoints.length + 1;
+    const nextCheckpoint = inProgressAttempt
+      ? {
+          sprintId: inProgressAttempt.data().sessionOccurrenceId ?? inProgressAttempt.id,
+          checkpointNumber: nextCheckpointNumber,
+          dueAt: null, // No fixed due date in the current schema
+        }
+      : undefined;
+
+    // Unread feedback: mission attempts with feedback that hasn't been acknowledged
+    const unreadFeedback = attemptsSnap.docs.filter((d) => {
+      const data = d.data();
+      return data.feedback && !data.feedbackAcknowledged;
+    }).length;
+
+    // Pending reflections: attempts completed but no linked reflection
+    const reflectionLinkedAttemptIds = new Set(
+      reflectionsSnap.docs.map((d) => d.data().missionId).filter(Boolean)
+    );
+    const completedAttempts = attemptsSnap.docs.filter((d) => d.data().status === 'completed');
+    const pendingReflections = completedAttempts.filter(
+      (d) => !reflectionLinkedAttemptIds.has(d.data().missionId)
+    ).length;
+
+    return {
+      todaysMission,
+      streak: {
+        current: currentStreak,
+        best: Math.max(currentStreak, sortedDates.length), // Approximate best
+        attendanceStreak: currentStreak,
+        effortStreak,
+      },
+      nextCheckpoint,
+      quickResumeAvailable: !!inProgressAttempt,
+      unreadFeedback,
+      pendingReflections,
+    };
   }
-
-  // Next checkpoint
-  const completedCheckpoints = checkpointsSnap.docs.filter(d => d.data().passed === true);
-  const nextCheckpointNumber = completedCheckpoints.length + 1;
-  const nextCheckpoint = inProgressAttempt ? {
-    sprintId: inProgressAttempt.data().sessionOccurrenceId ?? inProgressAttempt.id,
-    checkpointNumber: nextCheckpointNumber,
-    dueAt: null, // No fixed due date in the current schema
-  } : undefined;
-
-  // Unread feedback: mission attempts with feedback that hasn't been acknowledged
-  const unreadFeedback = attemptsSnap.docs.filter(d => {
-    const data = d.data();
-    return data.feedback && !data.feedbackAcknowledged;
-  }).length;
-
-  // Pending reflections: attempts completed but no linked reflection
-  const reflectionLinkedAttemptIds = new Set(
-    reflectionsSnap.docs.map(d => d.data().missionId).filter(Boolean)
-  );
-  const completedAttempts = attemptsSnap.docs.filter(d => d.data().status === 'completed');
-  const pendingReflections = completedAttempts.filter(d =>
-    !reflectionLinkedAttemptIds.has(d.data().missionId)
-  ).length;
-
-  return {
-    todaysMission,
-    streak: {
-      current: currentStreak,
-      best: Math.max(currentStreak, sortedDates.length), // Approximate best
-      attendanceStreak: currentStreak,
-      effortStreak,
-    },
-    nextCheckpoint,
-    quickResumeAvailable: !!inProgressAttempt,
-    unreadFeedback,
-    pendingReflections,
-  };
-});
+);
 
 /**
  * Get learning path progress for a learner.
@@ -8288,575 +9312,661 @@ export const getLearnerDashboard = onCall(async (request: CallableRequest<{
  * Builds a unit-by-unit progress map from missions, mission attempts,
  * and skill mastery data.
  */
-export const getLearningPath = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  courseId?: string;
-}>) => {
-  const { uid: _uid } = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'hq'], request.data.siteId);
-  const { learnerId, siteId, courseId } = request.data;
+export const getLearningPath = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      courseId?: string;
+    }>
+  ) => {
+    const { uid: _uid } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['learner', 'educator', 'hq'],
+      request.data.siteId
+    );
+    const { learnerId, siteId, courseId } = request.data;
 
-  if (!learnerId || !siteId) {
-    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
-  }
+    if (!learnerId || !siteId) {
+      throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+    }
 
-  const db = admin.firestore();
+    const db = admin.firestore();
 
-  // Load missions for this site, optionally filtered by course
-  let missionsQuery = db.collection('missions').where('siteId', '==', siteId);
-  if (courseId) {
-    missionsQuery = missionsQuery.where('courseId', '==', courseId);
-  }
+    // Load missions for this site, optionally filtered by course
+    let missionsQuery = db.collection('missions').where('siteId', '==', siteId);
+    if (courseId) {
+      missionsQuery = missionsQuery.where('courseId', '==', courseId);
+    }
 
-  const [missionsSnap, attemptsSnap, skillMasterySnap] = await Promise.all([
-    missionsQuery.get(),
-    db.collection('missionAttempts')
-      .where('learnerId', '==', learnerId)
-      .get(),
-    db.collection('skillMastery')
-      .where('learnerId', '==', learnerId)
-      .get(),
-  ]);
+    const [missionsSnap, attemptsSnap, skillMasterySnap] = await Promise.all([
+      missionsQuery.get(),
+      db.collection('missionAttempts').where('learnerId', '==', learnerId).get(),
+      db.collection('skillMastery').where('learnerId', '==', learnerId).get(),
+    ]);
 
-  // Group missions by unitId
-  const unitMissions = new Map<string, Array<{ id: string; title: string; difficultyLevel: string; order: number; microSkillIds: string[] }>>();
-  const unitNames = new Map<string, string>();
+    // Group missions by unitId
+    const unitMissions = new Map<
+      string,
+      Array<{
+        id: string;
+        title: string;
+        difficultyLevel: string;
+        order: number;
+        microSkillIds: string[];
+      }>
+    >();
+    const unitNames = new Map<string, string>();
 
-  missionsSnap.docs.forEach(d => {
-    const data = d.data();
-    const unitId = data.unitId ?? 'default';
-    const unitName = data.unitName ?? 'Learning Path';
-    unitNames.set(unitId, unitName);
-    if (!unitMissions.has(unitId)) unitMissions.set(unitId, []);
-    unitMissions.get(unitId)!.push({
-      id: d.id,
-      title: data.title ?? 'Mission',
-      difficultyLevel: data.difficultyLevel ?? 'developing',
-      order: typeof data.order === 'number' ? data.order : 0,
-      microSkillIds: Array.isArray(data.microSkillIds) ? data.microSkillIds : [],
+    missionsSnap.docs.forEach((d) => {
+      const data = d.data();
+      const unitId = data.unitId ?? 'default';
+      const unitName = data.unitName ?? 'Learning Path';
+      unitNames.set(unitId, unitName);
+      if (!unitMissions.has(unitId)) unitMissions.set(unitId, []);
+      unitMissions.get(unitId)!.push({
+        id: d.id,
+        title: data.title ?? 'Mission',
+        difficultyLevel: data.difficultyLevel ?? 'developing',
+        order: typeof data.order === 'number' ? data.order : 0,
+        microSkillIds: Array.isArray(data.microSkillIds) ? data.microSkillIds : [],
+      });
     });
-  });
 
-  // Index attempts by missionId
-  const completedMissionIds = new Set<string>();
-  attemptsSnap.docs.forEach(d => {
-    const data = d.data();
-    if (data.status === 'completed') completedMissionIds.add(data.missionId);
-  });
+    // Index attempts by missionId
+    const completedMissionIds = new Set<string>();
+    attemptsSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.status === 'completed') completedMissionIds.add(data.missionId);
+    });
 
-  // Index skill mastery
-  const masteredSkillIds = new Set<string>();
-  const inProgressSkillIds = new Set<string>();
-  skillMasterySnap.docs.forEach(d => {
-    const data = d.data();
-    const skillId = data.microSkillId ?? d.id;
-    const level = typeof data.level === 'number' ? data.level : 0;
-    if (level >= 3) masteredSkillIds.add(skillId);
-    else if (level >= 1) inProgressSkillIds.add(skillId);
-  });
+    // Index skill mastery
+    const masteredSkillIds = new Set<string>();
+    const inProgressSkillIds = new Set<string>();
+    skillMasterySnap.docs.forEach((d) => {
+      const data = d.data();
+      const skillId = data.microSkillId ?? d.id;
+      const level = typeof data.level === 'number' ? data.level : 0;
+      if (level >= 3) masteredSkillIds.add(skillId);
+      else if (level >= 1) inProgressSkillIds.add(skillId);
+    });
 
-  // Build path progress sorted by unit order
-  const unitEntries = [...unitMissions.entries()].sort((a, b) => {
-    const aMin = Math.min(...a[1].map(m => m.order));
-    const bMin = Math.min(...b[1].map(m => m.order));
-    return aMin - bMin;
-  });
+    // Build path progress sorted by unit order
+    const unitEntries = [...unitMissions.entries()].sort((a, b) => {
+      const aMin = Math.min(...a[1].map((m) => m.order));
+      const bMin = Math.min(...b[1].map((m) => m.order));
+      return aMin - bMin;
+    });
 
-  let previousUnitComplete = true;
-  const path = unitEntries.map(([unitId, missions]) => {
-    const missionsCompleted = missions.filter(m => completedMissionIds.has(m.id)).length;
-    const allMicroSkills = new Set(missions.flatMap(m => m.microSkillIds));
-    const proven = [...allMicroSkills].filter(id => masteredSkillIds.has(id));
-    const inProg = [...allMicroSkills].filter(id => inProgressSkillIds.has(id) && !masteredSkillIds.has(id));
+    let previousUnitComplete = true;
+    const path = unitEntries.map(([unitId, missions]) => {
+      const missionsCompleted = missions.filter((m) => completedMissionIds.has(m.id)).length;
+      const allMicroSkills = new Set(missions.flatMap((m) => m.microSkillIds));
+      const proven = [...allMicroSkills].filter((id) => masteredSkillIds.has(id));
+      const inProg = [...allMicroSkills].filter(
+        (id) => inProgressSkillIds.has(id) && !masteredSkillIds.has(id)
+      );
 
-    const isLocked = !previousUnitComplete;
-    previousUnitComplete = missionsCompleted >= missions.length;
+      const isLocked = !previousUnitComplete;
+      previousUnitComplete = missionsCompleted >= missions.length;
 
-    // Find next uncompleted mission
-    const nextMission = missions
-      .sort((a, b) => a.order - b.order)
-      .find(m => !completedMissionIds.has(m.id));
+      // Find next uncompleted mission
+      const nextMission = missions
+        .sort((a, b) => a.order - b.order)
+        .find((m) => !completedMissionIds.has(m.id));
 
-    return {
-      unitId,
-      unitName: unitNames.get(unitId) ?? 'Unit',
-      missionsTotal: missions.length,
-      missionsCompleted,
-      microSkillsProven: proven,
-      microSkillsInProgress: inProg,
-      isLocked,
-      nextMission: nextMission ? {
-        id: nextMission.id,
-        title: nextMission.title,
-        difficultyLevel: nextMission.difficultyLevel,
-      } : undefined,
-    };
-  });
+      return {
+        unitId,
+        unitName: unitNames.get(unitId) ?? 'Unit',
+        missionsTotal: missions.length,
+        missionsCompleted,
+        microSkillsProven: proven,
+        microSkillsInProgress: inProg,
+        isLocked,
+        nextMission: nextMission
+          ? {
+              id: nextMission.id,
+              title: nextMission.title,
+              difficultyLevel: nextMission.difficultyLevel,
+            }
+          : undefined,
+      };
+    });
 
-  return { path };
-});
+    return { path };
+  }
+);
 
 /**
  * Log a support intervention and its outcome
  */
-export const logSupportIntervention = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  sessionOccurrenceId?: string;
-  strategyType: MotivationType;
-  strategyDescription: string;
-  context: 'group' | 'individual' | 'peer-supported';
-  triggerReason?: string;
-  outcome: 'helped' | 'partial' | 'no-change' | 'backfired';
-  learnerResponse?: 'positive' | 'neutral' | 'resistant';
-  notes?: string;
-  recommendForFuture: boolean;
-}>) => {
-  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+export const logSupportIntervention = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      sessionOccurrenceId?: string;
+      strategyType: MotivationType;
+      strategyDescription: string;
+      context: 'group' | 'individual' | 'peer-supported';
+      triggerReason?: string;
+      outcome: 'helped' | 'partial' | 'no-change' | 'backfired';
+      learnerResponse?: 'positive' | 'neutral' | 'resistant';
+      notes?: string;
+      recommendForFuture: boolean;
+    }>
+  ) => {
+    const { uid, role } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['educator', 'hq'],
+      request.data.siteId
+    );
 
-  const {
-    learnerId,
-    siteId,
-    sessionOccurrenceId,
-    strategyType,
-    strategyDescription,
-    context,
-    triggerReason,
-    outcome,
-    learnerResponse,
-    notes,
-    recommendForFuture,
-  } = request.data;
-
-  if (!learnerId || !siteId || !strategyType || !strategyDescription || !context || !outcome) {
-    throw new HttpsError('invalid-argument', 'Missing required fields');
-  }
-
-  const interventionRef = await admin.firestore().collection(MOTIVATION_COLLECTIONS.SUPPORT_INTERVENTIONS).add({
-    learnerId,
-    educatorId: uid,
-    siteId,
-    sessionOccurrenceId: sessionOccurrenceId || null,
-    strategyType,
-    strategyDescription,
-    context,
-    triggerReason: triggerReason || null,
-    outcome,
-    learnerResponse: learnerResponse || null,
-    notes: notes || null,
-    recommendForFuture,
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  // Update effectiveness score in motivation profile
-  if (outcome !== 'no-change') {
-    await updateStrategyEffectiveness(learnerId, strategyType, outcome);
-  }
-
-  // Log telemetry
-  await persistTelemetryEvent({
-    event: 'support.applied',
-    userId: uid,
-    role,
-    siteId,
-    metadata: {
+    const {
       learnerId,
-      interventionId: interventionRef.id,
+      siteId,
+      sessionOccurrenceId,
       strategyType,
+      strategyDescription,
       context,
-    },
-  });
-
-  await persistTelemetryEvent({
-    event: 'support.intervention.logged',
-    userId: uid,
-    role,
-    siteId,
-    metadata: {
-      learnerId,
-      interventionId: interventionRef.id,
+      triggerReason,
       outcome,
-      strategyType,
-      context,
-    },
-  });
-
-  await persistTelemetryEvent({
-    event: 'support.outcome.logged',
-    userId: uid,
-    role,
-    siteId,
-    metadata: {
-      learnerId,
-      interventionId: interventionRef.id,
-      outcome,
-      learnerResponse: learnerResponse || null,
+      learnerResponse,
+      notes,
       recommendForFuture,
-    },
-  });
+    } = request.data;
 
-  return { success: true, interventionId: interventionRef.id };
-});
+    if (!learnerId || !siteId || !strategyType || !strategyDescription || !context || !outcome) {
+      throw new HttpsError('invalid-argument', 'Missing required fields');
+    }
+
+    const interventionRef = await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.SUPPORT_INTERVENTIONS)
+      .add({
+        learnerId,
+        educatorId: uid,
+        siteId,
+        sessionOccurrenceId: sessionOccurrenceId || null,
+        strategyType,
+        strategyDescription,
+        context,
+        triggerReason: triggerReason || null,
+        outcome,
+        learnerResponse: learnerResponse || null,
+        notes: notes || null,
+        recommendForFuture,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    // Update effectiveness score in motivation profile
+    if (outcome !== 'no-change') {
+      await updateStrategyEffectiveness(learnerId, strategyType, outcome);
+    }
+
+    // Log telemetry
+    await persistTelemetryEvent({
+      event: 'support.applied',
+      userId: uid,
+      role,
+      siteId,
+      metadata: {
+        learnerId,
+        interventionId: interventionRef.id,
+        strategyType,
+        context,
+      },
+    });
+
+    await persistTelemetryEvent({
+      event: 'support.intervention.logged',
+      userId: uid,
+      role,
+      siteId,
+      metadata: {
+        learnerId,
+        interventionId: interventionRef.id,
+        outcome,
+        strategyType,
+        context,
+      },
+    });
+
+    await persistTelemetryEvent({
+      event: 'support.outcome.logged',
+      userId: uid,
+      role,
+      siteId,
+      metadata: {
+        learnerId,
+        interventionId: interventionRef.id,
+        outcome,
+        learnerResponse: learnerResponse || null,
+        recommendForFuture,
+      },
+    });
+
+    return { success: true, interventionId: interventionRef.id };
+  }
+);
 
 /**
  * Track learner interaction with the app
  */
-export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
-  eventType: string;
-  siteId: string;
-  metadata?: {
-    durationSeconds?: number;
-    missionId?: string;
-    pillarCode?: string;
-    difficultyLevel?: string;
-    timeToComplete?: number;
-    helpType?: string;
-    nudgeType?: string;
-  };
-}>) => {
-  const eventType = typeof request.data?.eventType === 'string' ? request.data.eventType.trim() : '';
-  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
-  const metadata = request.data?.metadata;
+export const trackLearnerInteraction = onCall(
+  async (
+    request: CallableRequest<{
+      eventType: string;
+      siteId: string;
+      metadata?: {
+        durationSeconds?: number;
+        missionId?: string;
+        pillarCode?: string;
+        difficultyLevel?: string;
+        timeToComplete?: number;
+        helpType?: string;
+        nudgeType?: string;
+      };
+    }>
+  ) => {
+    const eventType =
+      typeof request.data?.eventType === 'string' ? request.data.eventType.trim() : '';
+    const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+    const metadata = request.data?.metadata;
 
-  if (!eventType || !siteId) {
-    throw new HttpsError('invalid-argument', 'eventType and siteId are required');
+    if (!eventType || !siteId) {
+      throw new HttpsError('invalid-argument', 'eventType and siteId are required');
+    }
+
+    const { uid, role } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['learner', 'educator', 'parent', 'site', 'partner', 'hq'],
+      siteId
+    );
+
+    // Validate event type
+    const validEvents = [
+      'app.open',
+      'app.session.end',
+      'mission.started',
+      'mission.completed',
+      'mission.abandoned',
+      'reflection.submitted',
+      'portfolio.item.added',
+      'help.requested',
+      'badge.viewed',
+      'leaderboard.viewed',
+      'streak.celebrated',
+      'popup.shown',
+      'popup.dismissed',
+      'popup.completed',
+      'nudge.accepted',
+      'nudge.dismissed',
+      'nudge.snoozed',
+    ];
+
+    if (!validEvents.includes(eventType)) {
+      throw new HttpsError('invalid-argument', `Invalid event type: ${eventType}`);
+    }
+
+    // Store interaction
+    await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS)
+      .add({
+        learnerId: uid,
+        siteId,
+        eventType,
+        metadata: metadata || {},
+        timestamp: FieldValue.serverTimestamp(),
+      });
+
+    // Also log to general telemetry
+    await persistTelemetryEvent({
+      event: eventType,
+      userId: uid,
+      role,
+      siteId,
+      metadata,
+    });
+
+    return { success: true };
   }
-
-  const { uid, role } = await requireRoleAndSite(
-    request.auth?.uid,
-    ['learner', 'educator', 'parent', 'site', 'partner', 'hq'],
-    siteId,
-  );
-
-  // Validate event type
-  const validEvents = [
-    'app.open', 'app.session.end', 'mission.started', 'mission.completed',
-    'mission.abandoned', 'reflection.submitted', 'portfolio.item.added',
-    'help.requested', 'badge.viewed', 'leaderboard.viewed', 'streak.celebrated',
-    'popup.shown', 'popup.dismissed', 'popup.completed',
-    'nudge.accepted', 'nudge.dismissed', 'nudge.snoozed',
-  ];
-
-  if (!validEvents.includes(eventType)) {
-    throw new HttpsError('invalid-argument', `Invalid event type: ${eventType}`);
-  }
-
-  // Store interaction
-  await admin.firestore().collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS).add({
-    learnerId: uid,
-    siteId,
-    eventType,
-    metadata: metadata || {},
-    timestamp: FieldValue.serverTimestamp(),
-  });
-
-  // Also log to general telemetry
-  await persistTelemetryEvent({
-    event: eventType,
-    userId: uid,
-    role,
-    siteId,
-    metadata,
-  });
-
-  return { success: true };
-});
+);
 
 /**
  * Get learner's motivation profile
  */
-export const getLearnerMotivationProfile = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-}>) => {
-  const { uid, role } = await requireRoleAndSite(
-    request.auth?.uid, 
-    ['learner', 'educator', 'parent', 'hq'], 
-    request.data.siteId
-  );
+export const getLearnerMotivationProfile = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+    }>
+  ) => {
+    const { uid, role } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['learner', 'educator', 'parent', 'hq'],
+      request.data.siteId
+    );
 
-  const { learnerId, siteId } = request.data;
+    const { learnerId, siteId } = request.data;
 
-  // Learners can only view their own profile, educators/parents can view their assigned learners
-  if (role === 'learner' && uid !== learnerId) {
-    throw new HttpsError('permission-denied', 'Cannot view other learner profiles');
+    // Learners can only view their own profile, educators/parents can view their assigned learners
+    if (role === 'learner' && uid !== learnerId) {
+      throw new HttpsError('permission-denied', 'Cannot view other learner profiles');
+    }
+
+    // Try to get existing profile
+    const profileQuery = await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+      .where('learnerId', '==', learnerId)
+      .where('siteId', '==', siteId)
+      .limit(1)
+      .get();
+
+    if (profileQuery.empty) {
+      // Create initial profile
+      const newProfile = await createInitialMotivationProfile(learnerId, siteId);
+      return newProfile;
+    }
+
+    const profile = profileQuery.docs[0].data();
+    return { id: profileQuery.docs[0].id, ...profile };
   }
-
-  // Try to get existing profile
-  const profileQuery = await admin.firestore()
-    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
-    .where('learnerId', '==', learnerId)
-    .where('siteId', '==', siteId)
-    .limit(1)
-    .get();
-
-  if (profileQuery.empty) {
-    // Create initial profile
-    const newProfile = await createInitialMotivationProfile(learnerId, siteId);
-    return newProfile;
-  }
-
-  const profile = profileQuery.docs[0].data();
-  return { id: profileQuery.docs[0].id, ...profile };
-});
+);
 
 /**
  * Get personalized motivation nudges for a learner
  */
-export const getLearnerNudges = onCall(async (request: CallableRequest<{
-  siteId: string;
-  limit?: number;
-}>) => {
-  const auth = request.auth;
-  if (!auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required');
+export const getLearnerNudges = onCall(
+  async (
+    request: CallableRequest<{
+      siteId: string;
+      limit?: number;
+    }>
+  ) => {
+    const auth = request.auth;
+    if (!auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required');
+    }
+
+    const { siteId, limit: nudgeLimit } = request.data;
+    const maxNudges = Math.min(nudgeLimit || 5, 10);
+
+    // Get pending nudges for this learner
+    const nudgesQuery = await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
+      .where('learnerId', '==', auth.uid)
+      .where('siteId', '==', siteId)
+      .where('status', '==', 'pending')
+      .orderBy('priority', 'desc')
+      .orderBy('createdAt', 'desc')
+      .limit(maxNudges)
+      .get();
+
+    const nudges = nudgesQuery.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return { nudges };
   }
-
-  const { siteId, limit: nudgeLimit } = request.data;
-  const maxNudges = Math.min(nudgeLimit || 5, 10);
-
-  // Get pending nudges for this learner
-  const nudgesQuery = await admin.firestore()
-    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
-    .where('learnerId', '==', auth.uid)
-    .where('siteId', '==', siteId)
-    .where('status', '==', 'pending')
-    .orderBy('priority', 'desc')
-    .orderBy('createdAt', 'desc')
-    .limit(maxNudges)
-    .get();
-
-  const nudges = nudgesQuery.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-
-  return { nudges };
-});
+);
 
 /**
  * Respond to a motivation nudge
  */
-export const respondToNudge = onCall(async (request: CallableRequest<{
-  nudgeId: string;
-  response: 'accepted' | 'dismissed' | 'snoozed';
-  snoozeDurationMinutes?: number;
-}>) => {
-  const auth = request.auth;
-  if (!auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required');
+export const respondToNudge = onCall(
+  async (
+    request: CallableRequest<{
+      nudgeId: string;
+      response: 'accepted' | 'dismissed' | 'snoozed';
+      snoozeDurationMinutes?: number;
+    }>
+  ) => {
+    const auth = request.auth;
+    if (!auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required');
+    }
+
+    const { nudgeId, response, snoozeDurationMinutes } = request.data;
+
+    if (!nudgeId || !response) {
+      throw new HttpsError('invalid-argument', 'nudgeId and response are required');
+    }
+
+    const nudgeRef = admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
+      .doc(nudgeId);
+    const nudgeDoc = await nudgeRef.get();
+
+    if (!nudgeDoc.exists) {
+      throw new HttpsError('not-found', 'Nudge not found');
+    }
+
+    const nudgeData = nudgeDoc.data()!;
+
+    // Verify ownership
+    if (nudgeData.learnerId !== auth.uid) {
+      throw new HttpsError('permission-denied', 'Cannot respond to nudges for other learners');
+    }
+
+    // Update nudge status
+    const updateData: Record<string, any> = {
+      status: response === 'snoozed' ? 'pending' : response,
+      respondedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (response === 'snoozed' && snoozeDurationMinutes) {
+      updateData.scheduledFor = Timestamp.fromMillis(
+        Date.now() + snoozeDurationMinutes * 60 * 1000
+      );
+    }
+
+    await nudgeRef.update(updateData);
+
+    // Track response
+    await admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS)
+      .add({
+        learnerId: auth.uid,
+        siteId: nudgeData.siteId,
+        eventType: `nudge.${response}`,
+        metadata: {
+          nudgeId,
+          nudgeType: nudgeData.type,
+          motivationType: nudgeData.motivationTypeTarget,
+        },
+        timestamp: FieldValue.serverTimestamp(),
+      });
+
+    return { success: true };
   }
-
-  const { nudgeId, response, snoozeDurationMinutes } = request.data;
-
-  if (!nudgeId || !response) {
-    throw new HttpsError('invalid-argument', 'nudgeId and response are required');
-  }
-
-  const nudgeRef = admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES).doc(nudgeId);
-  const nudgeDoc = await nudgeRef.get();
-
-  if (!nudgeDoc.exists) {
-    throw new HttpsError('not-found', 'Nudge not found');
-  }
-
-  const nudgeData = nudgeDoc.data()!;
-
-  // Verify ownership
-  if (nudgeData.learnerId !== auth.uid) {
-    throw new HttpsError('permission-denied', 'Cannot respond to nudges for other learners');
-  }
-
-  // Update nudge status
-  const updateData: Record<string, any> = {
-    status: response === 'snoozed' ? 'pending' : response,
-    respondedAt: FieldValue.serverTimestamp(),
-  };
-
-  if (response === 'snoozed' && snoozeDurationMinutes) {
-    updateData.scheduledFor = Timestamp.fromMillis(
-      Date.now() + snoozeDurationMinutes * 60 * 1000
-    );
-  }
-
-  await nudgeRef.update(updateData);
-
-  // Track response
-  await admin.firestore().collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS).add({
-    learnerId: auth.uid,
-    siteId: nudgeData.siteId,
-    eventType: `nudge.${response}`,
-    metadata: {
-      nudgeId,
-      nudgeType: nudgeData.type,
-      motivationType: nudgeData.motivationTypeTarget,
-    },
-    timestamp: FieldValue.serverTimestamp(),
-  });
-
-  return { success: true };
-});
+);
 
 /**
  * Compute motivation signals for a learner (scheduled function or manual trigger)
  */
-export const computeMotivationSignals = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-}>) => {
-  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+export const computeMotivationSignals = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+    }>
+  ) => {
+    await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
 
-  const { learnerId, siteId } = request.data;
-  await updateLearnerMotivationProfile(learnerId, siteId);
+    const { learnerId, siteId } = request.data;
+    await updateLearnerMotivationProfile(learnerId, siteId);
 
-  return { success: true };
-});
+    return { success: true };
+  }
+);
 
 /**
  * Generate personalized nudges for learners (scheduled function)
  */
-export const generateMotivationNudges = onCall(async (request: CallableRequest<{
-  siteId: string;
-  learnerIds?: string[];
-}>) => {
-  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+export const generateMotivationNudges = onCall(
+  async (
+    request: CallableRequest<{
+      siteId: string;
+      learnerIds?: string[];
+    }>
+  ) => {
+    await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
 
-  const { siteId, learnerIds } = request.data;
+    const { siteId, learnerIds } = request.data;
 
-  // Get learners to process
-  const learnersQuery: FirebaseFirestore.Query = admin.firestore()
-    .collection(USERS_COLLECTION)
-    .where('role', '==', 'learner')
-    .where('siteIds', 'array-contains', siteId);
+    // Get learners to process
+    const learnersQuery: FirebaseFirestore.Query = admin
+      .firestore()
+      .collection(USERS_COLLECTION)
+      .where('role', '==', 'learner')
+      .where('siteIds', 'array-contains', siteId);
 
-  if (learnerIds && learnerIds.length > 0) {
-    // Process specific learners only
-    const batch = learnerIds.slice(0, 10); // Limit batch size
-    for (const learnerId of batch) {
-      await generateNudgesForLearner(learnerId, siteId);
+    if (learnerIds && learnerIds.length > 0) {
+      // Process specific learners only
+      const batch = learnerIds.slice(0, 10); // Limit batch size
+      for (const learnerId of batch) {
+        await generateNudgesForLearner(learnerId, siteId);
+      }
+      return { success: true, processedCount: batch.length };
     }
-    return { success: true, processedCount: batch.length };
-  }
 
-  // Process all learners at the site
-  const learnersSnap = await learnersQuery.limit(100).get();
-  let processed = 0;
+    // Process all learners at the site
+    const learnersSnap = await learnersQuery.limit(100).get();
+    let processed = 0;
 
-  for (const learnerDoc of learnersSnap.docs) {
-    try {
-      await generateNudgesForLearner(learnerDoc.id, siteId);
-      processed++;
-    } catch (err) {
-      console.error(`Error generating nudges for learner ${learnerDoc.id}:`, err);
+    for (const learnerDoc of learnersSnap.docs) {
+      try {
+        await generateNudgesForLearner(learnerDoc.id, siteId);
+        processed++;
+      } catch (err) {
+        console.error(`Error generating nudges for learner ${learnerDoc.id}:`, err);
+      }
     }
-  }
 
-  return { success: true, processedCount: processed };
-});
+    return { success: true, processedCount: processed };
+  }
+);
 
 /**
  * Get educator insights for a class/session
  */
-export const getClassInsights = onCall(async (request: CallableRequest<{
-  siteId: string;
-  sessionOccurrenceId?: string;
-  learnerIds?: string[];
-}>) => {
-  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+export const getClassInsights = onCall(
+  async (
+    request: CallableRequest<{
+      siteId: string;
+      sessionOccurrenceId?: string;
+      learnerIds?: string[];
+    }>
+  ) => {
+    const { uid, role } = await requireRoleAndSite(
+      request.auth?.uid,
+      ['educator', 'hq'],
+      request.data.siteId
+    );
 
-  const { siteId, learnerIds } = request.data;
+    const { siteId, learnerIds } = request.data;
 
-  // Build query for motivation profiles
-  let profilesQuery: FirebaseFirestore.Query = admin.firestore()
-    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
-    .where('siteId', '==', siteId);
+    // Build query for motivation profiles
+    let profilesQuery: FirebaseFirestore.Query = admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+      .where('siteId', '==', siteId);
 
-  if (learnerIds && learnerIds.length > 0) {
-    // Note: Firestore 'in' limited to 10
-    const limitedIds = learnerIds.slice(0, 10);
-    profilesQuery = profilesQuery.where('learnerId', 'in', limitedIds);
-  }
+    if (learnerIds && learnerIds.length > 0) {
+      // Note: Firestore 'in' limited to 10
+      const limitedIds = learnerIds.slice(0, 10);
+      profilesQuery = profilesQuery.where('learnerId', 'in', limitedIds);
+    }
 
-  const profilesSnap = await profilesQuery.limit(30).get();
+    const profilesSnap = await profilesQuery.limit(30).get();
 
-  // Build insights summary
-  const insights: Array<{
-    learnerId: string;
-    currentEngagement: EngagementLevel;
-    primaryMotivators: MotivationType[];
-    suggestedStrategies: Array<{ type: MotivationType; strategy: string }>;
-    recentHighlights?: string[];
-    needsAttention: boolean;
-  }> = [];
+    // Build insights summary
+    const insights: Array<{
+      learnerId: string;
+      currentEngagement: EngagementLevel;
+      primaryMotivators: MotivationType[];
+      suggestedStrategies: Array<{ type: MotivationType; strategy: string }>;
+      recentHighlights?: string[];
+      needsAttention: boolean;
+    }> = [];
 
-  for (const doc of profilesSnap.docs) {
-    const profile = doc.data();
+    for (const doc of profilesSnap.docs) {
+      const profile = doc.data();
 
-    // Get recent educator feedback for highlights
-    const recentFeedback = await admin.firestore()
-      .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
-      .where('learnerId', '==', profile.learnerId)
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get();
+      // Get recent educator feedback for highlights
+      const recentFeedback = await admin
+        .firestore()
+        .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
+        .where('learnerId', '==', profile.learnerId)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
 
-    const highlights = recentFeedback.empty 
-      ? [] 
-      : (recentFeedback.docs[0].data().highlights || []);
+      const highlights = recentFeedback.empty ? [] : recentFeedback.docs[0].data().highlights || [];
 
-    // Determine if needs attention
-    const needsAttention = ['struggling', 'at-risk'].includes(profile.currentEngagement) ||
-      profile.engagementTrend === 'declining';
+      // Determine if needs attention
+      const needsAttention =
+        ['struggling', 'at-risk'].includes(profile.currentEngagement) ||
+        profile.engagementTrend === 'declining';
 
-    // Get top effective strategies
-    const suggestedStrategies = (profile.effectiveStrategies || [])
-      .filter((s: any) => s.effectiveness > 0.5)
-      .slice(0, 3)
-      .map((s: any) => ({ type: s.type, strategy: s.strategy }));
+      // Get top effective strategies
+      const suggestedStrategies = (profile.effectiveStrategies || [])
+        .filter((s: any) => s.effectiveness > 0.5)
+        .slice(0, 3)
+        .map((s: any) => ({ type: s.type, strategy: s.strategy }));
 
-    insights.push({
-      learnerId: profile.learnerId,
-      currentEngagement: profile.currentEngagement,
-      primaryMotivators: profile.primaryMotivators || [],
-      suggestedStrategies,
-      recentHighlights: highlights.slice(0, 2),
-      needsAttention,
+      insights.push({
+        learnerId: profile.learnerId,
+        currentEngagement: profile.currentEngagement,
+        primaryMotivators: profile.primaryMotivators || [],
+        suggestedStrategies,
+        recentHighlights: highlights.slice(0, 2),
+        needsAttention,
+      });
+    }
+
+    // Sort by needs attention first
+    insights.sort((a, b) => {
+      if (a.needsAttention && !b.needsAttention) return -1;
+      if (!a.needsAttention && b.needsAttention) return 1;
+      return 0;
     });
+
+    const insightMetadata = {
+      insightType: 'class_insights',
+      sessionOccurrenceId: request.data.sessionOccurrenceId || null,
+      requestedLearnerCount: learnerIds?.length || null,
+      returnedLearnerCount: insights.length,
+    };
+
+    await persistTelemetryEvent({
+      event: 'insight.viewed',
+      userId: uid,
+      role,
+      siteId,
+      metadata: insightMetadata,
+    });
+
+    // Keep legacy telemetry naming until all dashboards have migrated.
+    await persistTelemetryEvent({
+      event: 'motivation.insight.viewed',
+      userId: uid,
+      role,
+      siteId,
+      metadata: insightMetadata,
+    });
+
+    return { insights };
   }
-
-  // Sort by needs attention first
-  insights.sort((a, b) => {
-    if (a.needsAttention && !b.needsAttention) return -1;
-    if (!a.needsAttention && b.needsAttention) return 1;
-    return 0;
-  });
-
-  const insightMetadata = {
-    insightType: 'class_insights',
-    sessionOccurrenceId: request.data.sessionOccurrenceId || null,
-    requestedLearnerCount: learnerIds?.length || null,
-    returnedLearnerCount: insights.length,
-  };
-
-  await persistTelemetryEvent({
-    event: 'insight.viewed',
-    userId: uid,
-    role,
-    siteId,
-    metadata: insightMetadata,
-  });
-
-  // Keep legacy telemetry naming until all dashboards have migrated.
-  await persistTelemetryEvent({
-    event: 'motivation.insight.viewed',
-    userId: uid,
-    role,
-    siteId,
-    metadata: insightMetadata,
-  });
-
-  return { insights };
-});
+);
 
 // ============================================================================
 // HELPER FUNCTIONS FOR MOTIVATION ENGINE
@@ -8909,7 +10019,8 @@ async function createInitialMotivationProfile(learnerId: string, siteId: string)
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  const docRef = await admin.firestore()
+  const docRef = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
     .add(defaultProfile);
 
@@ -8918,7 +10029,8 @@ async function createInitialMotivationProfile(learnerId: string, siteId: string)
 
 async function updateLearnerMotivationProfile(learnerId: string, siteId: string) {
   // Get or create profile
-  const profileQuery = await admin.firestore()
+  const profileQuery = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
     .where('learnerId', '==', learnerId)
     .where('siteId', '==', siteId)
@@ -8930,7 +10042,10 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
 
   if (profileQuery.empty) {
     const newProfile = await createInitialMotivationProfile(learnerId, siteId);
-    profileRef = admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES).doc(newProfile.id);
+    profileRef = admin
+      .firestore()
+      .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+      .doc(newProfile.id);
     existingProfile = newProfile;
   } else {
     profileRef = profileQuery.docs[0].ref;
@@ -8940,7 +10055,8 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
   // Compute signals from interactions (last 30 days)
   const thirtyDaysAgo = Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const interactions = await admin.firestore()
+  const interactions = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS)
     .where('learnerId', '==', learnerId)
     .where('siteId', '==', siteId)
@@ -8950,11 +10066,12 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
     .get();
 
   // Analyze interaction patterns
-  const interactionData = interactions.docs.map(d => d.data());
+  const interactionData = interactions.docs.map((d) => d.data());
   const interactionPatterns = computeInteractionPatterns(interactionData);
 
   // Get educator feedback (last 30 days)
-  const feedbackQuery = await admin.firestore()
+  const feedbackQuery = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
     .where('learnerId', '==', learnerId)
     .where('siteId', '==', siteId)
@@ -8963,10 +10080,13 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
     .limit(50)
     .get();
 
-  const feedbackData = feedbackQuery.docs.map(d => d.data());
+  const feedbackData = feedbackQuery.docs.map((d) => d.data());
 
   // Compute motivation type scores from feedback
-  const motivatorScores = computeMotivatorScores(feedbackData, existingProfile.motivatorConfidence || {});
+  const motivatorScores = computeMotivatorScores(
+    feedbackData,
+    existingProfile.motivatorConfidence || {}
+  );
 
   // Determine engagement level
   const engagementLevel = computeEngagementLevel(interactionPatterns, feedbackData);
@@ -8976,10 +10096,18 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
   const engagementTrend = computeEngagementTrend(previousEngagement, engagementLevel);
 
   // Extract effective strategies from feedback
-  const effectiveStrategies = extractEffectiveStrategies(feedbackData, existingProfile.effectiveStrategies || []);
+  const effectiveStrategies = extractEffectiveStrategies(
+    feedbackData,
+    existingProfile.effectiveStrategies || []
+  );
 
   // Generate insights
-  const insights = generateInsights(interactionPatterns, feedbackData, motivatorScores, engagementLevel);
+  const insights = generateInsights(
+    interactionPatterns,
+    feedbackData,
+    motivatorScores,
+    engagementLevel
+  );
 
   // Sort motivators by confidence
   const sortedMotivators = Object.entries(motivatorScores)
@@ -9021,37 +10149,41 @@ function computeInteractionPatterns(interactions: any[]): Record<string, any> {
   }
 
   // Count events
-  const appSessions = interactions.filter(i => i.eventType === 'app.session.end');
-  const missionsCompleted = interactions.filter(i => i.eventType === 'mission.completed');
-  const reflections = interactions.filter(i => i.eventType === 'reflection.submitted');
-  const appOpens = interactions.filter(i => i.eventType === 'app.open');
-  const helpRequests = interactions.filter(i => i.eventType === 'help.requested');
-  const portfolioAdds = interactions.filter(i => i.eventType === 'portfolio.item.added');
+  const appSessions = interactions.filter((i) => i.eventType === 'app.session.end');
+  const missionsCompleted = interactions.filter((i) => i.eventType === 'mission.completed');
+  const reflections = interactions.filter((i) => i.eventType === 'reflection.submitted');
+  const appOpens = interactions.filter((i) => i.eventType === 'app.open');
+  const helpRequests = interactions.filter((i) => i.eventType === 'help.requested');
+  const portfolioAdds = interactions.filter((i) => i.eventType === 'portfolio.item.added');
 
   // Calculate averages
-  const avgSessionDuration = appSessions.length > 0
-    ? appSessions.reduce((sum, s) => sum + (s.metadata?.durationSeconds || 0), 0) / appSessions.length / 60
-    : 0;
+  const avgSessionDuration =
+    appSessions.length > 0
+      ? appSessions.reduce((sum, s) => sum + (s.metadata?.durationSeconds || 0), 0) /
+        appSessions.length /
+        60
+      : 0;
 
   // Determine preferred time of day
   const hours = interactions
-    .filter(i => i.timestamp)
-    .map(i => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getHours());
-  
-  const morningCount = hours.filter(h => h >= 6 && h < 12).length;
-  const afternoonCount = hours.filter(h => h >= 12 && h < 18).length;
-  const eveningCount = hours.filter(h => h >= 18 || h < 6).length;
+    .filter((i) => i.timestamp)
+    .map((i) => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getHours());
+
+  const morningCount = hours.filter((h) => h >= 6 && h < 12).length;
+  const afternoonCount = hours.filter((h) => h >= 12 && h < 18).length;
+  const eveningCount = hours.filter((h) => h >= 18 || h < 6).length;
 
   let preferredTimeOfDay: 'morning' | 'afternoon' | 'evening' = 'afternoon';
   if (morningCount > afternoonCount && morningCount > eveningCount) preferredTimeOfDay = 'morning';
-  else if (eveningCount > afternoonCount && eveningCount > morningCount) preferredTimeOfDay = 'evening';
+  else if (eveningCount > afternoonCount && eveningCount > morningCount)
+    preferredTimeOfDay = 'evening';
 
   // Most active day
   const days = interactions
-    .filter(i => i.timestamp)
-    .map(i => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getDay());
+    .filter((i) => i.timestamp)
+    .map((i) => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getDay());
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-  days.forEach(d => dayCounts[d]++);
+  days.forEach((d) => dayCounts[d]++);
   const mostActiveDay = dayCounts.indexOf(Math.max(...dayCounts));
 
   // Weekly rates (divide by ~4 weeks)
@@ -9061,21 +10193,22 @@ function computeInteractionPatterns(interactions: any[]): Record<string, any> {
     avgSessionDurationMinutes: Math.round(avgSessionDuration * 10) / 10,
     preferredTimeOfDay,
     mostActiveDay,
-    missionsCompletedPerWeek: Math.round(missionsCompleted.length / weeksInPeriod * 10) / 10,
-    reflectionResponseRate: missionsCompleted.length > 0 
-      ? Math.round(reflections.length / missionsCompleted.length * 100) / 100 
-      : 0,
-    appOpenFrequency: Math.round(appOpens.length / weeksInPeriod * 10) / 10,
+    missionsCompletedPerWeek: Math.round((missionsCompleted.length / weeksInPeriod) * 10) / 10,
+    reflectionResponseRate:
+      missionsCompleted.length > 0
+        ? Math.round((reflections.length / missionsCompleted.length) * 100) / 100
+        : 0,
+    appOpenFrequency: Math.round((appOpens.length / weeksInPeriod) * 10) / 10,
     streakDays: 0, // Would need more complex calculation
     longestStreak: 0,
     pauseBeforeSubmit: avgSessionDuration > 15,
-    seeksHelpFrequency: Math.round(helpRequests.length / weeksInPeriod * 10) / 10,
+    seeksHelpFrequency: Math.round((helpRequests.length / weeksInPeriod) * 10) / 10,
     portfolioContributions: portfolioAdds.length,
   };
 }
 
 function computeMotivatorScores(
-  feedbackData: any[], 
+  feedbackData: any[],
   existingScores: Record<MotivationType, number>
 ): Record<MotivationType, number> {
   const scores: Record<MotivationType, number> = {
@@ -9092,11 +10225,16 @@ function computeMotivatorScores(
 
   // Count positive responses to each motivation type
   const responseCounts: Record<MotivationType, number> = {
-    achievement: 0, social: 0, mastery: 0, autonomy: 0, 
-    purpose: 0, competition: 0, creativity: 0,
+    achievement: 0,
+    social: 0,
+    mastery: 0,
+    autonomy: 0,
+    purpose: 0,
+    competition: 0,
+    creativity: 0,
   };
 
-  feedbackData.forEach(fb => {
+  feedbackData.forEach((fb) => {
     (fb.respondedWellTo || []).forEach((type: MotivationType) => {
       if (responseCounts[type] !== undefined) {
         responseCounts[type]++;
@@ -9107,7 +10245,7 @@ function computeMotivatorScores(
   const totalFeedback = feedbackData.length;
 
   // Update scores with weighted average (existing 30%, new 70%)
-  Object.keys(responseCounts).forEach(type => {
+  Object.keys(responseCounts).forEach((type) => {
     const key = type as MotivationType;
     const newScore = responseCounts[key] / totalFeedback;
     scores[key] = Math.round((existingScores[key] * 0.3 + newScore * 0.7) * 100) / 100;
@@ -9117,7 +10255,7 @@ function computeMotivatorScores(
 }
 
 function computeEngagementLevel(
-  patterns: Record<string, any>, 
+  patterns: Record<string, any>,
   feedbackData: any[]
 ): EngagementLevel {
   // Calculate engagement score (0-100)
@@ -9140,7 +10278,8 @@ function computeEngagementLevel(
 
   // From educator feedback
   if (feedbackData.length > 0) {
-    const avgEngagement = feedbackData.reduce((sum, fb) => sum + (fb.engagementLevel || 3), 0) / feedbackData.length;
+    const avgEngagement =
+      feedbackData.reduce((sum, fb) => sum + (fb.engagementLevel || 3), 0) / feedbackData.length;
     score += (avgEngagement - 3) * 10; // -20 to +20 adjustment
 
     // Participation type adjustments
@@ -9161,7 +10300,7 @@ function computeEngagementLevel(
 }
 
 function computeEngagementTrend(
-  previous: EngagementLevel, 
+  previous: EngagementLevel,
   current: EngagementLevel
 ): 'improving' | 'stable' | 'declining' {
   const levels: EngagementLevel[] = ['at-risk', 'struggling', 'coasting', 'engaged', 'thriving'];
@@ -9173,19 +10312,16 @@ function computeEngagementTrend(
   return 'stable';
 }
 
-function extractEffectiveStrategies(
-  feedbackData: any[], 
-  existingStrategies: any[]
-): any[] {
+function extractEffectiveStrategies(feedbackData: any[], existingStrategies: any[]): any[] {
   const strategyMap = new Map<string, any>();
 
   // Load existing strategies
-  existingStrategies.forEach(s => {
+  existingStrategies.forEach((s) => {
     strategyMap.set(`${s.type}:${s.strategy}`, s);
   });
 
   // Add new strategies from feedback
-  feedbackData.forEach(fb => {
+  feedbackData.forEach((fb) => {
     (fb.effectiveStrategies || []).forEach((s: any) => {
       const key = `${s.type}:${s.strategy}`;
       if (strategyMap.has(key)) {
@@ -9193,14 +10329,15 @@ function extractEffectiveStrategies(
         existing.usageCount++;
         // Update effectiveness based on engagement level
         const engagementBonus = (fb.engagementLevel - 3) * 0.1;
-        existing.effectiveness = Math.min(1, Math.max(0, 
-          (existing.effectiveness + engagementBonus + 0.1) / 2
-        ));
+        existing.effectiveness = Math.min(
+          1,
+          Math.max(0, (existing.effectiveness + engagementBonus + 0.1) / 2)
+        );
       } else {
         strategyMap.set(key, {
           type: s.type,
           strategy: s.strategy,
-          effectiveness: 0.5 + ((fb.engagementLevel - 3) * 0.1),
+          effectiveness: 0.5 + (fb.engagementLevel - 3) * 0.1,
           usageCount: 1,
         });
       }
@@ -9220,7 +10357,7 @@ function confidenceAboveThreshold(
   value: number,
   threshold: number,
   scale: number,
-  baseline: number,
+  baseline: number
 ): number {
   const gap = Math.max(0, value - threshold);
   return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
@@ -9230,7 +10367,7 @@ function confidenceBelowThreshold(
   value: number,
   threshold: number,
   scale: number,
-  baseline: number,
+  baseline: number
 ): number {
   const gap = Math.max(0, threshold - value);
   return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
@@ -9246,9 +10383,10 @@ function generateInsights(
   const now = Timestamp.now();
 
   // Strength insights
-  const topMotivator = Object.entries(motivatorScores)
-    .sort(([, a], [, b]) => (b as number) - (a as number))[0];
-  
+  const topMotivator = Object.entries(motivatorScores).sort(
+    ([, a], [, b]) => (b as number) - (a as number)
+  )[0];
+
   if (topMotivator && (topMotivator[1] as number) > 0.6) {
     insights.push({
       id: `strength-${topMotivator[0]}`,
@@ -9257,7 +10395,10 @@ function generateInsights(
       description: `This learner responds particularly well to ${topMotivator[0]}-based approaches.`,
       confidence: topMotivator[1],
       basedOn: ['educator feedback patterns'],
-      suggestedActions: [`Use ${topMotivator[0]}-focused activities`, 'Leverage this in challenging moments'],
+      suggestedActions: [
+        `Use ${topMotivator[0]}-focused activities`,
+        'Leverage this in challenging moments',
+      ],
       createdAt: now,
     });
   }
@@ -9309,11 +10450,12 @@ function generateInsights(
 }
 
 async function updateStrategyEffectiveness(
-  learnerId: string, 
-  strategyType: MotivationType, 
+  learnerId: string,
+  strategyType: MotivationType,
   outcome: 'helped' | 'partial' | 'no-change' | 'backfired'
 ) {
-  const profileQuery = await admin.firestore()
+  const profileQuery = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
     .where('learnerId', '==', learnerId)
     .limit(1)
@@ -9331,7 +10473,7 @@ async function updateStrategyEffectiveness(
       if (outcome === 'helped') delta = 0.1;
       else if (outcome === 'partial') delta = 0.05;
       else if (outcome === 'backfired') delta = -0.15;
-      
+
       return {
         ...s,
         effectiveness: Math.min(1, Math.max(0, s.effectiveness + delta)),
@@ -9350,7 +10492,8 @@ async function updateStrategyEffectiveness(
 
 async function generateNudgesForLearner(learnerId: string, siteId: string) {
   // Get learner's motivation profile
-  const profileQuery = await admin.firestore()
+  const profileQuery = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
     .where('learnerId', '==', learnerId)
     .where('siteId', '==', siteId)
@@ -9366,7 +10509,8 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
   const primaryMotivator = profile.primaryMotivators?.[0] || 'achievement';
 
   // Check existing pending nudges
-  const existingNudges = await admin.firestore()
+  const existingNudges = await admin
+    .firestore()
     .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
     .where('learnerId', '==', learnerId)
     .where('status', '==', 'pending')
@@ -9378,58 +10522,106 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
   // Generate appropriate nudge based on engagement level and motivation type
   const nudgeTemplates: Record<MotivationType, { title: string; message: string }[]> = {
     achievement: [
-      { title: '🎯 Almost there!', message: 'You\'re so close to your next milestone. One more mission to go!' },
-      { title: '⭐ Challenge accepted?', message: 'Ready to tackle something new? Your skills are ready for the next level!' },
+      {
+        title: '🎯 Almost there!',
+        message: "You're so close to your next milestone. One more mission to go!",
+      },
+      {
+        title: '⭐ Challenge accepted?',
+        message: 'Ready to tackle something new? Your skills are ready for the next level!',
+      },
     ],
     social: [
-      { title: '👋 Your team misses you!', message: 'Join your classmates for today\'s group activity!' },
-      { title: '🤝 Collaboration time', message: 'A friend could use your help on their project. Ready to team up?' },
+      {
+        title: '👋 Your team misses you!',
+        message: "Join your classmates for today's group activity!",
+      },
+      {
+        title: '🤝 Collaboration time',
+        message: 'A friend could use your help on their project. Ready to team up?',
+      },
     ],
     mastery: [
-      { title: '📚 Deep dive time', message: 'Master today\'s skill with focused practice. You\'ve got this!' },
-      { title: '🧠 Level up your knowledge', message: 'New learning awaits! Take your time to really understand it.' },
+      {
+        title: '📚 Deep dive time',
+        message: "Master today's skill with focused practice. You've got this!",
+      },
+      {
+        title: '🧠 Level up your knowledge',
+        message: 'New learning awaits! Take your time to really understand it.',
+      },
     ],
     autonomy: [
-      { title: '🎨 Your choice today', message: 'Pick your own adventure! What skill do you want to work on?' },
-      { title: '🚀 Your path, your pace', message: 'Today\'s missions are flexible. Design your learning journey!' },
+      {
+        title: '🎨 Your choice today',
+        message: 'Pick your own adventure! What skill do you want to work on?',
+      },
+      {
+        title: '🚀 Your path, your pace',
+        message: "Today's missions are flexible. Design your learning journey!",
+      },
     ],
     purpose: [
-      { title: '🌍 Make an impact', message: 'Your work today can make a real difference. Ready to contribute?' },
-      { title: '💡 Meaningful work', message: 'This mission connects to real-world problems. Your ideas matter!' },
+      {
+        title: '🌍 Make an impact',
+        message: 'Your work today can make a real difference. Ready to contribute?',
+      },
+      {
+        title: '💡 Meaningful work',
+        message: 'This mission connects to real-world problems. Your ideas matter!',
+      },
     ],
     competition: [
-      { title: '🏆 Leaderboard update', message: 'You\'re just 2 points behind! One mission could change that.' },
-      { title: '⚡ Quick challenge', message: 'Beat your personal best! Can you complete this faster than last time?' },
+      {
+        title: '🏆 Leaderboard update',
+        message: "You're just 2 points behind! One mission could change that.",
+      },
+      {
+        title: '⚡ Quick challenge',
+        message: 'Beat your personal best! Can you complete this faster than last time?',
+      },
     ],
     creativity: [
-      { title: '🎨 Creative freedom', message: 'Today\'s mission lets you express yourself. What will you create?' },
-      { title: '✨ Imagination station', message: 'No wrong answers today! Let your creativity flow.' },
+      {
+        title: '🎨 Creative freedom',
+        message: "Today's mission lets you express yourself. What will you create?",
+      },
+      {
+        title: '✨ Imagination station',
+        message: 'No wrong answers today! Let your creativity flow.',
+      },
     ],
   };
 
-  const templates = nudgeTemplates[primaryMotivator as MotivationType] || nudgeTemplates.achievement;
+  const templates =
+    nudgeTemplates[primaryMotivator as MotivationType] || nudgeTemplates.achievement;
   const template = templates[Math.floor(Math.random() * templates.length)];
 
   // Determine nudge type based on engagement
-  let nudgeType: 'reminder' | 'celebration' | 'challenge' | 'encouragement' | 'tip' = 'encouragement';
+  let nudgeType: 'reminder' | 'celebration' | 'challenge' | 'encouragement' | 'tip' =
+    'encouragement';
   if (profile.currentEngagement === 'thriving') nudgeType = 'challenge';
-  else if (profile.currentEngagement === 'struggling' || profile.currentEngagement === 'at-risk') nudgeType = 'encouragement';
+  else if (profile.currentEngagement === 'struggling' || profile.currentEngagement === 'at-risk')
+    nudgeType = 'encouragement';
 
   // Create the nudge
-  await admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES).add({
-    learnerId,
-    siteId,
-    type: nudgeType,
-    title: template.title,
-    message: template.message,
-    motivationTypeTarget: primaryMotivator,
-    priority: profile.currentEngagement === 'at-risk' ? 'high' : 'medium',
-    status: 'pending',
-    generatedBy: 'system',
-    basedOnInsights: profile.insights?.slice(0, 2).map((i: any) => i.id) || [],
-    createdAt: FieldValue.serverTimestamp(),
-    expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-  });
+  await admin
+    .firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
+    .add({
+      learnerId,
+      siteId,
+      type: nudgeType,
+      title: template.title,
+      message: template.message,
+      motivationTypeTarget: primaryMotivator,
+      priority: profile.currentEngagement === 'at-risk' ? 'high' : 'medium',
+      status: 'pending',
+      generatedBy: 'system',
+      basedOnInsights: profile.insights?.slice(0, 2).map((i: any) => i.id) || [],
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
 }
 
 // ─── Evidence → Rubric → Growth callable ─────────────────────────────────────
@@ -9449,668 +10641,774 @@ interface RubricScoreInput {
   maxScore: number;
 }
 
-export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
-  evidenceRecordIds: string[];
-  missionAttemptId?: string;
-  portfolioItemId?: string;
-  learnerId: string;
-  siteId: string;
-  rubricId?: string;
-  scores: RubricScoreInput[];
-}>) => {
-  const educatorId = request.auth?.uid;
-  await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], request.data?.siteId);
+export const applyRubricToEvidence = onCall(
+  async (
+    request: CallableRequest<{
+      evidenceRecordIds: string[];
+      missionAttemptId?: string;
+      portfolioItemId?: string;
+      learnerId: string;
+      siteId: string;
+      rubricId?: string;
+      scores: RubricScoreInput[];
+    }>
+  ) => {
+    const educatorId = request.auth?.uid;
+    await requireRoleAndSite(
+      educatorId,
+      ['educator', 'siteLead', 'site', 'hq', 'admin'],
+      request.data?.siteId
+    );
 
-  const { evidenceRecordIds, missionAttemptId, portfolioItemId, learnerId, siteId, rubricId, scores } = request.data ?? {};
+    const {
+      evidenceRecordIds,
+      missionAttemptId,
+      portfolioItemId,
+      learnerId,
+      siteId,
+      rubricId,
+      scores,
+    } = request.data ?? {};
 
-  const hasEvidence = Array.isArray(evidenceRecordIds) && evidenceRecordIds.length > 0;
-  const hasMission = typeof missionAttemptId === 'string' && missionAttemptId.length > 0;
-  const hasPortfolioItem = typeof portfolioItemId === 'string' && portfolioItemId.length > 0;
-  if (!hasEvidence && !hasMission && !hasPortfolioItem) {
-    throw new HttpsError('invalid-argument', 'Evidence, mission attempt, or portfolio item context is required.');
-  }
-  const safeEvidenceRecordIds = hasEvidence ? evidenceRecordIds : [];
-  if (!learnerId || typeof learnerId !== 'string') {
-    throw new HttpsError('invalid-argument', 'learnerId is required.');
-  }
-  if (!siteId || typeof siteId !== 'string') {
-    throw new HttpsError('invalid-argument', 'siteId is required.');
-  }
-  if (!Array.isArray(scores) || scores.length === 0) {
-    throw new HttpsError('invalid-argument', 'scores array is required and must be non-empty.');
-  }
-  for (const s of scores) {
-    if (!s.capabilityId || typeof s.score !== 'number' || typeof s.maxScore !== 'number') {
-      throw new HttpsError('invalid-argument', 'Each score must have capabilityId, score, and maxScore.');
+    const hasEvidence = Array.isArray(evidenceRecordIds) && evidenceRecordIds.length > 0;
+    const hasMission = typeof missionAttemptId === 'string' && missionAttemptId.length > 0;
+    const hasPortfolioItem = typeof portfolioItemId === 'string' && portfolioItemId.length > 0;
+    if (!hasEvidence && !hasMission && !hasPortfolioItem) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Evidence, mission attempt, or portfolio item context is required.'
+      );
     }
-    if (s.score < 0 || s.maxScore <= 0 || s.score > s.maxScore) {
-      throw new HttpsError('invalid-argument', `Invalid score values: ${s.score}/${s.maxScore}`);
+    const safeEvidenceRecordIds = hasEvidence ? evidenceRecordIds : [];
+    if (!learnerId || typeof learnerId !== 'string') {
+      throw new HttpsError('invalid-argument', 'learnerId is required.');
     }
-  }
+    if (!siteId || typeof siteId !== 'string') {
+      throw new HttpsError('invalid-argument', 'siteId is required.');
+    }
+    if (!Array.isArray(scores) || scores.length === 0) {
+      throw new HttpsError('invalid-argument', 'scores array is required and must be non-empty.');
+    }
+    for (const s of scores) {
+      if (!s.capabilityId || typeof s.score !== 'number' || typeof s.maxScore !== 'number') {
+        throw new HttpsError(
+          'invalid-argument',
+          'Each score must have capabilityId, score, and maxScore.'
+        );
+      }
+      if (s.score < 0 || s.maxScore <= 0 || s.score > s.maxScore) {
+        throw new HttpsError('invalid-argument', `Invalid score values: ${s.score}/${s.maxScore}`);
+      }
+    }
 
-  const db = admin.firestore();
-  const relatedPortfolioDocs = new Map<string, FirebaseFirestore.DocumentSnapshot>();
+    const db = admin.firestore();
+    const relatedPortfolioDocs = new Map<string, FirebaseFirestore.DocumentSnapshot>();
 
-  if (hasPortfolioItem) {
-    const canonicalPortfolioDoc = await db.collection('portfolioItems').doc(portfolioItemId!).get();
-    if (!canonicalPortfolioDoc.exists) {
-      throw new HttpsError('not-found', 'Portfolio item not found.');
-    }
-    const canonicalPortfolioData = canonicalPortfolioDoc.data() ?? {};
-    const canonicalLearnerId = typeof canonicalPortfolioData.learnerId === 'string' ? canonicalPortfolioData.learnerId : '';
-    const canonicalSiteId = typeof canonicalPortfolioData.siteId === 'string' ? canonicalPortfolioData.siteId.trim() : '';
-    if (canonicalLearnerId !== learnerId) {
-      throw new HttpsError('failed-precondition', 'Portfolio item learner does not match rubric target.');
-    }
-    if (canonicalSiteId && canonicalSiteId !== siteId) {
-      throw new HttpsError('permission-denied', 'Portfolio item site does not match active educator site.');
-    }
-    relatedPortfolioDocs.set(canonicalPortfolioDoc.id, canonicalPortfolioDoc);
-  }
-
-  if (hasMission) {
-    const missionPortfolioSnap = await db
-      .collection('portfolioItems')
-      .where('missionAttemptId', '==', missionAttemptId!)
-      .limit(20)
-      .get();
-    for (const doc of missionPortfolioSnap.docs) {
-      relatedPortfolioDocs.set(doc.id, doc);
-    }
-  }
-
-  if (safeEvidenceRecordIds.length > 0) {
-    for (let i = 0; i < safeEvidenceRecordIds.length; i += 30) {
-      const evidenceChunk = safeEvidenceRecordIds.slice(i, i + 30);
-      const evidencePortfolioSnap = await db
+    if (hasPortfolioItem) {
+      const canonicalPortfolioDoc = await db
         .collection('portfolioItems')
-        .where('evidenceRecordIds', 'array-contains-any', evidenceChunk)
-        .limit(30)
+        .doc(portfolioItemId!)
         .get();
-      for (const doc of evidencePortfolioSnap.docs) {
+      if (!canonicalPortfolioDoc.exists) {
+        throw new HttpsError('not-found', 'Portfolio item not found.');
+      }
+      const canonicalPortfolioData = canonicalPortfolioDoc.data() ?? {};
+      const canonicalLearnerId =
+        typeof canonicalPortfolioData.learnerId === 'string'
+          ? canonicalPortfolioData.learnerId
+          : '';
+      const canonicalSiteId =
+        typeof canonicalPortfolioData.siteId === 'string'
+          ? canonicalPortfolioData.siteId.trim()
+          : '';
+      if (canonicalLearnerId !== learnerId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Portfolio item learner does not match rubric target.'
+        );
+      }
+      if (canonicalSiteId && canonicalSiteId !== siteId) {
+        throw new HttpsError(
+          'permission-denied',
+          'Portfolio item site does not match active educator site.'
+        );
+      }
+      relatedPortfolioDocs.set(canonicalPortfolioDoc.id, canonicalPortfolioDoc);
+    }
+
+    if (hasMission) {
+      const missionPortfolioSnap = await db
+        .collection('portfolioItems')
+        .where('missionAttemptId', '==', missionAttemptId!)
+        .limit(20)
+        .get();
+      for (const doc of missionPortfolioSnap.docs) {
         relatedPortfolioDocs.set(doc.id, doc);
       }
     }
-  }
 
-  const proofVerified = Array.from(relatedPortfolioDocs.values()).some((doc) => {
-    const data = doc.data() ?? {};
-    const rowSiteId = typeof data.siteId === 'string' ? data.siteId.trim() : '';
-    const proofStatus = typeof data.proofOfLearningStatus === 'string'
-      ? data.proofOfLearningStatus.trim()
-      : '';
-    return (!rowSiteId || rowSiteId === siteId) && proofStatus === 'verified';
-  });
-
-  if (!proofVerified) {
-    throw new HttpsError(
-      'failed-precondition',
-      'Verify proof-of-learning before applying a rubric that updates capability growth.'
-    );
-  }
-
-  const batch = db.batch();
-
-  // 1. Create the RubricApplication document
-  const rubricAppRef = db.collection('rubricApplications').doc();
-  batch.set(rubricAppRef, {
-    learnerId,
-    siteId,
-    educatorId,
-    rubricId: rubricId ?? null,
-    missionAttemptId: missionAttemptId ?? null,
-    portfolioItemId: portfolioItemId ?? null,
-    evidenceRecordIds: safeEvidenceRecordIds,
-    scores: scores.map((s) => ({
-      criterionId: s.criterionId,
-      capabilityId: s.capabilityId,
-      processDomainId: s.processDomainId ?? null,
-      pillarCode: s.pillarCode,
-      score: s.score,
-      maxScore: s.maxScore,
-    })),
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  // Group scores by capabilityId
-  const scoresByCapability = new Map<string, RubricScoreInput[]>();
-  for (const s of scores) {
-    const existing = scoresByCapability.get(s.capabilityId) ?? [];
-    existing.push(s);
-    scoresByCapability.set(s.capabilityId, existing);
-  }
-
-  const growthEventIds: string[] = [];
-
-  // 2. For each capability: create growth event + upsert mastery
-  for (const [capabilityId, capabilityScores] of scoresByCapability) {
-    const rawScore = capabilityScores.reduce((sum, s) => sum + s.score, 0);
-    const maxScore = capabilityScores.reduce((sum, s) => sum + s.maxScore, 0);
-    const pillarCode = capabilityScores.find((s) => s.pillarCode)?.pillarCode ?? '';
-
-    // Level 1-4 from normalized score
-    const nextLevel = maxScore <= 0
-      ? 0
-      : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
-
-    // Upsert CapabilityMastery
-    const masteryId = `${learnerId}_${capabilityId}`;
-    const masteryRef = db.collection('capabilityMastery').doc(masteryId);
-    const masterySnap = await masteryRef.get();
-    const masteryData = masterySnap.data() ?? {};
-    const highestLevel = Math.max(nextLevel, (masteryData.highestLevel as number) ?? 0);
-    const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
-    const mergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...priorEvidenceIds])];
-
-    const NUMBER_TO_LEVEL: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
-
-    batch.set(masteryRef, {
-      learnerId,
-      capabilityId,
-      siteId,
-      pillarCode,
-      latestLevel: nextLevel,
-      currentLevel: NUMBER_TO_LEVEL[nextLevel] ?? 'emerging',
-      highestLevel,
-      latestEvidenceId: safeEvidenceRecordIds[0] ?? null,
-      latestMissionAttemptId: missionAttemptId ?? null,
-      evidenceIds: mergedEvidenceIds,
-      createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    // Create CapabilityGrowthEvent
-    const growthEventRef = db.collection('capabilityGrowthEvents').doc();
-    growthEventIds.push(growthEventRef.id);
-    batch.set(growthEventRef, {
-      learnerId,
-      capabilityId,
-      siteId,
-      pillarCode,
-      level: nextLevel,
-      rawScore,
-      maxScore,
-      missionAttemptId: missionAttemptId ?? null,
-      linkedEvidenceRecordIds: safeEvidenceRecordIds,
-      linkedPortfolioItemIds: hasPortfolioItem ? [portfolioItemId!] : [],
-      rubricApplicationId: rubricAppRef.id,
-      educatorId,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    // 2a-ii. Write skillMastery for microSkillIds linked to this capability
-    const capDocForSkills = await db.collection('capabilities').doc(capabilityId).get();
-    const capMicroSkills = capDocForSkills.exists ? capDocForSkills.data()?.microSkillIds : null;
-    if (Array.isArray(capMicroSkills)) {
-      for (const msId of capMicroSkills) {
-        if (typeof msId !== 'string' || !msId.trim()) continue;
-        const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${msId}`);
-        batch.set(skillMasteryRef, {
-          learnerId,
-          microSkillId: msId,
-          capabilityId,
-          level: nextLevel,
-          siteId,
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+    if (safeEvidenceRecordIds.length > 0) {
+      for (let i = 0; i < safeEvidenceRecordIds.length; i += 30) {
+        const evidenceChunk = safeEvidenceRecordIds.slice(i, i + 30);
+        const evidencePortfolioSnap = await db
+          .collection('portfolioItems')
+          .where('evidenceRecordIds', 'array-contains-any', evidenceChunk)
+          .limit(30)
+          .get();
+        for (const doc of evidencePortfolioSnap.docs) {
+          relatedPortfolioDocs.set(doc.id, doc);
+        }
       }
     }
-  }
 
-  // 2b. For each process domain: create growth event + upsert mastery
-  const scoresByProcessDomain = new Map<string, RubricScoreInput[]>();
-  for (const s of scores) {
-    if (s.processDomainId && typeof s.processDomainId === 'string' && s.processDomainId.trim().length > 0) {
-      const existing = scoresByProcessDomain.get(s.processDomainId) ?? [];
-      existing.push(s);
-      scoresByProcessDomain.set(s.processDomainId, existing);
+    const proofVerified = Array.from(relatedPortfolioDocs.values()).some((doc) => {
+      const data = doc.data() ?? {};
+      const rowSiteId = typeof data.siteId === 'string' ? data.siteId.trim() : '';
+      const proofStatus =
+        typeof data.proofOfLearningStatus === 'string' ? data.proofOfLearningStatus.trim() : '';
+      return (!rowSiteId || rowSiteId === siteId) && proofStatus === 'verified';
+    });
+
+    if (!proofVerified) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Verify proof-of-learning before applying a rubric that updates capability growth.'
+      );
     }
-  }
 
-  for (const [processDomainId, domainScores] of scoresByProcessDomain) {
-    const rawScore = domainScores.reduce((sum, s) => sum + s.score, 0);
-    const maxScore = domainScores.reduce((sum, s) => sum + s.maxScore, 0);
-    const nextLevel = maxScore <= 0
-      ? 0
-      : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
+    const batch = db.batch();
 
-    // Upsert ProcessDomainMastery
-    const pdMasteryId = `${learnerId}_${processDomainId}`;
-    const pdMasteryRef = db.collection('processDomainMastery').doc(pdMasteryId);
-    const pdMasterySnap = await pdMasteryRef.get();
-    const pdMasteryData = pdMasterySnap.data() ?? {};
-    const pdHighestLevel = Math.max(nextLevel, (pdMasteryData.highestLevel as number) ?? 0);
-    const pdPriorEvidenceIds: string[] = Array.isArray(pdMasteryData.evidenceIds) ? pdMasteryData.evidenceIds : [];
-    const pdMergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...pdPriorEvidenceIds])];
-
-    const pdPreviousLevel = (pdMasteryData.latestLevel as number) ?? (pdMasteryData.currentLevel as number) ?? 0;
-
-    batch.set(pdMasteryRef, {
+    // 1. Create the RubricApplication document
+    const rubricAppRef = db.collection('rubricApplications').doc();
+    batch.set(rubricAppRef, {
       learnerId,
-      processDomainId,
       siteId,
-      currentLevel: LEVEL_FROM_NUMBER[nextLevel] || 'emerging',
-      latestLevel: nextLevel,
-      previousLevel: pdPreviousLevel,
-      highestLevel: pdHighestLevel,
-      evidenceCount: pdMergedEvidenceIds.length,
-      evidenceIds: pdMergedEvidenceIds,
-      lastAssessedBy: educatorId,
-      lastAssessedAt: FieldValue.serverTimestamp(),
-      createdAt: pdMasteryData.createdAt ?? FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    // Create ProcessDomainGrowthEvent
-    const pdGrowthRef = db.collection('processDomainGrowthEvents').doc();
-    batch.set(pdGrowthRef, {
-      learnerId,
-      processDomainId,
-      siteId,
-      level: nextLevel,
-      fromLevel: pdPreviousLevel,
-      toLevel: nextLevel,
-      rawScore,
-      maxScore,
-      missionAttemptId: missionAttemptId ?? null,
-      linkedEvidenceRecordIds: safeEvidenceRecordIds,
-      rubricApplicationId: rubricAppRef.id,
       educatorId,
+      rubricId: rubricId ?? null,
+      missionAttemptId: missionAttemptId ?? null,
+      portfolioItemId: portfolioItemId ?? null,
+      evidenceRecordIds: safeEvidenceRecordIds,
+      scores: scores.map((s) => ({
+        criterionId: s.criterionId,
+        capabilityId: s.capabilityId,
+        processDomainId: s.processDomainId ?? null,
+        pillarCode: s.pillarCode,
+        score: s.score,
+        maxScore: s.maxScore,
+      })),
       createdAt: FieldValue.serverTimestamp(),
     });
-  }
 
-  // 3. Link evidence records
-  for (const evidenceId of safeEvidenceRecordIds) {
-    const evidenceRef = db.collection('evidenceRecords').doc(evidenceId);
-    batch.update(evidenceRef, {
-      rubricStatus: 'applied',
-      growthStatus: 'recorded',
-      rubricApplicationId: rubricAppRef.id,
-      growthEventId: growthEventIds[0] ?? null,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
+    // Group scores by capabilityId
+    const scoresByCapability = new Map<string, RubricScoreInput[]>();
+    for (const s of scores) {
+      const existing = scoresByCapability.get(s.capabilityId) ?? [];
+      existing.push(s);
+      scoresByCapability.set(s.capabilityId, existing);
+    }
 
-  // 3b. Update mission attempt if provided
-  if (hasMission) {
-    const missionRef = db.collection('missionAttempts').doc(missionAttemptId!);
-    batch.update(missionRef, {
-      status: 'reviewed',
-      reviewStatus: 'reviewed',
-      reviewedBy: educatorId,
-      reviewedAt: FieldValue.serverTimestamp(),
-      rubricApplicationId: rubricAppRef.id,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
+    const growthEventIds: string[] = [];
 
-  await batch.commit();
+    // 2. For each capability: create growth event + upsert mastery
+    for (const [capabilityId, capabilityScores] of scoresByCapability) {
+      const rawScore = capabilityScores.reduce((sum, s) => sum + s.score, 0);
+      const maxScore = capabilityScores.reduce((sum, s) => sum + s.maxScore, 0);
+      const pillarCode = capabilityScores.find((s) => s.pillarCode)?.pillarCode ?? '';
 
-  // 4. Enrich portfolio — create/update a PortfolioItem linking evidence → capabilities → growth
-  const portfolioItemIds: string[] = [];
-  const portfolioBatch = db.batch();
-  const capabilityIds = Array.from(scoresByCapability.keys());
+      // Level 1-4 from normalized score
+      const nextLevel =
+        maxScore <= 0 ? 0 : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
 
-  // Group pillar codes from scored capabilities
-  const pillarCodes = [...new Set(scores.map((s) => s.pillarCode).filter(Boolean))];
+      // Upsert CapabilityMastery
+      const masteryId = `${learnerId}_${capabilityId}`;
+      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+      const masterySnap = await masteryRef.get();
+      const masteryData = masterySnap.data() ?? {};
+      const highestLevel = Math.max(nextLevel, (masteryData.highestLevel as number) ?? 0);
+      const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds)
+        ? masteryData.evidenceIds
+        : [];
+      const mergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...priorEvidenceIds])];
 
-  if (hasPortfolioItem) {
-    const canonicalPortfolioDoc = relatedPortfolioDocs.get(portfolioItemId!);
-    const canonicalPortfolioData = canonicalPortfolioDoc?.data() ?? {};
-    const existingCapabilityIds: string[] = Array.isArray(canonicalPortfolioData.capabilityIds)
-      ? canonicalPortfolioData.capabilityIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      : [];
-    const existingPillarCodes: string[] = Array.isArray(canonicalPortfolioData.pillarCodes)
-      ? canonicalPortfolioData.pillarCodes.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      : [];
-    portfolioBatch.set(db.collection('portfolioItems').doc(portfolioItemId!), {
-      capabilityIds: [...new Set([...existingCapabilityIds, ...capabilityIds])],
-      pillarCodes: [...new Set([...existingPillarCodes, ...pillarCodes])],
-      growthEventIds,
-      rubricApplicationId: rubricAppRef.id,
-      educatorReviewedBy: educatorId,
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-    portfolioItemIds.push(portfolioItemId!);
-  }
+      const NUMBER_TO_LEVEL: Record<number, string> = {
+        1: 'emerging',
+        2: 'developing',
+        3: 'proficient',
+        4: 'advanced',
+      };
 
-  // Read evidence records to extract artifact data for portfolio
-  if (!hasPortfolioItem && safeEvidenceRecordIds.length > 0) {
-    const evidenceDocs = await Promise.all(
-      safeEvidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
-    );
+      batch.set(
+        masteryRef,
+        {
+          learnerId,
+          capabilityId,
+          siteId,
+          pillarCode,
+          latestLevel: nextLevel,
+          currentLevel: NUMBER_TO_LEVEL[nextLevel] ?? 'emerging',
+          highestLevel,
+          latestEvidenceId: safeEvidenceRecordIds[0] ?? null,
+          latestMissionAttemptId: missionAttemptId ?? null,
+          evidenceIds: mergedEvidenceIds,
+          createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
 
-    for (const evidenceDoc of evidenceDocs) {
-      if (!evidenceDoc.exists) continue;
-      const evidenceData = evidenceDoc.data() ?? {};
-      const portfolioId = `rubric-${evidenceDoc.id}`;
-      const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
-
-      portfolioBatch.set(portfolioRef, {
+      // Create CapabilityGrowthEvent
+      const growthEventRef = db.collection('capabilityGrowthEvents').doc();
+      growthEventIds.push(growthEventRef.id);
+      batch.set(growthEventRef, {
         learnerId,
+        capabilityId,
         siteId,
-        title: typeof evidenceData.description === 'string'
-          ? evidenceData.description.slice(0, 100)
-          : 'Reviewed evidence',
-        description: typeof evidenceData.description === 'string'
-          ? evidenceData.description
-          : '',
-        pillarCodes,
-        artifacts: typeof evidenceData.artifactUrl === 'string' ? [evidenceData.artifactUrl] : [],
-        evidenceRecordIds: [evidenceDoc.id],
-        capabilityIds,
-        growthEventIds,
+        pillarCode,
+        level: nextLevel,
+        rawScore,
+        maxScore,
+        missionAttemptId: missionAttemptId ?? null,
+        linkedEvidenceRecordIds: safeEvidenceRecordIds,
+        linkedPortfolioItemIds: hasPortfolioItem ? [portfolioItemId!] : [],
         rubricApplicationId: rubricAppRef.id,
         educatorId,
-        verificationStatus: 'reviewed',
-        proofOfLearningStatus: evidenceData.portfolioCandidate ? 'partial' : 'not-available',
-        aiDisclosureStatus: evidenceData.aiDisclosureStatus ?? 'not-available',
-        source: 'rubric_application',
         createdAt: FieldValue.serverTimestamp(),
+      });
+
+      // 2a-ii. Write skillMastery for microSkillIds linked to this capability
+      const capDocForSkills = await db.collection('capabilities').doc(capabilityId).get();
+      const capMicroSkills = capDocForSkills.exists ? capDocForSkills.data()?.microSkillIds : null;
+      if (Array.isArray(capMicroSkills)) {
+        for (const msId of capMicroSkills) {
+          if (typeof msId !== 'string' || !msId.trim()) continue;
+          const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${msId}`);
+          batch.set(
+            skillMasteryRef,
+            {
+              learnerId,
+              microSkillId: msId,
+              capabilityId,
+              level: nextLevel,
+              siteId,
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+      }
+    }
+
+    // 2b. For each process domain: create growth event + upsert mastery
+    const scoresByProcessDomain = new Map<string, RubricScoreInput[]>();
+    for (const s of scores) {
+      if (
+        s.processDomainId &&
+        typeof s.processDomainId === 'string' &&
+        s.processDomainId.trim().length > 0
+      ) {
+        const existing = scoresByProcessDomain.get(s.processDomainId) ?? [];
+        existing.push(s);
+        scoresByProcessDomain.set(s.processDomainId, existing);
+      }
+    }
+
+    for (const [processDomainId, domainScores] of scoresByProcessDomain) {
+      const rawScore = domainScores.reduce((sum, s) => sum + s.score, 0);
+      const maxScore = domainScores.reduce((sum, s) => sum + s.maxScore, 0);
+      const nextLevel =
+        maxScore <= 0 ? 0 : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
+
+      // Upsert ProcessDomainMastery
+      const pdMasteryId = `${learnerId}_${processDomainId}`;
+      const pdMasteryRef = db.collection('processDomainMastery').doc(pdMasteryId);
+      const pdMasterySnap = await pdMasteryRef.get();
+      const pdMasteryData = pdMasterySnap.data() ?? {};
+      const pdHighestLevel = Math.max(nextLevel, (pdMasteryData.highestLevel as number) ?? 0);
+      const pdPriorEvidenceIds: string[] = Array.isArray(pdMasteryData.evidenceIds)
+        ? pdMasteryData.evidenceIds
+        : [];
+      const pdMergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...pdPriorEvidenceIds])];
+
+      const pdPreviousLevel =
+        (pdMasteryData.latestLevel as number) ?? (pdMasteryData.currentLevel as number) ?? 0;
+
+      batch.set(
+        pdMasteryRef,
+        {
+          learnerId,
+          processDomainId,
+          siteId,
+          currentLevel: LEVEL_FROM_NUMBER[nextLevel] || 'emerging',
+          latestLevel: nextLevel,
+          previousLevel: pdPreviousLevel,
+          highestLevel: pdHighestLevel,
+          evidenceCount: pdMergedEvidenceIds.length,
+          evidenceIds: pdMergedEvidenceIds,
+          lastAssessedBy: educatorId,
+          lastAssessedAt: FieldValue.serverTimestamp(),
+          createdAt: pdMasteryData.createdAt ?? FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Create ProcessDomainGrowthEvent
+      const pdGrowthRef = db.collection('processDomainGrowthEvents').doc();
+      batch.set(pdGrowthRef, {
+        learnerId,
+        processDomainId,
+        siteId,
+        level: nextLevel,
+        fromLevel: pdPreviousLevel,
+        toLevel: nextLevel,
+        rawScore,
+        maxScore,
+        missionAttemptId: missionAttemptId ?? null,
+        linkedEvidenceRecordIds: safeEvidenceRecordIds,
+        rubricApplicationId: rubricAppRef.id,
+        educatorId,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // 3. Link evidence records
+    for (const evidenceId of safeEvidenceRecordIds) {
+      const evidenceRef = db.collection('evidenceRecords').doc(evidenceId);
+      batch.update(evidenceRef, {
+        rubricStatus: 'applied',
+        growthStatus: 'recorded',
+        rubricApplicationId: rubricAppRef.id,
+        growthEventId: growthEventIds[0] ?? null,
         updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      });
+    }
+
+    // 3b. Update mission attempt if provided
+    if (hasMission) {
+      const missionRef = db.collection('missionAttempts').doc(missionAttemptId!);
+      batch.update(missionRef, {
+        status: 'reviewed',
+        reviewStatus: 'reviewed',
+        reviewedBy: educatorId,
+        reviewedAt: FieldValue.serverTimestamp(),
+        rubricApplicationId: rubricAppRef.id,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+
+    // 4. Enrich portfolio — create/update a PortfolioItem linking evidence → capabilities → growth
+    const portfolioItemIds: string[] = [];
+    const portfolioBatch = db.batch();
+    const capabilityIds = Array.from(scoresByCapability.keys());
+
+    // Group pillar codes from scored capabilities
+    const pillarCodes = [...new Set(scores.map((s) => s.pillarCode).filter(Boolean))];
+
+    if (hasPortfolioItem) {
+      const canonicalPortfolioDoc = relatedPortfolioDocs.get(portfolioItemId!);
+      const canonicalPortfolioData = canonicalPortfolioDoc?.data() ?? {};
+      const existingCapabilityIds: string[] = Array.isArray(canonicalPortfolioData.capabilityIds)
+        ? canonicalPortfolioData.capabilityIds.filter(
+            (value): value is string => typeof value === 'string' && value.trim().length > 0
+          )
+        : [];
+      const existingPillarCodes: string[] = Array.isArray(canonicalPortfolioData.pillarCodes)
+        ? canonicalPortfolioData.pillarCodes.filter(
+            (value): value is string => typeof value === 'string' && value.trim().length > 0
+          )
+        : [];
+      portfolioBatch.set(
+        db.collection('portfolioItems').doc(portfolioItemId!),
+        {
+          capabilityIds: [...new Set([...existingCapabilityIds, ...capabilityIds])],
+          pillarCodes: [...new Set([...existingPillarCodes, ...pillarCodes])],
+          growthEventIds,
+          rubricApplicationId: rubricAppRef.id,
+          educatorReviewedBy: educatorId,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      portfolioItemIds.push(portfolioItemId!);
+    }
+
+    // Read evidence records to extract artifact data for portfolio
+    if (!hasPortfolioItem && safeEvidenceRecordIds.length > 0) {
+      const evidenceDocs = await Promise.all(
+        safeEvidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
+      );
+
+      for (const evidenceDoc of evidenceDocs) {
+        if (!evidenceDoc.exists) continue;
+        const evidenceData = evidenceDoc.data() ?? {};
+        const portfolioId = `rubric-${evidenceDoc.id}`;
+        const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
+
+        portfolioBatch.set(
+          portfolioRef,
+          {
+            learnerId,
+            siteId,
+            title:
+              typeof evidenceData.description === 'string'
+                ? evidenceData.description.slice(0, 100)
+                : 'Reviewed evidence',
+            description:
+              typeof evidenceData.description === 'string' ? evidenceData.description : '',
+            pillarCodes,
+            artifacts:
+              typeof evidenceData.artifactUrl === 'string' ? [evidenceData.artifactUrl] : [],
+            evidenceRecordIds: [evidenceDoc.id],
+            capabilityIds,
+            growthEventIds,
+            rubricApplicationId: rubricAppRef.id,
+            educatorId,
+            verificationStatus: 'reviewed',
+            proofOfLearningStatus: evidenceData.portfolioCandidate ? 'partial' : 'not-available',
+            aiDisclosureStatus: evidenceData.aiDisclosureStatus ?? 'not-available',
+            source: 'rubric_application',
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        portfolioItemIds.push(portfolioId);
+      }
+    }
+
+    // 4b. Create portfolio item from mission attempt if no evidence records
+    if (!hasPortfolioItem && hasMission && safeEvidenceRecordIds.length === 0) {
+      const missionDoc = await db.collection('missionAttempts').doc(missionAttemptId!).get();
+      const missionData = missionDoc.exists ? (missionDoc.data() ?? {}) : {};
+      const missionTitle =
+        typeof missionData.missionTitle === 'string'
+          ? missionData.missionTitle
+          : 'Mission submission';
+      const portfolioId = `rubric-mission-${missionAttemptId}`;
+      const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
+      const artifacts: string[] = Array.isArray(missionData.attachmentUrls)
+        ? missionData.attachmentUrls
+        : [];
+
+      portfolioBatch.set(
+        portfolioRef,
+        {
+          learnerId,
+          siteId,
+          title: missionTitle.slice(0, 100),
+          description: typeof missionData.content === 'string' ? missionData.content : missionTitle,
+          pillarCodes,
+          artifacts,
+          evidenceRecordIds: [],
+          missionAttemptId,
+          capabilityIds,
+          growthEventIds,
+          rubricApplicationId: rubricAppRef.id,
+          educatorId,
+          verificationStatus: 'reviewed',
+          proofOfLearningStatus: 'not-available',
+          aiDisclosureStatus: 'not-available',
+          source: 'mission_rubric_application',
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       portfolioItemIds.push(portfolioId);
     }
-  }
 
-  // 4b. Create portfolio item from mission attempt if no evidence records
-  if (!hasPortfolioItem && hasMission && safeEvidenceRecordIds.length === 0) {
-    const missionDoc = await db.collection('missionAttempts').doc(missionAttemptId!).get();
-    const missionData = missionDoc.exists ? (missionDoc.data() ?? {}) : {};
-    const missionTitle = typeof missionData.missionTitle === 'string'
-      ? missionData.missionTitle
-      : 'Mission submission';
-    const portfolioId = `rubric-mission-${missionAttemptId}`;
-    const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
-    const artifacts: string[] = Array.isArray(missionData.attachmentUrls) ? missionData.attachmentUrls : [];
-
-    portfolioBatch.set(portfolioRef, {
-      learnerId,
-      siteId,
-      title: missionTitle.slice(0, 100),
-      description: typeof missionData.content === 'string' ? missionData.content : missionTitle,
-      pillarCodes,
-      artifacts,
-      evidenceRecordIds: [],
-      missionAttemptId,
-      capabilityIds,
-      growthEventIds,
-      rubricApplicationId: rubricAppRef.id,
-      educatorId,
-      verificationStatus: 'reviewed',
-      proofOfLearningStatus: 'not-available',
-      aiDisclosureStatus: 'not-available',
-      source: 'mission_rubric_application',
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    portfolioItemIds.push(portfolioId);
-  }
-
-  // 4c. Update any existing learner-created portfolioItems linked to this missionAttempt
-  if (!hasPortfolioItem && hasMission) {
-    const existingPiSnap = await db.collection('portfolioItems')
-      .where('missionAttemptId', '==', missionAttemptId)
-      .limit(10)
-      .get();
-    for (const piDoc of existingPiSnap.docs) {
-      // Skip the rubric-created portfolio item (already set to 'reviewed' above)
-      if (piDoc.id.startsWith('rubric-')) continue;
-      portfolioBatch.update(piDoc.ref, {
-        verificationStatus: 'reviewed',
-        rubricApplicationId: rubricAppRef.id,
-        growthEventIds,
-        educatorReviewedBy: educatorId,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      portfolioItemIds.push(piDoc.id);
+    // 4c. Update any existing learner-created portfolioItems linked to this missionAttempt
+    if (!hasPortfolioItem && hasMission) {
+      const existingPiSnap = await db
+        .collection('portfolioItems')
+        .where('missionAttemptId', '==', missionAttemptId)
+        .limit(10)
+        .get();
+      for (const piDoc of existingPiSnap.docs) {
+        // Skip the rubric-created portfolio item (already set to 'reviewed' above)
+        if (piDoc.id.startsWith('rubric-')) continue;
+        portfolioBatch.update(piDoc.ref, {
+          verificationStatus: 'reviewed',
+          rubricApplicationId: rubricAppRef.id,
+          growthEventIds,
+          educatorReviewedBy: educatorId,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        portfolioItemIds.push(piDoc.id);
+      }
     }
+
+    // Update growth events with linked portfolio item IDs
+    for (const growthEventId of growthEventIds) {
+      portfolioBatch.update(db.collection('capabilityGrowthEvents').doc(growthEventId), {
+        linkedPortfolioItemIds: portfolioItemIds,
+      });
+    }
+
+    await portfolioBatch.commit();
+
+    // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
+    evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
+      console.warn('Badge evaluation after rubric apply failed (non-blocking):', err)
+    );
+
+    return {
+      rubricApplicationId: rubricAppRef.id,
+      growthEventIds,
+      portfolioItemIds,
+      capabilitiesProcessed: scoresByCapability.size,
+    };
   }
-
-  // Update growth events with linked portfolio item IDs
-  for (const growthEventId of growthEventIds) {
-    portfolioBatch.update(db.collection('capabilityGrowthEvents').doc(growthEventId), {
-      linkedPortfolioItemIds: portfolioItemIds,
-    });
-  }
-
-  await portfolioBatch.commit();
-
-  // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
-  evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
-    console.warn('Badge evaluation after rubric apply failed (non-blocking):', err)
-  );
-
-  return {
-    rubricApplicationId: rubricAppRef.id,
-    growthEventIds,
-    portfolioItemIds,
-    capabilitiesProcessed: scoresByCapability.size,
-  };
-});
+);
 
 /**
  * Verify Proof-of-Learning for a portfolio item.
  * Verification confirms authenticity and proof readiness, but capability growth
  * is only recorded later through rubric interpretation.
  */
-export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
-  portfolioItemId: string;
-  verificationStatus: 'verified' | 'reviewed' | 'pending';
-  proofOfLearningStatus: 'verified' | 'partial' | 'missing' | 'not-available';
-  proofChecks: { explainItBack: boolean; oralCheck: boolean; miniRebuild: boolean };
-  excerpts?: { explainItBack?: string; oralCheck?: string; miniRebuild?: string };
-  educatorNotes?: string;
-  resubmissionReason?: string;
-}>) => {
-  const educatorId = request.auth?.uid;
-  if (!educatorId) {
-    throw new HttpsError('unauthenticated', 'Must be authenticated.');
-  }
-
-  const {
-    portfolioItemId,
-    verificationStatus,
-    proofOfLearningStatus,
-    proofChecks,
-    excerpts,
-    educatorNotes,
-    resubmissionReason,
-  } = request.data ?? {};
-
-  if (!portfolioItemId || typeof portfolioItemId !== 'string') {
-    throw new HttpsError('invalid-argument', 'portfolioItemId is required.');
-  }
-  if (!verificationStatus) {
-    throw new HttpsError('invalid-argument', 'verificationStatus is required.');
-  }
-
-  const db = admin.firestore();
-
-  // Read the portfolio item
-  const portfolioRef = db.collection('portfolioItems').doc(portfolioItemId);
-  const portfolioSnap = await portfolioRef.get();
-  if (!portfolioSnap.exists) {
-    throw new HttpsError('not-found', 'Portfolio item not found.');
-  }
-  const portfolioData = portfolioSnap.data() ?? {};
-  const learnerId = portfolioData.learnerId as string;
-  const siteId = portfolioData.siteId as string;
-  let capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds)
-    ? portfolioData.capabilityIds
-        .filter((value: unknown): value is string => typeof value === 'string')
-        .map((value: string) => value.trim())
-        .filter((value: string) => value.length > 0)
-    : [];
-  let capabilityTitles: string[] = Array.isArray(portfolioData.capabilityTitles)
-    ? portfolioData.capabilityTitles
-        .filter((value: unknown): value is string => typeof value === 'string')
-        .map((value: string) => value.trim())
-        .filter((value: string) => value.length > 0)
-    : [];
-  const checkpointDefinitionId =
-    typeof portfolioData.checkpointDefinitionId === 'string' && portfolioData.checkpointDefinitionId.trim()
-      ? portfolioData.checkpointDefinitionId.trim()
-      : '';
-
-  // Verify educator has access to this site
-  await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], siteId);
-
-  if (checkpointDefinitionId) {
-    const checkpointDefinitionSnap = await db.collection('checkpoints').doc(checkpointDefinitionId).get();
-    if (!checkpointDefinitionSnap.exists) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition exists.'
-      );
+export const verifyProofOfLearning = onCall(
+  async (
+    request: CallableRequest<{
+      portfolioItemId: string;
+      verificationStatus: 'verified' | 'reviewed' | 'pending';
+      proofOfLearningStatus: 'verified' | 'partial' | 'missing' | 'not-available';
+      proofChecks: { explainItBack: boolean; oralCheck: boolean; miniRebuild: boolean };
+      excerpts?: { explainItBack?: string; oralCheck?: string; miniRebuild?: string };
+      educatorNotes?: string;
+      resubmissionReason?: string;
+    }>
+  ) => {
+    const educatorId = request.auth?.uid;
+    if (!educatorId) {
+      throw new HttpsError('unauthenticated', 'Must be authenticated.');
     }
 
-    const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
-    const canonicalCapabilityId =
-      typeof checkpointDefinition.capabilityId === 'string' ? checkpointDefinition.capabilityId.trim() : '';
-    const canonicalCapabilityTitle =
-      typeof checkpointDefinition.capabilityTitle === 'string'
-        ? checkpointDefinition.capabilityTitle.trim()
-        : '';
-    const checkpointDefinitionSiteId =
-      typeof checkpointDefinition.siteId === 'string' ? checkpointDefinition.siteId.trim() : '';
-
-    if (!canonicalCapabilityId) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition maps to a capability.'
-      );
-    }
-    if (checkpointDefinitionSiteId && checkpointDefinitionSiteId !== siteId) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Checkpoint-linked proof cannot be verified against a checkpoint definition from another site.'
-      );
-    }
-
-    capabilityIds = [canonicalCapabilityId];
-    capabilityTitles = canonicalCapabilityTitle ? [canonicalCapabilityTitle] : capabilityTitles;
-  }
-
-  if (verificationStatus === 'verified' && capabilityIds.length === 0) {
-    throw new HttpsError(
-      'failed-precondition',
-      'Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.'
-    );
-  }
-
-  const checkpointCount = [proofChecks?.explainItBack, proofChecks?.oralCheck, proofChecks?.miniRebuild]
-    .filter(Boolean).length;
-  const explainItBackExcerpt = typeof excerpts?.explainItBack === 'string' && excerpts.explainItBack.trim()
-    ? excerpts.explainItBack.trim()
-    : null;
-  const oralCheckExcerpt = typeof excerpts?.oralCheck === 'string' && excerpts.oralCheck.trim()
-    ? excerpts.oralCheck.trim()
-    : null;
-  const miniRebuildExcerpt = typeof excerpts?.miniRebuild === 'string' && excerpts.miniRebuild.trim()
-    ? excerpts.miniRebuild.trim()
-    : null;
-  const normalizedEducatorNotes = typeof educatorNotes === 'string' && educatorNotes.trim()
-    ? educatorNotes.trim()
-    : null;
-  const normalizedResubmissionReason = typeof resubmissionReason === 'string' && resubmissionReason.trim()
-    ? resubmissionReason.trim()
-    : null;
-
-  const batch = db.batch();
-
-  // 1. Update the portfolio item
-  const portfolioUpdate: Record<string, unknown> = {
-    verificationStatus,
-    proofOfLearningStatus,
-    proofHasExplainItBack: proofChecks?.explainItBack ?? false,
-    proofHasOralCheck: proofChecks?.oralCheck ?? false,
-    proofHasMiniRebuild: proofChecks?.miniRebuild ?? false,
-    proofCheckpointCount: checkpointCount,
-    proofExplainItBackExcerpt: explainItBackExcerpt,
-    proofOralCheckExcerpt: oralCheckExcerpt,
-    proofMiniRebuildExcerpt: miniRebuildExcerpt,
-    verificationNotes: normalizedEducatorNotes,
-    verificationPrompt: normalizedResubmissionReason,
-    verificationPromptSource: normalizedResubmissionReason ? 'educator_review' : null,
-    updatedAt: FieldValue.serverTimestamp(),
-  };
-  if (capabilityIds.length > 0) {
-    portfolioUpdate.capabilityIds = capabilityIds;
-  }
-  if (capabilityTitles.length > 0) {
-    portfolioUpdate.capabilityTitles = capabilityTitles;
-  }
-  batch.update(portfolioRef, portfolioUpdate);
-
-  const proofBundleId = typeof portfolioData.proofBundleId === 'string' ? portfolioData.proofBundleId.trim() : '';
-  if (proofBundleId) {
-    const proofBundleRef = db.collection('proofOfLearningBundles').doc(proofBundleId);
-    const proofBundleSnap = await proofBundleRef.get();
-    const proofBundleData = proofBundleSnap.data() ?? {};
-    batch.set(proofBundleRef, {
-      learnerId,
+    const {
       portfolioItemId,
-      siteId,
-      hasExplainItBack: proofChecks?.explainItBack ?? false,
-      hasOralCheck: proofChecks?.oralCheck ?? false,
-      hasMiniRebuild: proofChecks?.miniRebuild ?? false,
-      explainItBackExcerpt,
-      oralCheckExcerpt,
-      miniRebuildExcerpt,
-      verificationStatus: proofOfLearningStatus === 'not-available' ? 'missing' : proofOfLearningStatus,
-      educatorVerifierId: verificationStatus === 'verified' ? educatorId : null,
-      version: typeof proofBundleData.version === 'number' ? proofBundleData.version + 1 : 1,
-      createdAt: proofBundleData.createdAt ?? FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-  }
-
-  await batch.commit();
-
-  // 3. Back-link: update associated mission attempt with proof bundle summary
-  const missionAttemptId = portfolioData.missionAttemptId as string | undefined;
-  if (missionAttemptId) {
-    const proofBundleSummary = {
-      hasExplainItBack: proofChecks?.explainItBack ?? false,
-      hasOralCheck: proofChecks?.oralCheck ?? false,
-      hasMiniRebuild: proofChecks?.miniRebuild ?? false,
-      checkpointCount,
-      hasLearnerAiDisclosure: portfolioData.aiAssistanceUsed === true,
-      aiAssistanceUsed: portfolioData.aiAssistanceUsed ?? false,
       verificationStatus,
-    };
-    await db.collection('missionAttempts').doc(missionAttemptId).update({
-      proofBundleId: portfolioData.proofBundleId || null,
-      proofBundleSummary,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
+      proofOfLearningStatus,
+      proofChecks,
+      excerpts,
+      educatorNotes,
+      resubmissionReason,
+    } = request.data ?? {};
 
-  // 4. Back-link: update evidence records with linked portfolio item ID
-  const evidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
-    ? portfolioData.evidenceRecordIds
-    : [];
-  if (evidenceRecordIds.length > 0) {
-    const evidenceBatch = db.batch();
-    for (const evidenceId of evidenceRecordIds) {
-      evidenceBatch.update(db.collection('evidenceRecords').doc(evidenceId), {
-        linkedPortfolioItemId: portfolioItemId,
-        linkedMissionAttemptId: missionAttemptId || null,
-      });
+    if (!portfolioItemId || typeof portfolioItemId !== 'string') {
+      throw new HttpsError('invalid-argument', 'portfolioItemId is required.');
     }
-    await evidenceBatch.commit();
-  }
+    if (!verificationStatus) {
+      throw new HttpsError('invalid-argument', 'verificationStatus is required.');
+    }
 
-  return {
-    portfolioItemId,
-    verificationStatus,
-    capabilitiesReadyForRubric: verificationStatus === 'verified' ? capabilityIds.length : 0,
-  };
-});
+    const db = admin.firestore();
+
+    // Read the portfolio item
+    const portfolioRef = db.collection('portfolioItems').doc(portfolioItemId);
+    const portfolioSnap = await portfolioRef.get();
+    if (!portfolioSnap.exists) {
+      throw new HttpsError('not-found', 'Portfolio item not found.');
+    }
+    const portfolioData = portfolioSnap.data() ?? {};
+    const learnerId = portfolioData.learnerId as string;
+    const siteId = portfolioData.siteId as string;
+    let capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds)
+      ? portfolioData.capabilityIds
+          .filter((value: unknown): value is string => typeof value === 'string')
+          .map((value: string) => value.trim())
+          .filter((value: string) => value.length > 0)
+      : [];
+    let capabilityTitles: string[] = Array.isArray(portfolioData.capabilityTitles)
+      ? portfolioData.capabilityTitles
+          .filter((value: unknown): value is string => typeof value === 'string')
+          .map((value: string) => value.trim())
+          .filter((value: string) => value.length > 0)
+      : [];
+    const checkpointDefinitionId =
+      typeof portfolioData.checkpointDefinitionId === 'string' &&
+      portfolioData.checkpointDefinitionId.trim()
+        ? portfolioData.checkpointDefinitionId.trim()
+        : '';
+
+    // Verify educator has access to this site
+    await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], siteId);
+
+    if (checkpointDefinitionId) {
+      const checkpointDefinitionSnap = await db
+        .collection('checkpoints')
+        .doc(checkpointDefinitionId)
+        .get();
+      if (!checkpointDefinitionSnap.exists) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition exists.'
+        );
+      }
+
+      const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
+      const canonicalCapabilityId =
+        typeof checkpointDefinition.capabilityId === 'string'
+          ? checkpointDefinition.capabilityId.trim()
+          : '';
+      const canonicalCapabilityTitle =
+        typeof checkpointDefinition.capabilityTitle === 'string'
+          ? checkpointDefinition.capabilityTitle.trim()
+          : '';
+      const checkpointDefinitionSiteId =
+        typeof checkpointDefinition.siteId === 'string' ? checkpointDefinition.siteId.trim() : '';
+
+      if (!canonicalCapabilityId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition maps to a capability.'
+        );
+      }
+      if (checkpointDefinitionSiteId && checkpointDefinitionSiteId !== siteId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Checkpoint-linked proof cannot be verified against a checkpoint definition from another site.'
+        );
+      }
+
+      capabilityIds = [canonicalCapabilityId];
+      capabilityTitles = canonicalCapabilityTitle ? [canonicalCapabilityTitle] : capabilityTitles;
+    }
+
+    if (verificationStatus === 'verified' && capabilityIds.length === 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.'
+      );
+    }
+
+    const checkpointCount = [
+      proofChecks?.explainItBack,
+      proofChecks?.oralCheck,
+      proofChecks?.miniRebuild,
+    ].filter(Boolean).length;
+    const explainItBackExcerpt =
+      typeof excerpts?.explainItBack === 'string' && excerpts.explainItBack.trim()
+        ? excerpts.explainItBack.trim()
+        : null;
+    const oralCheckExcerpt =
+      typeof excerpts?.oralCheck === 'string' && excerpts.oralCheck.trim()
+        ? excerpts.oralCheck.trim()
+        : null;
+    const miniRebuildExcerpt =
+      typeof excerpts?.miniRebuild === 'string' && excerpts.miniRebuild.trim()
+        ? excerpts.miniRebuild.trim()
+        : null;
+    const normalizedEducatorNotes =
+      typeof educatorNotes === 'string' && educatorNotes.trim() ? educatorNotes.trim() : null;
+    const normalizedResubmissionReason =
+      typeof resubmissionReason === 'string' && resubmissionReason.trim()
+        ? resubmissionReason.trim()
+        : null;
+
+    const batch = db.batch();
+
+    // 1. Update the portfolio item
+    const portfolioUpdate: Record<string, unknown> = {
+      verificationStatus,
+      proofOfLearningStatus,
+      proofHasExplainItBack: proofChecks?.explainItBack ?? false,
+      proofHasOralCheck: proofChecks?.oralCheck ?? false,
+      proofHasMiniRebuild: proofChecks?.miniRebuild ?? false,
+      proofCheckpointCount: checkpointCount,
+      proofExplainItBackExcerpt: explainItBackExcerpt,
+      proofOralCheckExcerpt: oralCheckExcerpt,
+      proofMiniRebuildExcerpt: miniRebuildExcerpt,
+      verificationNotes: normalizedEducatorNotes,
+      verificationPrompt: normalizedResubmissionReason,
+      verificationPromptSource: normalizedResubmissionReason ? 'educator_review' : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (capabilityIds.length > 0) {
+      portfolioUpdate.capabilityIds = capabilityIds;
+    }
+    if (capabilityTitles.length > 0) {
+      portfolioUpdate.capabilityTitles = capabilityTitles;
+    }
+    batch.update(portfolioRef, portfolioUpdate);
+
+    const proofBundleId =
+      typeof portfolioData.proofBundleId === 'string' ? portfolioData.proofBundleId.trim() : '';
+    if (proofBundleId) {
+      const proofBundleRef = db.collection('proofOfLearningBundles').doc(proofBundleId);
+      const proofBundleSnap = await proofBundleRef.get();
+      const proofBundleData = proofBundleSnap.data() ?? {};
+      batch.set(
+        proofBundleRef,
+        {
+          learnerId,
+          portfolioItemId,
+          siteId,
+          hasExplainItBack: proofChecks?.explainItBack ?? false,
+          hasOralCheck: proofChecks?.oralCheck ?? false,
+          hasMiniRebuild: proofChecks?.miniRebuild ?? false,
+          explainItBackExcerpt,
+          oralCheckExcerpt,
+          miniRebuildExcerpt,
+          verificationStatus:
+            proofOfLearningStatus === 'not-available' ? 'missing' : proofOfLearningStatus,
+          educatorVerifierId: verificationStatus === 'verified' ? educatorId : null,
+          version: typeof proofBundleData.version === 'number' ? proofBundleData.version + 1 : 1,
+          createdAt: proofBundleData.createdAt ?? FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    await batch.commit();
+
+    // 3. Back-link: update associated mission attempt with proof bundle summary
+    const missionAttemptId = portfolioData.missionAttemptId as string | undefined;
+    if (missionAttemptId) {
+      const proofBundleSummary = {
+        hasExplainItBack: proofChecks?.explainItBack ?? false,
+        hasOralCheck: proofChecks?.oralCheck ?? false,
+        hasMiniRebuild: proofChecks?.miniRebuild ?? false,
+        checkpointCount,
+        hasLearnerAiDisclosure: portfolioData.aiAssistanceUsed === true,
+        aiAssistanceUsed: portfolioData.aiAssistanceUsed ?? false,
+        verificationStatus,
+      };
+      await db
+        .collection('missionAttempts')
+        .doc(missionAttemptId)
+        .update({
+          proofBundleId: portfolioData.proofBundleId || null,
+          proofBundleSummary,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+    }
+
+    // 4. Back-link: update evidence records with linked portfolio item ID
+    const evidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
+      ? portfolioData.evidenceRecordIds
+      : [];
+    if (evidenceRecordIds.length > 0) {
+      const evidenceBatch = db.batch();
+      for (const evidenceId of evidenceRecordIds) {
+        evidenceBatch.update(db.collection('evidenceRecords').doc(evidenceId), {
+          linkedPortfolioItemId: portfolioItemId,
+          linkedMissionAttemptId: missionAttemptId || null,
+        });
+      }
+      await evidenceBatch.commit();
+    }
+
+    return {
+      portfolioItemId,
+      verificationStatus,
+      capabilitiesReadyForRubric: verificationStatus === 'verified' ? capabilityIds.length : 0,
+    };
+  }
+);
 
 // ---------------------------------------------------------------------------
 // S3-2: Badge auto-issuance based on capability mastery
@@ -10126,7 +11424,7 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
 async function evaluateBadgeEligibilityInternal(
   learnerId: string,
   siteId: string,
-  capabilityId?: string,
+  capabilityId?: string
 ): Promise<{ awarded: Array<{ badgeId: string; badgeName: string; awardId: string }> }> {
   const db = admin.firestore();
   const MASTERY_RANK: Record<string, number> = {
@@ -10136,7 +11434,9 @@ async function evaluateBadgeEligibilityInternal(
     advanced: 4,
   };
 
-  let badgeQuery: admin.firestore.Query = db.collection('recognitionBadges').where('siteId', '==', siteId);
+  let badgeQuery: admin.firestore.Query = db
+    .collection('recognitionBadges')
+    .where('siteId', '==', siteId);
   if (capabilityId) {
     badgeQuery = badgeQuery.where('requiredCapabilityId', '==', capabilityId);
   }
@@ -10152,9 +11452,7 @@ async function evaluateBadgeEligibilityInternal(
   masterySnap.docs.forEach((d) => {
     const data = d.data();
     if (data.capabilityId) {
-      const level = data.currentLevel
-        || LEVEL_FROM_NUMBER[data.latestLevel as number]
-        || null;
+      const level = data.currentLevel || LEVEL_FROM_NUMBER[data.latestLevel as number] || null;
       if (level) {
         masteryByCapability.set(data.capabilityId, level);
       }
@@ -10203,7 +11501,11 @@ async function evaluateBadgeEligibilityInternal(
       }
     }
 
-    if (eligible && Array.isArray(badge.requiredMicroSkillIds) && badge.requiredMicroSkillIds.length > 0) {
+    if (
+      eligible &&
+      Array.isArray(badge.requiredMicroSkillIds) &&
+      badge.requiredMicroSkillIds.length > 0
+    ) {
       for (const skillId of badge.requiredMicroSkillIds) {
         const evidence = evidenceBySkill.get(skillId);
         if (!evidence || evidence.length === 0) {
@@ -10214,7 +11516,11 @@ async function evaluateBadgeEligibilityInternal(
       }
     }
 
-    if (eligible && typeof badge.requiredEvidenceCount === 'number' && badge.requiredEvidenceCount > 0) {
+    if (
+      eligible &&
+      typeof badge.requiredEvidenceCount === 'number' &&
+      badge.requiredEvidenceCount > 0
+    ) {
       if (linkedEvidenceIds.length < badge.requiredEvidenceCount) {
         eligible = false;
       }
@@ -10245,21 +11551,25 @@ async function evaluateBadgeEligibilityInternal(
   return { awarded };
 }
 
-export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  capabilityId?: string;
-}>) => {
-  const auth = request.auth;
-  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+export const evaluateBadgeEligibility = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      capabilityId?: string;
+    }>
+  ) => {
+    const auth = request.auth;
+    if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
 
-  const { learnerId, siteId, capabilityId } = request.data;
-  if (!learnerId || !siteId) {
-    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+    const { learnerId, siteId, capabilityId } = request.data;
+    if (!learnerId || !siteId) {
+      throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+    }
+
+    return evaluateBadgeEligibilityInternal(learnerId, siteId, capabilityId);
   }
-
-  return evaluateBadgeEligibilityInternal(learnerId, siteId, capabilityId);
-});
+);
 
 // ---------------------------------------------------------------------------
 // S4-1: Checkpoint completion → capability mastery update
@@ -10271,237 +11581,275 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
  * Proof-linked checkpoints must now update growth through verifyProofOfLearning
  * on the linked portfolio artifact instead of checkpoint correctness alone.
  */
-export const processCheckpointMasteryUpdate = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  checkpointId: string;
-  skillIds: string[];
-  passed: boolean;
-  educatorId?: string;
-}>) => {
-  const auth = request.auth;
-  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
-  await requireRoleAndSite(auth.uid, ['educator', 'siteLead', 'hq'] as Role[], request.data.siteId);
+export const processCheckpointMasteryUpdate = onCall(
+  async (
+    request: CallableRequest<{
+      learnerId: string;
+      siteId: string;
+      checkpointId: string;
+      skillIds: string[];
+      passed: boolean;
+      educatorId?: string;
+    }>
+  ) => {
+    const auth = request.auth;
+    if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+    await requireRoleAndSite(
+      auth.uid,
+      ['educator', 'siteLead', 'hq'] as Role[],
+      request.data.siteId
+    );
 
-  const { learnerId, siteId, checkpointId, skillIds, passed, educatorId } = request.data;
-  if (!learnerId || !siteId) {
-    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
-  }
-
-  if (!passed) return { updated: false, reason: 'Checkpoint not passed' };
-
-  const db = admin.firestore();
-  if (checkpointId && typeof checkpointId === 'string') {
-    const checkpointSnap = await db.collection('checkpointHistory').doc(checkpointId).get();
-    if (!checkpointSnap.exists) {
-      return { updated: false, reason: 'Checkpoint record not found.' };
+    const { learnerId, siteId, checkpointId, skillIds, passed, educatorId } = request.data;
+    if (!learnerId || !siteId) {
+      throw new HttpsError('invalid-argument', 'learnerId and siteId required');
     }
 
-    const checkpointData = checkpointSnap.data() ?? {};
-    const checkpointDefinitionId =
-      typeof checkpointData.checkpointDefinitionId === 'string' && checkpointData.checkpointDefinitionId.trim()
-        ? checkpointData.checkpointDefinitionId.trim()
-        : null;
+    if (!passed) return { updated: false, reason: 'Checkpoint not passed' };
 
-    if (!checkpointDefinitionId) {
-      return {
-        updated: false,
-        reason:
-          'Checkpoint must reference an HQ-authored checkpoint definition before it can update capability growth.',
-      };
-    }
-
-    const checkpointDefinitionSnap = await db.collection('checkpoints').doc(checkpointDefinitionId).get();
-    if (!checkpointDefinitionSnap.exists) {
-      return {
-        updated: false,
-        reason: 'Canonical checkpoint definition not found for this checkpoint submission.',
-      };
-    }
-
-    const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
-    if (checkpointDefinition.siteId !== siteId) {
-      return {
-        updated: false,
-        reason: 'Canonical checkpoint definition is outside the active site scope.',
-      };
-    }
-
-    if (
-      typeof checkpointDefinition.capabilityId !== 'string' ||
-      !checkpointDefinition.capabilityId.trim()
-    ) {
-      return {
-        updated: false,
-        reason: 'Canonical checkpoint definition must map to a capability before learner evidence can use it.',
-      };
-    }
-
-    const checkpointPortfolioItemId =
-      typeof checkpointData.portfolioItemId === 'string' && checkpointData.portfolioItemId.trim()
-        ? checkpointData.portfolioItemId.trim()
-        : null;
-
-    if (!checkpointPortfolioItemId) {
-      return {
-        updated: false,
-        reason:
-          'Checkpoint must be linked to a portfolio artifact before it can update capability growth.',
-      };
-    }
-
-    const portfolioSnap = await db.collection('portfolioItems').doc(checkpointPortfolioItemId).get();
-    if (!portfolioSnap.exists) {
-      return {
-        updated: false,
-        reason: 'Linked portfolio artifact not found for this checkpoint.',
-      };
-    }
-
-    const portfolioData = portfolioSnap.data() ?? {};
-    const proofStatus =
-      typeof portfolioData.proofOfLearningStatus === 'string'
-        ? portfolioData.proofOfLearningStatus.trim()
-        : '';
-
-    if (proofStatus !== 'verified') {
-      return {
-        updated: false,
-        reason:
-          'Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.',
-      };
-    }
-
-    return {
-      updated: false,
-      reason:
-        'Checkpoint growth is recorded from proof verification on the linked portfolio artifact.',
-    };
-  }
-
-  const LEVEL_ORDER = ['emerging', 'developing', 'proficient', 'advanced'];
-  const batch = db.batch();
-  const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
-
-  // Strategy: if skillIds are provided, use skill→capability lookup.
-  // Otherwise refuse the update — checkpoint-only growth must flow through a
-  // canonical checkpoint definition and proof verification on the linked artifact.
-
-  if (skillIds && skillIds.length > 0) {
-    // Skill-based path: look up capability from microSkillIds
-    for (const skillId of skillIds) {
-      const capSnap = await db
-        .collection('capabilities')
-        .where('microSkillIds', 'array-contains', skillId)
-        .limit(1)
-        .get();
-
-      if (capSnap.empty) continue;
-
-      const capDoc = capSnap.docs[0];
-      const capabilityId = capDoc.id;
-
-      const masteryQuery = await db
-        .collection('capabilityMastery')
-        .where('learnerId', '==', learnerId)
-        .where('capabilityId', '==', capabilityId)
-        .limit(1)
-        .get();
-
-      const currentLevel = masteryQuery.empty
-        ? null
-        : (masteryQuery.docs[0].data().currentLevel as string) || 'emerging';
-
-      const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
-
-      // Count both skillEvidence and passed checkpoints as evidence
-      const [skillSnap, checkSnap] = await Promise.all([
-        db.collection('skillEvidence').where('learnerId', '==', learnerId).where('microSkillId', '==', skillId).get(),
-        db.collection('checkpointHistory').where('learnerId', '==', learnerId).where('isCorrect', '==', true).get(),
-      ]);
-
-      const evidenceCount = skillSnap.size + checkSnap.size;
-      let newLevel = 'emerging';
-      if (evidenceCount >= 5) newLevel = 'advanced';
-      else if (evidenceCount >= 3) newLevel = 'proficient';
-      else if (evidenceCount >= 1) newLevel = 'developing';
-
-      const newIdx = LEVEL_ORDER.indexOf(newLevel);
-      if (newIdx <= currentIdx) continue;
-
-      const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
-
-      const masteryId = `${learnerId}_${capabilityId}`;
-      if (masteryQuery.empty) {
-        const masteryRef = db.collection('capabilityMastery').doc(masteryId);
-        batch.set(masteryRef, {
-          learnerId,
-          capabilityId,
-          currentLevel: newLevel,
-          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-          previousLevel: null,
-          evidenceCount,
-          lastAssessedBy: educatorId || 'system',
-          lastAssessedAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      } else {
-        batch.update(masteryQuery.docs[0].ref, {
-          currentLevel: newLevel,
-          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-          previousLevel: currentLevel,
-          evidenceCount,
-          lastAssessedBy: educatorId || 'system',
-          lastAssessedAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
+    const db = admin.firestore();
+    if (checkpointId && typeof checkpointId === 'string') {
+      const checkpointSnap = await db.collection('checkpointHistory').doc(checkpointId).get();
+      if (!checkpointSnap.exists) {
+        return { updated: false, reason: 'Checkpoint record not found.' };
       }
 
-      const LEVEL_TO_NUMBER_SK: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+      const checkpointData = checkpointSnap.data() ?? {};
+      const checkpointDefinitionId =
+        typeof checkpointData.checkpointDefinitionId === 'string' &&
+        checkpointData.checkpointDefinitionId.trim()
+          ? checkpointData.checkpointDefinitionId.trim()
+          : null;
 
-      const growthRef = db.collection('capabilityGrowthEvents').doc();
-      batch.set(growthRef, {
-        learnerId,
-        capabilityId,
-        level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
-        fromLevel: currentLevel,
-        toLevel: newLevel,
-        educatorId: educatorId || 'system',
-        siteId,
-        source: 'checkpoint',
-        checkpointId: checkpointId || null,
-        createdAt: FieldValue.serverTimestamp(),
-      });
+      if (!checkpointDefinitionId) {
+        return {
+          updated: false,
+          reason:
+            'Checkpoint must reference an HQ-authored checkpoint definition before it can update capability growth.',
+        };
+      }
 
-      // Write skillMastery for the skill that triggered this growth
-      const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${skillId}`);
-      batch.set(skillMasteryRef, {
-        learnerId,
-        microSkillId: skillId,
-        capabilityId,
-        level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
-        siteId,
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      const checkpointDefinitionSnap = await db
+        .collection('checkpoints')
+        .doc(checkpointDefinitionId)
+        .get();
+      if (!checkpointDefinitionSnap.exists) {
+        return {
+          updated: false,
+          reason: 'Canonical checkpoint definition not found for this checkpoint submission.',
+        };
+      }
 
-      growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+      const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
+      if (checkpointDefinition.siteId !== siteId) {
+        return {
+          updated: false,
+          reason: 'Canonical checkpoint definition is outside the active site scope.',
+        };
+      }
+
+      if (
+        typeof checkpointDefinition.capabilityId !== 'string' ||
+        !checkpointDefinition.capabilityId.trim()
+      ) {
+        return {
+          updated: false,
+          reason:
+            'Canonical checkpoint definition must map to a capability before learner evidence can use it.',
+        };
+      }
+
+      const checkpointPortfolioItemId =
+        typeof checkpointData.portfolioItemId === 'string' && checkpointData.portfolioItemId.trim()
+          ? checkpointData.portfolioItemId.trim()
+          : null;
+
+      if (!checkpointPortfolioItemId) {
+        return {
+          updated: false,
+          reason:
+            'Checkpoint must be linked to a portfolio artifact before it can update capability growth.',
+        };
+      }
+
+      const portfolioSnap = await db
+        .collection('portfolioItems')
+        .doc(checkpointPortfolioItemId)
+        .get();
+      if (!portfolioSnap.exists) {
+        return {
+          updated: false,
+          reason: 'Linked portfolio artifact not found for this checkpoint.',
+        };
+      }
+
+      const portfolioData = portfolioSnap.data() ?? {};
+      const proofStatus =
+        typeof portfolioData.proofOfLearningStatus === 'string'
+          ? portfolioData.proofOfLearningStatus.trim()
+          : '';
+
+      if (proofStatus !== 'verified') {
+        return {
+          updated: false,
+          reason:
+            'Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.',
+        };
+      }
+
+      return {
+        updated: false,
+        reason:
+          'Checkpoint growth is recorded from proof verification on the linked portfolio artifact.',
+      };
     }
-  } else {
-    return {
-      updated: false,
-      reason:
-        'Checkpoint updates require a canonical checkpoint definition or mapped skill IDs before capability growth can be evaluated.',
-    };
+
+    const LEVEL_ORDER = ['emerging', 'developing', 'proficient', 'advanced'];
+    const batch = db.batch();
+    const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
+
+    // Strategy: if skillIds are provided, use skill→capability lookup.
+    // Otherwise refuse the update — checkpoint-only growth must flow through a
+    // canonical checkpoint definition and proof verification on the linked artifact.
+
+    if (skillIds && skillIds.length > 0) {
+      // Skill-based path: look up capability from microSkillIds
+      for (const skillId of skillIds) {
+        const capSnap = await db
+          .collection('capabilities')
+          .where('microSkillIds', 'array-contains', skillId)
+          .limit(1)
+          .get();
+
+        if (capSnap.empty) continue;
+
+        const capDoc = capSnap.docs[0];
+        const capabilityId = capDoc.id;
+
+        const masteryQuery = await db
+          .collection('capabilityMastery')
+          .where('learnerId', '==', learnerId)
+          .where('capabilityId', '==', capabilityId)
+          .limit(1)
+          .get();
+
+        const currentLevel = masteryQuery.empty
+          ? null
+          : (masteryQuery.docs[0].data().currentLevel as string) || 'emerging';
+
+        const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
+
+        // Count both skillEvidence and passed checkpoints as evidence
+        const [skillSnap, checkSnap] = await Promise.all([
+          db
+            .collection('skillEvidence')
+            .where('learnerId', '==', learnerId)
+            .where('microSkillId', '==', skillId)
+            .get(),
+          db
+            .collection('checkpointHistory')
+            .where('learnerId', '==', learnerId)
+            .where('isCorrect', '==', true)
+            .get(),
+        ]);
+
+        const evidenceCount = skillSnap.size + checkSnap.size;
+        let newLevel = 'emerging';
+        if (evidenceCount >= 5) newLevel = 'advanced';
+        else if (evidenceCount >= 3) newLevel = 'proficient';
+        else if (evidenceCount >= 1) newLevel = 'developing';
+
+        const newIdx = LEVEL_ORDER.indexOf(newLevel);
+        if (newIdx <= currentIdx) continue;
+
+        const LEVEL_TO_NUMBER: Record<string, number> = {
+          emerging: 1,
+          developing: 2,
+          proficient: 3,
+          advanced: 4,
+        };
+
+        const masteryId = `${learnerId}_${capabilityId}`;
+        if (masteryQuery.empty) {
+          const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+          batch.set(masteryRef, {
+            learnerId,
+            capabilityId,
+            currentLevel: newLevel,
+            latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+            previousLevel: null,
+            evidenceCount,
+            lastAssessedBy: educatorId || 'system',
+            lastAssessedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        } else {
+          batch.update(masteryQuery.docs[0].ref, {
+            currentLevel: newLevel,
+            latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+            previousLevel: currentLevel,
+            evidenceCount,
+            lastAssessedBy: educatorId || 'system',
+            lastAssessedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+
+        const LEVEL_TO_NUMBER_SK: Record<string, number> = {
+          emerging: 1,
+          developing: 2,
+          proficient: 3,
+          advanced: 4,
+        };
+
+        const growthRef = db.collection('capabilityGrowthEvents').doc();
+        batch.set(growthRef, {
+          learnerId,
+          capabilityId,
+          level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
+          fromLevel: currentLevel,
+          toLevel: newLevel,
+          educatorId: educatorId || 'system',
+          siteId,
+          source: 'checkpoint',
+          checkpointId: checkpointId || null,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+        // Write skillMastery for the skill that triggered this growth
+        const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${skillId}`);
+        batch.set(
+          skillMasteryRef,
+          {
+            learnerId,
+            microSkillId: skillId,
+            capabilityId,
+            level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
+            siteId,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+      }
+    } else {
+      return {
+        updated: false,
+        reason:
+          'Checkpoint updates require a canonical checkpoint definition or mapped skill IDs before capability growth can be evaluated.',
+      };
+    }
+
+    if (growthEvents.length > 0) {
+      await batch.commit();
+
+      // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
+      evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
+        console.warn('Badge evaluation after checkpoint mastery failed (non-blocking):', err)
+      );
+    }
+
+    return { updated: growthEvents.length > 0, growthEvents };
   }
-
-  if (growthEvents.length > 0) {
-    await batch.commit();
-
-    // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
-    evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
-      console.warn('Badge evaluation after checkpoint mastery failed (non-blocking):', err)
-    );
-  }
-
-  return { updated: growthEvents.length > 0, growthEvents };
-});
+);

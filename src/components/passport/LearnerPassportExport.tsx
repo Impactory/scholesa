@@ -200,28 +200,42 @@ function bandLabel(band: string | null): string {
 
 function proofLabel(status: string): string {
   switch (status) {
-    case 'verified': return 'Verified';
-    case 'partial': return 'Partial';
-    case 'missing': return 'Missing';
-    default: return 'N/A';
+    case 'verified':
+      return 'Verified';
+    case 'partial':
+      return 'Partial';
+    case 'missing':
+      return 'Missing';
+    default:
+      return 'N/A';
   }
 }
 
 function aiLabel(status: string): string {
   switch (status) {
-    case 'learner-ai-verified': return 'AI used — verified';
-    case 'learner-ai-verification-gap': return 'AI used — not verified';
-    case 'learner-ai-not-used': return 'AI not used';
-    case 'educator-feedback-ai': return 'Educator AI feedback';
-    case 'no-learner-ai-signal': return 'No AI signal';
-    default: return '—';
+    case 'learner-ai-verified':
+      return 'AI used — verified';
+    case 'learner-ai-verification-gap':
+      return 'AI used — not verified';
+    case 'learner-ai-not-used':
+      return 'AI not used';
+    case 'educator-feedback-ai':
+      return 'Educator AI feedback';
+    case 'no-learner-ai-signal':
+      return 'No AI signal';
+    default:
+      return '—';
   }
 }
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   } catch {
     return '—';
   }
@@ -240,14 +254,18 @@ function summarizeProofMethods(
   explainItBack: boolean,
   oralCheck: boolean,
   miniRebuild: boolean,
-  checkpointCount: number,
+  checkpointCount: number
 ): string {
-  return [
-    explainItBack ? 'Explain-it-back' : null,
-    oralCheck ? 'Oral check' : null,
-    miniRebuild ? 'Mini-rebuild' : null,
-    checkpointCount > 0 ? `${checkpointCount} checkpoint(s)` : null,
-  ].filter(Boolean).join(' · ') || '—';
+  return (
+    [
+      explainItBack ? 'Explain-it-back' : null,
+      oralCheck ? 'Oral check' : null,
+      miniRebuild ? 'Mini-rebuild' : null,
+      checkpointCount > 0 ? `${checkpointCount} checkpoint(s)` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || '—'
+  );
 }
 
 export function buildPassportTextLines(learner: LearnerPassportData): string[] {
@@ -261,9 +279,13 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
   lines.push(`Capability Band: ${bandLabel(learner.capabilitySnapshot.band)}`);
   lines.push('');
   lines.push('── Report Basis ──');
-  lines.push('  This passport summarizes reviewed evidence, linked artifacts, and recorded growth events.');
+  lines.push(
+    '  This passport summarizes reviewed evidence, linked artifacts, and recorded growth events.'
+  );
   lines.push('  Participation signals do not replace capability judgments.');
-  lines.push('  Legacy family progress is a compatibility roll-up of the current curriculum strands.');
+  lines.push(
+    '  Legacy family progress is a compatibility roll-up of the current curriculum strands.'
+  );
   lines.push(`  Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`);
   lines.push('');
   lines.push('── Legacy Family Progress ──');
@@ -300,9 +322,13 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
   }
   for (const event of learner.processDomainGrowthTimeline.slice(0, 10)) {
     lines.push(`  ${formatDate(event.createdAt)} · ${event.title}`);
-    lines.push(`    Level change:    ${levelLabel(event.fromLevel)} -> ${levelLabel(event.toLevel)}`);
+    lines.push(
+      `    Level change:    ${levelLabel(event.fromLevel)} -> ${levelLabel(event.toLevel)}`
+    );
     lines.push(`    Evidence links:  ${event.linkedEvidenceRecordIds.length}`);
-    lines.push(`    Provenance:      ${event.linkedEvidenceRecordIds.length} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`);
+    lines.push(
+      `    Provenance:      ${event.linkedEvidenceRecordIds.length} evidence${event.missionAttemptId ? ', mission-linked' : ''}${event.rubricApplicationId ? ', rubric-linked' : ''}`
+    );
     if (event.reviewingEducatorName) {
       lines.push(`    Reviewed by:     ${event.reviewingEducatorName}`);
     }
@@ -326,12 +352,18 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
     lines.push(`  ${claim.title}`);
     lines.push(`    Legacy family:   ${legacyFamilyLabel(claim.pillar)}`);
     lines.push(`    Level:           ${levelLabel(claim.latestLevel)}`);
-    lines.push(`    Evidence:        ${claim.evidenceCount} records, ${claim.verifiedArtifactCount} verified artifacts`);
-    lines.push(`    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio, ${claim.missionAttemptIds.length} mission`);
+    lines.push(
+      `    Evidence:        ${claim.evidenceCount} records, ${claim.verifiedArtifactCount} verified artifacts`
+    );
+    lines.push(
+      `    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio, ${claim.missionAttemptIds.length} mission`
+    );
     lines.push(`    Proof-of-Learn:  ${proofLabel(claim.proofOfLearningStatus)}`);
     lines.push(`    AI Disclosure:   ${aiLabel(claim.aiDisclosureStatus)}`);
     if (claim.reviewingEducatorName) {
-      lines.push(`    Reviewed by:     ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`);
+      lines.push(
+        `    Reviewed by:     ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`
+      );
     }
     if (claim.rubricRawScore != null && claim.rubricMaxScore != null) {
       lines.push(`    Rubric Score:    ${claim.rubricRawScore}/${claim.rubricMaxScore}`);
@@ -356,10 +388,16 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
     if (item.aiAssistanceDetails) {
       lines.push(`    AI Details:      ${item.aiAssistanceDetails}`);
     }
-    lines.push(`    Provenance:      ${item.evidenceRecordIds.length} evidence, ${item.missionAttemptId ? 'mission-linked' : 'standalone artifact'}, ${item.source ?? item.type}`);
-    lines.push(`    Proof methods:   ${summarizeProofMethods(item.proofHasExplainItBack, item.proofHasOralCheck, item.proofHasMiniRebuild, item.proofCheckpointCount)}`);
+    lines.push(
+      `    Provenance:      ${item.evidenceRecordIds.length} evidence, ${item.missionAttemptId ? 'mission-linked' : 'standalone artifact'}, ${item.source ?? item.type}`
+    );
+    lines.push(
+      `    Proof methods:   ${summarizeProofMethods(item.proofHasExplainItBack, item.proofHasOralCheck, item.proofHasMiniRebuild, item.proofCheckpointCount)}`
+    );
     if (item.reviewingEducatorName) {
-      lines.push(`    Reviewed by:     ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`);
+      lines.push(
+        `    Reviewed by:     ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`
+      );
     }
     if (item.rubricRawScore != null && item.rubricMaxScore != null) {
       lines.push(`    Rubric Score:    ${item.rubricRawScore}/${item.rubricMaxScore}`);
@@ -377,7 +415,9 @@ export function buildPassportTextLines(learner: LearnerPassportData): string[] {
     lines.push(`  ${formatDate(entry.occurredAt)} · ${entry.title}`);
     lines.push(`    Level:           ${levelLabel(entry.level)}`);
     lines.push(`    Proof-of-Learn:  ${proofLabel(entry.proofOfLearningStatus ?? 'missing')}`);
-    lines.push(`    Provenance:      ${entry.linkedEvidenceRecordIds.length} evidence, ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ', mission-linked' : ''}`);
+    lines.push(
+      `    Provenance:      ${entry.linkedEvidenceRecordIds.length} evidence, ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ', mission-linked' : ''}`
+    );
     if (entry.reviewingEducatorName) {
       lines.push(`    Reviewed by:     ${entry.reviewingEducatorName}`);
     }
@@ -406,11 +446,13 @@ export function buildFamilyShareSummary(learner: LearnerPassportData): string {
     .filter((item) => item.evidenceLinked || item.evidenceRecordIds.length > 0)
     .slice(0, 2);
   const nextPrompts = learner.portfolioItemsPreview
-    .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
+    .filter(
+      (item) =>
+        typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0
+    )
     .slice(0, 2);
-  const featuredAiDisclosure = topClaims.length > 0
-    ? aiLabel(topClaims[0].aiDisclosureStatus)
-    : null;
+  const featuredAiDisclosure =
+    topClaims.length > 0 ? aiLabel(topClaims[0].aiDisclosureStatus) : null;
 
   return [
     `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
@@ -458,7 +500,9 @@ function formatFamilyShareClaimLine(claim: PassportClaim): string {
       ? `reviewed by ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`
       : null,
     `${claim.evidenceRecordIds.length} evidence links, ${claim.portfolioItemIds.length} portfolio links, ${claim.missionAttemptIds.length} mission links`,
-  ].filter(Boolean).join(' • ');
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function formatFamilyShareGrowthLine(entry: GrowthTimelineEntry): string {
@@ -473,7 +517,9 @@ function formatFamilyShareGrowthLine(entry: GrowthTimelineEntry): string {
     `${entry.linkedPortfolioItemIds.length} portfolio links`,
     entry.missionAttemptId ? 'mission-linked' : null,
     `date ${formatDate(entry.occurredAt)}`,
-  ].filter(Boolean).join(' • ');
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function formatFamilySharePortfolioLine(item: PortfolioItemPreview): string {
@@ -490,7 +536,9 @@ function formatFamilySharePortfolioLine(item: PortfolioItemPreview): string {
     item.reviewingEducatorName
       ? `reviewed by ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`
       : null,
-  ].filter(Boolean).join(' • ');
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | null {
@@ -627,7 +675,9 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
           : [],
         missionAttemptId: str(r.missionAttemptId) || null,
         verificationPrompt: str(r.verificationPrompt) || null,
-        capabilityTitles: Array.isArray(r.capabilityTitles) ? r.capabilityTitles.filter((v): v is string => typeof v === 'string') : [],
+        capabilityTitles: Array.isArray(r.capabilityTitles)
+          ? r.capabilityTitles.filter((v): v is string => typeof v === 'string')
+          : [],
         proofOfLearningStatus: str(r.proofOfLearningStatus, 'missing'),
         aiDisclosureStatus: str(r.aiDisclosureStatus, 'not-available'),
         aiAssistanceDetails: str(r.aiAssistanceDetails) || null,
@@ -708,7 +758,11 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
 const LEGACY_FAMILY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   FUTURE_SKILLS: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' },
   LEADERSHIP_AGENCY: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
-  IMPACT_INNOVATION: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
+  IMPACT_INNOVATION: {
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-800',
+    border: 'border-emerald-200',
+  },
 };
 
 function legacyFamilyLabel(pillar: string | null) {
@@ -718,7 +772,13 @@ function legacyFamilyLabel(pillar: string | null) {
 
 function pillarColor(pillar: string | null) {
   const normalized = normalizeLegacyPillarCode(pillar);
-  return LEGACY_FAMILY_COLORS[normalized ?? ''] ?? { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
+  return (
+    LEGACY_FAMILY_COLORS[normalized ?? ''] ?? {
+      bg: 'bg-gray-50',
+      text: 'text-gray-700',
+      border: 'border-gray-200',
+    }
+  );
 }
 
 /* ───── Component ───── */
@@ -752,7 +812,9 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
       const payload = (response.data ?? {}) as Record<string, unknown>;
       const rawLearners = Array.isArray(payload.learners) ? payload.learners : [];
       const normalized = rawLearners
-        .filter((v): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v))
+        .filter(
+          (v): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+        )
         .map(normalizeLearner)
         .filter((v): v is LearnerPassportData => v !== null);
       setLearners(normalized);
@@ -763,7 +825,9 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
     }
   }, [user, siteId]);
 
-  useEffect(() => { fetchPassport(); }, [fetchPassport]);
+  useEffect(() => {
+    fetchPassport();
+  }, [fetchPassport]);
 
   const learner = learners[selectedIndex] ?? null;
 
@@ -773,7 +837,9 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
     return () => window.clearTimeout(timeout);
   }, [shareFeedback]);
 
-  const handlePrint = useCallback(() => { window.print(); }, []);
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
 
   const handleShareSummary = useCallback(async () => {
     if (!learner) return;
@@ -810,7 +876,9 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
 
     if (result === 'aborted') return;
     if (result === 'contract-failed') {
-      setShareFeedback('Sharing is blocked because this report is missing evidence provenance or sharing policy.');
+      setShareFeedback(
+        'Sharing is blocked because this report is missing evidence provenance or sharing policy.'
+      );
       return;
     }
     if (result === 'shared') {
@@ -852,12 +920,17 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
         cta: 'learner_passport_export_html',
         fileName: `ideation-passport-${learner.learnerId}.html`,
       });
-      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
+      setShareFeedback(
+        'Export is blocked because this report is missing evidence provenance or sharing policy.'
+      );
       return;
     }
-    const claimsHtml = learner.ideationPassport.claims.length === 0
-      ? '<p style="color:#6b7280;font-size:14px">No capability claims backed by evidence yet.</p>'
-      : learner.ideationPassport.claims.map((c) => `
+    const claimsHtml =
+      learner.ideationPassport.claims.length === 0
+        ? '<p style="color:#6b7280;font-size:14px">No capability claims backed by evidence yet.</p>'
+        : learner.ideationPassport.claims
+            .map(
+              (c) => `
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;background:#fafafa">
           <h3 style="margin:0 0 8px;font-size:16px;color:#111827">${escapeHtml(c.title)}</h3>
           <table style="border-collapse:collapse;font-size:13px;width:100%">
@@ -872,11 +945,17 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
             <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Proof methods</td><td>${summarizeProofMethods(c.proofHasExplainItBack, c.proofHasOralCheck, c.proofHasMiniRebuild, c.proofCheckpointCount)}</td></tr>
             ${c.progressionDescriptors.length > 0 ? `<tr><td style="color:#6b7280;padding:2px 12px 2px 0">Descriptor</td><td>${escapeHtml(c.progressionDescriptors[0])}</td></tr>` : ''}
           </table>
-        </div>`).join('');
+        </div>`
+            )
+            .join('');
 
-    const portfolioHtml = learner.portfolioItemsPreview.length === 0
-      ? '<p style="color:#6b7280;font-size:14px">No portfolio artifacts are linked into this passport yet.</p>'
-      : learner.portfolioItemsPreview.slice(0, 20).map((item) => `
+    const portfolioHtml =
+      learner.portfolioItemsPreview.length === 0
+        ? '<p style="color:#6b7280;font-size:14px">No portfolio artifacts are linked into this passport yet.</p>'
+        : learner.portfolioItemsPreview
+            .slice(0, 20)
+            .map(
+              (item) => `
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;background:#ffffff">
           <h3 style="margin:0 0 8px;font-size:15px;color:#111827">${escapeHtml(item.title)}</h3>
           <table style="border-collapse:collapse;font-size:13px;width:100%">
@@ -892,11 +971,17 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
             ${item.rubricRawScore != null && item.rubricMaxScore != null ? `<tr><td style="color:#6b7280;padding:2px 12px 2px 0">Rubric Score</td><td>${item.rubricRawScore}/${item.rubricMaxScore}</td></tr>` : ''}
             ${item.verificationPrompt ? `<tr><td style="color:#6b7280;padding:2px 12px 2px 0">Verification prompt</td><td>${escapeHtml(item.verificationPrompt)}</td></tr>` : ''}
           </table>
-        </div>`).join('');
+        </div>`
+            )
+            .join('');
 
-    const growthHtml = learner.growthTimeline.length === 0
-      ? '<p style="color:#6b7280;font-size:14px">No growth events have been recorded yet.</p>'
-      : learner.growthTimeline.slice(0, 15).map((entry) => `
+    const growthHtml =
+      learner.growthTimeline.length === 0
+        ? '<p style="color:#6b7280;font-size:14px">No growth events have been recorded yet.</p>'
+        : learner.growthTimeline
+            .slice(0, 15)
+            .map(
+              (entry) => `
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#ffffff">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
             <div>
@@ -910,20 +995,31 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
             </div>
           </div>
           <div style="font-size:12px;color:#6b7280;margin-top:6px">${entry.linkedEvidenceRecordIds.length} evidence · ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ' · mission-linked' : ''}</div>
-        </div>`).join('');
+        </div>`
+            )
+            .join('');
 
-    const processDomainSnapshotHtml = learner.processDomainSnapshot.length === 0
-      ? '<p style="color:#6b7280;font-size:14px">No process domain progress has been recorded yet.</p>'
-      : learner.processDomainSnapshot.map((domain) => `
+    const processDomainSnapshotHtml =
+      learner.processDomainSnapshot.length === 0
+        ? '<p style="color:#6b7280;font-size:14px">No process domain progress has been recorded yet.</p>'
+        : learner.processDomainSnapshot
+            .map(
+              (domain) => `
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#ffffff">
           <div style="font-size:14px;font-weight:600;color:#111827">${escapeHtml(domain.title)}</div>
           <div style="font-size:12px;color:#6b7280;margin-top:6px">Current level: ${escapeHtml(levelLabel(domain.currentLevel))} · Highest level: ${escapeHtml(levelLabel(domain.highestLevel))}</div>
           <div style="font-size:12px;color:#6b7280;margin-top:4px">${domain.evidenceCount} evidence · Updated ${escapeHtml(formatDate(domain.updatedAt))}</div>
-        </div>`).join('');
+        </div>`
+            )
+            .join('');
 
-    const processDomainGrowthHtml = learner.processDomainGrowthTimeline.length === 0
-      ? '<p style="color:#6b7280;font-size:14px">No process domain growth events have been recorded yet.</p>'
-      : learner.processDomainGrowthTimeline.slice(0, 10).map((entry) => `
+    const processDomainGrowthHtml =
+      learner.processDomainGrowthTimeline.length === 0
+        ? '<p style="color:#6b7280;font-size:14px">No process domain growth events have been recorded yet.</p>'
+        : learner.processDomainGrowthTimeline
+            .slice(0, 10)
+            .map(
+              (entry) => `
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#ffffff">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
             <div>
@@ -936,7 +1032,9 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
               ${entry.rubricRawScore != null && entry.rubricMaxScore != null ? `<div>${entry.rubricRawScore}/${entry.rubricMaxScore}</div>` : ''}
             </div>
           </div>
-        </div>`).join('');
+        </div>`
+            )
+            .join('');
 
     const reportBasisHtml = `<div style="border:1px solid #dbeafe;background:#eff6ff;border-radius:12px;padding:14px 16px;font-size:13px;color:#1e3a8a;line-height:1.6;margin-bottom:20px">
   <strong>Report basis</strong><br/>
@@ -1072,7 +1170,7 @@ ${growthHtml}
     const marginX = 40;
     const marginY = 48;
     const lineHeight = 14;
-    const maxWidth = pageWidth - (marginX * 2);
+    const maxWidth = pageWidth - marginX * 2;
     const reportLines = buildPassportTextLines(learner);
     const reportMetadata = reportProvenanceMetadata({
       text: reportLines.join('\n'),
@@ -1098,7 +1196,9 @@ ${growthHtml}
         cta: 'learner_passport_export_pdf',
         fileName: `ideation-passport-${learner.learnerId}.pdf`,
       });
-      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
+      setShareFeedback(
+        'Export is blocked because this report is missing evidence provenance or sharing policy.'
+      );
       return;
     }
     let y = marginY;
@@ -1108,7 +1208,7 @@ ${growthHtml}
 
     for (const line of reportLines) {
       const wrapped = pdf.splitTextToSize(line, maxWidth) as string[];
-      if (y + (wrapped.length * lineHeight) > pageHeight - marginY) {
+      if (y + wrapped.length * lineHeight > pageHeight - marginY) {
         pdf.addPage();
         y = marginY;
       }
@@ -1169,7 +1269,9 @@ ${growthHtml}
       fileName: `ideation-passport-${learner.learnerId}.txt`,
     });
     if (downloaded === 'contract-failed') {
-      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
+      setShareFeedback(
+        'Export is blocked because this report is missing evidence provenance or sharing policy.'
+      );
     }
   }, [learner, siteId, trackInteraction]);
 
@@ -1207,7 +1309,9 @@ ${growthHtml}
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 text-sm">{error}</p>
-            <button onClick={fetchPassport} className="mt-2 text-sm text-red-600 underline">Retry</button>
+            <button onClick={fetchPassport} className="mt-2 text-sm text-red-600 underline">
+              Retry
+            </button>
           </div>
         </div>
       </RoleRouteGuard>
@@ -1219,7 +1323,10 @@ ${growthHtml}
       <RoleRouteGuard allowedRoles={['learner']}>
         <div className="p-6">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-            <p className="text-gray-600">No passport evidence is available yet. Your passport will appear once reviewed evidence is linked into your growth record.</p>
+            <p className="text-gray-600">
+              No passport evidence is available yet. Your passport will appear once reviewed
+              evidence is linked into your growth record.
+            </p>
           </div>
         </div>
       </RoleRouteGuard>
@@ -1236,10 +1343,14 @@ ${growthHtml}
             <p className="text-sm text-gray-500 mt-1">Evidence-backed learner capability report</p>
             <p className="mt-2 max-w-2xl text-xs text-gray-500">
               Export a family-safe copy of reviewed evidence, linked artifacts, and recorded growth.
-              Pending verification prompts remain visible in the export as next questions, not completed claims.
+              Pending verification prompts remain visible in the export as next questions, not
+              completed claims.
             </p>
             {shareFeedback && (
-              <p className="mt-2 text-xs font-medium text-emerald-700" data-testid="learner-passport-share-feedback">
+              <p
+                className="mt-2 text-xs font-medium text-emerald-700"
+                data-testid="learner-passport-share-feedback"
+              >
                 {shareFeedback}
               </p>
             )}
@@ -1252,13 +1363,17 @@ ${growthHtml}
                 className="text-sm border border-gray-300 rounded-md px-3 py-2"
               >
                 {learners.map((l, i) => (
-                  <option key={l.learnerId} value={i}>{l.learnerName ?? l.learnerId}</option>
+                  <option key={l.learnerId} value={i}>
+                    {l.learnerName ?? l.learnerId}
+                  </option>
                 ))}
               </select>
             )}
             <button
               type="button"
-              onClick={() => { void handleShareSummary(); }}
+              onClick={() => {
+                void handleShareSummary();
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               title="Share a family-safe evidence summary with native share when available, or copy it to the clipboard"
             >
@@ -1281,7 +1396,9 @@ ${growthHtml}
             </button>
             <button
               type="button"
-              onClick={() => { void handleExportPdf(); }}
+              onClick={() => {
+                void handleExportPdf();
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               title="Download a dedicated PDF artifact of this evidence-backed passport"
             >
@@ -1330,7 +1447,8 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
           <div className="text-right text-sm text-gray-500">
             <div>Generated {formatDate(learner.ideationPassport.generatedAt)}</div>
             <div className="font-medium text-gray-700">
-              Band: <span className="text-indigo-600">{bandLabel(learner.capabilitySnapshot.band)}</span>
+              Band:{' '}
+              <span className="text-indigo-600">{bandLabel(learner.capabilitySnapshot.band)}</span>
             </div>
           </div>
         </div>
@@ -1338,28 +1456,46 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
 
       {/* ── Legacy Family Progress ── */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Legacy Family Progress</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          Legacy Family Progress
+        </h3>
         <div className="grid grid-cols-3 gap-4">
-          <PillarCard label={getLegacyPillarFamilyLabel('FUTURE_SKILLS')} value={learner.capabilitySnapshot.futureSkills} />
-          <PillarCard label={getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY')} value={learner.capabilitySnapshot.leadership} />
-          <PillarCard label={getLegacyPillarFamilyLabel('IMPACT_INNOVATION')} value={learner.capabilitySnapshot.impact} />
+          <PillarCard
+            label={getLegacyPillarFamilyLabel('FUTURE_SKILLS')}
+            value={learner.capabilitySnapshot.futureSkills}
+          />
+          <PillarCard
+            label={getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY')}
+            value={learner.capabilitySnapshot.leadership}
+          />
+          <PillarCard
+            label={getLegacyPillarFamilyLabel('IMPACT_INNOVATION')}
+            value={learner.capabilitySnapshot.impact}
+          />
         </div>
       </section>
 
       {/* ── Evidence Summary ── */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Evidence Summary</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          Evidence Summary
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Evidence Records" value={learner.evidenceSummary.recordCount} />
           <StatCard label="Reviewed" value={learner.evidenceSummary.reviewedCount} />
           <StatCard label="Portfolio-Linked" value={learner.evidenceSummary.portfolioLinkedCount} />
-          <StatCard label="Verified Artifacts" value={learner.portfolioSnapshot.verifiedArtifactCount} />
+          <StatCard
+            label="Verified Artifacts"
+            value={learner.portfolioSnapshot.verifiedArtifactCount}
+          />
         </div>
       </section>
 
       {/* ── Growth Summary ── */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Growth Summary</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          Growth Summary
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Capabilities Tracked" value={learner.growthSummary.capabilityCount} />
           <StatCard label="Updated" value={learner.growthSummary.updatedCapabilityCount} />
@@ -1368,16 +1504,23 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
         </div>
       </section>
 
-      {(learner.processDomainSnapshot.length > 0 || learner.processDomainGrowthTimeline.length > 0) && (
+      {(learner.processDomainSnapshot.length > 0 ||
+        learner.processDomainGrowthTimeline.length > 0) && (
         <section className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Process Domains</h3>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            Process Domains
+          </h3>
           {learner.processDomainSnapshot.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {learner.processDomainSnapshot.map((domain) => (
-                <div key={domain.processDomainId} className="rounded-lg border border-gray-200 bg-white p-3">
+                <div
+                  key={domain.processDomainId}
+                  className="rounded-lg border border-gray-200 bg-white p-3"
+                >
                   <div className="font-medium text-gray-900">{domain.title}</div>
                   <div className="mt-1 text-xs text-gray-500">
-                    Current {levelLabel(domain.currentLevel)} · Highest {levelLabel(domain.highestLevel)}
+                    Current {levelLabel(domain.currentLevel)} · Highest{' '}
+                    {levelLabel(domain.highestLevel)}
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
                     {domain.evidenceCount} evidence · Updated {formatDate(domain.updatedAt)}
@@ -1386,20 +1529,31 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">No process domain progress has been recorded yet.</p>
+            <p className="text-sm text-gray-500 italic">
+              No process domain progress has been recorded yet.
+            </p>
           )}
           {learner.processDomainGrowthTimeline.length > 0 && (
             <div className="mt-4 space-y-1.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Recent process domain growth</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Recent process domain growth
+              </h4>
               {learner.processDomainGrowthTimeline.slice(0, 10).map((entry, index) => (
-                <div key={`${entry.processDomainId}-${index}`} className="flex items-center gap-3 border-b border-gray-50 py-1 text-sm">
-                  <span className="w-20 shrink-0 text-xs text-gray-400">{formatDate(entry.createdAt)}</span>
+                <div
+                  key={`${entry.processDomainId}-${index}`}
+                  className="flex items-center gap-3 border-b border-gray-50 py-1 text-sm"
+                >
+                  <span className="w-20 shrink-0 text-xs text-gray-400">
+                    {formatDate(entry.createdAt)}
+                  </span>
                   <div className="flex-1">
                     <div className="font-medium text-gray-800">{entry.title}</div>
                     <div className="mt-0.5 text-[11px] text-gray-500">
                       {levelLabel(entry.fromLevel)} to {levelLabel(entry.toLevel)}
                       {entry.reviewingEducatorName ? ` · ${entry.reviewingEducatorName}` : ''}
-                      {entry.linkedEvidenceRecordIds.length > 0 ? ` · ${entry.linkedEvidenceRecordIds.length} evidence` : ''}
+                      {entry.linkedEvidenceRecordIds.length > 0
+                        ? ` · ${entry.linkedEvidenceRecordIds.length} evidence`
+                        : ''}
                       {entry.missionAttemptId ? ' · mission-linked' : ''}
                       {entry.rubricApplicationId ? ' · rubric-linked' : ''}
                       {entry.rubricRawScore != null && entry.rubricMaxScore != null
@@ -1420,14 +1574,20 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
           Capability Claims ({learner.ideationPassport.claims.length})
         </h3>
         {learner.ideationPassport.claims.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No capability claims backed by evidence yet.</p>
+          <p className="text-sm text-gray-500 italic">
+            No capability claims backed by evidence yet.
+          </p>
         ) : (
           <div className="space-y-4">
             {Array.from(claimsByPillar.entries()).map(([pillar, claims]) => {
               const colors = pillarColor(pillar);
               return (
                 <div key={pillar}>
-                  <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${colors.text}`}>{pillar}</h4>
+                  <h4
+                    className={`text-xs font-semibold uppercase tracking-wider mb-2 ${colors.text}`}
+                  >
+                    {pillar}
+                  </h4>
                   <div className="space-y-2">
                     {claims.map((claim) => (
                       <ClaimRow key={claim.capabilityId} claim={claim} />
@@ -1464,10 +1624,16 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
                     <td className="py-1.5 pr-3">
                       <div className="font-medium text-gray-900">{item.title}</div>
                       <div className="mt-0.5 text-[11px] text-gray-500">
-                        {item.capabilityTitles.length > 0 ? item.capabilityTitles.join(', ') : 'No capability tags'}
-                        {item.evidenceRecordIds.length > 0 ? ` · ${item.evidenceRecordIds.length} evidence` : ''}
+                        {item.capabilityTitles.length > 0
+                          ? item.capabilityTitles.join(', ')
+                          : 'No capability tags'}
+                        {item.evidenceRecordIds.length > 0
+                          ? ` · ${item.evidenceRecordIds.length} evidence`
+                          : ''}
                         {item.missionAttemptId ? ' · mission-linked' : ''}
-                        {item.proofCheckpointCount > 0 ? ` · ${item.proofCheckpointCount} checkpoints` : ''}
+                        {item.proofCheckpointCount > 0
+                          ? ` · ${item.proofCheckpointCount} checkpoints`
+                          : ''}
                       </div>
                     </td>
                     <td className="py-1.5 pr-3 text-gray-600">{legacyFamilyLabel(item.pillar)}</td>
@@ -1477,8 +1643,12 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
                     <td className="py-1.5 pr-3">
                       <ProofBadge status={item.proofOfLearningStatus} />
                     </td>
-                    <td className="py-1.5 pr-3 text-gray-500 text-xs">{aiLabel(item.aiDisclosureStatus)}</td>
-                    <td className="py-1.5 text-gray-500 text-xs">{item.reviewingEducatorName ?? '—'}</td>
+                    <td className="py-1.5 pr-3 text-gray-500 text-xs">
+                      {aiLabel(item.aiDisclosureStatus)}
+                    </td>
+                    <td className="py-1.5 text-gray-500 text-xs">
+                      {item.reviewingEducatorName ?? '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1495,12 +1665,18 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
           </h3>
           <div className="space-y-1.5">
             {learner.growthTimeline.slice(0, 15).map((entry, i) => (
-              <div key={`${entry.capabilityId}-${i}`} className="flex items-center gap-3 text-sm py-1 border-b border-gray-50">
-                <span className="text-xs text-gray-400 w-20 shrink-0">{formatDate(entry.occurredAt)}</span>
+              <div
+                key={`${entry.capabilityId}-${i}`}
+                className="flex items-center gap-3 text-sm py-1 border-b border-gray-50"
+              >
+                <span className="text-xs text-gray-400 w-20 shrink-0">
+                  {formatDate(entry.occurredAt)}
+                </span>
                 <div className="flex-1">
                   <div className="font-medium text-gray-800">{entry.title}</div>
                   <div className="mt-0.5 text-[11px] text-gray-500">
-                    {entry.linkedEvidenceRecordIds.length} evidence · {entry.linkedPortfolioItemIds.length} portfolio
+                    {entry.linkedEvidenceRecordIds.length} evidence ·{' '}
+                    {entry.linkedPortfolioItemIds.length} portfolio
                     {entry.missionAttemptId ? ' · mission-linked' : ''}
                     {entry.reviewingEducatorName ? ` · ${entry.reviewingEducatorName}` : ''}
                   </div>
@@ -1511,7 +1687,9 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
                   </span>
                   <ProofBadge status={entry.proofOfLearningStatus ?? 'missing'} />
                   {entry.rubricRawScore != null && entry.rubricMaxScore != null && (
-                    <span className="text-xs text-gray-500">{entry.rubricRawScore}/{entry.rubricMaxScore}</span>
+                    <span className="text-xs text-gray-500">
+                      {entry.rubricRawScore}/{entry.rubricMaxScore}
+                    </span>
                   )}
                 </div>
               </div>
@@ -1522,7 +1700,9 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
 
       {/* ── Ideation Activity ── */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Ideation Activity</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          Ideation Activity
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard label="Missions Attempted" value={learner.ideationPassport.missionAttempts} />
           <StatCard label="Missions Completed" value={learner.ideationPassport.completedMissions} />
@@ -1536,7 +1716,8 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
       <div className="border-t border-gray-200 pt-4 mt-8">
         <p className="text-xs text-gray-400 italic">{learner.ideationPassport.summary}</p>
         <p className="text-xs text-gray-300 mt-1">
-          Scholesa Ideation Passport — capability claims are backed by reviewed evidence and verified artifacts.
+          Scholesa Ideation Passport — capability claims are backed by reviewed evidence and
+          verified artifacts.
         </p>
       </div>
     </div>
@@ -1585,8 +1766,12 @@ function ClaimRow({ claim }: { claim: PassportClaim }) {
         <div className="text-xs text-gray-500 mt-0.5 flex gap-3">
           <span>{claim.evidenceCount} evidence</span>
           <span>{claim.verifiedArtifactCount} verified</span>
-          {claim.portfolioItemIds.length > 0 && <span>{claim.portfolioItemIds.length} portfolio</span>}
-          {claim.missionAttemptIds.length > 0 && <span>{claim.missionAttemptIds.length} mission</span>}
+          {claim.portfolioItemIds.length > 0 && (
+            <span>{claim.portfolioItemIds.length} portfolio</span>
+          )}
+          {claim.missionAttemptIds.length > 0 && (
+            <span>{claim.missionAttemptIds.length} mission</span>
+          )}
           {claim.reviewingEducatorName && <span>by {claim.reviewingEducatorName}</span>}
           {claim.reviewedAt && <span>{formatDate(claim.reviewedAt)}</span>}
         </div>
@@ -1628,9 +1813,7 @@ function ProofBadge({ status }: { status: string }) {
   };
   const c = config[status] ?? { bg: 'bg-gray-100', text: 'text-gray-500' };
   return (
-    <span className={`text-xs px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>
-      {proofLabel(status)}
-    </span>
+    <span className={`text-xs px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{proofLabel(status)}</span>
   );
 }
 
@@ -1642,9 +1825,5 @@ function VerificationBadge({ status }: { status: string | null }) {
     pending: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Pending' },
   };
   const c = config[status] ?? { bg: 'bg-gray-100', text: 'text-gray-500', label: status };
-  return (
-    <span className={`text-xs px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>
-      {c.label}
-    </span>
-  );
+  return <span className={`text-xs px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span>;
 }

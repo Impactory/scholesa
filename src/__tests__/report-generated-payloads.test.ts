@@ -319,10 +319,16 @@ describe('generated web report payload provenance', () => {
     });
 
     expect(guardianPassportText).toContain('MiloOS Support Provenance');
-    expect(guardianPassportText).toContain('These are support and verification signals, not capability mastery.');
-    expect(guardianPassportText).toContain('Provenance:      1 evidence, mission-linked, rubric-linked');
+    expect(guardianPassportText).toContain(
+      'These are support and verification signals, not capability mastery.'
+    );
+    expect(guardianPassportText).toContain(
+      'Provenance:      1 evidence, mission-linked, rubric-linked'
+    );
     expect(guardianPassportText).toContain('Rubric Score:    3/4');
-    expect(guardianShareText).toContain('MiloOS support provenance: 2 opened, 2 used, 1 explain-back(s), 1 pending; not capability mastery.');
+    expect(guardianShareText).toContain(
+      'MiloOS support provenance: 2 opened, 2 used, 1 explain-back(s), 1 pending; not capability mastery.'
+    );
     expect(guardianShareText).toContain('rubric-linked');
   });
 });
