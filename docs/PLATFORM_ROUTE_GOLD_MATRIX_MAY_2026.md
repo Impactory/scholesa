@@ -9,6 +9,8 @@ Primary sources:
 - `docs/ROUTE_MODULE_MATRIX.md`
 - `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`
 - `docs/PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md`
+- `functions/src/evidenceChainEmulator.test.ts`
+- `test/e2e/evidence-chain-cross-role.e2e.spec.ts`
 
 Classification key:
 
@@ -31,9 +33,9 @@ This is the smallest route-level path that can prove Scholesa's central capabili
 
 | Priority | Route | Current status | Why it blocks blanket gold | Next proof |
 | --- | --- | --- | --- | --- |
-| 1 | `/educator/rubrics/apply` joined to `/parent/passport` | aligned and reusable | Functions emulator proof now blocks rubric growth before verified proof and proves the resulting parent/passport output after server-owned growth, but blanket gold still needs browser coverage using canonical synthetic data. | Add a cross-role evidence-chain E2E using canonical synthetic data. |
+| 1 | `/educator/rubrics/apply` joined to `/parent/passport` | gold-candidate | Functions emulator proof now blocks rubric growth before verified proof and proves the resulting parent/passport output after server-owned growth. Browser route proof now seeds production-shaped evidence/proof/rubric/growth records and verifies educator rubric handoff, guardian passport provenance, and site evidence-health consumption. Blanket gold still needs importer-backed canonical synthetic broadening and per-route proof references. | Replace the local browser seed with importer-backed canonical platform synthetic data and attach exact proof references to each evidence-chain route row. |
 | 2 | `/hq/capability-frameworks` + `/hq/rubric-builder` | aligned and reusable | HQ setup is real, but the final route chain must prove setup feeds educator rubricing without manual fixture shortcuts. | Seed/import canonical framework and rubric records, then consume them in educator rubric flow. |
-| 3 | `/site/evidence-health` | aligned and reusable | Site leaders must see evidence coverage gaps from the same route chain, not generic operational totals. | Assert evidence-health reflects the canonical full-chain learner/educator records. |
+| 3 | `/site/evidence-health` | gold-candidate | Browser route proof now shows site leaders evidence coverage, capability-mapped rate, and rubric-applied rate from the same seeded learner/educator evidence record used by guardian passport. Blanket gold still needs importer-backed canonical synthetic data and broader site session coverage. | Expand evidence-health proof to importer-backed canonical synthetic data and site session evidence coverage. |
 | 4 | `/educator/sessions` and `/site/sessions` | reusable with modification | Session views communicate evidence coverage but still need final joined proof across educator and site scopes. | Add route proof that session coverage counts are site-scoped and evidence-backed. |
 | 5 | `/partner/deliverables` | deferred unless partner scope is included | Partner output trust is real, but external-facing surfaces should not be included in blanket gold without explicit permission and evidence-safety scope. | Decide release inclusion; if included, run partner deliverable proof in the final packet. |
 
@@ -128,4 +130,4 @@ Work Package 1 is complete when:
 - partner routes are either explicitly included with proof or deferred;
 - the first gold-critical route chain is named and pinned by source-contract tests.
 
-Current status: **Work Package 1 is substantially started, not complete**. The route matrix exists and is pinned, and `functions/src/evidenceChainEmulator.test.ts` now proves the first server-side route chain boundary from verified proof to rubric growth to parent/passport output and site-health-readable evidence. The next pass must attach exact E2E/test file references to each route and implement browser coverage for the same cross-role evidence-chain proof using canonical synthetic data.
+Current status: **Work Package 1 is substantially started, not complete**. The route matrix exists and is pinned. `functions/src/evidenceChainEmulator.test.ts` proves the first server-side route chain boundary from verified proof to rubric growth to parent/passport output and site-health-readable evidence. `test/e2e/evidence-chain-cross-role.e2e.spec.ts` now proves the browser route layer consumes one production-shaped seeded chain across educator rubric handoff, guardian passport, and site evidence-health. The remaining Work Package 1 gap is exact E2E/test file references for every evidence-chain route row plus importer-backed canonical synthetic broadening beyond this local browser seed.

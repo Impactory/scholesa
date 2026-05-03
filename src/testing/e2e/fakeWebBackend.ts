@@ -941,16 +941,20 @@ export async function getE2EParentDashboardBundle(params: {
             ? 'verified'
             : 'pending',
           aiDisclosureStatus: item.aiDisclosureStatus || 'learner-ai-not-used',
-          proofDetails: item.proofDetails || {
-            explainItBack: false,
-            oralCheck: false,
-            miniRebuild: false,
-          },
+          proofHasExplainItBack: item.proofDetails?.explainItBack === true,
+          proofHasOralCheck: item.proofDetails?.oralCheck === true,
+          proofHasMiniRebuild: item.proofDetails?.miniRebuild === true,
+          proofExplainItBackExcerpt: item.proofDetails?.explainItBackExcerpt,
+          proofOralCheckExcerpt: item.proofDetails?.oralCheckExcerpt,
+          proofMiniRebuildExcerpt: item.proofDetails?.miniRebuildExcerpt,
+          reviewingEducatorName: item.proofDetails?.educatorVerifierName,
           reviewedAt: item.reviewedAt || item.updatedAt,
-          evidenceCount: item.evidenceRecordIds?.length || 0,
+          evidenceRecordIds: item.evidenceRecordIds || [],
           proofCheckpointCount: item.proofDetails?.proofCheckpointCount || 0,
           missionAttemptId: item.missionAttemptId || null,
-          rubricScore: item.rubricScore || null,
+          rubricRawScore: item.rubricScore?.raw,
+          rubricMaxScore: item.rubricScore?.max,
+          rubricLevel: item.rubricScore?.level === 'Level 4' ? 4 : undefined,
         }));
       const reviewedEvidenceCount = learnerEvidence.filter((record) => (
         record.rubricStatus === 'applied' || record.growthStatus === 'recorded'
@@ -965,27 +969,34 @@ export async function getE2EParentDashboardBundle(params: {
 
         return {
           capabilityId,
-          capabilityTitle: typeof capability?.title === 'string' ? capability.title : String(mastery.title || capabilityId),
-          pillarCode: typeof capability?.pillarCode === 'string' ? capability.pillarCode : 'FUTURE_SKILLS',
-          level: String(mastery.currentLevel || mastery.levelAchieved || relatedGrowth?.levelAchieved || 'Level 4'),
+          title: typeof capability?.title === 'string' ? capability.title : String(mastery.title || capabilityId),
+          pillar: typeof capability?.pillarCode === 'string' ? capability.pillarCode : 'FUTURE_SKILLS',
+          latestLevel: mastery.currentLevel || mastery.levelAchieved || relatedGrowth?.levelAchieved || 4,
           evidenceCount: Number(mastery.evidenceCount || relatedGrowth?.linkedEvidenceCount || learnerEvidence.length),
           verifiedArtifactCount: relatedPortfolioCount,
-          portfolioItemCount: relatedPortfolioCount,
-          missionAttemptCount: relatedGrowth?.missionAttemptId ? 1 : 0,
-          proofStatus: 'verified',
+          portfolioItemIds: state.portfolioItems
+            .filter((portfolio) => portfolio.learnerId === learner.uid && portfolio.capabilityIds?.includes(capabilityId))
+            .map((portfolio) => portfolio.id),
+          missionAttemptIds: relatedGrowth?.missionAttemptId ? [relatedGrowth.missionAttemptId] : [],
+          proofOfLearningStatus: 'verified',
           aiDisclosureStatus: 'learner-ai-not-used',
-          reviewerName: String(relatedGrowth?.educatorName || 'Educator Alpha'),
+          reviewingEducatorName: String(relatedGrowth?.educatorName || 'Educator Alpha'),
           reviewedAt: String(relatedGrowth?.date || mastery.updatedAt || DEFAULT_TIMESTAMP),
-          rubricScore: relatedGrowth?.rubricScore || mastery.rubricScore || null,
+          rubricRawScore: typeof relatedGrowth?.rubricScore === 'object' && relatedGrowth.rubricScore !== null
+            ? Number((relatedGrowth.rubricScore as Record<string, unknown>).raw || 0)
+            : 4,
+          rubricMaxScore: typeof relatedGrowth?.rubricScore === 'object' && relatedGrowth.rubricScore !== null
+            ? Number((relatedGrowth.rubricScore as Record<string, unknown>).max || 4)
+            : 4,
           proofHasExplainItBack: true,
           proofHasOralCheck: true,
           proofHasMiniRebuild: true,
           proofCheckpointCount: 3,
-          progressionDescriptor: typeof mastery.progressionDescriptor === 'string'
+          progressionDescriptors: [typeof mastery.progressionDescriptor === 'string'
             ? mastery.progressionDescriptor
             : typeof capability?.progressionDescriptor === 'string'
             ? capability.progressionDescriptor
-            : undefined,
+            : undefined].filter(Boolean),
         };
       });
       const averageLevel = learnerMastery.length > 0
@@ -1026,16 +1037,21 @@ export async function getE2EParentDashboardBundle(params: {
           averageLevel,
         },
         growthTimeline: learnerGrowthEvents.map((event) => ({
-          id: event.id,
-          capabilityTitle: String(event.capabilityTitle || state.capabilities.find((record) => record.id === event.capabilityId)?.title || event.capabilityId || 'Capability'),
-          levelAchieved: String(event.levelAchieved || 'Level 4'),
-          educatorName: String(event.educatorName || 'Educator Alpha'),
-          date: String(event.date || event.createdAt || DEFAULT_TIMESTAMP),
-          proofStatus: 'verified',
-          linkedEvidenceCount: Number(event.linkedEvidenceCount || learnerEvidence.length),
-          linkedPortfolioCount: Number(event.linkedPortfolioCount || portfolioItemsPreview.length),
+          title: String(event.capabilityTitle || state.capabilities.find((record) => record.id === event.capabilityId)?.title || event.capabilityId || 'Capability'),
+          capabilityId: event.capabilityId,
+          level: event.level || 4,
+          reviewingEducatorName: String(event.educatorName || 'Educator Alpha'),
+          occurredAt: String(event.date || event.createdAt || DEFAULT_TIMESTAMP),
+          proofOfLearningStatus: 'verified',
+          linkedEvidenceRecordIds: event.linkedEvidenceRecordIds || learnerEvidence.map((record) => record.id),
+          linkedPortfolioItemIds: event.linkedPortfolioItemIds || portfolioItemsPreview.map((item) => item.id),
           missionAttemptId: event.missionAttemptId || null,
-          rubricScore: event.rubricScore || null,
+          rubricRawScore: typeof event.rubricScore === 'object' && event.rubricScore !== null
+            ? (event.rubricScore as Record<string, unknown>).raw
+            : undefined,
+          rubricMaxScore: typeof event.rubricScore === 'object' && event.rubricScore !== null
+            ? (event.rubricScore as Record<string, unknown>).max
+            : undefined,
         })),
         processDomainSnapshot: learnerProcessMastery.map((mastery) => ({
           processDomainId: mastery.processDomainId || mastery.id,
