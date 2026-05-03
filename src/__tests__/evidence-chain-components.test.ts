@@ -1032,13 +1032,18 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain("where('learnerId', '==', learnerId)");
     expect(managerSource).toContain("where('status', '==', 'active')");
     expect(managerSource).toContain('Boolean(expiresAt && expiresAt.getTime() > Date.now())');
-    expect(managerSource).toContain(
-      "if (viewer === 'guardian') return request.visibility === 'family'"
-    );
+    expect(managerSource).toContain("request.audience === 'guardian'");
+    expect(managerSource).toContain("if (viewer === 'guardian') return isGuardianFamilyShare");
+    expect(managerSource).toContain("request.audience === 'learner'");
     expect(managerSource).toContain('isVisibleForViewer(request, viewer)');
+    expect(managerSource).toContain('isRevocableForViewer(request, viewer)');
+    expect(managerSource).toContain("? 'Revoke'\n                    : 'Visible'");
     expect(managerSource).toContain('.slice(0, 25)');
     expect(managerSource).toContain('revokeReportShareRequest');
     expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
+    expect(managerSource).toContain(
+      "catch {\n      setRequests([]);\n      setFeedback('Active report shares could not be loaded.');"
+    );
     expect(managerSource).toContain('Share revocation failed. The active share is still listed.');
     expect(managerSource).toContain(
       'External/public sharing remains blocked until explicit consent workflow support exists.'
@@ -1051,7 +1056,7 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain('request.sharePolicy.allowsExternalSharing');
     expect(managerSource).toContain('data-testid={`report-share-request-manager-${learnerId}`}');
     expect(managerSource).toContain(
-      "request.visibility === 'family' || request.visibility === 'private'"
+      "request.audience === 'learner' && request.visibility === 'private'"
     );
   });
 

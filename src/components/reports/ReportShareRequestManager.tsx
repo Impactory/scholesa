@@ -41,8 +41,18 @@ function isUnexpiredShare(request: ReportShareRequestRow): boolean {
 }
 
 function isVisibleForViewer(request: ReportShareRequestRow, viewer: 'learner' | 'guardian') {
-  if (viewer === 'guardian') return request.visibility === 'family';
-  return request.visibility === 'family' || request.visibility === 'private';
+  const isGuardianFamilyShare = request.audience === 'guardian' && request.visibility === 'family';
+  if (viewer === 'guardian') return isGuardianFamilyShare;
+  return (
+    isGuardianFamilyShare || (request.audience === 'learner' && request.visibility === 'private')
+  );
+}
+
+function isRevocableForViewer(request: ReportShareRequestRow, viewer: 'learner' | 'guardian') {
+  if (viewer === 'guardian') {
+    return request.audience === 'guardian' && request.visibility === 'family';
+  }
+  return request.audience === 'learner' && request.visibility === 'private';
 }
 
 function labelForAction(action: ReportShareRequest['reportAction']): string {
@@ -105,6 +115,7 @@ export function ReportShareRequestManager({
         .slice(0, 25);
       setRequests(activeRequests);
     } catch {
+      setRequests([]);
       setFeedback('Active report shares could not be loaded.');
     } finally {
       setLoading(false);
@@ -208,10 +219,14 @@ export function ReportShareRequestManager({
               <button
                 type="button"
                 onClick={() => void handleRevoke(request.id)}
-                disabled={revokingId === request.id}
+                disabled={revokingId === request.id || !isRevocableForViewer(request, viewer)}
                 className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {revokingId === request.id ? 'Revoking...' : 'Revoke'}
+                {revokingId === request.id
+                  ? 'Revoking...'
+                  : isRevocableForViewer(request, viewer)
+                    ? 'Revoke'
+                    : 'Visible'}
               </button>
             </li>
           ))}
