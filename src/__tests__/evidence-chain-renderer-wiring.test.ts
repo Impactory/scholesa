@@ -858,6 +858,30 @@ describe('Renderers delegate to real evidence components', () => {
     expect(firestoreRulesTestSource).toContain('other-site educator cannot read or issue site1 learner credential');
   });
 
+  it('Platform gold readiness master plan keeps blanket certification bounded', () => {
+    const masterPlanSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md'),
+      'utf8'
+    );
+    const auditSource = fs.readFileSync(
+      path.join(process.cwd(), 'AUDIT_TODO_APRIL_2026.md'),
+      'utf8'
+    );
+
+    expect(masterPlanSource).toContain('not blanket platform gold-ready yet');
+    expect(masterPlanSource).toContain('Master Matrix');
+    expect(masterPlanSource).toContain('MiloOS support provenance');
+    expect(masterPlanSource).toContain('Gold-candidate');
+    expect(masterPlanSource).toContain('HQ setup -> educator live evidence capture -> learner artifact/reflection/checkpoint/proof');
+    expect(masterPlanSource).toContain('applyRubricToEvidence');
+    expect(masterPlanSource).toContain('processCheckpointMasteryUpdate');
+    expect(masterPlanSource).toContain('Work Package 1 - Build The Route Gold Matrix');
+    expect(masterPlanSource).toContain('Work Package 2 - Certify The Full Evidence Chain');
+    expect(masterPlanSource).toContain('Do not call the platform blanket gold-ready');
+    expect(auditSource).toContain('PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md');
+    expect(auditSource).toContain('first gold-critical gap');
+  });
+
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {
     const source = readSrcFile('components', 'layout', 'PageTransition.tsx');
 

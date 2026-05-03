@@ -37,6 +37,8 @@
 
 **MiloOS synthetic manifest parity update**: On 2026-05-03, `syntheticMiloOSGoldStates/latest` was strengthened to carry canonical `sourceCounts` directly in the manifest (`miloosGoldLearnerStates: 5`, `miloosGoldInteractionEvents: 13`). The JS importer test, web E2E fixture, browser manifest assertion, Flutter fake Firestore bridge, and source-contract test now all verify the same manifest metadata, removing the previous web-summary-vs-mobile-manifest asymmetry.
 
+**Blanket platform gold-readiness plan**: `docs/PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md` is now the master certification queue for any future blanket platform gold claim. It classifies the current MiloOS/Flutter-web work as gold-candidate, keeps broader platform gold blocked until all release-critical workflows are classified and proven, and names the first gold-critical gap as the HQ setup -> educator evidence/rubric -> server-owned growth -> portfolio -> guardian passport/report chain.
+
 **MiloOS final signoff**: MiloOS creates support/provenance evidence (`ai_help_opened`, `ai_help_used`, `ai_coach_response`, `explain_it_back_submitted`), lets learners/educators/guardians/site leaders observe the right scoped summaries on web, adds focused Flutter/mobile learner/educator/site support-provenance parity, verifies authenticity through explain-back linked to the support turn, and keeps support separate from mastery by never writing support-only `capabilityMastery` or `capabilityGrowthEvents`. Broader platform and broader Flutter workflows remain beta.
 
 | Metric | Value |
