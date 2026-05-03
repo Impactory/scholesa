@@ -573,9 +573,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
   it('also exposes the same family-safe share and export actions on the parent summary route', () => {
     expect(source).toContain("const isSummaryRoute = ctx.routePath === '/parent/summary'");
     expect(source).toContain('const showGuardianShareActions = isPassportRoute || isSummaryRoute');
-    expect(source).toContain(
-      'Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth'
-    );
+    expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked');
+    expect(source).toContain('artifacts, and recorded growth for {learner.name}.');
     expect(source).toContain('Featured AI disclosure:');
     expect(source).toContain('Recent growth provenance:');
     expect(source).toContain('Recent process-domain growth:');
@@ -587,8 +586,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('proof ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label');
     expect(source).toContain('AI ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label');
     expect(source).toContain('rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}');
-    expect(source).toContain('${event.linkedEvidenceCount} evidence link(s)');
-    expect(source).toContain('${event.linkedPortfolioCount} portfolio link(s)');
+    expect(source).toContain('${evidenceLinkCount} evidence link(s)');
+    expect(source).toContain('${portfolioLinkCount} portfolio link(s)');
     expect(source).toContain('${item.evidenceCount ?? 0} evidence, ${item.missionAttemptId ?');
     expect(source).toContain(
       'Rubric Score:    ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})'
@@ -847,10 +846,13 @@ describe('ParentAnalyticsDashboard guardian honesty', () => {
 describe('verifyProofOfLearning callable', () => {
   const functionsSource = fs.readFileSync(path.join(functionsDir, 'index.ts'), 'utf8');
   const verifyStart = functionsSource.indexOf('export const verifyProofOfLearning');
-  const verifyEnd = functionsSource.indexOf('\n});', verifyStart);
+  const verifyEnd = functionsSource.indexOf(
+    '// ---------------------------------------------------------------------------\n// S3-2',
+    verifyStart
+  );
   const verifySection = functionsSource.slice(
     verifyStart,
-    verifyEnd > verifyStart ? verifyEnd + 4 : verifyStart + 8000
+    verifyEnd > verifyStart ? verifyEnd : verifyStart + 8000
   );
 
   it('exports verifyProofOfLearning as onCall', () => {
