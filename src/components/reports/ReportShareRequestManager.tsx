@@ -82,7 +82,10 @@ export function ReportShareRequestManager({
         )
       );
       const activeRequests = snap.docs
-        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }) as ReportShareRequestRow)
+        .map((docSnap) => {
+          const { id: _storedId, ...data } = docSnap.data();
+          return { ...data, id: docSnap.id } as ReportShareRequestRow;
+        })
         .filter(isUnexpiredShare)
         .filter((request) => request.visibility === 'family' || request.visibility === 'private');
       setRequests(activeRequests);
