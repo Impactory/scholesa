@@ -233,6 +233,55 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     setLoading(true);
     setError(null);
       try {
+        if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+          const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+          const loaded = getE2ECollection('missionAttempts')
+            .filter((record) => record.siteId === educatorSiteId)
+            .filter((record) => record.status === 'submitted' || record.status === 'pending_review')
+            .map((record) => ({
+              id: asString(record.id, ''),
+              learnerId: asString(record.learnerId, ''),
+              missionId: asString(record.missionId, ''),
+              portfolioItemId: typeof record.portfolioItemId === 'string' ? record.portfolioItemId : null,
+              status: asString(record.status, 'submitted'),
+              content: asString(record.content, ''),
+              attachmentUrls: Array.isArray(record.attachmentUrls) ? record.attachmentUrls as string[] : [],
+              aiDisclosure: Boolean(record.aiDisclosure || record.aiAssistanceUsed),
+              aiToolsUsed: typeof record.aiToolsUsed === 'string' ? record.aiToolsUsed : null,
+              aiAssistanceDetails: typeof record.aiAssistanceDetails === 'string'
+                ? record.aiAssistanceDetails
+                : null,
+              aiDisclosureStatus: typeof record.aiDisclosureStatus === 'string'
+                ? record.aiDisclosureStatus
+                : null,
+              submittedAt: toIso(record.submittedAt),
+              capabilityId: typeof record.capabilityId === 'string' ? record.capabilityId : null,
+              proofOfLearningStatus: typeof record.proofOfLearningStatus === 'string'
+                ? record.proofOfLearningStatus
+                : null,
+              revisionRound: typeof record.revisionRound === 'number' ? record.revisionRound : 0,
+              revisionHistory: [],
+            }));
+          setAttempts(loaded);
+          setLearners(Object.fromEntries(getE2ECollection('users').map((record) => [
+            String(record.uid),
+            {
+              displayName: asString(record.displayName, 'Unknown Learner'),
+              email: asString(record.email, ''),
+            },
+          ])));
+          setMissions(Object.fromEntries(getE2ECollection('missions').map((record) => [
+            String(record.id),
+            {
+              title: asString(record.title, String(record.id)),
+              capabilityId: typeof record.capabilityId === 'string' ? record.capabilityId : null,
+              siteId: typeof record.siteId === 'string' ? record.siteId : null,
+              grade: typeof record.grade === 'number' ? record.grade : null,
+            },
+          ])));
+          return;
+        }
+
         const snap = await getDocs(
           query(
           collection(firestore, 'missionAttempts'),

@@ -45,7 +45,7 @@ interface PortfolioItemSummary {
   type: string;
   createdAt: Timestamp | null;
   proofBundleId?: string;
-  proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'verified';
+  proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'pending_review' | 'verified';
   proofHasExplainItBack?: boolean;
   proofHasOralCheck?: boolean;
   proofHasMiniRebuild?: boolean;

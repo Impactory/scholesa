@@ -128,6 +128,20 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
         source: 'learner-created-proof-e2e',
         capabilityIds: [CAPABILITY_ID],
       },
+      missionAttempt: {
+        id: 'mission-attempt-consent-e2e',
+        learnerId: LEARNER_ALPHA,
+        siteId: 'site-alpha',
+        missionId: 'mission-robotics',
+        notes: 'Learner submitted evidence for broader-share consent proof.',
+        content: 'I tested the prototype and can explain what changed after feedback.',
+        status: 'submitted',
+        submittedAt: '2026-03-07T18:10:00.000Z',
+        updatedAt: '2026-03-07T18:10:00.000Z',
+        capabilityId: CAPABILITY_ID,
+        proofOfLearningStatus: 'verified',
+        aiDisclosureStatus: 'learner-ai-verified',
+      },
     }
   );
 
@@ -319,6 +333,40 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
         proofHasOralCheck: true,
         proofHasMiniRebuild: true,
         proofCheckpointCount: 3,
+      }),
+    ])
+  );
+
+  await signInAs(page, EDUCATOR_ALPHA);
+  await gotoProtectedRoute(page, '/en/educator/proof-review');
+
+  await expect(page.getByRole('heading', { name: 'Proof-of-Learning Verification' })).toBeVisible();
+  await page.getByRole('button', { name: /Learner-Created Proof Draft/ }).click();
+  await expect(page.getByText('Next step after proof verification')).toBeVisible();
+  await page.getByPlaceholder('Overall notes on this verification').fill(
+    'Learner independently explained the rebuild path from their own evidence.'
+  );
+  await page.getByRole('button', { name: 'Verify (3/3 checks)' }).click();
+  await expect(page.getByText('Verified — proof confirmed. Ready for rubric application.')).toBeVisible();
+
+  expect(await getCollection(page, 'proofOfLearningBundles')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: learnerCreatedProofBundle?.id,
+        portfolioItemId: LEARNER_CREATED_PORTFOLIO_ITEM_ID,
+        verificationStatus: 'verified',
+        status: 'verified',
+        educatorVerifierId: EDUCATOR_ALPHA,
+      }),
+    ])
+  );
+  expect(await getCollection(page, 'portfolioItems')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: LEARNER_CREATED_PORTFOLIO_ITEM_ID,
+        verificationStatus: 'verified',
+        proofOfLearningStatus: 'verified',
+        educatorVerifierId: EDUCATOR_ALPHA,
       }),
     ])
   );

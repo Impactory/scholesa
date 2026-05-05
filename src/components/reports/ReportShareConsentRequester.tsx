@@ -182,6 +182,18 @@ export function ReportShareConsentRequester({
 
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setConsents(getE2ECollection('reportShareConsents')
+          .filter((record) => record.siteId === siteId && record.learnerId === learnerId)
+          .map((record) => record as unknown as ReportShareConsent));
+        setShareRequests(getE2ECollection('reportShareRequests')
+          .filter((record) => record.siteId === siteId && record.learnerId === learnerId)
+          .map((record) => record as unknown as ReportShareRequest));
+        setFeedback(null);
+        return;
+      }
+
       const [consentSnap, shareSnap] = await Promise.all([
         getDocs(
           query(

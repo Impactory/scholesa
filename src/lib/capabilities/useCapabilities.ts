@@ -17,6 +17,18 @@ export async function loadCapabilitiesForSite(siteId: string): Promise<Map<strin
   const cached = siteCapabilityCache.get(siteId);
   if (cached) return cached;
 
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+    const map = new Map<string, Capability>();
+    getE2ECollection('capabilities')
+      .filter((record) => record.siteId === siteId)
+      .forEach((record) => {
+        map.set(String(record.id), { ...record, id: String(record.id) } as unknown as Capability);
+      });
+    siteCapabilityCache.set(siteId, map);
+    return map;
+  }
+
   const snap = await getDocs(query(capabilitiesCollection, where('siteId', '==', siteId)));
   const map = new Map<string, Capability>();
   for (const doc of snap.docs) {

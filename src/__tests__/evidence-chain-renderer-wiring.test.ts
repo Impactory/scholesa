@@ -1120,6 +1120,9 @@ describe('LearnerProofAssemblyRenderer proof bundle writes', () => {
     expect(browserEvidenceChainSource).toContain('Learner-Created Proof Draft');
     expect(browserEvidenceChainSource).toContain("verificationStatus: 'pending_review'");
     expect(browserEvidenceChainSource).toContain('proofCheckpointCount: 3');
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/proof-review')");
+    expect(browserEvidenceChainSource).toContain('Verify (3/3 checks)');
+    expect(browserEvidenceChainSource).toContain("verificationStatus: 'verified'");
   });
 });
 

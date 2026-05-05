@@ -206,6 +206,21 @@ export async function requestReportShareConsent({
   if (!siteId || !learnerId || !purpose.trim() || !evidenceSummary.trim()) return null;
 
   try {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { requestE2EReportShareConsent } = await import('@/src/testing/e2e/fakeWebBackend');
+      const response = await requestE2EReportShareConsent({
+        siteId,
+        learnerId,
+        scope,
+        audience,
+        visibility,
+        purpose: purpose.trim(),
+        evidenceSummary: evidenceSummary.trim(),
+        expiresInDays,
+      });
+      return response.id;
+    }
+
     const callable = httpsCallable(functions, 'requestReportShareConsent');
     const response = await callable({
       siteId,
@@ -251,6 +266,26 @@ export async function createExplicitConsentReportShareRequest({
   }
 
   try {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { createExplicitE2EReportShareRequest } = await import('@/src/testing/e2e/fakeWebBackend');
+      const response = await createExplicitE2EReportShareRequest({
+        siteId,
+        learnerId,
+        reportAction,
+        reportDelivery,
+        module,
+        surface,
+        cta,
+        fileName,
+        expiresInDays,
+        audience,
+        visibility,
+        explicitConsentId,
+        metadata,
+      });
+      return response.id;
+    }
+
     const callable = httpsCallable(functions, 'createReportShareRequest');
     const response = await callable({
       siteId,
@@ -302,6 +337,12 @@ export async function grantReportShareConsent({
   if (!consentId) return false;
 
   try {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { grantE2EReportShareConsent } = await import('@/src/testing/e2e/fakeWebBackend');
+      await grantE2EReportShareConsent(consentId);
+      return true;
+    }
+
     const callable = httpsCallable(functions, 'grantReportShareConsent');
     await callable({ consentId });
     return true;
@@ -319,6 +360,12 @@ export async function revokeReportShareConsent({
   if (!consentId) return false;
 
   try {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { revokeE2EReportShareConsent } = await import('@/src/testing/e2e/fakeWebBackend');
+      await revokeE2EReportShareConsent(consentId);
+      return true;
+    }
+
     const callable = httpsCallable(functions, 'revokeReportShareConsent');
     await callable({ consentId });
     return true;

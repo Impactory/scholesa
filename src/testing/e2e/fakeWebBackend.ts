@@ -117,19 +117,38 @@ type PortfolioRecord = {
   capabilityIds?: string[];
   evidenceRecordIds?: string[];
   missionAttemptId?: string;
+  proofBundleId?: string;
   proofOfLearningStatus?: string;
+  proofHasExplainItBack?: boolean;
+  proofHasOralCheck?: boolean;
+  proofHasMiniRebuild?: boolean;
+  proofCheckpointCount?: number;
+  proofExplainItBackExcerpt?: string | null;
+  proofOralCheckExcerpt?: string | null;
+  proofMiniRebuildExcerpt?: string | null;
   aiDisclosureStatus?: string;
   proofDetails?: Record<string, unknown>;
   reviewedAt?: string;
   rubricScore?: Record<string, unknown>;
+  verificationStatus?: string;
+  verificationNotes?: string | null;
+  verificationPrompt?: string | null;
+  educatorVerifierId?: string;
+  verifiedAt?: string;
 };
 
 type MissionAttemptRecord = {
   id: string;
   learnerId: string;
+  siteId?: string;
   missionId: string;
   notes: string;
+  content?: string;
   status: string;
+  submittedAt?: string;
+  attachmentUrls?: string[];
+  capabilityId?: string;
+  proofOfLearningStatus?: string;
   updatedAt: string;
 };
 
@@ -201,6 +220,7 @@ type EvidenceChainSeedInput = Partial<Pick<StoreState,
   | 'rubricTemplates'
 >> & {
   portfolioItems?: PortfolioRecord[];
+  missionAttempts?: MissionAttemptRecord[];
 };
 
 type E2ERubricScoreInput = {
@@ -235,6 +255,51 @@ type SaveE2EProofBundleInput = {
   miniRebuildExcerpt?: string | null;
   verificationStatus: 'missing' | 'partial' | 'pending_review';
   version?: number;
+};
+
+type VerifyE2EProofOfLearningInput = {
+  portfolioItemId: string;
+  verificationStatus: string;
+  proofOfLearningStatus: string;
+  proofChecks?: {
+    explainItBack?: boolean;
+    oralCheck?: boolean;
+    miniRebuild?: boolean;
+  };
+  excerpts?: {
+    explainItBack?: string;
+    oralCheck?: string;
+    miniRebuild?: string;
+  };
+  educatorNotes?: string;
+  resubmissionReason?: string;
+};
+
+type RequestE2EReportShareConsentInput = {
+  siteId: string;
+  learnerId: string;
+  scope: string;
+  audience: string;
+  visibility: string;
+  purpose: string;
+  evidenceSummary: string;
+  expiresInDays?: number;
+};
+
+type CreateExplicitE2EReportShareRequestInput = {
+  siteId: string;
+  learnerId: string;
+  reportAction: string;
+  reportDelivery: string;
+  module: string;
+  surface: string;
+  cta: string;
+  fileName?: string;
+  expiresInDays?: number;
+  audience: string;
+  visibility: string;
+  explicitConsentId: string;
+  metadata: Record<string, unknown>;
 };
 
 type StoreState = {
@@ -674,7 +739,6 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
 }
 
 type EvidenceChainCollectionName = keyof Pick<StoreState,
-  | 'portfolioItems'
   | 'capabilities'
   | 'processDomains'
   | 'evidenceRecords'
@@ -750,6 +814,173 @@ export async function saveE2EProofBundle(
 
   writeStore(state);
   return { proofBundleId };
+}
+
+export async function verifyE2EProofOfLearning(
+  input: VerifyE2EProofOfLearningInput
+): Promise<{ capabilitiesReadyForRubric: number }> {
+  const state = readStore();
+  const updatedAt = nowIso();
+  const verifierId = currentUserId() || 'e2e-educator';
+  const portfolioItem = state.portfolioItems.find((item) => item.id === input.portfolioItemId);
+
+  if (!portfolioItem) {
+    throw new Error(`Unknown E2E portfolio item: ${input.portfolioItemId}`);
+  }
+
+  const proofBundle = state.proofOfLearningBundles.find(
+    (bundle) => bundle.portfolioItemId === input.portfolioItemId
+      || bundle.id === portfolioItem.proofBundleId
+  );
+  const proofBundleId = String(proofBundle?.id || portfolioItem.proofBundleId || nextId('e2e-proof-bundle'));
+  const proofCheckpointCount = [
+    input.proofChecks?.explainItBack === true,
+    input.proofChecks?.oralCheck === true,
+    input.proofChecks?.miniRebuild === true,
+  ].filter(Boolean).length;
+
+  state.proofOfLearningBundles = mergeById(state.proofOfLearningBundles, [{
+    id: proofBundleId,
+    learnerId: portfolioItem.learnerId,
+    portfolioItemId: input.portfolioItemId,
+    siteId: portfolioItem.siteId,
+    hasExplainItBack: input.proofChecks?.explainItBack === true,
+    hasOralCheck: input.proofChecks?.oralCheck === true,
+    hasMiniRebuild: input.proofChecks?.miniRebuild === true,
+    explainItBackExcerpt: input.excerpts?.explainItBack || null,
+    oralCheckExcerpt: input.excerpts?.oralCheck || null,
+    miniRebuildExcerpt: input.excerpts?.miniRebuild || null,
+    verificationStatus: input.proofOfLearningStatus,
+    status: input.proofOfLearningStatus,
+    educatorVerifierId: verifierId,
+    version: typeof proofBundle?.version === 'number' ? proofBundle.version + 1 : 1,
+    updatedAt,
+    createdAt: typeof proofBundle?.createdAt === 'string' ? proofBundle.createdAt : updatedAt,
+  }]);
+
+  state.portfolioItems = state.portfolioItems.map((item) =>
+    item.id === input.portfolioItemId
+      ? {
+          ...item,
+          proofBundleId,
+          proofOfLearningStatus: input.proofOfLearningStatus,
+          proofHasExplainItBack: input.proofChecks?.explainItBack === true,
+          proofHasOralCheck: input.proofChecks?.oralCheck === true,
+          proofHasMiniRebuild: input.proofChecks?.miniRebuild === true,
+          proofCheckpointCount,
+          proofExplainItBackExcerpt: input.excerpts?.explainItBack || null,
+          proofOralCheckExcerpt: input.excerpts?.oralCheck || null,
+          proofMiniRebuildExcerpt: input.excerpts?.miniRebuild || null,
+          verificationStatus: input.verificationStatus,
+          verificationNotes: input.educatorNotes || null,
+          verificationPrompt: input.resubmissionReason || null,
+          educatorVerifierId: verifierId,
+          verifiedAt: input.verificationStatus === 'verified' ? updatedAt : undefined,
+          updatedAt,
+        }
+      : item
+  );
+
+  writeStore(state);
+  return { capabilitiesReadyForRubric: portfolioItem.capabilityIds?.length || 0 };
+}
+
+function expiresAtIso(expiresInDays = 30): string {
+  return new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+}
+
+export async function requestE2EReportShareConsent(
+  input: RequestE2EReportShareConsentInput
+): Promise<{ id: string }> {
+  const state = readStore();
+  const createdAt = nowIso();
+  const id = nextId('e2e-report-share-consent');
+  state.reportShareConsents = mergeById(state.reportShareConsents, [{
+    id,
+    siteId: input.siteId,
+    learnerId: input.learnerId,
+    requestedBy: currentUserId() || 'e2e-requester',
+    status: 'pending',
+    scope: input.scope,
+    audience: input.audience,
+    visibility: input.visibility,
+    purpose: input.purpose,
+    evidenceSummary: input.evidenceSummary,
+    createdAt,
+    updatedAt: createdAt,
+    expiresAt: expiresAtIso(input.expiresInDays),
+  }]);
+  writeStore(state);
+  return { id };
+}
+
+export async function grantE2EReportShareConsent(consentId: string): Promise<void> {
+  const state = readStore();
+  const updatedAt = nowIso();
+  const decidedBy = currentUserId() || 'e2e-approver';
+  state.reportShareConsents = state.reportShareConsents.map((consent) =>
+    consent.id === consentId
+      ? { ...consent, status: 'granted', decidedBy, grantedAt: updatedAt, updatedAt }
+      : consent
+  );
+  writeStore(state);
+}
+
+export async function revokeE2EReportShareConsent(consentId: string): Promise<void> {
+  const state = readStore();
+  const updatedAt = nowIso();
+  const decidedBy = currentUserId() || 'e2e-approver';
+  state.reportShareConsents = state.reportShareConsents.map((consent) =>
+    consent.id === consentId
+      ? { ...consent, status: 'revoked', decidedBy, revokedAt: updatedAt, updatedAt }
+      : consent
+  );
+  writeStore(state);
+}
+
+export async function createExplicitE2EReportShareRequest(
+  input: CreateExplicitE2EReportShareRequestInput
+): Promise<{ id: string }> {
+  const state = readStore();
+  const consent = state.reportShareConsents.find((record) => record.id === input.explicitConsentId);
+  if (!consent || consent.status !== 'granted') {
+    throw new Error(`Explicit consent is not granted: ${input.explicitConsentId}`);
+  }
+  const createdAt = nowIso();
+  const id = nextId('e2e-report-share-request');
+  state.reportShareRequests = mergeById(state.reportShareRequests, [{
+    id,
+    siteId: input.siteId,
+    learnerId: input.learnerId,
+    createdBy: currentUserId() || 'e2e-requester',
+    status: 'active',
+    reportAction: input.reportAction,
+    reportDelivery: input.reportDelivery,
+    module: input.module,
+    source: input.module,
+    surface: input.surface,
+    cta: input.cta,
+    fileName: input.fileName,
+    audience: input.audience,
+    visibility: input.visibility,
+    explicitConsentId: input.explicitConsentId,
+    expiresAt: expiresAtIso(input.expiresInDays),
+    createdAt,
+    updatedAt: createdAt,
+    provenance: {
+      meetsDeliveryContract: input.metadata.report_meets_delivery_contract === true,
+      expectedSignals: input.metadata.report_expected_signals,
+      missingSignals: input.metadata.report_missing_signals,
+    },
+    sharePolicy: {
+      requiresEvidenceProvenance: input.metadata.report_share_policy_requires_evidence_provenance === true,
+      requiresGuardianContext: input.metadata.report_share_policy_requires_guardian_context === true,
+      allowsExternalSharing: input.metadata.report_share_policy_allows_external_sharing === true,
+    },
+    metadata: input.metadata,
+  }]);
+  writeStore(state);
+  return { id };
 }
 
 export async function applyE2ERubricToEvidence(
@@ -894,6 +1125,9 @@ export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
 
   if (records.portfolioItems) {
     state.portfolioItems = mergeById(state.portfolioItems, records.portfolioItems);
+  }
+  if (records.missionAttempts) {
+    state.missionAttempts = mergeById(state.missionAttempts, records.missionAttempts);
   }
   if (records.capabilities) state.capabilities = mergeById(state.capabilities, records.capabilities);
   if (records.processDomains) state.processDomains = mergeById(state.processDomains, records.processDomains);

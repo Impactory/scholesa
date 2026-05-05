@@ -70,6 +70,21 @@ export function ProofOfLearningVerification() {
 
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const allItems = getE2ECollection('portfolioItems')
+          .filter((record) => record.siteId === siteId)
+          .filter((record) => {
+            const status = typeof record.verificationStatus === 'string'
+              ? record.verificationStatus
+              : 'pending';
+            return status !== 'verified';
+          })
+          .map((record) => ({ ...record, id: String(record.id) }) as unknown as PortfolioItem);
+        setItems(allItems);
+        return;
+      }
+
       // Load items that are pending or reviewed (not yet verified)
       // Site-scoped to prevent cross-site data access
       const constraints = [
@@ -212,6 +227,37 @@ export function ProofOfLearningVerification() {
                   onVerify={async (verdictData) => {
                     setSaving(true);
                     try {
+                      let resultData: VerifyProofOfLearningResult | undefined;
+                      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+                        const { verifyE2EProofOfLearning } = await import('@/src/testing/e2e/fakeWebBackend');
+                        resultData = await verifyE2EProofOfLearning({
+                          portfolioItemId: selectedItem.id,
+                          verificationStatus: String(verdictData.verificationStatus),
+                          proofOfLearningStatus: String(verdictData.proofOfLearningStatus),
+                          proofChecks: {
+                            explainItBack: verdictData.proofHasExplainItBack === true,
+                            oralCheck: verdictData.proofHasOralCheck === true,
+                            miniRebuild: verdictData.proofHasMiniRebuild === true,
+                          },
+                          excerpts: {
+                            explainItBack: typeof verdictData.proofExplainItBackExcerpt === 'string'
+                              ? verdictData.proofExplainItBackExcerpt
+                              : undefined,
+                            oralCheck: typeof verdictData.proofOralCheckExcerpt === 'string'
+                              ? verdictData.proofOralCheckExcerpt
+                              : undefined,
+                            miniRebuild: typeof verdictData.proofMiniRebuildExcerpt === 'string'
+                              ? verdictData.proofMiniRebuildExcerpt
+                              : undefined,
+                          },
+                          educatorNotes: typeof verdictData.verificationNotes === 'string'
+                            ? verdictData.verificationNotes
+                            : undefined,
+                          resubmissionReason: typeof verdictData.verificationPrompt === 'string'
+                            ? verdictData.verificationPrompt
+                            : undefined,
+                        });
+                      } else {
                       const verifyPoL = httpsCallable(functions, 'verifyProofOfLearning');
                       const result = await verifyPoL({
                         portfolioItemId: selectedItem.id,
@@ -230,10 +276,12 @@ export function ProofOfLearningVerification() {
                         educatorNotes: verdictData.verificationNotes,
                         resubmissionReason: verdictData.verificationPrompt,
                       });
+                        resultData = result.data as VerifyProofOfLearningResult | undefined;
+                      }
                       const capabilitiesReadyForRubric =
-                        typeof (result.data as VerifyProofOfLearningResult | undefined)
+                        typeof resultData
                           ?.capabilitiesReadyForRubric === 'number'
-                          ? (result.data as VerifyProofOfLearningResult).capabilitiesReadyForRubric ?? 0
+                          ? resultData.capabilitiesReadyForRubric ?? 0
                           : 0;
                       setSuccessMessage(
                         verdictData.verificationStatus === 'verified'

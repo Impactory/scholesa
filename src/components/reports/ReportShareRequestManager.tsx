@@ -23,6 +23,10 @@ type ReportShareRequestRow = ReportShareRequest & { id: string };
 type ReportShareConsentRow = ReportShareConsent & { id: string };
 
 function timestampToDate(value: unknown): Date | null {
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
   if (!value || typeof value !== 'object') return null;
   const candidate = value as { toDate?: () => Date };
   if (typeof candidate.toDate !== 'function') return null;
@@ -128,6 +132,25 @@ export function ReportShareRequestManager({
     setLoading(true);
     setFeedback(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const activeRequests = getE2ECollection('reportShareRequests')
+          .filter((record) => record.siteId === siteId && record.learnerId === learnerId)
+          .map((record) => record as unknown as ReportShareRequestRow)
+          .filter((request) => request.status === 'active')
+          .filter(isUnexpiredShare)
+          .filter((request) => isVisibleForViewer(request, viewer))
+          .slice(0, 25);
+        const visibleConsents = getE2ECollection('reportShareConsents')
+          .filter((record) => record.siteId === siteId && record.learnerId === learnerId)
+          .map((record) => record as unknown as ReportShareConsentRow)
+          .filter(isVisibleConsent)
+          .slice(0, 25);
+        setRequests(activeRequests);
+        setConsents(visibleConsents);
+        return;
+      }
+
       const snap = await getDocs(
         query(
           reportShareRequestsCollection,
