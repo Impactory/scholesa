@@ -227,6 +227,17 @@ service cloud.firestore {
       allow create, update, delete: if false; // Server-owned lifecycle via Cloud Functions
     }
 
+    match /reportShareConsents/{id} {
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
+        resource.data.requesterId == request.auth.uid
+        || resource.data.learnerId == request.auth.uid
+        || resource.data.approverId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create, update, delete: if false; // Server-owned explicit consent lifecycle
+    }
+
     // --- Stripe & Billing Collections (Server-only writes) ---
     
     // Stripe Customers: Users can read their own, no client writes

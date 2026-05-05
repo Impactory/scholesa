@@ -356,6 +356,39 @@ export interface ReportShareRequest {
   updatedAt: Timestamp;
 }
 
+export type ReportShareConsentStatus = 'pending' | 'granted' | 'revoked' | 'expired';
+export type ReportShareConsentScope =
+  | 'family'
+  | 'staff'
+  | 'site'
+  | 'partner'
+  | 'external'
+  | 'public';
+
+export interface ReportShareConsent {
+  id: string;
+  siteId: string;
+  learnerId: string;
+  requesterId: string;
+  requesterRole: UserRole | 'site';
+  approverId?: string;
+  approverRole?: 'learner' | 'parent' | 'hq' | 'siteLead' | 'site';
+  status: ReportShareConsentStatus;
+  scope: ReportShareConsentScope;
+  audience: ReportShareRequestAudience;
+  visibility: ReportShareRequestVisibility;
+  purpose: string;
+  evidenceSummary: string;
+  linkedReportShareRequestIds?: string[];
+  requestedAt: Timestamp;
+  decidedAt?: Timestamp;
+  expiresAt?: Timestamp;
+  revokedAt?: Timestamp;
+  revokedBy?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface EnterpriseSsoProvider {
   id: string;
   providerId: string;

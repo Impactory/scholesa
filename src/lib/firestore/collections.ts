@@ -12,6 +12,7 @@ import type {
   MissionAttempt,
   Portfolio,
   PortfolioItem,
+  ReportShareConsent,
   ReportShareRequest,
   AccountabilityCycle,
   AccountabilityCommitment,
@@ -72,6 +73,7 @@ export const missionAttemptsCollection = createCollection<Omit<MissionAttempt, '
 // Portfolio
 export const portfoliosCollection = createCollection<Portfolio>('portfolios');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');
+export const reportShareConsentsCollection = createCollection<ReportShareConsent>('reportShareConsents');
 export const reportShareRequestsCollection = createCollection<ReportShareRequest>('reportShareRequests');
 
 // Accountability
