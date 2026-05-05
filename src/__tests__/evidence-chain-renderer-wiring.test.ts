@@ -899,11 +899,13 @@ describe('Renderers delegate to real evidence components', () => {
     expect(routeMatrixSource).toContain('consent-backed report-share records');
     expect(routeMatrixSource).toContain('canonical published HQ rubric template is available');
     expect(routeMatrixSource).toContain('newly authored and edited HQ rubric template');
+    expect(routeMatrixSource).toContain('live-authored template is selected and applied');
     expect(routeMatrixSource).toContain('test/e2e/evidence-chain-cross-role.e2e.spec.ts');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/hq/rubric-builder')");
     expect(browserEvidenceChainSource).toContain('Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('Edited Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('rubric-template-card-');
+    expect(browserEvidenceChainSource).toContain('Apply Rubric (1 scores)');
     expect(browserEvidenceChainSource).toContain("page.getByLabel('Select rubric template')");
     expect(browserEvidenceChainSource).toContain('Prototype Iteration Evidence Rubric');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/parent/passport')");
@@ -920,6 +922,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(masterPlanSource).toContain('consent-backed broader share records');
     expect(masterPlanSource).toContain('canonical HQ rubric template selection');
     expect(masterPlanSource).toContain('live HQ rubric create/edit');
+    expect(masterPlanSource).toContain('live-authored rubric application');
     expect(auditSource).toContain('PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md');
     expect(auditSource).toContain('PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md');
     expect(auditSource).toContain('first gold-critical gap');
@@ -1066,6 +1069,10 @@ describe('LearnerProofAssemblyRenderer proof bundle writes', () => {
   const source = readSrcFile(
     'features', 'workflows', 'renderers', 'LearnerProofAssemblyRenderer.tsx'
   );
+  const browserEvidenceChainSource = fs.readFileSync(
+    path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
+    'utf8'
+  );
 
   it('reads portfolioItems', () => {
     expect(source).toContain('portfolioItems');
@@ -1096,6 +1103,8 @@ describe('LearnerProofAssemblyRenderer proof bundle writes', () => {
   it('site-scopes proof assembly and mirrors proof fields onto portfolio items', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain("NEXT_PUBLIC_E2E_TEST_MODE === '1'");
+    expect(source).toContain('saveE2EProofBundle');
     expect(source).toContain('proofHasExplainItBack');
     expect(source).toContain('proofExplainItBackExcerpt');
     expect(source).toContain('proofCheckpointCount');
@@ -1104,6 +1113,13 @@ describe('LearnerProofAssemblyRenderer proof bundle writes', () => {
   it('falls back to portfolio proof fields when no persisted proof bundle exists', () => {
     expect(source).toContain('portfolioProofFallback');
     expect(source).toContain('proofBundleId ?? `portfolio-${item.id}`');
+  });
+
+  it('has browser proof for learner-created pending-review proof bundles', () => {
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/learner/proof-assembly')");
+    expect(browserEvidenceChainSource).toContain('Learner-Created Proof Draft');
+    expect(browserEvidenceChainSource).toContain("verificationStatus: 'pending_review'");
+    expect(browserEvidenceChainSource).toContain('proofCheckpointCount: 3');
   });
 });
 

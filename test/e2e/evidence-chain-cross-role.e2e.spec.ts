@@ -26,6 +26,7 @@ const PORTFOLIO_ITEM_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.portfolioItemId;
 const RUBRIC_APPLICATION_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricApplicationId;
 const RUBRIC_TEMPLATE_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricTemplateId;
 const GROWTH_EVENT_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.growthEventId;
+const LEARNER_CREATED_PORTFOLIO_ITEM_ID = 'portfolio-learner-created-proof';
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() =>
@@ -107,6 +108,28 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
 }) => {
   const liveAuthoredRubricTitle = 'Live HQ Authored Evidence Rubric';
   const editedLiveAuthoredRubricTitle = 'Edited Live HQ Authored Evidence Rubric';
+
+  await page.evaluate(
+    ({ portfolioItem }) => {
+      (window as Window & {
+        __scholesaE2E: E2EWindowApi;
+      }).__scholesaE2E.seedEvidenceChain({ portfolioItems: [portfolioItem] });
+    },
+    {
+      portfolioItem: {
+        id: LEARNER_CREATED_PORTFOLIO_ITEM_ID,
+        learnerId: LEARNER_ALPHA,
+        siteId: 'site-alpha',
+        title: 'Learner-Created Proof Draft',
+        description: 'Learner-authored proof assembly browser item.',
+        mediaType: 'document',
+        status: 'draft',
+        updatedAt: '2026-03-07T18:05:00.000Z',
+        source: 'learner-created-proof-e2e',
+        capabilityIds: [CAPABILITY_ID],
+      },
+    }
+  );
 
   await signInAs(page, HQ_ALPHA);
   await gotoProtectedRoute(page, '/en/hq/rubric-builder');
@@ -250,6 +273,52 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
         explicitConsentId: 'report-share-consent-alpha',
         audience: 'external',
         visibility: 'external',
+      }),
+    ])
+  );
+
+  await signInAs(page, LEARNER_ALPHA);
+  await gotoProtectedRoute(page, '/en/learner/proof-assembly');
+
+  await expect(page.getByRole('heading', { name: 'Proof of Learning' })).toBeVisible();
+  await page.getByRole('button', { name: /Learner-Created Proof Draft/ }).click();
+  await page
+    .getByPlaceholder('I learned that... My approach was...')
+    .fill('I learned that testing evidence changed which prototype part I rebuilt first.');
+  await page
+    .getByPlaceholder('If asked, I would explain...')
+    .fill('If asked, I would explain why the sensor result showed the weak point.');
+  await page
+    .getByPlaceholder('To rebuild this, I would start by...')
+    .fill('To rebuild this, I would start by retesting the sensor mount with one variable changed.');
+  await page.getByRole('button', { name: 'Save Proof Bundle' }).click();
+  await expect(page.getByText('Ready for review')).toBeVisible();
+
+  const learnerCreatedProofBundles = await getCollection(page, 'proofOfLearningBundles');
+  const learnerCreatedProofBundle = learnerCreatedProofBundles.find(
+    (bundle) => bundle.portfolioItemId === LEARNER_CREATED_PORTFOLIO_ITEM_ID
+  );
+  expect(learnerCreatedProofBundle).toEqual(
+    expect.objectContaining({
+      learnerId: LEARNER_ALPHA,
+      siteId: 'site-alpha',
+      hasExplainItBack: true,
+      hasOralCheck: true,
+      hasMiniRebuild: true,
+      verificationStatus: 'pending_review',
+      status: 'pending_review',
+    })
+  );
+  expect(await getCollection(page, 'portfolioItems')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: LEARNER_CREATED_PORTFOLIO_ITEM_ID,
+        proofBundleId: learnerCreatedProofBundle?.id,
+        proofOfLearningStatus: 'pending_review',
+        proofHasExplainItBack: true,
+        proofHasOralCheck: true,
+        proofHasMiniRebuild: true,
+        proofCheckpointCount: 3,
       }),
     ])
   );

@@ -180,6 +180,70 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
     setLoading(true);
     setError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const items = getE2ECollection('portfolioItems')
+          .filter((record) => record.learnerId === learnerId && record.siteId === siteId)
+          .map((record) => ({
+            id: String(record.id),
+            title: typeof record.title === 'string' ? record.title : 'Untitled',
+            type: typeof record.type === 'string'
+              ? record.type
+              : typeof record.mediaType === 'string'
+                ? record.mediaType
+                : 'artifact',
+            createdAt: null,
+            proofBundleId: typeof record.proofBundleId === 'string' ? record.proofBundleId : undefined,
+            proofOfLearningStatus: record.proofOfLearningStatus as PortfolioItemSummary['proofOfLearningStatus'],
+            proofHasExplainItBack: record.proofHasExplainItBack === true,
+            proofHasOralCheck: record.proofHasOralCheck === true,
+            proofHasMiniRebuild: record.proofHasMiniRebuild === true,
+            proofExplainItBackExcerpt: typeof record.proofExplainItBackExcerpt === 'string'
+              ? record.proofExplainItBackExcerpt
+              : undefined,
+            proofOralCheckExcerpt: typeof record.proofOralCheckExcerpt === 'string'
+              ? record.proofOralCheckExcerpt
+              : undefined,
+            proofMiniRebuildExcerpt: typeof record.proofMiniRebuildExcerpt === 'string'
+              ? record.proofMiniRebuildExcerpt
+              : undefined,
+          }));
+        setPortfolioItems(items);
+        const sitePortfolioItemIds = new Set(items.map((item) => item.id));
+        const bundleMap = new Map<string, ProofBundle>();
+        getE2ECollection('proofOfLearningBundles').forEach((record) => {
+          const portfolioItemId = typeof record.portfolioItemId === 'string'
+            ? record.portfolioItemId
+            : '';
+          if (!sitePortfolioItemIds.has(portfolioItemId) || record.learnerId !== learnerId) return;
+          if (typeof record.siteId === 'string' && record.siteId.trim() !== siteId) return;
+          bundleMap.set(portfolioItemId, {
+            id: String(record.id),
+            portfolioItemId,
+            capabilityId: typeof record.capabilityId === 'string' ? record.capabilityId : undefined,
+            hasExplainItBack: record.hasExplainItBack === true,
+            hasOralCheck: record.hasOralCheck === true,
+            hasMiniRebuild: record.hasMiniRebuild === true,
+            explainItBackExcerpt: typeof record.explainItBackExcerpt === 'string'
+              ? record.explainItBackExcerpt
+              : undefined,
+            oralCheckExcerpt: typeof record.oralCheckExcerpt === 'string'
+              ? record.oralCheckExcerpt
+              : undefined,
+            miniRebuildExcerpt: typeof record.miniRebuildExcerpt === 'string'
+              ? record.miniRebuildExcerpt
+              : undefined,
+            verificationStatus: (record.verificationStatus as ProofBundle['verificationStatus']) || 'missing',
+            educatorVerifierId: typeof record.educatorVerifierId === 'string'
+              ? record.educatorVerifierId
+              : undefined,
+            version: typeof record.version === 'number' ? record.version : 1,
+          });
+        });
+        setBundles(bundleMap);
+        return;
+      }
+
       // Load portfolio items
       const piQuery = query(
         portfolioItemsCollection,
@@ -286,6 +350,46 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
       };
 
       const existing = bundles.get(portfolioItemId);
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { saveE2EProofBundle } = await import('@/src/testing/e2e/fakeWebBackend');
+        const result = await saveE2EProofBundle({
+          learnerId,
+          portfolioItemId,
+          siteId,
+          proofBundleId: existing?.id,
+          hasExplainItBack: hasEIB,
+          hasOralCheck: hasOC,
+          hasMiniRebuild: hasMR,
+          explainItBackExcerpt: draftExplainItBack.trim() || null,
+          oralCheckExcerpt: draftOralCheck.trim() || null,
+          miniRebuildExcerpt: draftMiniRebuild.trim() || null,
+          verificationStatus,
+          version: existing ? existing.version + 1 : 1,
+        });
+        setBundles((prev) => {
+          const next = new Map(prev);
+          next.set(portfolioItemId, {
+            id: result.proofBundleId,
+            portfolioItemId,
+            hasExplainItBack: hasEIB,
+            hasOralCheck: hasOC,
+            hasMiniRebuild: hasMR,
+            explainItBackExcerpt: draftExplainItBack.trim() || undefined,
+            oralCheckExcerpt: draftOralCheck.trim() || undefined,
+            miniRebuildExcerpt: draftMiniRebuild.trim() || undefined,
+            verificationStatus,
+            version: existing ? existing.version + 1 : 1,
+          });
+          return next;
+        });
+        setPortfolioItems((prev) => prev.map((item) =>
+          item.id === portfolioItemId
+            ? { ...item, proofBundleId: result.proofBundleId, proofOfLearningStatus: verificationStatus }
+            : item
+        ));
+        return;
+      }
+
       if (existing) {
         // Update existing bundle
         const docRef = doc(db, 'proofOfLearningBundles', existing.id);

@@ -222,6 +222,21 @@ type ApplyE2ERubricInput = {
   scores: E2ERubricScoreInput[];
 };
 
+type SaveE2EProofBundleInput = {
+  learnerId: string;
+  siteId: string;
+  portfolioItemId: string;
+  proofBundleId?: string;
+  hasExplainItBack: boolean;
+  hasOralCheck: boolean;
+  hasMiniRebuild: boolean;
+  explainItBackExcerpt?: string | null;
+  oralCheckExcerpt?: string | null;
+  miniRebuildExcerpt?: string | null;
+  verificationStatus: 'missing' | 'partial' | 'pending_review';
+  version?: number;
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -659,6 +674,7 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
 }
 
 type EvidenceChainCollectionName = keyof Pick<StoreState,
+  | 'portfolioItems'
   | 'capabilities'
   | 'processDomains'
   | 'evidenceRecords'
@@ -681,6 +697,59 @@ export function upsertE2ECollectionRecord(
   state[collectionName] = mergeById(state[collectionName], [record]);
   writeStore(state);
   return cloneState(record);
+}
+
+export async function saveE2EProofBundle(
+  input: SaveE2EProofBundleInput
+): Promise<{ proofBundleId: string }> {
+  const state = readStore();
+  const updatedAt = nowIso();
+  const proofBundleId = input.proofBundleId || nextId('e2e-proof-bundle');
+  const proofCheckpointCount = [
+    input.hasExplainItBack,
+    input.hasOralCheck,
+    input.hasMiniRebuild,
+  ].filter(Boolean).length;
+
+  const proofBundle = {
+    id: proofBundleId,
+    learnerId: input.learnerId,
+    portfolioItemId: input.portfolioItemId,
+    siteId: input.siteId,
+    hasExplainItBack: input.hasExplainItBack,
+    hasOralCheck: input.hasOralCheck,
+    hasMiniRebuild: input.hasMiniRebuild,
+    explainItBackExcerpt: input.explainItBackExcerpt || null,
+    oralCheckExcerpt: input.oralCheckExcerpt || null,
+    miniRebuildExcerpt: input.miniRebuildExcerpt || null,
+    verificationStatus: input.verificationStatus,
+    status: input.verificationStatus,
+    version: input.version || 1,
+    updatedAt,
+    createdAt: updatedAt,
+  };
+
+  state.proofOfLearningBundles = mergeById(state.proofOfLearningBundles, [proofBundle]);
+  state.portfolioItems = state.portfolioItems.map((item) =>
+    item.id === input.portfolioItemId
+      ? {
+          ...item,
+          proofBundleId,
+          proofOfLearningStatus: input.verificationStatus,
+          proofHasExplainItBack: input.hasExplainItBack,
+          proofHasOralCheck: input.hasOralCheck,
+          proofHasMiniRebuild: input.hasMiniRebuild,
+          proofCheckpointCount,
+          proofExplainItBackExcerpt: input.explainItBackExcerpt || null,
+          proofOralCheckExcerpt: input.oralCheckExcerpt || null,
+          proofMiniRebuildExcerpt: input.miniRebuildExcerpt || null,
+          updatedAt,
+        }
+      : item
+  );
+
+  writeStore(state);
+  return { proofBundleId };
 }
 
 export async function applyE2ERubricToEvidence(
@@ -738,9 +807,9 @@ export async function applyE2ERubricToEvidence(
       learnerId: input.learnerId,
       siteId: input.siteId,
       capabilityId: score.capabilityId,
-      level: score.score,
-      score: score.score,
-      maxScore: score.maxScore,
+      currentLevel: score.score,
+      highestLevel: score.score,
+      rubricScore: { raw: score.score, max: score.maxScore },
       evidenceCount: Math.max(1, evidenceRecordIds.size),
       latestEvidenceRecordIds: Array.from(evidenceRecordIds),
       latestRubricApplicationId: rubricApplicationId,
@@ -760,6 +829,9 @@ export async function applyE2ERubricToEvidence(
           ...item,
           reviewedAt: createdAt,
           rubricScore: {
+            raw: scoredCapabilities[0]?.score ?? 0,
+            max: scoredCapabilities[0]?.maxScore ?? 4,
+            level: scoredCapabilities[0] ? `Level ${scoredCapabilities[0].score}` : undefined,
             rubricId: input.rubricId,
             rubricApplicationId,
             averageScore: scoredCapabilities.length > 0
