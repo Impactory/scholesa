@@ -23,6 +23,7 @@ export type {
   MissionPlan,
   MissionAttempt,
   PortfolioItem,
+  ReportShareConsent,
   ReportShareRequest,
   AccountabilityCycle,
   AccountabilityCommitment,

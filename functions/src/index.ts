@@ -34,8 +34,20 @@ import {
   type ReportShareRequestAudience,
   type ReportShareRequestDelivery,
   type ReportShareRequestRevocationReason,
+  type ReportShareRequestRole,
   type ReportShareRequestVisibility,
 } from './reportShareRequests';
+import {
+  canDecideReportShareConsent,
+  canRequestReportShareConsentForPolicy,
+  canRevokeReportShareConsent,
+  grantReportShareConsentRecord,
+  isPendingUnexpiredReportShareConsentRecord,
+  isReportShareConsentScope,
+  persistReportShareConsentRecord,
+  revokeReportShareConsentRecord,
+  type ReportShareConsentScope,
+} from './reportShareConsents';
 import {
   ANALYTICS_REPAIR_AUDIT_ACTIONS,
   buildAnalyticsRepairRunRecord,
@@ -281,6 +293,7 @@ function toCanonicalTelemetryRole(role: TelemetryRole): CanonicalTelemetryRole {
 const USERS_COLLECTION = 'users';
 const AUDIT_COLLECTION = 'auditLogs';
 const REPORT_SHARE_REQUESTS_COLLECTION = 'reportShareRequests';
+const REPORT_SHARE_CONSENTS_COLLECTION = 'reportShareConsents';
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
@@ -5081,6 +5094,15 @@ const REPORT_SHARE_VISIBILITIES = new Set<ReportShareRequestVisibility>([
   'public',
 ]);
 
+const REPORT_SHARE_CONSENT_SCOPES = new Set<ReportShareConsentScope>([
+  'family',
+  'staff',
+  'site',
+  'partner',
+  'external',
+  'public',
+]);
+
 const SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES = new Set<ReportShareRequestAudience>([
   'learner',
   'guardian',
@@ -5141,6 +5163,17 @@ function normalizeReportShareVisibility(value: unknown): ReportShareRequestVisib
   const normalized = value.trim() as ReportShareRequestVisibility;
   if (!REPORT_SHARE_VISIBILITIES.has(normalized)) {
     throw new HttpsError('invalid-argument', 'Unsupported share visibility.');
+  }
+  return normalized;
+}
+
+function normalizeReportShareConsentScope(value: unknown): ReportShareConsentScope {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'Consent scope is required.');
+  }
+  const normalized = value.trim() as ReportShareConsentScope;
+  if (!REPORT_SHARE_CONSENT_SCOPES.has(normalized) || !isReportShareConsentScope(normalized)) {
+    throw new HttpsError('invalid-argument', 'Unsupported consent scope.');
   }
   return normalized;
 }
@@ -5671,6 +5704,303 @@ export const revokeReportShareRequest = onCall(
     });
 
     return { status: 'ok', id: shareRequestId };
+  }
+);
+
+export const requestReportShareConsent = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const { actorRole, learnerId, siteId } = await requireReportShareContext({
+      authUid: request.auth?.uid,
+      data,
+    });
+
+    const audience = normalizeReportShareAudience(data.audience);
+    const visibility = normalizeReportShareVisibility(data.visibility);
+    const scope = normalizeReportShareConsentScope(data.scope);
+    const purpose = readTrimmedField(data, 'purpose');
+    const evidenceSummary = readTrimmedField(data, 'evidenceSummary');
+    if (!purpose || !evidenceSummary) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Explicit report share consent requires purpose and evidence summary.'
+      );
+    }
+
+    const requesterRole = actorRole as ReportShareRequestRole;
+    if (
+      !canRequestReportShareConsentForPolicy({
+        actorRole: requesterRole,
+        scope,
+        audience,
+        visibility,
+      })
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Explicit report share consent requests must be staff-initiated and match the requested audience, visibility, and scope.'
+      );
+    }
+
+    const id = await persistReportShareConsentRecord({
+      requesterId: request.auth!.uid,
+      requesterRole,
+      learnerId,
+      siteId,
+      scope,
+      audience,
+      visibility,
+      purpose,
+      evidenceSummary,
+      linkedReportShareRequestIds: readStringArrayField(data.linkedReportShareRequestIds),
+      expiresAt: resolveShareExpiry(data),
+      collectionName: REPORT_SHARE_CONSENTS_COLLECTION,
+    });
+
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole,
+      userId: request.auth!.uid,
+      action: 'report.share_consent_requested',
+      entityType: 'reportShareConsent',
+      entityId: id,
+      targetType: 'learner',
+      targetId: learnerId,
+      siteId,
+      details: { scope, audience, visibility, purpose },
+      metadata: { scope, audience, visibility },
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return { status: 'ok', id };
+  }
+);
+
+export const grantReportShareConsent = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const consentId = readTrimmedField(data, 'consentId');
+    if (!consentId) {
+      throw new HttpsError('invalid-argument', 'consentId is required.');
+    }
+
+    const actorProfile = await getUserProfile(request.auth.uid);
+    const actorRole = normalizeRoleValue(actorProfile?.role);
+    if (!actorProfile || !actorRole || !['learner', 'parent'].includes(actorRole)) {
+      throw new HttpsError(
+        'permission-denied',
+        'Only learners and linked guardians can grant report share consent.'
+      );
+    }
+
+    const consentSnap = await admin
+      .firestore()
+      .collection(REPORT_SHARE_CONSENTS_COLLECTION)
+      .doc(consentId)
+      .get();
+    if (!consentSnap.exists) {
+      throw new HttpsError('not-found', 'Report share consent not found.');
+    }
+    const consentData = consentSnap.data() ?? {};
+    const learnerId = typeof consentData.learnerId === 'string' ? consentData.learnerId : '';
+    const siteId = typeof consentData.siteId === 'string' ? consentData.siteId : '';
+    if (!learnerId || !siteId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share consent is missing learner or site linkage.'
+      );
+    }
+    if (!hasSiteAccess(actorProfile, siteId)) {
+      throw new HttpsError('permission-denied', 'Site access denied.');
+    }
+
+    let linkedLearnerIds: string[] | undefined;
+    if (actorRole === 'parent') {
+      linkedLearnerIds = await collectParentLinkedLearnerIds({
+        parentId: request.auth.uid,
+        siteId,
+      });
+    }
+    if (
+      !canDecideReportShareConsent({
+        actorId: request.auth.uid,
+        actorRole: actorRole as ReportShareRequestRole,
+        learnerId,
+        linkedLearnerIds,
+      })
+    ) {
+      throw new HttpsError(
+        'permission-denied',
+        'Only the learner or a linked guardian can grant report share consent.'
+      );
+    }
+    if (!isPendingUnexpiredReportShareConsentRecord(consentData)) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Only pending, unexpired report share consent can be granted.'
+      );
+    }
+
+    await grantReportShareConsentRecord({
+      consentId,
+      approverId: request.auth.uid,
+      approverRole: actorRole as ReportShareRequestRole,
+      collectionName: REPORT_SHARE_CONSENTS_COLLECTION,
+    });
+    await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
+      .add({
+        actorId: request.auth.uid,
+        actorRole,
+        userId: request.auth.uid,
+        action: 'report.share_consent_granted',
+        entityType: 'reportShareConsent',
+        entityId: consentId,
+        targetType: 'learner',
+        targetId: learnerId,
+        siteId,
+        details: {
+          scope: consentData.scope ?? null,
+          audience: consentData.audience ?? null,
+          visibility: consentData.visibility ?? null,
+        },
+        metadata: {
+          scope: consentData.scope ?? null,
+          audience: consentData.audience ?? null,
+          visibility: consentData.visibility ?? null,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    return { status: 'ok', id: consentId };
+  }
+);
+
+export const revokeReportShareConsent = onCall(
+  async (request: CallableRequest<Record<string, unknown>>) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+    if (
+      request.data !== undefined &&
+      (typeof request.data !== 'object' || Array.isArray(request.data))
+    ) {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+    const data = request.data ?? {};
+    const consentId = readTrimmedField(data, 'consentId');
+    if (!consentId) {
+      throw new HttpsError('invalid-argument', 'consentId is required.');
+    }
+
+    const actorProfile = await getUserProfile(request.auth.uid);
+    const actorRole = normalizeRoleValue(actorProfile?.role);
+    if (
+      !actorProfile ||
+      !actorRole ||
+      !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)
+    ) {
+      throw new HttpsError('permission-denied', 'Insufficient role.');
+    }
+
+    const consentSnap = await admin
+      .firestore()
+      .collection(REPORT_SHARE_CONSENTS_COLLECTION)
+      .doc(consentId)
+      .get();
+    if (!consentSnap.exists) {
+      throw new HttpsError('not-found', 'Report share consent not found.');
+    }
+    const consentData = consentSnap.data() ?? {};
+    const learnerId = typeof consentData.learnerId === 'string' ? consentData.learnerId : '';
+    const siteId = typeof consentData.siteId === 'string' ? consentData.siteId : '';
+    if (!learnerId || !siteId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share consent is missing learner or site linkage.'
+      );
+    }
+    if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+      throw new HttpsError('permission-denied', 'Site access denied.');
+    }
+
+    let linkedLearnerIds: string[] | undefined;
+    if (actorRole === 'parent') {
+      linkedLearnerIds = await collectParentLinkedLearnerIds({
+        parentId: request.auth.uid,
+        siteId,
+      });
+    }
+    if (
+      !canRevokeReportShareConsent({
+        actorId: request.auth.uid,
+        actorRole: actorRole as ReportShareRequestRole,
+        learnerId,
+        requesterId:
+          typeof consentData.requesterId === 'string' ? consentData.requesterId : undefined,
+        approverId: typeof consentData.approverId === 'string' ? consentData.approverId : undefined,
+        linkedLearnerIds,
+      })
+    ) {
+      throw new HttpsError('permission-denied', 'Actor cannot revoke this report share consent.');
+    }
+    if (consentData.status !== 'pending' && consentData.status !== 'granted') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Only pending or granted report share consent can be revoked.'
+      );
+    }
+
+    await revokeReportShareConsentRecord({
+      consentId,
+      actorId: request.auth.uid,
+      collectionName: REPORT_SHARE_CONSENTS_COLLECTION,
+    });
+    await admin
+      .firestore()
+      .collection(AUDIT_COLLECTION)
+      .add({
+        actorId: request.auth.uid,
+        actorRole,
+        userId: request.auth.uid,
+        action: 'report.share_consent_revoked',
+        entityType: 'reportShareConsent',
+        entityId: consentId,
+        targetType: 'learner',
+        targetId: learnerId,
+        siteId,
+        details: {
+          previousStatus: consentData.status ?? null,
+          scope: consentData.scope ?? null,
+          audience: consentData.audience ?? null,
+          visibility: consentData.visibility ?? null,
+        },
+        metadata: {
+          previousStatus: consentData.status ?? null,
+          scope: consentData.scope ?? null,
+          audience: consentData.audience ?? null,
+          visibility: consentData.visibility ?? null,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+    return { status: 'ok', id: consentId };
   }
 );
 

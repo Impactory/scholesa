@@ -985,6 +985,44 @@ describe('report share request lifecycle', () => {
     expect(schemaSource).toContain('revokedAt?: Timestamp');
   });
 
+  it('defines server-owned report share consent records before enabling external sharing', () => {
+    const collectionsSource = readSrcFile('lib', 'firestore', 'collections.ts');
+
+    expect(schemaSource).toContain('export interface ReportShareConsent');
+    expect(schemaSource).toContain(
+      "export type ReportShareConsentStatus = 'pending' | 'granted' | 'revoked' | 'expired'"
+    );
+    expect(schemaSource).toContain('export type ReportShareConsentScope =');
+    expect(schemaSource).toContain("| 'external'");
+    expect(schemaSource).toContain("| 'public'");
+    expect(schemaSource).toContain('linkedReportShareRequestIds?: string[]');
+    expect(collectionsSource).toContain('reportShareConsentsCollection');
+    expect(collectionsSource).toContain(
+      "createCollection<ReportShareConsent>('reportShareConsents')"
+    );
+    expect(rulesSource).toContain('match /reportShareConsents/{id}');
+    expect(rulesSource).toContain('allow create, update, delete: if false');
+    expect(rulesSource).toContain('Server-owned explicit consent lifecycle');
+    expect(functionsSource).toContain('export const requestReportShareConsent');
+    expect(functionsSource).toContain('export const grantReportShareConsent');
+    expect(functionsSource).toContain('export const revokeReportShareConsent');
+    expect(functionsSource).toContain('persistReportShareConsentRecord');
+    expect(functionsSource).toContain('grantReportShareConsentRecord');
+    expect(functionsSource).toContain('revokeReportShareConsentRecord');
+    expect(functionsSource).toContain('canRequestReportShareConsentForPolicy');
+    expect(functionsSource).toContain('canDecideReportShareConsent');
+    expect(functionsSource).toContain('canRevokeReportShareConsent');
+    expect(functionsSource).toContain(
+      'Only learners and linked guardians can grant report share consent.'
+    );
+    expect(functionsSource).toContain('report.share_consent_requested');
+    expect(functionsSource).toContain('report.share_consent_granted');
+    expect(functionsSource).toContain('report.share_consent_revoked');
+    expect(functionsSource).toContain(
+      'External and partner report sharing requires explicit consent workflow support.'
+    );
+  });
+
   it('keeps report share request writes server-owned in Firestore rules', () => {
     expect(rulesSource).toContain('match /reportShareRequests/{id}');
     expect(rulesSource).toContain('allow create, update, delete: if false');
