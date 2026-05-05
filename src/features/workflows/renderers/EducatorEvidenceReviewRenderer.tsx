@@ -19,8 +19,10 @@ import { httpsCallable } from 'firebase/functions';
 import { firestore, functions } from '@/src/firebase/client-init';
 import { rubricTemplatesCollection, portfolioItemsCollection } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
+import { ReportShareConsentRequester } from '@/src/components/reports/ReportShareConsentRequester';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
+import type { ReportProvenanceSignal } from '@/src/lib/reports/shareExport';
 import {
   RubricManager,
   type AssessmentRubric,
@@ -960,6 +962,26 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
             const isRubricOpen = rubricOpen === attempt.id;
             const isRevisionOpen = revisionOpen === attempt.id;
             const isSaving = saving === attempt.id;
+            const shareSiteId = mission?.siteId || educatorSiteId;
+            const shareExpectedSignals: ReportProvenanceSignal[] = [
+              'evidence',
+              'mission',
+              'proof',
+              'aiDisclosure',
+              'reviewer',
+              'verificationPrompt',
+            ];
+            if (attempt.portfolioItemId) shareExpectedSignals.push('portfolio');
+            const broaderShareReportText = [
+              `Evidence id: ${attempt.id}`,
+              `Mission attempt id: ${attempt.id}`,
+              `Mission link: ${mission?.title ?? attempt.missionId}`,
+              attempt.portfolioItemId ? `Portfolio item: ${attempt.portfolioItemId}` : null,
+              `Proof-of-learning proof status: ${attempt.proofOfLearningStatus ?? 'pending verification'}`,
+              `AI disclosure status: ${attempt.aiDisclosure ? 'learner AI disclosure present' : 'no AI disclosure'}`,
+              `Reviewed by educator: ${ctx.uid}`,
+              `Verification prompt: verify next with learner explanation before external use.`,
+            ].filter(Boolean).join('\n');
 
             return (
               <li
@@ -1152,6 +1174,18 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                     </button>
                   </div>
                 )}
+
+                <ReportShareConsentRequester
+                  siteId={shareSiteId}
+                  learnerId={attempt.learnerId}
+                  reportText={broaderShareReportText}
+                  expectedSignals={shareExpectedSignals}
+                  module="passport"
+                  surface="educator_evidence_review"
+                  cta="educator_request_broader_report_share"
+                  fileName={`broader-report-${attempt.learnerId}-${attempt.id}.txt`}
+                  defaultEvidenceSummary={`Evidence ${attempt.id} for ${mission?.title ?? attempt.missionId}; proof status ${attempt.proofOfLearningStatus ?? 'pending verification'}.`}
+                />
 
                 {/* Inline rubric form */}
                 {isRubricOpen && (

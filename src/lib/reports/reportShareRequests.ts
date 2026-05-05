@@ -1,7 +1,19 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import type { ReportDeliveryAuditAction, ReportDeliveryAuditStatus } from './reportDeliveryAudit';
-import type { ReportProvenanceMetadata } from './shareExport';
+import type {
+  ReportProvenanceMetadata,
+  ReportShareAudience,
+  ReportShareVisibility,
+} from './shareExport';
+
+export type ReportShareConsentScope =
+  | 'family'
+  | 'staff'
+  | 'site'
+  | 'partner'
+  | 'external'
+  | 'public';
 
 interface CreateReportShareRequestParams {
   siteId?: string | null;
@@ -15,6 +27,23 @@ interface CreateReportShareRequestParams {
   fileName?: string;
   expiresInDays?: number;
   shareRequestActorPolicyAligned?: boolean;
+}
+
+interface RequestReportShareConsentParams {
+  siteId?: string | null;
+  learnerId?: string | null;
+  scope: ReportShareConsentScope;
+  audience: ReportShareAudience;
+  visibility: ReportShareVisibility;
+  purpose: string;
+  evidenceSummary: string;
+  expiresInDays?: number;
+}
+
+interface CreateExplicitConsentReportShareRequestParams extends CreateReportShareRequestParams {
+  explicitConsentId?: string | null;
+  audience: ReportShareAudience;
+  visibility: ReportShareVisibility;
 }
 
 interface RevokeReportShareRequestParams {
@@ -159,6 +188,91 @@ export async function createReportShareRequest({
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('Unable to create report share request.', error);
+    }
+    return null;
+  }
+}
+
+export async function requestReportShareConsent({
+  siteId,
+  learnerId,
+  scope,
+  audience,
+  visibility,
+  purpose,
+  evidenceSummary,
+  expiresInDays,
+}: RequestReportShareConsentParams): Promise<string | null> {
+  if (!siteId || !learnerId || !purpose.trim() || !evidenceSummary.trim()) return null;
+
+  try {
+    const callable = httpsCallable(functions, 'requestReportShareConsent');
+    const response = await callable({
+      siteId,
+      learnerId,
+      scope,
+      audience,
+      visibility,
+      purpose: purpose.trim(),
+      evidenceSummary: evidenceSummary.trim(),
+      expiresInDays,
+    });
+    const data = response.data as { id?: unknown } | undefined;
+    return typeof data?.id === 'string' ? data.id : null;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Unable to request report share consent.', error);
+    }
+    return null;
+  }
+}
+
+export async function createExplicitConsentReportShareRequest({
+  siteId,
+  learnerId,
+  reportAction,
+  reportDelivery,
+  metadata,
+  module,
+  surface,
+  cta,
+  fileName,
+  expiresInDays,
+  explicitConsentId,
+  audience,
+  visibility,
+}: CreateExplicitConsentReportShareRequestParams): Promise<string | null> {
+  if (!siteId || !learnerId || !metadata || !reportDelivery || !explicitConsentId) return null;
+  if (!completedDeliveryStatuses.has(reportDelivery)) return null;
+  if (metadata.report_meets_delivery_contract !== true) return null;
+  if (metadata.report_share_policy_declared !== true) return null;
+  if (metadata.report_share_audience !== audience || metadata.report_share_visibility !== visibility) {
+    return null;
+  }
+
+  try {
+    const callable = httpsCallable(functions, 'createReportShareRequest');
+    const response = await callable({
+      siteId,
+      learnerId,
+      reportAction,
+      reportDelivery,
+      module,
+      source: module,
+      surface,
+      cta,
+      fileName,
+      expiresInDays,
+      audience,
+      visibility,
+      explicitConsentId,
+      metadata,
+    });
+    const data = response.data as { id?: unknown } | undefined;
+    return typeof data?.id === 'string' ? data.id : null;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Unable to create explicit-consent report share request.', error);
     }
     return null;
   }

@@ -1120,6 +1120,37 @@ describe('report share request lifecycle', () => {
     expect(learnerPassportSource).toContain('learner_passport_share_family_summary');
     expect(learnerPassportSource).toContain('shareRequestActorPolicyAligned: false');
   });
+
+  it('exposes requester-side broader sharing behind explicit consent', () => {
+    const requesterSource = readSrcFile('components', 'reports', 'ReportShareConsentRequester.tsx');
+    const helperSource = readSrcFile('lib', 'reports', 'reportShareRequests.ts');
+    const educatorReviewSource = readSrcFile(
+      'features',
+      'workflows',
+      'renderers',
+      'EducatorEvidenceReviewRenderer.tsx'
+    );
+
+    expect(requesterSource).toContain("'use client'");
+    expect(requesterSource).toContain('reportShareConsentsCollection');
+    expect(requesterSource).toContain('reportShareRequestsCollection');
+    expect(requesterSource).toContain('requestReportShareConsent');
+    expect(requesterSource).toContain('createExplicitConsentReportShareRequest');
+    expect(requesterSource).toContain('Explicit consent required before staff, site, partner, external, or public sharing.');
+    expect(requesterSource).toContain('Delivery contract:');
+    expect(requesterSource).toContain('Consent status:');
+    expect(requesterSource).toContain('Request consent');
+    expect(requesterSource).toContain('Activate share');
+    expect(requesterSource).toContain("reportDelivery: 'shared'");
+    expect(requesterSource).toContain('explicitConsentId: grantedConsent.id');
+    expect(requesterSource).not.toContain('grantReportShareConsent');
+    expect(helperSource).toContain('requestReportShareConsent');
+    expect(helperSource).toContain('createExplicitConsentReportShareRequest');
+    expect(helperSource).toContain('if (!siteId || !learnerId || !metadata || !reportDelivery || !explicitConsentId) return null;');
+    expect(helperSource).toContain('metadata.report_share_audience !== audience');
+    expect(educatorReviewSource).toContain('ReportShareConsentRequester');
+    expect(educatorReviewSource).toContain('educator_request_broader_report_share');
+  });
 });
 
 /* ───── EvidenceRecord schema sessionOccurrenceId ───── */

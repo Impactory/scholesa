@@ -5489,7 +5489,7 @@ export const createReportShareRequest = onCall(
       allowsExternalSharing ||
       !SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES.has(audience) ||
       !SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES.has(visibility);
-    if (!familySafe) {
+    if (!requiresExplicitConsent && !familySafe) {
       throw new HttpsError(
         'failed-precondition',
         'Report share requests require a family-safe share policy.'

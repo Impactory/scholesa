@@ -19,8 +19,10 @@ import {
 } from '@/src/lib/reports/reportDeliveryAudit';
 import { recordReportDeliveryLifecycle } from '@/src/lib/reports/reportDeliveryLifecycle';
 import {
+  createExplicitConsentReportShareRequest,
   createReportShareRequest,
   reportShareRequestLifecycleMetadata,
+  requestReportShareConsent,
   resolveReportShareRequestSkipReason,
   shouldCreateReportShareRequest,
 } from '@/src/lib/reports/reportShareRequests';
@@ -408,6 +410,90 @@ describe('report share request client helpers', () => {
         metadata,
       })
     );
+  });
+
+  it('requests explicit report share consent through the server-owned callable', async () => {
+    const id = await requestReportShareConsent({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      scope: 'external',
+      audience: 'external',
+      visibility: 'external',
+      purpose: 'Share verified evidence with an approved reviewer.',
+      evidenceSummary: 'Verified portfolio evidence with provenance.',
+    });
+
+    expect(id).toBe('audit-1');
+    expect(httpsCallableMock).toHaveBeenCalledWith(
+      { app: 'test-app' },
+      'requestReportShareConsent'
+    );
+    expect(callableMock).toHaveBeenCalledWith({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      scope: 'external',
+      audience: 'external',
+      visibility: 'external',
+      purpose: 'Share verified evidence with an approved reviewer.',
+      evidenceSummary: 'Verified portfolio evidence with provenance.',
+      expiresInDays: undefined,
+    });
+  });
+
+  it('creates broader report shares only with granted explicit consent metadata', async () => {
+    const metadata = buildMetadata({
+      report_share_audience: 'external',
+      report_share_visibility: 'external',
+      report_share_allows_external_sharing: true,
+      report_share_family_safe: false,
+    });
+
+    const id = await createExplicitConsentReportShareRequest({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      reportAction: 'share',
+      reportDelivery: 'shared',
+      metadata,
+      module: 'passport',
+      surface: 'educator_evidence_review',
+      cta: 'educator_request_broader_report_share',
+      explicitConsentId: 'consent-1',
+      audience: 'external',
+      visibility: 'external',
+    });
+
+    expect(id).toBe('audit-1');
+    expect(httpsCallableMock).toHaveBeenCalledWith({ app: 'test-app' }, 'createReportShareRequest');
+    expect(callableMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        siteId: 'site-1',
+        learnerId: 'learner-1',
+        reportAction: 'share',
+        reportDelivery: 'shared',
+        audience: 'external',
+        visibility: 'external',
+        explicitConsentId: 'consent-1',
+        metadata,
+      })
+    );
+
+    jest.clearAllMocks();
+    const blocked = await createExplicitConsentReportShareRequest({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      reportAction: 'share',
+      reportDelivery: 'shared',
+      metadata,
+      module: 'passport',
+      surface: 'educator_evidence_review',
+      cta: 'educator_request_broader_report_share',
+      explicitConsentId: null,
+      audience: 'external',
+      visibility: 'external',
+    });
+
+    expect(blocked).toBeNull();
+    expect(httpsCallableMock).not.toHaveBeenCalled();
   });
 
   it('creates a share request before recording the linked delivery audit', async () => {
