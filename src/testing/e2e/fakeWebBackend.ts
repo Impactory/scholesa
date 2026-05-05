@@ -223,6 +223,27 @@ type EvidenceChainSeedInput = Partial<Pick<StoreState,
   missionAttempts?: MissionAttemptRecord[];
 };
 
+function buildSessionCoverageMetadata(params: {
+  sessionId: string;
+  siteId: string;
+  evidenceRecords: EvidenceChainRecord[];
+}): Record<string, string> {
+  const linkedEvidence = params.evidenceRecords.filter((record) => {
+    const sessionId = record.sessionId || record.sessionOccurrenceId;
+    return record.siteId === params.siteId && sessionId === params.sessionId;
+  });
+  const learnerIds = new Set(
+    linkedEvidence
+      .map((record) => record.learnerId)
+      .filter((learnerId): learnerId is string => typeof learnerId === 'string' && learnerId.length > 0)
+  );
+  return {
+    evidenceCount: String(linkedEvidence.length),
+    checkpointCount: '0',
+    observedLearnerCount: String(learnerIds.size),
+  };
+}
+
 type E2ERubricScoreInput = {
   criterionId: string;
   capabilityId?: string;
@@ -1761,6 +1782,35 @@ export async function loadE2EWorkflowRecords(ctx: WorkflowContext): Promise<Work
         canEdit: false,
         canDelete: false,
       })] : [],
+    };
+  }
+  case '/site/sessions': {
+    const siteId = activeSiteIdFromContext(ctx) || '';
+    return {
+      ...emptyResult(),
+      canCreate: true,
+      createLabel: 'Create site session',
+      createConfig: null,
+      records: state.sessions
+        .filter((entry) => entry.siteId === siteId)
+        .map((entry) => toRecord({
+          id: entry.id,
+          title: entry.title,
+          subtitle: 'Site-scoped session coverage',
+          status: entry.status,
+          updatedAt: entry.updatedAt,
+          siteId: entry.siteId,
+          collectionName: 'sessions',
+          routePath: ctx.routePath,
+          canEdit: true,
+          canDelete: false,
+          primaryActionLabel: entry.status === 'in_progress' ? 'Complete session' : 'Start session',
+          metadata: buildSessionCoverageMetadata({
+            sessionId: entry.id,
+            siteId: entry.siteId,
+            evidenceRecords: state.evidenceRecords,
+          }),
+        })),
     };
   }
   case '/site/provisioning': {

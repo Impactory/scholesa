@@ -917,6 +917,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(browserEvidenceChainSource).toContain('capabilityGrowthEvents');
     expect(browserEvidenceChainSource).toContain('rubricTemplates');
     expect(browserEvidenceChainSource).toContain('reportShareRequests');
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/missions/review')");
+    expect(browserEvidenceChainSource).toContain('Request consent');
+    expect(browserEvidenceChainSource).toContain("getByRole('button', { name: 'Grant' })");
+    expect(browserEvidenceChainSource).toContain('Active share:');
     expect(masterPlanSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest');
     expect(masterPlanSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest.routeProofReferences');
     expect(masterPlanSource).toContain('consent-backed broader share records');
@@ -1294,6 +1298,14 @@ describe('EducatorSessionsRenderer evidence-enriched session view', () => {
 
   it('shows checkpoint count per session', () => {
     expect(source).toMatch(/checkpointCount|checkpointCounts/);
+  });
+
+  it('has harness-backed browser proof for educator and site session coverage', () => {
+    expect(source).toContain('NEXT_PUBLIC_E2E_TEST_MODE');
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/sessions')");
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/site/sessions')");
+    expect(workflowDataSource).toContain('enrichSessionRecordsWithEvidenceCoverage');
+    expect(workflowDataSource).toContain('observedLearnerCount');
   });
 });
 

@@ -110,10 +110,13 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
   const editedLiveAuthoredRubricTitle = 'Edited Live HQ Authored Evidence Rubric';
 
   await page.evaluate(
-    ({ portfolioItem }) => {
+    ({ portfolioItem, missionAttempt }) => {
       (window as Window & {
         __scholesaE2E: E2EWindowApi;
-      }).__scholesaE2E.seedEvidenceChain({ portfolioItems: [portfolioItem] });
+      }).__scholesaE2E.seedEvidenceChain({
+        portfolioItems: [portfolioItem],
+        missionAttempts: [missionAttempt],
+      });
     },
     {
       portfolioItem: {
@@ -291,6 +294,73 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
     ])
   );
 
+  await signInAs(page, EDUCATOR_ALPHA);
+  await gotoProtectedRoute(page, '/en/educator/missions/review');
+
+  await expect(page.getByTestId('educator-evidence-review')).toBeVisible();
+  await expect(page.getByTestId('submission-mission-attempt-consent-e2e')).toContainText(
+    'Learner Alpha'
+  );
+  const consentRequester = page.getByTestId(`report-share-consent-requester-${LEARNER_ALPHA}`);
+  await expect(consentRequester).toBeVisible();
+  await consentRequester.getByRole('button', { name: 'Partner' }).click();
+  await consentRequester.getByRole('button', { name: 'Request consent' }).click();
+  await expect(consentRequester).toContainText('Consent status: pending');
+
+  const partnerConsent = (await getCollection(page, 'reportShareConsents')).find(
+    (consent) => consent.scope === 'partner' && consent.status === 'pending'
+  );
+  expect(partnerConsent).toEqual(
+    expect.objectContaining({
+      learnerId: LEARNER_ALPHA,
+      siteId: 'site-alpha',
+      audience: 'partner',
+      visibility: 'external',
+    })
+  );
+
+  await signInAs(page, PARENT_ALPHA);
+  await gotoProtectedRoute(page, '/en/parent/passport');
+
+  const consentManager = page.getByTestId(`report-share-request-manager-${LEARNER_ALPHA}`);
+  await expect(consentManager).toContainText('Explicit consent requests');
+  await consentManager
+    .locator('li')
+    .filter({ hasText: 'partner' })
+    .getByRole('button', { name: 'Grant' })
+    .click();
+  await expect(consentManager).toContainText('Consent granted · partner');
+
+  expect(await getCollection(page, 'reportShareConsents')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: partnerConsent?.id,
+        status: 'granted',
+        decidedBy: PARENT_ALPHA,
+      }),
+    ])
+  );
+
+  await signInAs(page, EDUCATOR_ALPHA);
+  await gotoProtectedRoute(page, '/en/educator/missions/review');
+
+  const grantedConsentRequester = page.getByTestId(`report-share-consent-requester-${LEARNER_ALPHA}`);
+  await grantedConsentRequester.getByRole('button', { name: 'Partner' }).click();
+  await expect(grantedConsentRequester).toContainText('Consent status: granted');
+  await grantedConsentRequester.getByRole('button', { name: 'Activate share' }).click();
+  await expect(grantedConsentRequester).toContainText('Active share:');
+
+  expect(await getCollection(page, 'reportShareRequests')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        explicitConsentId: partnerConsent?.id,
+        audience: 'partner',
+        visibility: 'external',
+        status: 'active',
+      }),
+    ])
+  );
+
   await signInAs(page, LEARNER_ALPHA);
   await gotoProtectedRoute(page, '/en/learner/proof-assembly');
 
@@ -412,6 +482,26 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
   const educators = page.getByTestId('evidence-health-educators');
   await expect(educators).toContainText('Educator Alpha');
   await expect(educators).toContainText('1');
+
+  await signInAs(page, EDUCATOR_ALPHA);
+  await gotoProtectedRoute(page, '/en/educator/sessions');
+
+  const educatorSession = page.getByRole('button', { name: /Skills Studio/ });
+  await expect(educatorSession).toContainText('1 learners');
+  await expect(educatorSession).toContainText('1 evidence');
+  await educatorSession.click();
+  const educatorSessionDetails = page.getByText('Evidence Records').locator('..');
+  await expect(educatorSessionDetails).toContainText('1');
+
+  await signInAs(page, SITE_ADMIN);
+  await gotoProtectedRoute(page, '/en/site/sessions');
+
+  const siteSession = page.getByTestId('workflow-record-session-future-skills');
+  await expect(siteSession).toContainText('Skills Studio');
+  await expect(siteSession).toContainText('Site: site-alpha');
+  await expect(siteSession).toContainText('Evidence Count:');
+  await expect(siteSession).toContainText('1');
+  await expect(siteSession).toContainText('Observed Learner Count:');
 
   const evidenceRecords = await getCollection(page, 'evidenceRecords');
   expect(evidenceRecords).toEqual(

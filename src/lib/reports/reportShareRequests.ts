@@ -281,7 +281,7 @@ export async function createExplicitConsentReportShareRequest({
         audience,
         visibility,
         explicitConsentId,
-        metadata,
+        metadata: metadata as unknown as Record<string, unknown>,
       });
       return response.id;
     }

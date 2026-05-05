@@ -1007,6 +1007,51 @@ async function queryCollectionRecords(params: {
   );
 }
 
+async function enrichSessionRecordsWithEvidenceCoverage(records: WorkflowRecord[], siteId: string | null): Promise<void> {
+  if (!siteId || records.length === 0) return;
+  const sessionIds = records.map((record) => record.id);
+  const evidenceCounts = new Map<string, number>();
+  const checkpointCounts = new Map<string, number>();
+  const learnerSets = new Map<string, Set<string>>();
+
+  const [evidenceSnap, checkpointSnap] = await Promise.all([
+    getDocs(query(collection(firestore, 'evidenceRecords'), where('siteId', '==', siteId), limit(500))),
+    getDocs(query(collection(firestore, 'checkpointHistory'), where('siteId', '==', siteId), limit(500))),
+  ]);
+
+  for (const snapDoc of evidenceSnap.docs) {
+    const data = snapDoc.data() as Record<string, unknown>;
+    const sid = data.sessionId || data.sessionOccurrenceId;
+    if (typeof sid === 'string' && sessionIds.includes(sid)) {
+      evidenceCounts.set(sid, (evidenceCounts.get(sid) || 0) + 1);
+      if (typeof data.learnerId === 'string') {
+        const set = learnerSets.get(sid) || new Set<string>();
+        set.add(data.learnerId);
+        learnerSets.set(sid, set);
+      }
+    }
+  }
+
+  for (const snapDoc of checkpointSnap.docs) {
+    const data = snapDoc.data() as Record<string, unknown>;
+    const sid = data.sprintSessionId;
+    if (typeof sid === 'string' && sessionIds.includes(sid)) {
+      checkpointCounts.set(sid, (checkpointCounts.get(sid) || 0) + 1);
+      if (typeof data.learnerId === 'string') {
+        const set = learnerSets.get(sid) || new Set<string>();
+        set.add(data.learnerId);
+        learnerSets.set(sid, set);
+      }
+    }
+  }
+
+  for (const record of records) {
+    record.metadata.evidenceCount = String(evidenceCounts.get(record.id) || 0);
+    record.metadata.checkpointCount = String(checkpointCounts.get(record.id) || 0);
+    record.metadata.observedLearnerCount = String(learnerSets.get(record.id)?.size || 0);
+  }
+}
+
 async function loadLearnerToday(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
   const enrollmentsSnap = await getDocs(
     query(
@@ -2450,18 +2495,20 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         };
       }
     case '/site/sessions':
+      const sessionRecords = applyRouteActionLabels(await queryCollectionRecords({
+        routePath: ctx.routePath,
+        collectionName: 'sessions',
+        constraints: siteId ? [where('siteId', '==', siteId), orderBy('startDate', 'asc')] : [orderBy('startDate', 'asc')],
+        titleKeys: ['title'],
+        subtitleKeys: ['description', 'roomId'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: false,
+        limitSize: 80,
+      }), ctx.routePath);
+      await enrichSessionRecordsWithEvidenceCoverage(sessionRecords, siteId);
       return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'sessions',
-          constraints: siteId ? [where('siteId', '==', siteId), orderBy('startDate', 'asc')] : [orderBy('startDate', 'asc')],
-          titleKeys: ['title'],
-          subtitleKeys: ['description', 'roomId'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 80,
-        }), ctx.routePath),
+        records: sessionRecords,
         canCreate: true,
         canRefresh: true,
         createLabel: 'Create site session',

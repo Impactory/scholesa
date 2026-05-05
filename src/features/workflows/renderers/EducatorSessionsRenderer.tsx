@@ -98,6 +98,66 @@ function statusLabel(status: string): string {
   }
 }
 
+function sessionCoverageRowsFromRecords(params: {
+  sessions: Record<string, unknown>[];
+  evidenceRecords: Record<string, unknown>[];
+  checkpointHistory: Record<string, unknown>[];
+  siteId: string;
+}): SessionRow[] {
+  const sessionIds = params.sessions
+    .filter((session) => session.siteId === params.siteId)
+    .map((session) => String(session.id));
+  const evidenceCounts = new Map<string, number>();
+  const checkpointCounts = new Map<string, number>();
+  const learnerSets = new Map<string, Set<string>>();
+
+  params.evidenceRecords
+    .filter((record) => record.siteId === params.siteId)
+    .forEach((record) => {
+      const sid = record.sessionId || record.sessionOccurrenceId;
+      if (typeof sid === 'string' && sessionIds.includes(sid)) {
+        evidenceCounts.set(sid, (evidenceCounts.get(sid) || 0) + 1);
+        if (typeof record.learnerId === 'string') {
+          const set = learnerSets.get(sid) || new Set<string>();
+          set.add(record.learnerId);
+          learnerSets.set(sid, set);
+        }
+      }
+    });
+
+  params.checkpointHistory
+    .filter((record) => record.siteId === params.siteId)
+    .forEach((record) => {
+      const sid = record.sprintSessionId;
+      if (typeof sid === 'string' && sessionIds.includes(sid)) {
+        checkpointCounts.set(sid, (checkpointCounts.get(sid) || 0) + 1);
+        if (typeof record.learnerId === 'string') {
+          const set = learnerSets.get(sid) || new Set<string>();
+          set.add(record.learnerId);
+          learnerSets.set(sid, set);
+        }
+      }
+    });
+
+  return params.sessions
+    .filter((session) => session.siteId === params.siteId)
+    .map((session) => {
+      const id = String(session.id);
+      return {
+        id,
+        title: asString(session.title || session.name, 'Untitled Session'),
+        description: asString(session.description, ''),
+        status: asString(session.status, 'scheduled'),
+        startDate: toIso(session.startDate || session.startTime),
+        endDate: toIso(session.endDate || session.endTime),
+        siteId: asString(session.siteId, ''),
+        evidenceCount: evidenceCounts.get(id) || 0,
+        checkpointCount: checkpointCounts.get(id) || 0,
+        learnerCount: learnerSets.get(id)?.size || 0,
+      };
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
@@ -121,6 +181,17 @@ export default function EducatorSessionsRenderer({ ctx }: CustomRouteRendererPro
     setLoading(true);
     setError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setSessions(sessionCoverageRowsFromRecords({
+          sessions: getE2ECollection('sessions'),
+          evidenceRecords: getE2ECollection('evidenceRecords'),
+          checkpointHistory: getE2ECollection('checkpointHistory'),
+          siteId,
+        }));
+        return;
+      }
+
       const sessionsQuery = query(
         collection(firestore, 'sessions'),
         where('siteId', '==', siteId),
