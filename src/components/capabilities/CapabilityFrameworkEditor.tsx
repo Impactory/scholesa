@@ -47,6 +47,7 @@ const PILLAR_OPTIONS: { value: PillarCode; label: string; color: string }[] = [
 ];
 
 const LEVEL_LABELS = ['Beginning', 'Developing', 'Proficient', 'Advanced'] as const;
+const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
 
 function pillarClass(pillarCode: PillarCode): string {
   return PILLAR_OPTIONS.find((p) => p.value === pillarCode)?.color ?? 'bg-gray-100 text-gray-700';
@@ -162,6 +163,31 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
 
     setLoading(true);
     try {
+      if (isE2ETestMode) {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setCapabilities(
+          getE2ECollection('capabilities')
+            .filter((capability) => capability.siteId === resolvedSiteId)
+            .map((capability) => ({ ...capability, id: String(capability.id) }) as Capability)
+        );
+        setCheckpoints(
+          getE2ECollection('checkpoints')
+            .filter((checkpoint) => checkpoint.siteId === resolvedSiteId && checkpoint.status !== 'archived')
+            .map((checkpoint) => ({ ...checkpoint, id: String(checkpoint.id) }) as Checkpoint)
+        );
+        setRubricTemplates(
+          getE2ECollection('rubricTemplates')
+            .filter((template) => template.siteId === resolvedSiteId)
+            .map((template) => ({ ...template, id: String(template.id) }) as RubricTemplate)
+        );
+        setMissions(
+          getE2ECollection('missions')
+            .filter((mission) => !mission.siteId || mission.siteId === resolvedSiteId)
+            .map((mission) => ({ ...mission, id: String(mission.id) }) as Mission)
+        );
+        return;
+      }
+
       const [capSnap, checkpointSnap, rubSnap, missionSnap] = await Promise.all([
         getDocs(query(capabilitiesCollection, where('siteId', '==', resolvedSiteId), orderBy('pillarCode'), orderBy('sortOrder'))),
         getDocs(query(checkpointsCollection, where('siteId', '==', resolvedSiteId))),
@@ -563,6 +589,27 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
         };
       });
 
+        if (isE2ETestMode) {
+          const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+          const now = new Date().toISOString();
+          const rubricId = editingRubricId ?? `e2e-rubric-template-${Date.now()}`;
+          upsertE2ECollectionRecord('rubricTemplates', {
+            id: rubricId,
+            title,
+            siteId: activeSiteId,
+            capabilityIds,
+            criteria,
+            status: rubricForm.status,
+            createdBy: user.uid,
+            createdAt: now,
+            updatedAt: now,
+          });
+          flash(editingRubricId ? `Rubric template ${rubricForm.status === 'published' ? 'published' : 'saved as draft'}.` : 'Rubric template created.');
+          setShowRubricForm(false);
+          await loadData();
+          return;
+        }
+
       if (editingRubricId) {
         const ref = doc(rubricTemplatesCollection, editingRubricId);
         await updateDoc(ref, {
@@ -610,6 +657,16 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
     }
 
     try {
+      if (isE2ETestMode) {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setProcessDomains(
+          getE2ECollection('processDomains')
+            .filter((domain) => domain.siteId === resolvedSiteId && domain.status !== 'archived')
+            .map((domain) => ({ ...domain, id: String(domain.id) }) as ProcessDomain)
+        );
+        return;
+      }
+
       const snap = await getDocs(
         query(processDomainsCollection, where('siteId', '==', resolvedSiteId), orderBy('sortOrder')),
       );
@@ -1054,7 +1111,11 @@ function RubricTemplatesTab({
       ) : (
         <div className="space-y-3">
           {rubricTemplates.map((tmpl) => (
-            <div key={tmpl.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div
+              key={tmpl.id}
+              data-testid={`rubric-template-card-${tmpl.id}`}
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h4 className="text-sm font-medium text-gray-900">{tmpl.title}</h4>
@@ -1257,6 +1318,7 @@ function CapabilityFormModal({
                       />
                       <div className="grid gap-2 sm:grid-cols-2">
                         <select
+                          aria-label="Checkpoint mission"
                           value={cm.missionId ?? ''}
                           onChange={(e) =>
                             setForm((prev) => ({

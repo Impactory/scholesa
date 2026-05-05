@@ -99,6 +99,15 @@ export function RubricReviewPanel({
     if (!siteId) return;
     void (async () => {
       try {
+        if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+          const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+          setTemplates(
+            getE2ECollection('rubricTemplates')
+              .filter((template) => template.siteId === siteId && template.status === 'published')
+              .map((template) => ({ ...template, id: String(template.id) }) as RubricTemplate)
+          );
+          return;
+        }
         const snap = await getDocs(
           query(rubricTemplatesCollection, where('siteId', '==', siteId), where('status', '==', 'published'))
         );
@@ -114,6 +123,15 @@ export function RubricReviewPanel({
     if (!siteId) return;
     void (async () => {
       try {
+        if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+          const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+          setProcessDomains(
+            getE2ECollection('processDomains')
+              .filter((domain) => domain.siteId === siteId && domain.status === 'active')
+              .map((domain) => ({ ...domain, id: String(domain.id) }) as ProcessDomain)
+          );
+          return;
+        }
         const snap = await getDocs(
           query(processDomainsCollection, where('siteId', '==', siteId), where('status', '==', 'active'))
         );
@@ -336,9 +354,8 @@ export function RubricReviewPanel({
     setError(null);
 
     try {
-      const applyRubric = httpsCallable(functions, 'applyRubricToEvidence');
       const allScores = [...scores, ...domainScores];
-      await applyRubric({
+      const payload = {
         portfolioItemId: portfolioItemId ?? undefined,
         evidenceRecordIds,
         missionAttemptId: missionAttemptId ?? undefined,
@@ -353,7 +370,14 @@ export function RubricReviewPanel({
           score: s.score,
           maxScore: s.maxScore,
         })),
-      });
+      };
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { applyE2ERubricToEvidence } = await import('@/src/testing/e2e/fakeWebBackend');
+        await applyE2ERubricToEvidence(payload);
+      } else {
+        const applyRubric = httpsCallable(functions, 'applyRubricToEvidence');
+        await applyRubric(payload);
+      }
       onComplete();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to apply rubric';

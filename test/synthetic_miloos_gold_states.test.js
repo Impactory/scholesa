@@ -136,6 +136,7 @@ describe('synthetic platform evidence-chain gold-readiness state', () => {
         platformEvidenceChainEvidenceRecords: 1,
         platformEvidenceChainProofBundles: 1,
         platformEvidenceChainPortfolioItems: 1,
+        platformEvidenceChainRubricTemplates: 1,
         platformEvidenceChainRubricApplications: 1,
         platformEvidenceChainMasteryRecords: 2,
         platformEvidenceChainGrowthEvents: 2,
@@ -183,6 +184,16 @@ describe('synthetic platform evidence-chain gold-readiness state', () => {
     expect(collectionMap(bundle, 'proofOfLearningBundles').get(manifest.ids.proofBundleId)).toMatchObject({
       verificationStatus: 'verified',
       portfolioItemId: manifest.ids.portfolioItemId,
+    });
+    expect(collectionMap(bundle, 'rubricTemplates').get(manifest.ids.rubricTemplateId)).toMatchObject({
+      siteId: manifest.siteId,
+      status: 'published',
+      capabilityIds: [manifest.ids.capabilityId],
+      sourcePack: 'platform-evidence-chain-gold-readiness',
+    });
+    expect(collectionMap(bundle, 'rubricApplications').get(manifest.ids.rubricApplicationId)).toMatchObject({
+      rubricId: manifest.ids.rubricTemplateId,
+      status: 'applied',
     });
     expect(collectionMap(bundle, 'capabilityGrowthEvents').get(manifest.ids.growthEventId)).toMatchObject({
       interpretationOwner: 'server',

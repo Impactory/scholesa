@@ -588,6 +588,7 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
   const evidenceId = 'evidence-chain-alpha';
   const portfolioItemId = 'portfolio-evidence-chain-alpha';
   const proofBundleId = 'proof-bundle-alpha';
+  const rubricTemplateId = 'rubric-template-prototype-iteration';
   const rubricApplicationId = 'rubric-application-alpha';
   const growthEventId = 'growth-event-alpha';
   const processGrowthEventId = 'process-growth-event-alpha';
@@ -795,12 +796,41 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
     synthetic: true,
     sourcePack,
   });
+  upsertDoc(bundle, 'rubricTemplates', rubricTemplateId, {
+    id: rubricTemplateId,
+    siteId,
+    title: 'Prototype Iteration Evidence Rubric',
+    capabilityIds: [capabilityId],
+    criteria: [
+      {
+        id: 'criterion-prototype-iteration',
+        label: 'Uses test evidence to choose the next prototype change',
+        capabilityId,
+        processDomainId,
+        pillarCode: 'FUTURE_SKILLS',
+        maxScore: 4,
+        descriptors: {
+          beginning: 'Names a prototype change with limited evidence connection.',
+          developing: 'Connects a prototype change to one test observation.',
+          proficient: 'Uses test evidence to justify a practical next iteration.',
+          advanced: 'Compares test evidence, tradeoffs, and next iteration choices clearly.',
+        },
+      },
+    ],
+    status: 'published',
+    createdBy: 'hq-alpha',
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
   upsertDoc(bundle, 'rubricApplications', rubricApplicationId, {
     id: rubricApplicationId,
     siteId,
     learnerId,
     educatorId,
     portfolioItemId,
+    rubricId: rubricTemplateId,
     evidenceRecordIds: [evidenceId],
     capabilityScores: [{ capabilityId, score: 4, maxScore: 4 }],
     status: 'applied',
@@ -940,6 +970,7 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
     platformEvidenceChainEvidenceRecords: 1,
     platformEvidenceChainProofBundles: 1,
     platformEvidenceChainPortfolioItems: 1,
+    platformEvidenceChainRubricTemplates: 1,
     platformEvidenceChainRubricApplications: 1,
     platformEvidenceChainMasteryRecords: 2,
     platformEvidenceChainGrowthEvents: 2,
@@ -962,6 +993,7 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
       evidenceId,
       portfolioItemId,
       proofBundleId,
+      rubricTemplateId,
       rubricApplicationId,
       growthEventId,
       processGrowthEventId,

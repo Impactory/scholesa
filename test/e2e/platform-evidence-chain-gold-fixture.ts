@@ -33,6 +33,7 @@ export const PLATFORM_EVIDENCE_CHAIN_GOLD_IDS = {
   portfolioItemId: 'portfolio-evidence-chain-alpha',
   proofBundleId: 'proof-bundle-alpha',
   rubricApplicationId: 'rubric-application-alpha',
+  rubricTemplateId: 'rubric-template-prototype-iteration',
   growthEventId: 'growth-event-alpha',
 } as const;
 
@@ -83,6 +84,7 @@ export function canonicalPlatformEvidenceChainGoldRecords(): Record<string, Coll
     evidenceRecords: [requiredDoc(bundle, 'evidenceRecords', ids.evidenceId)],
     proofOfLearningBundles: [requiredDoc(bundle, 'proofOfLearningBundles', ids.proofBundleId)],
     portfolioItems: [requiredDoc(bundle, 'portfolioItems', ids.portfolioItemId)],
+    rubricTemplates: [requiredDoc(bundle, 'rubricTemplates', ids.rubricTemplateId)],
     rubricApplications: [requiredDoc(bundle, 'rubricApplications', ids.rubricApplicationId)],
     capabilityMastery: [
       requiredDoc(bundle, 'capabilityMastery', `mastery-${ids.learnerId}-${ids.capabilityId}`),

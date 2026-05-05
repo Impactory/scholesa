@@ -203,6 +203,25 @@ type EvidenceChainSeedInput = Partial<Pick<StoreState,
   portfolioItems?: PortfolioRecord[];
 };
 
+type E2ERubricScoreInput = {
+  criterionId: string;
+  capabilityId?: string;
+  processDomainId?: string;
+  pillarCode?: string;
+  score: number;
+  maxScore: number;
+};
+
+type ApplyE2ERubricInput = {
+  portfolioItemId?: string;
+  evidenceRecordIds?: string[];
+  missionAttemptId?: string;
+  learnerId: string;
+  siteId: string;
+  rubricId?: string;
+  scores: E2ERubricScoreInput[];
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -637,6 +656,124 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
   const state = readStore() as unknown as Record<string, Array<Record<string, unknown>>>;
   const collection = state[collectionName];
   return Array.isArray(collection) ? cloneState(collection) : [];
+}
+
+type EvidenceChainCollectionName = keyof Pick<StoreState,
+  | 'capabilities'
+  | 'processDomains'
+  | 'evidenceRecords'
+  | 'proofOfLearningBundles'
+  | 'rubricApplications'
+  | 'capabilityMastery'
+  | 'processDomainMastery'
+  | 'capabilityGrowthEvents'
+  | 'processDomainGrowthEvents'
+  | 'reportShareConsents'
+  | 'reportShareRequests'
+  | 'rubricTemplates'
+>;
+
+export function upsertE2ECollectionRecord(
+  collectionName: EvidenceChainCollectionName,
+  record: EvidenceChainRecord
+): EvidenceChainRecord {
+  const state = readStore();
+  state[collectionName] = mergeById(state[collectionName], [record]);
+  writeStore(state);
+  return cloneState(record);
+}
+
+export async function applyE2ERubricToEvidence(
+  input: ApplyE2ERubricInput
+): Promise<{ rubricApplicationId: string }> {
+  const state = readStore();
+  const createdAt = nowIso();
+  const reviewerId = currentUserId() || 'e2e-reviewer';
+  const rubricApplicationId = nextId('e2e-rubric-application');
+  const evidenceRecordIds = new Set(input.evidenceRecordIds || []);
+
+  if (input.portfolioItemId) {
+    const portfolioItem = state.portfolioItems.find((item) => item.id === input.portfolioItemId);
+    portfolioItem?.evidenceRecordIds?.forEach((id) => evidenceRecordIds.add(id));
+  }
+
+  state.rubricApplications = mergeById(state.rubricApplications, [{
+    id: rubricApplicationId,
+    learnerId: input.learnerId,
+    siteId: input.siteId,
+    portfolioItemId: input.portfolioItemId,
+    evidenceRecordIds: Array.from(evidenceRecordIds),
+    missionAttemptId: input.missionAttemptId,
+    rubricId: input.rubricId,
+    scores: input.scores,
+    status: 'applied',
+    reviewedBy: reviewerId,
+    createdAt,
+    updatedAt: createdAt,
+  }]);
+
+  const scoredCapabilities = input.scores.filter((score) => score.capabilityId);
+  state.capabilityGrowthEvents = mergeById(
+    state.capabilityGrowthEvents,
+    scoredCapabilities.map((score, index) => ({
+      id: `${rubricApplicationId}-growth-${index}`,
+      learnerId: input.learnerId,
+      siteId: input.siteId,
+      capabilityId: score.capabilityId,
+      source: 'rubricApplication',
+      sourceId: rubricApplicationId,
+      evidenceRecordIds: Array.from(evidenceRecordIds),
+      portfolioItemId: input.portfolioItemId,
+      rubricId: input.rubricId,
+      score: score.score,
+      maxScore: score.maxScore,
+      createdAt,
+      createdBy: reviewerId,
+    }))
+  );
+  state.capabilityMastery = mergeById(
+    state.capabilityMastery,
+    scoredCapabilities.map((score) => ({
+      id: `mastery-${input.learnerId}-${score.capabilityId}`,
+      learnerId: input.learnerId,
+      siteId: input.siteId,
+      capabilityId: score.capabilityId,
+      level: score.score,
+      score: score.score,
+      maxScore: score.maxScore,
+      evidenceCount: Math.max(1, evidenceRecordIds.size),
+      latestEvidenceRecordIds: Array.from(evidenceRecordIds),
+      latestRubricApplicationId: rubricApplicationId,
+      updatedAt: createdAt,
+      updatedBy: reviewerId,
+    }))
+  );
+
+  state.evidenceRecords = state.evidenceRecords.map((record) =>
+    evidenceRecordIds.has(record.id)
+      ? { ...record, rubricStatus: 'applied', growthStatus: 'recorded', rubricApplicationId, updatedAt: createdAt }
+      : record
+  );
+  state.portfolioItems = state.portfolioItems.map((item) =>
+    item.id === input.portfolioItemId
+      ? {
+          ...item,
+          reviewedAt: createdAt,
+          rubricScore: {
+            rubricId: input.rubricId,
+            rubricApplicationId,
+            averageScore: scoredCapabilities.length > 0
+              ? scoredCapabilities.reduce((sum, score) => sum + score.score, 0) / scoredCapabilities.length
+              : 0,
+            maxScore: scoredCapabilities[0]?.maxScore ?? 4,
+          },
+          updatedAt: createdAt,
+        }
+      : item
+  );
+
+  writeStore(state);
+  return { rubricApplicationId };
 }
 
 export function seedE2EInteractionEvents(events: SeedInteractionEventInput[]): void {

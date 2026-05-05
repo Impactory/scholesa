@@ -17,12 +17,14 @@ type E2EWindowApi = {
 
 const LEARNER_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.learnerId;
 const EDUCATOR_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.educatorId;
+const HQ_ALPHA = 'hq-alpha';
 const PARENT_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.parentId;
 const SITE_ADMIN = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.siteAdminId;
 const CAPABILITY_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.capabilityId;
 const EVIDENCE_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.evidenceId;
 const PORTFOLIO_ITEM_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.portfolioItemId;
 const RUBRIC_APPLICATION_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricApplicationId;
+const RUBRIC_TEMPLATE_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricTemplateId;
 const GROWTH_EVENT_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.growthEventId;
 
 async function waitForE2EHarness(page: Page): Promise<void> {
@@ -103,6 +105,57 @@ test.beforeEach(async ({ page }) => {
 test('verified proof and rubric growth are consumed by educator, guardian, and site routes', async ({
   page,
 }) => {
+  const liveAuthoredRubricTitle = 'Live HQ Authored Evidence Rubric';
+  const editedLiveAuthoredRubricTitle = 'Edited Live HQ Authored Evidence Rubric';
+
+  await signInAs(page, HQ_ALPHA);
+  await gotoProtectedRoute(page, '/en/hq/rubric-builder');
+
+  await expect(page.getByRole('heading', { name: 'Capability Framework' })).toBeVisible();
+  await page.getByRole('button', { name: '+ Add Rubric Template' }).click();
+  await expect(page.getByRole('heading', { name: 'Create Rubric Template' })).toBeVisible();
+  await page.getByPlaceholder('e.g., Design Thinking Project Rubric').fill(liveAuthoredRubricTitle);
+  await page.getByRole('button', { name: '+ Add Criterion' }).click();
+  await page
+    .getByPlaceholder('Criterion label (e.g., Problem decomposition)')
+    .fill('Explains learner test evidence from live HQ authoring');
+  await page.getByLabel('Map to capability').selectOption(CAPABILITY_ID);
+  await page.getByRole('button', { name: 'Draft' }).click();
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByText('Rubric template created.')).toBeVisible();
+  await expect(page.getByText(liveAuthoredRubricTitle)).toBeVisible();
+
+  await page
+    .locator('[data-testid^="rubric-template-card-"]')
+    .filter({ hasText: liveAuthoredRubricTitle })
+    .getByRole('button', { name: 'Edit' })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Edit Rubric Template' })).toBeVisible();
+  await page
+    .getByPlaceholder('e.g., Design Thinking Project Rubric')
+    .fill(editedLiveAuthoredRubricTitle);
+  await page.getByRole('button', { name: 'Update' }).click();
+  await expect(page.getByText('Rubric template published.')).toBeVisible();
+  await expect(page.getByText(editedLiveAuthoredRubricTitle)).toBeVisible();
+
+  expect(await getCollection(page, 'rubricTemplates')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        title: editedLiveAuthoredRubricTitle,
+        siteId: 'site-alpha',
+        status: 'published',
+        createdBy: HQ_ALPHA,
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+        criteria: expect.arrayContaining([
+          expect.objectContaining({
+            label: 'Explains learner test evidence from live HQ authoring',
+            capabilityId: CAPABILITY_ID,
+          }),
+        ]),
+      }),
+    ])
+  );
+
   await signInAs(page, EDUCATOR_ALPHA);
   await gotoProtectedRoute(page, `/en/educator/rubrics/apply?portfolioItemId=${PORTFOLIO_ITEM_ID}`);
 
@@ -112,6 +165,59 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
   );
   await expect(page.getByTestId('educator-rubric-portfolio-handoff')).toContainText(
     'Learner: Learner Alpha'
+  );
+  await expect(page.getByLabel('Select rubric template')).toContainText(
+    'Prototype Iteration Evidence Rubric'
+  );
+  await expect(page.getByLabel('Select rubric template')).toContainText(
+    editedLiveAuthoredRubricTitle
+  );
+
+  const authoredTemplate = (await getCollection(page, 'rubricTemplates')).find(
+    (template) => template.title === editedLiveAuthoredRubricTitle
+  );
+  expect(authoredTemplate).toEqual(
+    expect.objectContaining({
+      siteId: 'site-alpha',
+      status: 'published',
+      createdBy: HQ_ALPHA,
+      capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+    })
+  );
+  const authoredTemplateId = String(authoredTemplate?.id);
+  await page.getByLabel('Select rubric template').selectOption(authoredTemplateId);
+  await page.getByRole('button', { name: 'Advanced' }).click();
+  await page.getByRole('button', { name: 'Apply Rubric (1 scores)' }).click();
+
+  await expect.poll(async () => getCollection(page, 'rubricApplications')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        rubricId: authoredTemplateId,
+        learnerId: LEARNER_ALPHA,
+        siteId: 'site-alpha',
+        status: 'applied',
+      }),
+    ])
+  );
+  expect(await getCollection(page, 'capabilityGrowthEvents')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        rubricId: authoredTemplateId,
+        learnerId: LEARNER_ALPHA,
+        capabilityId: CAPABILITY_ID,
+      }),
+    ])
+  );
+
+  expect(await getCollection(page, 'rubricTemplates')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: RUBRIC_TEMPLATE_ID,
+        siteId: 'site-alpha',
+        status: 'published',
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+      }),
+    ])
   );
 
   expect(await getCollection(page, 'proofOfLearningBundles')).toEqual(
