@@ -16,7 +16,7 @@ jest.mock('firebase/firestore', () => ({
   where: jest.fn((...args) => args),
 }));
 
-jest.mock('@/src/firebase/firestore/collections', () => ({
+jest.mock('@/src/lib/firestore/collections', () => ({
   reportShareConsentsCollection: { path: 'reportShareConsents' },
   reportShareRequestsCollection: { path: 'reportShareRequests' },
 }));
@@ -60,24 +60,7 @@ function consentDoc(id: string, overrides: Record<string, unknown>) {
   };
 }
 
-function shareDoc(id: string, overrides: Record<string, unknown>) {
-  return {
-    id,
-    data: () => ({
-      id: `stored-${id}`,
-      siteId: 'site-1',
-      learnerId: 'learner-1',
-      status: 'active',
-      audience: 'external',
-      visibility: 'external',
-      explicitConsentId: 'consent-granted',
-      expiresAt: timestamp('2099-05-01T00:00:00.000Z'),
-      ...overrides,
-    }),
-  };
-}
-
-function docsSnapshot(docs: Array<ReturnType<typeof consentDoc> | ReturnType<typeof shareDoc>>) {
+function docsSnapshot(docs: Array<ReturnType<typeof consentDoc>>) {
   return { docs } as unknown as Awaited<ReturnType<typeof getDocs>>;
 }
 

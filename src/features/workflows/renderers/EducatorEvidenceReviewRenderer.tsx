@@ -980,7 +980,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
               `Proof-of-learning proof status: ${attempt.proofOfLearningStatus ?? 'pending verification'}`,
               `AI disclosure status: ${attempt.aiDisclosure ? 'learner AI disclosure present' : 'no AI disclosure'}`,
               `Reviewed by educator: ${ctx.uid}`,
-              `Verification prompt: verify next with learner explanation before external use.`,
+              'Verification prompt: verify next with learner explanation before external use.',
             ].filter(Boolean).join('\n');
 
             return (

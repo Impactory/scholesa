@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDocs, query, where } from 'firebase/firestore';
-import { reportShareConsentsCollection, reportShareRequestsCollection } from '@/src/firebase/firestore/collections';
+import { reportShareConsentsCollection, reportShareRequestsCollection } from '@/src/lib/firestore/collections';
 import {
   createExplicitConsentReportShareRequest,
   requestReportShareConsent,
