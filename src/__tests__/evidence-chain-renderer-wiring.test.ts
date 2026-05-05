@@ -890,6 +890,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(masterPlanSource).toContain('test/e2e/evidence-chain-cross-role.e2e.spec.ts');
     expect(routeMatrixSource).toContain('route coverage is classified, but blanket platform gold is still blocked');
     expect(routeMatrixSource).toContain('/hq/capability-frameworks` -> `/hq/rubric-builder` -> `/educator/today`');
+    expect(routeMatrixSource).toContain('Gold-Critical Route Proof References');
+    expect(routeMatrixSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest');
     expect(routeMatrixSource).toContain('/educator/rubrics/apply` joined to `/parent/passport');
     expect(routeMatrixSource).toContain('| `/partner/deliverables` | partner | generic | External evidence-facing deliverables | deferred |');
     expect(routeMatrixSource).toContain('Work Package 1 is substantially started, not complete');
@@ -897,7 +899,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/parent/passport')");
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/site/evidence-health')");
     expect(browserEvidenceChainSource).toContain('seedEvidenceChain');
+    expect(browserEvidenceChainSource).toContain('canonicalPlatformEvidenceChainGoldRecords');
+    expect(browserEvidenceChainSource).toContain('platform-evidence-chain-gold-fixture');
     expect(browserEvidenceChainSource).toContain('capabilityGrowthEvents');
+    expect(masterPlanSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest');
     expect(auditSource).toContain('PLATFORM_GOLD_READINESS_MASTER_PLAN_MAY_2026.md');
     expect(auditSource).toContain('PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md');
     expect(auditSource).toContain('first gold-critical gap');
@@ -935,7 +940,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('portfolioItemsPreview');
     expect(source).toContain('updatedCapabilityCount');
     expect(source).toContain('Supplemental engagement signals');
-    expect(source).toContain('do not replace the evidence-backed capability');
+    expect(source).toContain('do not replace the evidence-backed');
+    expect(source).toContain('capability, proof, and growth judgments');
     expect(source).toContain("NEXT_PUBLIC_E2E_TEST_MODE === '1'");
     expect(source).toContain('getE2EParentDashboardBundle');
     expect(source).toContain('trackInteractionRef');

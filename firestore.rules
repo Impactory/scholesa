@@ -226,7 +226,6 @@ service cloud.firestore {
       );
       allow create, update, delete: if false; // Server-owned lifecycle via Cloud Functions
     }
-
     match /reportShareConsents/{id} {
       allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.requesterId == request.auth.uid

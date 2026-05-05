@@ -576,6 +576,248 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
   incrementCount(bundle.sourceCounts, 'miloosGoldInteractionEvents', miloosGoldSourceCounts.miloosGoldInteractionEvents);
 }
 
+function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
+  const siteId = 'site-alpha';
+  const learnerId = 'learner-alpha';
+  const educatorId = 'educator-alpha';
+  const parentId = 'parent-alpha';
+  const capabilityId = 'capability-prototype-iteration';
+  const processDomainId = 'process-domain-evidence-reasoning';
+  const sessionId = 'session-future-skills';
+  const sessionOccurrenceId = 'session-future-skills';
+  const evidenceId = 'evidence-chain-alpha';
+  const portfolioItemId = 'portfolio-evidence-chain-alpha';
+  const proofBundleId = 'proof-bundle-alpha';
+  const rubricApplicationId = 'rubric-application-alpha';
+  const growthEventId = 'growth-event-alpha';
+  const processGrowthEventId = 'process-growth-event-alpha';
+  const sourcePack = 'platform-evidence-chain-gold-readiness';
+
+  upsertDoc(bundle, 'capabilities', capabilityId, {
+    id: capabilityId,
+    siteId,
+    title: 'Prototype iteration and testing',
+    pillarCode: 'FUTURE_SKILLS',
+    progressionDescriptor: 'Explains test evidence and chooses the next prototype change.',
+    status: 'active',
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'processDomains', processDomainId, {
+    id: processDomainId,
+    siteId,
+    title: 'Evidence reasoning',
+    status: 'active',
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'sessions', sessionId, {
+    id: sessionId,
+    siteId,
+    title: 'Skills Studio',
+    educatorIds: [educatorId],
+    status: 'scheduled',
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'sessionOccurrences', sessionOccurrenceId, {
+    id: sessionOccurrenceId,
+    siteId,
+    sessionId,
+    title: 'Skills Studio',
+    sessionTitle: 'Skills Studio',
+    educatorId,
+    startTime: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'evidenceRecords', evidenceId, {
+    id: evidenceId,
+    siteId,
+    learnerId,
+    educatorId,
+    sessionOccurrenceId,
+    capabilityIds: [capabilityId],
+    portfolioItemId,
+    source: 'educator_observation',
+    description: 'Educator observed Learner Alpha comparing prototype test results.',
+    capabilityMapped: true,
+    rubricStatus: 'applied',
+    growthStatus: 'recorded',
+    rubricApplicationId,
+    createdAt: startedAt,
+    observedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'proofOfLearningBundles', proofBundleId, {
+    id: proofBundleId,
+    siteId,
+    learnerId,
+    portfolioItemId,
+    status: 'verified',
+    verificationStatus: 'verified',
+    verifiedBy: educatorId,
+    verifiedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'portfolioItems', portfolioItemId, {
+    id: portfolioItemId,
+    siteId,
+    learnerId,
+    title: 'Robotics Prototype Evidence Pack',
+    description: 'Verified proof bundle tied to educator observation and rubric application.',
+    mediaType: 'document',
+    status: 'published',
+    source: 'educator_observation',
+    capabilityIds: [capabilityId],
+    evidenceRecordIds: [evidenceId],
+    missionAttemptId: 'mission-attempt-alpha',
+    proofOfLearningStatus: 'verified',
+    aiDisclosureStatus: 'learner-ai-not-used',
+    proofDetails: {
+      explainItBack: true,
+      oralCheck: true,
+      miniRebuild: true,
+      explainItBackExcerpt: 'I changed one variable and used the test evidence to justify the next iteration.',
+      oralCheckExcerpt: 'Learner explained why the stronger test result supports the design choice.',
+      miniRebuildExcerpt: 'Learner rebuilt the sensor mount from memory and named the tradeoff.',
+      educatorVerifierName: 'Educator Alpha',
+      proofCheckpointCount: 3,
+    },
+    reviewedAt: startedAt,
+    rubricScore: { raw: 4, max: 4, level: 'Level 4' },
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'rubricApplications', rubricApplicationId, {
+    id: rubricApplicationId,
+    siteId,
+    learnerId,
+    educatorId,
+    portfolioItemId,
+    evidenceRecordIds: [evidenceId],
+    capabilityScores: [{ capabilityId, score: 4, maxScore: 4 }],
+    status: 'applied',
+    createdAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'capabilityMastery', `mastery-${learnerId}-${capabilityId}`, {
+    id: `mastery-${learnerId}-${capabilityId}`,
+    siteId,
+    learnerId,
+    capabilityId,
+    currentLevel: 4,
+    highestLevel: 4,
+    evidenceCount: 1,
+    rubricScore: { raw: 4, max: 4 },
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+    interpretationOwner: 'server',
+  });
+  upsertDoc(bundle, 'processDomainMastery', `process-mastery-${learnerId}-${processDomainId}`, {
+    id: `process-mastery-${learnerId}-${processDomainId}`,
+    siteId,
+    learnerId,
+    processDomainId,
+    title: 'Evidence reasoning',
+    currentLevel: 'Level 4',
+    highestLevel: 'Level 4',
+    evidenceCount: 1,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+    interpretationOwner: 'server',
+  });
+  upsertDoc(bundle, 'capabilityGrowthEvents', growthEventId, {
+    id: growthEventId,
+    siteId,
+    learnerId,
+    capabilityId,
+    capabilityTitle: 'Prototype iteration and testing',
+    levelAchieved: 'Level 4',
+    educatorId,
+    educatorName: 'Educator Alpha',
+    linkedEvidenceCount: 1,
+    linkedPortfolioCount: 1,
+    linkedEvidenceRecordIds: [evidenceId],
+    linkedPortfolioItemIds: [portfolioItemId],
+    missionAttemptId: 'mission-attempt-alpha',
+    rubricScore: { raw: 4, max: 4 },
+    createdAt: startedAt,
+    date: startedAt,
+    synthetic: true,
+    sourcePack,
+    interpretationOwner: 'server',
+  });
+  upsertDoc(bundle, 'processDomainGrowthEvents', processGrowthEventId, {
+    id: processGrowthEventId,
+    siteId,
+    learnerId,
+    processDomainId,
+    processDomainTitle: 'Evidence reasoning',
+    fromLevel: 'Level 3',
+    toLevel: 'Level 4',
+    educatorName: 'Educator Alpha',
+    evidenceCount: 1,
+    createdAt: startedAt,
+    date: startedAt,
+    synthetic: true,
+    sourcePack,
+    interpretationOwner: 'server',
+  });
+
+  const platformEvidenceChainSourceCounts = {
+    platformEvidenceChainCapabilities: 1,
+    platformEvidenceChainProcessDomains: 1,
+    platformEvidenceChainSessions: 1,
+    platformEvidenceChainSessionOccurrences: 1,
+    platformEvidenceChainEvidenceRecords: 1,
+    platformEvidenceChainProofBundles: 1,
+    platformEvidenceChainPortfolioItems: 1,
+    platformEvidenceChainRubricApplications: 1,
+    platformEvidenceChainMasteryRecords: 2,
+    platformEvidenceChainGrowthEvents: 2,
+  };
+
+  upsertDoc(bundle, 'syntheticPlatformEvidenceChainGoldStates', 'latest', {
+    id: 'latest',
+    siteId,
+    modeSupport: ['starter', 'full', 'all'],
+    ids: {
+      learnerId,
+      educatorId,
+      parentId,
+      capabilityId,
+      processDomainId,
+      sessionId,
+      sessionOccurrenceId,
+      evidenceId,
+      portfolioItemId,
+      proofBundleId,
+      rubricApplicationId,
+      growthEventId,
+      processGrowthEventId,
+    },
+    usage: 'Use this canonical state for the platform HQ-to-passport evidence-chain certification path.',
+    evidenceChain: 'HQ setup -> educator evidence -> proof -> rubric -> server-owned growth -> portfolio -> guardian passport -> site evidence health',
+    serverOwnedGrowth: true,
+    noClientMasteryWrites: true,
+    sourceCounts: platformEvidenceChainSourceCounts,
+    synthetic: true,
+    sourcePack,
+    importedAt: startedAt,
+  });
+
+  Object.entries(platformEvidenceChainSourceCounts).forEach(([key, value]) => {
+    incrementCount(bundle.sourceCounts, key, value);
+  });
+}
+
 function starterContextForRow(row) {
   const unitSlug = slugify(row.unit_family || 'starter-unit');
   const gradeSlug = slugify(row.grade_band || 'starter');
@@ -1314,6 +1556,7 @@ function buildImportBundle(options) {
   }
 
   addMiloOSGoldSyntheticStates(bundle, startedAt);
+  addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt);
 
   const trainingArtifacts = buildBosMiaSyntheticTrainingArtifacts({
     importedAt: startedAt,
@@ -1358,6 +1601,12 @@ function buildImportBundle(options) {
       documentId: 'latest',
       seedModes: ['starter', 'full', 'all'],
       purpose: 'MiloOS demos, UAT, rules tests, and regression checks without support-only mastery writes.',
+    },
+    platformEvidenceChainGoldState: {
+      collection: 'syntheticPlatformEvidenceChainGoldStates',
+      documentId: 'latest',
+      seedModes: ['starter', 'full', 'all'],
+      purpose: 'Platform HQ-to-passport evidence-chain certification without local browser-only fixtures.',
     },
     synthetic: true,
   };

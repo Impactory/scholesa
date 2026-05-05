@@ -120,3 +120,50 @@ describe('synthetic MiloOS gold-readiness states', () => {
     });
   });
 });
+
+describe('synthetic platform evidence-chain gold-readiness state', () => {
+  it('adds an importer-backed canonical HQ-to-passport evidence chain', () => {
+    const bundle = buildImportBundle({ mode: 'starter' });
+    const manifest = collectionMap(bundle, 'syntheticPlatformEvidenceChainGoldStates').get('latest');
+
+    expect(manifest).toMatchObject({
+      siteId: 'site-alpha',
+      modeSupport: ['starter', 'full', 'all'],
+      serverOwnedGrowth: true,
+      noClientMasteryWrites: true,
+      sourcePack: 'platform-evidence-chain-gold-readiness',
+      sourceCounts: {
+        platformEvidenceChainEvidenceRecords: 1,
+        platformEvidenceChainProofBundles: 1,
+        platformEvidenceChainPortfolioItems: 1,
+        platformEvidenceChainRubricApplications: 1,
+        platformEvidenceChainMasteryRecords: 2,
+        platformEvidenceChainGrowthEvents: 2,
+      },
+    });
+    expect(bundle.summary.platformEvidenceChainGoldState).toMatchObject({
+      collection: 'syntheticPlatformEvidenceChainGoldStates',
+      documentId: 'latest',
+      seedModes: ['starter', 'full', 'all'],
+    });
+
+    expect(collectionMap(bundle, 'evidenceRecords').get(manifest.ids.evidenceId)).toMatchObject({
+      siteId: manifest.siteId,
+      learnerId: manifest.ids.learnerId,
+      educatorId: manifest.ids.educatorId,
+      capabilityMapped: true,
+      rubricStatus: 'applied',
+      growthStatus: 'recorded',
+      sourcePack: 'platform-evidence-chain-gold-readiness',
+    });
+    expect(collectionMap(bundle, 'proofOfLearningBundles').get(manifest.ids.proofBundleId)).toMatchObject({
+      verificationStatus: 'verified',
+      portfolioItemId: manifest.ids.portfolioItemId,
+    });
+    expect(collectionMap(bundle, 'capabilityGrowthEvents').get(manifest.ids.growthEventId)).toMatchObject({
+      interpretationOwner: 'server',
+      linkedEvidenceRecordIds: [manifest.ids.evidenceId],
+      linkedPortfolioItemIds: [manifest.ids.portfolioItemId],
+    });
+  });
+});

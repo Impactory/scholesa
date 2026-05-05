@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import {
+  PLATFORM_EVIDENCE_CHAIN_GOLD_IDS,
+  canonicalPlatformEvidenceChainGoldRecords,
+} from './platform-evidence-chain-gold-fixture';
 
 type CollectionRecord = Record<string, unknown>;
 
@@ -10,17 +14,15 @@ type E2EWindowApi = {
   seedEvidenceChain: (records: Record<string, CollectionRecord[]>) => void;
 };
 
-const LEARNER_ALPHA = 'learner-alpha';
-const EDUCATOR_ALPHA = 'educator-alpha';
-const PARENT_ALPHA = 'parent-alpha';
-const SITE_ADMIN = 'site-alpha-admin';
-const SITE_ALPHA = 'site-alpha';
-const CAPABILITY_ID = 'capability-prototype-iteration';
-const PROCESS_DOMAIN_ID = 'process-domain-evidence-reasoning';
-const EVIDENCE_ID = 'evidence-chain-alpha';
-const PORTFOLIO_ITEM_ID = 'portfolio-evidence-chain-alpha';
-const RUBRIC_APPLICATION_ID = 'rubric-application-alpha';
-const GROWTH_EVENT_ID = 'growth-event-alpha';
+const LEARNER_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.learnerId;
+const EDUCATOR_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.educatorId;
+const PARENT_ALPHA = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.parentId;
+const SITE_ADMIN = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.siteAdminId;
+const CAPABILITY_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.capabilityId;
+const EVIDENCE_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.evidenceId;
+const PORTFOLIO_ITEM_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.portfolioItemId;
+const RUBRIC_APPLICATION_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricApplicationId;
+const GROWTH_EVENT_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.growthEventId;
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() =>
@@ -80,162 +82,7 @@ async function getCollection(page: Page, collectionName: string): Promise<Collec
 }
 
 async function seedEvidenceChain(page: Page): Promise<void> {
-  const timestamp = new Date().toISOString();
-  const records: Record<string, CollectionRecord[]> = {
-    capabilities: [
-      {
-        id: CAPABILITY_ID,
-        siteId: SITE_ALPHA,
-        title: 'Prototype iteration and testing',
-        pillarCode: 'FUTURE_SKILLS',
-        progressionDescriptor: 'Explains test evidence and chooses the next prototype change.',
-        status: 'active',
-      },
-    ],
-    processDomains: [
-      {
-        id: PROCESS_DOMAIN_ID,
-        siteId: SITE_ALPHA,
-        title: 'Evidence reasoning',
-        status: 'active',
-      },
-    ],
-    evidenceRecords: [
-      {
-        id: EVIDENCE_ID,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        educatorId: EDUCATOR_ALPHA,
-        sessionOccurrenceId: 'session-future-skills',
-        capabilityIds: [CAPABILITY_ID],
-        portfolioItemId: PORTFOLIO_ITEM_ID,
-        source: 'educator_observation',
-        description: 'Educator observed Learner Alpha comparing prototype test results.',
-        capabilityMapped: true,
-        rubricStatus: 'applied',
-        growthStatus: 'recorded',
-        rubricApplicationId: RUBRIC_APPLICATION_ID,
-        createdAt: timestamp,
-        observedAt: timestamp,
-      },
-    ],
-    proofOfLearningBundles: [
-      {
-        id: 'proof-bundle-alpha',
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        portfolioItemId: PORTFOLIO_ITEM_ID,
-        status: 'verified',
-        verificationStatus: 'verified',
-        verifiedBy: EDUCATOR_ALPHA,
-        verifiedAt: timestamp,
-      },
-    ],
-    portfolioItems: [
-      {
-        id: PORTFOLIO_ITEM_ID,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        title: 'Robotics Prototype Evidence Pack',
-        description: 'Verified proof bundle tied to educator observation and rubric application.',
-        mediaType: 'document',
-        status: 'published',
-        source: 'educator_observation',
-        capabilityIds: [CAPABILITY_ID],
-        evidenceRecordIds: [EVIDENCE_ID],
-        missionAttemptId: 'mission-attempt-alpha',
-        proofOfLearningStatus: 'verified',
-        aiDisclosureStatus: 'learner-ai-not-used',
-        proofDetails: {
-          explainItBack: true,
-          oralCheck: true,
-          miniRebuild: true,
-          explainItBackExcerpt: 'I changed one variable and used the test evidence to justify the next iteration.',
-          oralCheckExcerpt: 'Learner explained why the stronger test result supports the design choice.',
-          miniRebuildExcerpt: 'Learner rebuilt the sensor mount from memory and named the tradeoff.',
-          educatorVerifierName: 'Educator Alpha',
-          proofCheckpointCount: 3,
-        },
-        reviewedAt: timestamp,
-        rubricScore: { raw: 4, max: 4, level: 'Level 4' },
-        updatedAt: timestamp,
-      },
-    ],
-    rubricApplications: [
-      {
-        id: RUBRIC_APPLICATION_ID,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        educatorId: EDUCATOR_ALPHA,
-        portfolioItemId: PORTFOLIO_ITEM_ID,
-        evidenceRecordIds: [EVIDENCE_ID],
-        capabilityScores: [{ capabilityId: CAPABILITY_ID, score: 4, maxScore: 4 }],
-        status: 'applied',
-        createdAt: timestamp,
-      },
-    ],
-    capabilityMastery: [
-      {
-        id: `mastery-${LEARNER_ALPHA}-${CAPABILITY_ID}`,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        capabilityId: CAPABILITY_ID,
-        currentLevel: 4,
-        highestLevel: 4,
-        evidenceCount: 1,
-        rubricScore: { raw: 4, max: 4 },
-        updatedAt: timestamp,
-      },
-    ],
-    processDomainMastery: [
-      {
-        id: `process-mastery-${LEARNER_ALPHA}-${PROCESS_DOMAIN_ID}`,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        processDomainId: PROCESS_DOMAIN_ID,
-        title: 'Evidence reasoning',
-        currentLevel: 'Level 4',
-        highestLevel: 'Level 4',
-        evidenceCount: 1,
-        updatedAt: timestamp,
-      },
-    ],
-    capabilityGrowthEvents: [
-      {
-        id: GROWTH_EVENT_ID,
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        capabilityId: CAPABILITY_ID,
-        capabilityTitle: 'Prototype iteration and testing',
-        levelAchieved: 'Level 4',
-        educatorId: EDUCATOR_ALPHA,
-        educatorName: 'Educator Alpha',
-        linkedEvidenceCount: 1,
-        linkedPortfolioCount: 1,
-        linkedEvidenceRecordIds: [EVIDENCE_ID],
-        linkedPortfolioItemIds: [PORTFOLIO_ITEM_ID],
-        missionAttemptId: 'mission-attempt-alpha',
-        rubricScore: { raw: 4, max: 4 },
-        createdAt: timestamp,
-        date: timestamp,
-      },
-    ],
-    processDomainGrowthEvents: [
-      {
-        id: 'process-growth-event-alpha',
-        siteId: SITE_ALPHA,
-        learnerId: LEARNER_ALPHA,
-        processDomainId: PROCESS_DOMAIN_ID,
-        processDomainTitle: 'Evidence reasoning',
-        fromLevel: 'Level 3',
-        toLevel: 'Level 4',
-        educatorName: 'Educator Alpha',
-        evidenceCount: 1,
-        createdAt: timestamp,
-        date: timestamp,
-      },
-    ],
-  };
+  const records = canonicalPlatformEvidenceChainGoldRecords();
 
   await page.evaluate(
     ({ seedRecords }) => {
