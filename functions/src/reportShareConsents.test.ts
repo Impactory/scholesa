@@ -3,10 +3,12 @@ import {
   canDecideReportShareConsent,
   canRequestReportShareConsentForPolicy,
   canRevokeReportShareConsent,
+  doesGrantedReportShareConsentMatchPolicy,
   grantReportShareConsentRecord,
   isGrantedUnexpiredReportShareConsentRecord,
   isPendingUnexpiredReportShareConsentRecord,
   isReportShareConsentScope,
+  linkReportShareConsentToRequestRecord,
   persistReportShareConsentRecord,
   revokeReportShareConsentRecord,
 } from './reportShareConsents';
@@ -205,6 +207,39 @@ describe('reportShareConsents', () => {
     ).toBe(false);
   });
 
+  it('matches granted consent to the requested learner, site, audience, and visibility', () => {
+    const now = new Date('2026-05-01T12:00:00.000Z');
+    const grantedConsent = {
+      status: 'granted',
+      learnerId: 'learner-1',
+      siteId: 'site-1',
+      audience: 'external',
+      visibility: 'external',
+      expiresAt: new Date('2026-05-02T12:00:00.000Z'),
+    };
+
+    expect(
+      doesGrantedReportShareConsentMatchPolicy({
+        data: grantedConsent,
+        learnerId: 'learner-1',
+        siteId: 'site-1',
+        audience: 'external',
+        visibility: 'external',
+        now,
+      })
+    ).toBe(true);
+    expect(
+      doesGrantedReportShareConsentMatchPolicy({
+        data: grantedConsent,
+        learnerId: 'learner-1',
+        siteId: 'site-1',
+        audience: 'partner',
+        visibility: 'external',
+        now,
+      })
+    ).toBe(false);
+  });
+
   it('persists, grants, and revokes consent records in the consent collection', async () => {
     const id = await persistReportShareConsentRecord({
       requesterId: 'educator-1',
@@ -222,6 +257,10 @@ describe('reportShareConsents', () => {
       consentId: 'consent-1',
       approverId: 'parent-1',
       approverRole: 'parent',
+    });
+    await linkReportShareConsentToRequestRecord({
+      consentId: 'consent-1',
+      shareRequestId: 'share-request-1',
     });
     await revokeReportShareConsentRecord({ consentId: 'consent-1', actorId: 'parent-1' });
 
@@ -242,6 +281,9 @@ describe('reportShareConsents', () => {
       approverRole: 'parent',
     });
     expect(updates[1][0]).toMatchObject({
+      linkedReportShareRequestIds: expect.any(Object),
+    });
+    expect(updates[2][0]).toMatchObject({
       status: 'revoked',
       revokedBy: 'parent-1',
     });

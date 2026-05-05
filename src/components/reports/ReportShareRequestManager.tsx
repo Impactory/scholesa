@@ -2,9 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getDocs, query, where } from 'firebase/firestore';
-import { reportShareRequestsCollection } from '@/src/lib/firestore/collections';
-import { revokeReportShareRequest } from '@/src/lib/reports/reportShareRequests';
-import type { ReportShareRequest } from '@/src/types/schema';
+import {
+  reportShareConsentsCollection,
+  reportShareRequestsCollection,
+} from '@/src/lib/firestore/collections';
+import {
+  grantReportShareConsent,
+  revokeReportShareConsent,
+  revokeReportShareRequest,
+} from '@/src/lib/reports/reportShareRequests';
+import type { ReportShareConsent, ReportShareRequest } from '@/src/types/schema';
 
 interface ReportShareRequestManagerProps {
   siteId: string | null | undefined;
@@ -13,6 +20,7 @@ interface ReportShareRequestManagerProps {
 }
 
 type ReportShareRequestRow = ReportShareRequest & { id: string };
+type ReportShareConsentRow = ReportShareConsent & { id: string };
 
 function timestampToDate(value: unknown): Date | null {
   if (!value || typeof value !== 'object') return null;
@@ -38,6 +46,15 @@ function formatDate(value: unknown): string {
 function isUnexpiredShare(request: ReportShareRequestRow): boolean {
   const expiresAt = timestampToDate(request.expiresAt);
   return Boolean(expiresAt && expiresAt.getTime() > Date.now());
+}
+
+function isUnexpiredConsent(consent: ReportShareConsentRow): boolean {
+  const expiresAt = timestampToDate(consent.expiresAt);
+  return Boolean(expiresAt && expiresAt.getTime() > Date.now());
+}
+
+function isVisibleConsent(consent: ReportShareConsentRow): boolean {
+  return (consent.status === 'pending' || consent.status === 'granted') && isUnexpiredConsent(consent);
 }
 
 function isVisibleForViewer(request: ReportShareRequestRow, viewer: 'learner' | 'guardian') {
@@ -83,19 +100,28 @@ function revocationActionLabel(request: ReportShareRequestRow, viewer: 'learner'
   return 'Visible for transparency; revocation belongs to the share audience';
 }
 
+function labelForConsentStatus(status: ReportShareConsent['status']): string {
+  if (status === 'pending') return 'Consent requested';
+  if (status === 'granted') return 'Consent granted';
+  return status;
+}
+
 export function ReportShareRequestManager({
   siteId,
   learnerId,
   viewer,
 }: ReportShareRequestManagerProps) {
   const [requests, setRequests] = useState<ReportShareRequestRow[]>([]);
+  const [consents, setConsents] = useState<ReportShareConsentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [decidingConsentId, setDecidingConsentId] = useState<string | null>(null);
 
   const loadRequests = useCallback(async () => {
     if (!siteId || !learnerId) {
       setRequests([]);
+      setConsents([]);
       return;
     }
 
@@ -118,10 +144,26 @@ export function ReportShareRequestManager({
         .filter(isUnexpiredShare)
         .filter((request) => isVisibleForViewer(request, viewer))
         .slice(0, 25);
+      const consentSnap = await getDocs(
+        query(
+          reportShareConsentsCollection,
+          where('siteId', '==', siteId),
+          where('learnerId', '==', learnerId)
+        )
+      );
+      const visibleConsents = consentSnap.docs
+        .map((docSnap) => {
+          const { id: _storedId, ...data } = docSnap.data();
+          return { ...data, id: docSnap.id } as ReportShareConsentRow;
+        })
+        .filter(isVisibleConsent)
+        .slice(0, 25);
       setRequests(activeRequests);
+      setConsents(visibleConsents);
     } catch {
       setRequests([]);
-      setFeedback('Active report shares could not be loaded.');
+      setConsents([]);
+      setFeedback('Active report shares or consent requests could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -150,6 +192,38 @@ export function ReportShareRequestManager({
     [loadRequests, viewer]
   );
 
+  const handleGrantConsent = useCallback(
+    async (consentId: string) => {
+      setDecidingConsentId(consentId);
+      setFeedback(null);
+      const granted = await grantReportShareConsent({ consentId });
+      setDecidingConsentId(null);
+      if (!granted) {
+        setFeedback('Consent grant failed. The request is still pending.');
+        return;
+      }
+      setFeedback('Report share consent granted.');
+      await loadRequests();
+    },
+    [loadRequests]
+  );
+
+  const handleRevokeConsent = useCallback(
+    async (consentId: string) => {
+      setDecidingConsentId(consentId);
+      setFeedback(null);
+      const revoked = await revokeReportShareConsent({ consentId });
+      setDecidingConsentId(null);
+      if (!revoked) {
+        setFeedback('Consent revocation failed. The consent is still listed.');
+        return;
+      }
+      setFeedback('Report share consent revoked.');
+      await loadRequests();
+    },
+    [loadRequests]
+  );
+
   if (!siteId || !learnerId) return null;
 
   return (
@@ -162,7 +236,7 @@ export function ReportShareRequestManager({
           <h3 className="text-sm font-semibold text-gray-900">Active report shares</h3>
           <p className="mt-1 text-xs text-gray-600">
             Family/private report deliveries stay visible here until they expire or are revoked.
-            External/public sharing remains blocked until explicit consent workflow support exists.
+            External, partner, staff, site, and public sharing require granted explicit consent.
           </p>
         </div>
         <button
@@ -184,7 +258,7 @@ export function ReportShareRequestManager({
       )}
 
       {loading ? (
-        <p className="mt-3 text-xs text-gray-600">Loading active report shares...</p>
+        <p className="mt-3 text-xs text-gray-600">Loading active report shares and consent requests...</p>
       ) : requests.length === 0 ? (
         <p className="mt-3 text-xs text-gray-600">No active report shares for this learner.</p>
       ) : (
@@ -242,6 +316,53 @@ export function ReportShareRequestManager({
             </li>
           ))}
         </ul>
+      )}
+
+      {!loading && consents.length > 0 && (
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+            Explicit consent requests
+          </h4>
+          <ul className="mt-2 space-y-2">
+            {consents.map((consent) => (
+              <li key={consent.id} className="rounded-md border border-amber-200 bg-white p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="max-w-3xl text-xs text-gray-600">
+                    <p className="font-medium text-gray-900">
+                      {labelForConsentStatus(consent.status)} · {consent.scope}
+                    </p>
+                    <p className="mt-0.5">
+                      Audience: {consent.audience} · visibility: {consent.visibility} · expires{' '}
+                      {formatDate(consent.expiresAt)}
+                    </p>
+                    <p className="mt-1">Purpose: {consent.purpose}</p>
+                    <p className="mt-1">Evidence: {consent.evidenceSummary}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {consent.status === 'pending' && (
+                      <button
+                        type="button"
+                        onClick={() => void handleGrantConsent(consent.id)}
+                        disabled={decidingConsentId === consent.id}
+                        className="rounded-md border border-green-200 bg-white px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {decidingConsentId === consent.id ? 'Granting...' : 'Grant'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void handleRevokeConsent(consent.id)}
+                      disabled={decidingConsentId === consent.id}
+                      className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {decidingConsentId === consent.id ? 'Revoking...' : 'Revoke consent'}
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

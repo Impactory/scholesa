@@ -196,6 +196,8 @@ type EvidenceChainSeedInput = Partial<Pick<StoreState,
   | 'processDomainMastery'
   | 'capabilityGrowthEvents'
   | 'processDomainGrowthEvents'
+  | 'reportShareConsents'
+  | 'reportShareRequests'
   | 'rubricTemplates'
 >> & {
   portfolioItems?: PortfolioRecord[];
@@ -225,6 +227,8 @@ type StoreState = {
   processDomainMastery: EvidenceChainRecord[];
   capabilityGrowthEvents: EvidenceChainRecord[];
   processDomainGrowthEvents: EvidenceChainRecord[];
+  reportShareConsents: EvidenceChainRecord[];
+  reportShareRequests: EvidenceChainRecord[];
   rubricTemplates: EvidenceChainRecord[];
 };
 
@@ -400,6 +404,8 @@ function defaultState(): StoreState {
     processDomainMastery: [],
     capabilityGrowthEvents: [],
     processDomainGrowthEvents: [],
+    reportShareConsents: [],
+    reportShareRequests: [],
     rubricTemplates: [],
   };
 }
@@ -700,6 +706,12 @@ export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
   }
   if (records.processDomainGrowthEvents) {
     state.processDomainGrowthEvents = mergeById(state.processDomainGrowthEvents, records.processDomainGrowthEvents);
+  }
+  if (records.reportShareConsents) {
+    state.reportShareConsents = mergeById(state.reportShareConsents, records.reportShareConsents);
+  }
+  if (records.reportShareRequests) {
+    state.reportShareRequests = mergeById(state.reportShareRequests, records.reportShareRequests);
   }
   if (records.rubricTemplates) {
     state.rubricTemplates = mergeById(state.rubricTemplates, records.rubricTemplates);

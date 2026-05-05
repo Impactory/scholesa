@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   PLATFORM_EVIDENCE_CHAIN_GOLD_IDS,
+  canonicalPlatformEvidenceChainRouteProofReferences,
   canonicalPlatformEvidenceChainGoldRecords,
 } from './platform-evidence-chain-gold-fixture';
 
@@ -121,6 +122,30 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
   );
   expect(await getCollection(page, 'capabilityGrowthEvents')).toEqual(
     expect.arrayContaining([expect.objectContaining({ id: GROWTH_EVENT_ID, capabilityId: CAPABILITY_ID })])
+  );
+  expect(canonicalPlatformEvidenceChainRouteProofReferences()).toMatchObject({
+    educatorRubricApply: {
+      route: '/educator/rubrics/apply',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+    },
+    parentPassport: {
+      route: '/parent/passport',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+    },
+    siteEvidenceHealth: {
+      route: '/site/evidence-health',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+    },
+  });
+  expect(await getCollection(page, 'reportShareRequests')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'report-share-request-alpha',
+        explicitConsentId: 'report-share-consent-alpha',
+        audience: 'external',
+        visibility: 'external',
+      }),
+    ])
   );
 
   await signInAs(page, PARENT_ALPHA);

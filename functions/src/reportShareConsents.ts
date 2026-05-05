@@ -134,6 +134,23 @@ export function isGrantedUnexpiredReportShareConsentRecord(
   return expiresAtMillis > now.getTime();
 }
 
+export function doesGrantedReportShareConsentMatchPolicy(params: {
+  data: Record<string, unknown>;
+  learnerId: string;
+  siteId: string;
+  audience: ReportShareRequestAudience;
+  visibility: ReportShareRequestVisibility;
+  now?: Date;
+}): boolean {
+  if (!isGrantedUnexpiredReportShareConsentRecord(params.data, params.now)) return false;
+  return (
+    params.data.learnerId === params.learnerId &&
+    params.data.siteId === params.siteId &&
+    params.data.audience === params.audience &&
+    params.data.visibility === params.visibility
+  );
+}
+
 export function buildReportShareConsentRecord(id: string, params: ReportShareConsentWriteParams) {
   return {
     id,
@@ -188,6 +205,18 @@ export async function revokeReportShareConsentRecord(params: {
     status: 'revoked',
     revokedAt: FieldValue.serverTimestamp(),
     revokedBy: params.actorId,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function linkReportShareConsentToRequestRecord(params: {
+  consentId: string;
+  shareRequestId: string;
+  collectionName?: string;
+}) {
+  const collectionName = params.collectionName ?? 'reportShareConsents';
+  await admin.firestore().collection(collectionName).doc(params.consentId).update({
+    linkedReportShareRequestIds: FieldValue.arrayUnion(params.shareRequestId),
     updatedAt: FieldValue.serverTimestamp(),
   });
 }

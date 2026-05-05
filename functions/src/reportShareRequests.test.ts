@@ -48,6 +48,7 @@ describe('reportShareRequests', () => {
       source: 'passport',
       surface: 'guardian_capability_view',
       cta: 'guardian_passport_share_family_summary',
+      explicitConsentId: 'consent-1',
       sharePolicy: {
         requiresEvidenceProvenance: true,
         requiresGuardianContext: true,
@@ -77,6 +78,7 @@ describe('reportShareRequests', () => {
       source: 'passport',
       surface: 'guardian_capability_view',
       cta: 'guardian_passport_share_family_summary',
+      explicitConsentId: 'consent-1',
       sharePolicy: {
         requiresEvidenceProvenance: true,
         requiresGuardianContext: true,

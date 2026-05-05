@@ -334,6 +334,7 @@ export interface ReportShareRequest {
   surface?: string;
   cta?: string;
   fileName?: string;
+  explicitConsentId?: string;
   sharePolicy: {
     requiresEvidenceProvenance: boolean;
     requiresGuardianContext: boolean;

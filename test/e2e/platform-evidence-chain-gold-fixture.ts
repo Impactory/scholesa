@@ -9,6 +9,15 @@ type CanonicalBundle = {
 type PlatformEvidenceChainManifest = {
   siteId: string;
   ids: Record<string, string>;
+  routeProofReferences: Record<
+    string,
+    {
+      route: string;
+      web: string[];
+      serverSynthetic: string[];
+      mobile: string[];
+    }
+  >;
   serverOwnedGrowth: boolean;
   noClientMasteryWrites: boolean;
 };
@@ -85,5 +94,18 @@ export function canonicalPlatformEvidenceChainGoldRecords(): Record<string, Coll
     processDomainGrowthEvents: [
       requiredDoc(bundle, 'processDomainGrowthEvents', ids.processGrowthEventId),
     ],
+    reportShareConsents: [
+      requiredDoc(bundle, 'reportShareConsents', ids.reportShareConsentId),
+    ],
+    reportShareRequests: [
+      requiredDoc(bundle, 'reportShareRequests', ids.reportShareRequestId),
+    ],
   };
+}
+
+export function canonicalPlatformEvidenceChainRouteProofReferences() {
+  const bundle = buildImportBundle({ mode: 'starter' }) as CanonicalBundle;
+  const manifest = manifestFor(bundle);
+
+  return cloneForBrowser(manifest.routeProofReferences);
 }

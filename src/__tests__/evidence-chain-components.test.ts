@@ -1012,6 +1012,8 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain('canRequestReportShareConsentForPolicy');
     expect(functionsSource).toContain('canDecideReportShareConsent');
     expect(functionsSource).toContain('canRevokeReportShareConsent');
+    expect(functionsSource).toContain('doesGrantedReportShareConsentMatchPolicy');
+    expect(functionsSource).toContain('linkReportShareConsentToRequestRecord');
     expect(functionsSource).toContain(
       'Only learners and linked guardians can grant report share consent.'
     );
@@ -1019,7 +1021,7 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain('report.share_consent_granted');
     expect(functionsSource).toContain('report.share_consent_revoked');
     expect(functionsSource).toContain(
-      'External and partner report sharing requires explicit consent workflow support.'
+      'Broader report share requests require granted explicit consent.'
     );
   });
 
@@ -1033,18 +1035,18 @@ describe('report share request lifecycle', () => {
     expect(functionsSource).toContain('export const createReportShareRequest');
     expect(functionsSource).toContain('export const revokeReportShareRequest');
     expect(functionsSource).toContain('Report share requests require a passing delivery contract.');
-    expect(functionsSource).toContain(
-      'External and partner report sharing requires explicit consent workflow support.'
-    );
     expect(functionsSource).toContain('SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES');
     expect(functionsSource).toContain('SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES');
     expect(functionsSource).toContain('metadata.report_share_family_safe === true');
     expect(functionsSource).toContain(
-      'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
+      'Report share requests require a family-safe share policy.'
     );
     expect(functionsSource).toContain('canCreateReportShareRequestForPolicy');
     expect(functionsSource).toContain(
-      'Active report share requests must be learner-created private exports or guardian-created family shares until explicit consent workflow support exists.'
+      'Active report share requests must be learner-created private exports, guardian-created family shares, or broader shares backed by granted explicit consent.'
+    );
+    expect(functionsSource).toContain(
+      'Granted explicit report share consent must match learner, site, audience, and visibility.'
     );
     expect(functionsSource).toContain(
       'Only completed report deliveries can create active share requests.'
@@ -1066,6 +1068,7 @@ describe('report share request lifecycle', () => {
 
     expect(managerSource).toContain("'use client'");
     expect(managerSource).toContain('reportShareRequestsCollection');
+    expect(managerSource).toContain('reportShareConsentsCollection');
     expect(managerSource).toContain("where('siteId', '==', siteId)");
     expect(managerSource).toContain("where('learnerId', '==', learnerId)");
     expect(managerSource).toContain("where('status', '==', 'active')");
@@ -1086,12 +1089,15 @@ describe('report share request lifecycle', () => {
     expect(managerSource).toContain('revokeReportShareRequest');
     expect(managerSource).toContain('reason: `${viewer}_revoked_report_share`');
     expect(managerSource).toContain(
-      "catch {\n      setRequests([]);\n      setFeedback('Active report shares could not be loaded.');"
+      "catch {\n      setRequests([]);\n      setConsents([]);\n      setFeedback('Active report shares or consent requests could not be loaded.');"
     );
     expect(managerSource).toContain('Share revocation failed. The active share is still listed.');
     expect(managerSource).toContain(
-      'External/public sharing remains blocked until explicit consent workflow support exists.'
+      'External, partner, staff, site, and public sharing require granted explicit consent.'
     );
+    expect(managerSource).toContain('grantReportShareConsent');
+    expect(managerSource).toContain('revokeReportShareConsent');
+    expect(managerSource).toContain('Explicit consent requests');
     expect(managerSource).toContain('request.provenance.meetsDeliveryContract');
     expect(managerSource).toContain('formatSignalList(request.provenance.expectedSignals)');
     expect(managerSource).toContain('formatSignalList(request.provenance.missingSignals)');

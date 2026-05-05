@@ -41,9 +41,11 @@ import {
   canDecideReportShareConsent,
   canRequestReportShareConsentForPolicy,
   canRevokeReportShareConsent,
+  doesGrantedReportShareConsentMatchPolicy,
   grantReportShareConsentRecord,
   isPendingUnexpiredReportShareConsentRecord,
   isReportShareConsentScope,
+  linkReportShareConsentToRequestRecord,
   persistReportShareConsentRecord,
   revokeReportShareConsentRecord,
   type ReportShareConsentScope,
@@ -5483,29 +5485,61 @@ export const createReportShareRequest = onCall(
     );
     const allowsExternalSharing = metadata.report_share_allows_external_sharing === true;
     const familySafe = metadata.report_share_family_safe === true;
-    if (
+    const requiresExplicitConsent =
       allowsExternalSharing ||
-      audience === 'external' ||
-      audience === 'partner' ||
-      visibility === 'external' ||
-      visibility === 'public'
-    ) {
-      throw new HttpsError(
-        'failed-precondition',
-        'External and partner report sharing requires explicit consent workflow support.'
-      );
-    }
-    if (
-      !familySafe ||
       !SUPPORTED_REPORT_SHARE_REQUEST_AUDIENCES.has(audience) ||
-      !SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES.has(visibility)
-    ) {
+      !SUPPORTED_REPORT_SHARE_REQUEST_VISIBILITIES.has(visibility);
+    if (!familySafe) {
       throw new HttpsError(
         'failed-precondition',
-        'Report share requests are limited to learner/private and guardian/family policies until explicit consent workflow support exists.'
+        'Report share requests require a family-safe share policy.'
       );
     }
-    if (
+
+    let explicitConsentId: string | undefined;
+    if (requiresExplicitConsent) {
+      explicitConsentId = readTrimmedField(data, 'explicitConsentId');
+      if (!explicitConsentId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Broader report share requests require granted explicit consent.'
+        );
+      }
+
+      const consentSnap = await admin
+        .firestore()
+        .collection(REPORT_SHARE_CONSENTS_COLLECTION)
+        .doc(explicitConsentId)
+        .get();
+      if (!consentSnap.exists) {
+        throw new HttpsError('failed-precondition', 'Granted report share consent not found.');
+      }
+      const consentData = consentSnap.data() ?? {};
+      if (
+        !doesGrantedReportShareConsentMatchPolicy({
+          data: consentData,
+          learnerId,
+          siteId,
+          audience,
+          visibility,
+        })
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Granted explicit report share consent must match learner, site, audience, and visibility.'
+        );
+      }
+      const consentRequesterId =
+        typeof consentData.requesterId === 'string' ? consentData.requesterId : undefined;
+      const canUseConsent =
+        consentRequesterId === request.auth!.uid || ['site', 'siteLead', 'hq', 'admin'].includes(actorRole);
+      if (!canUseConsent) {
+        throw new HttpsError(
+          'permission-denied',
+          'Only the requester or site governance can create a share from granted consent.'
+        );
+      }
+    } else if (
       !canCreateReportShareRequestForPolicy({
         actorId: request.auth!.uid,
         actorRole,
@@ -5516,7 +5550,7 @@ export const createReportShareRequest = onCall(
     ) {
       throw new HttpsError(
         'failed-precondition',
-        'Active report share requests must be learner-created private exports or guardian-created family shares until explicit consent workflow support exists.'
+        'Active report share requests must be learner-created private exports, guardian-created family shares, or broader shares backed by granted explicit consent.'
       );
     }
 
@@ -5547,6 +5581,7 @@ export const createReportShareRequest = onCall(
       surface: readTrimmedField(data, 'surface'),
       cta: readTrimmedField(data, 'cta'),
       fileName: readTrimmedField(data, 'fileName'),
+      explicitConsentId,
       expiresAt: resolveShareExpiry(data),
       sharePolicy: {
         requiresEvidenceProvenance: metadata.report_share_requires_evidence_provenance === true,
@@ -5563,6 +5598,14 @@ export const createReportShareRequest = onCall(
       },
       collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
     });
+
+    if (explicitConsentId) {
+      await linkReportShareConsentToRequestRecord({
+        consentId: explicitConsentId,
+        shareRequestId: id,
+        collectionName: REPORT_SHARE_CONSENTS_COLLECTION,
+      });
+    }
 
     await admin
       .firestore()
@@ -5582,6 +5625,7 @@ export const createReportShareRequest = onCall(
           visibility,
           reportAction,
           reportDelivery: reportDelivery ?? null,
+          explicitConsentId: explicitConsentId ?? null,
           redactionApplied: redactedPaths.length > 0,
           redactedPathCount: redactedPaths.length,
         },
@@ -5590,6 +5634,7 @@ export const createReportShareRequest = onCall(
           visibility,
           reportAction,
           reportDelivery: reportDelivery ?? null,
+          explicitConsentId: explicitConsentId ?? null,
         },
         createdAt: FieldValue.serverTimestamp(),
       });

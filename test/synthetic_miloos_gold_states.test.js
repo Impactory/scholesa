@@ -139,6 +139,30 @@ describe('synthetic platform evidence-chain gold-readiness state', () => {
         platformEvidenceChainRubricApplications: 1,
         platformEvidenceChainMasteryRecords: 2,
         platformEvidenceChainGrowthEvents: 2,
+        platformEvidenceChainReportShareConsents: 1,
+        platformEvidenceChainReportShareRequests: 1,
+      },
+    });
+    expect(manifest.routeProofReferences).toMatchObject({
+      hqCapabilityFrameworks: {
+        route: '/hq/capability-frameworks',
+        web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts'],
+      },
+      learnerProofAssembly: {
+        route: '/learner/proof-assembly',
+        serverSynthetic: expect.arrayContaining(['functions/src/evidenceChainEmulator.test.ts']),
+      },
+      educatorRubricApply: {
+        route: '/educator/rubrics/apply',
+        web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      },
+      parentPassport: {
+        route: '/parent/passport',
+        web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      },
+      siteEvidenceHealth: {
+        route: '/site/evidence-health',
+        web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
       },
     });
     expect(bundle.summary.platformEvidenceChainGoldState).toMatchObject({
@@ -164,6 +188,22 @@ describe('synthetic platform evidence-chain gold-readiness state', () => {
       interpretationOwner: 'server',
       linkedEvidenceRecordIds: [manifest.ids.evidenceId],
       linkedPortfolioItemIds: [manifest.ids.portfolioItemId],
+    });
+    expect(collectionMap(bundle, 'reportShareConsents').get(manifest.ids.reportShareConsentId)).toMatchObject({
+      status: 'granted',
+      audience: 'external',
+      visibility: 'external',
+      linkedReportShareRequestIds: [manifest.ids.reportShareRequestId],
+    });
+    expect(collectionMap(bundle, 'reportShareRequests').get(manifest.ids.reportShareRequestId)).toMatchObject({
+      status: 'active',
+      explicitConsentId: manifest.ids.reportShareConsentId,
+      audience: 'external',
+      visibility: 'external',
+      sharePolicy: expect.objectContaining({
+        allowsExternalSharing: true,
+        requiresEvidenceProvenance: true,
+      }),
     });
   });
 });

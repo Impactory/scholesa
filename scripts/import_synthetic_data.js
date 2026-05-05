@@ -591,7 +591,110 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
   const rubricApplicationId = 'rubric-application-alpha';
   const growthEventId = 'growth-event-alpha';
   const processGrowthEventId = 'process-growth-event-alpha';
+  const reportShareConsentId = 'report-share-consent-alpha';
+  const reportShareRequestId = 'report-share-request-alpha';
   const sourcePack = 'platform-evidence-chain-gold-readiness';
+  const routeProofReferences = {
+    hqCapabilityFrameworks: {
+      route: '/hq/capability-frameworks',
+      web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts'],
+      serverSynthetic: ['scripts/import_synthetic_data.js', 'test/synthetic_miloos_gold_states.test.js'],
+      mobile: [
+        'apps/empire_flutter/app/test/hq_authoring_persistence_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_routes_test.dart',
+        'apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart',
+      ],
+    },
+    hqRubricBuilder: {
+      route: '/hq/rubric-builder',
+      web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts'],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts'],
+      mobile: [
+        'apps/empire_flutter/app/test/hq_authoring_persistence_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_routes_test.dart',
+        'apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart',
+      ],
+    },
+    educatorToday: {
+      route: '/educator/today',
+      web: [
+        'src/__tests__/evidence-chain-renderer-wiring.test.ts',
+        'test/e2e/mobile-evidence-workflows.e2e.spec.ts',
+      ],
+      serverSynthetic: ['scripts/import_synthetic_data.js'],
+      mobile: [
+        'apps/empire_flutter/app/test/educator_today_page_test.dart',
+        'apps/empire_flutter/app/test/educator_live_session_mode_test.dart',
+      ],
+    },
+    educatorEvidence: {
+      route: '/educator/evidence',
+      web: [
+        'src/__tests__/evidence-chain-renderer-wiring.test.ts',
+        'test/e2e/mobile-evidence-workflows.e2e.spec.ts',
+      ],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts'],
+      mobile: [
+        'apps/empire_flutter/app/test/observation_capture_page_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_routes_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_offline_queue_test.dart',
+      ],
+    },
+    learnerProofAssembly: {
+      route: '/learner/proof-assembly',
+      web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts'],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts', 'scripts/import_synthetic_data.js'],
+      mobile: [
+        'apps/empire_flutter/app/test/proof_assembly_page_test.dart',
+        'apps/empire_flutter/app/test/sync_coordinator_test.dart',
+        'apps/empire_flutter/app/test/mission_proof_bundle_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_routes_test.dart',
+      ],
+    },
+    educatorProofReview: {
+      route: '/educator/proof-review',
+      web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts'],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts'],
+      mobile: [
+        'apps/empire_flutter/app/test/proof_verification_page_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_routes_test.dart',
+      ],
+    },
+    educatorRubricApply: {
+      route: '/educator/rubrics/apply',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts', 'test/synthetic_miloos_gold_states.test.js'],
+      mobile: [
+        'apps/empire_flutter/app/test/growth_engine_service_test.dart',
+        'apps/empire_flutter/app/test/evidence_chain_firestore_service_test.dart',
+      ],
+    },
+    learnerPortfolio: {
+      route: '/learner/portfolio',
+      web: ['src/__tests__/evidence-chain-renderer-wiring.test.ts', 'test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      serverSynthetic: ['scripts/import_synthetic_data.js'],
+      mobile: ['apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart'],
+    },
+    parentPassport: {
+      route: '/parent/passport',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      serverSynthetic: ['functions/src/evidenceChainEmulator.test.ts'],
+      mobile: [
+        'apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart',
+        'apps/empire_flutter/app/test/parent_child_page_test.dart',
+        'apps/empire_flutter/app/test/parent_growth_timeline_page_test.dart',
+      ],
+    },
+    siteEvidenceHealth: {
+      route: '/site/evidence-health',
+      web: ['test/e2e/evidence-chain-cross-role.e2e.spec.ts'],
+      serverSynthetic: ['scripts/import_synthetic_data.js'],
+      mobile: [
+        'apps/empire_flutter/app/test/site_dashboard_page_test.dart',
+        'apps/empire_flutter/app/test/site_sessions_page_test.dart',
+      ],
+    },
+  };
 
   upsertDoc(bundle, 'capabilities', capabilityId, {
     id: capabilityId,
@@ -770,6 +873,64 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
     sourcePack,
     interpretationOwner: 'server',
   });
+  upsertDoc(bundle, 'reportShareConsents', reportShareConsentId, {
+    id: reportShareConsentId,
+    siteId,
+    learnerId,
+    requesterId: educatorId,
+    requesterRole: 'educator',
+    approverId: parentId,
+    approverRole: 'parent',
+    status: 'granted',
+    scope: 'external',
+    audience: 'external',
+    visibility: 'external',
+    purpose: 'Share verified evidence-chain passport with an approved external reviewer.',
+    evidenceSummary: 'Verified proof bundle, rubric application, portfolio item, and server-owned growth only.',
+    linkedReportShareRequestIds: [reportShareRequestId],
+    requestedAt: startedAt,
+    decidedAt: startedAt,
+    expiresAt: startedAt,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'reportShareRequests', reportShareRequestId, {
+    id: reportShareRequestId,
+    siteId,
+    learnerId,
+    createdBy: educatorId,
+    createdByRole: 'educator',
+    status: 'active',
+    reportAction: 'share',
+    reportDelivery: 'shared',
+    audience: 'external',
+    visibility: 'external',
+    source: 'passport',
+    surface: 'platform_gold_route_matrix',
+    cta: 'canonical_external_share_after_granted_consent',
+    fileName: 'learner-alpha-evidence-chain-passport.txt',
+    explicitConsentId: reportShareConsentId,
+    sharePolicy: {
+      requiresEvidenceProvenance: true,
+      requiresGuardianContext: true,
+      allowsExternalSharing: true,
+      includesLearnerIdentifiers: true,
+    },
+    provenance: {
+      expectedSignals: ['evidence', 'proof', 'rubric', 'growth', 'portfolio', 'consent'],
+      missingSignals: [],
+      meetsProvenanceContract: true,
+      meetsDeliveryContract: true,
+      sharePolicyDeclared: true,
+    },
+    expiresAt: startedAt,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
 
   const platformEvidenceChainSourceCounts = {
     platformEvidenceChainCapabilities: 1,
@@ -782,6 +943,8 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
     platformEvidenceChainRubricApplications: 1,
     platformEvidenceChainMasteryRecords: 2,
     platformEvidenceChainGrowthEvents: 2,
+    platformEvidenceChainReportShareConsents: 1,
+    platformEvidenceChainReportShareRequests: 1,
   };
 
   upsertDoc(bundle, 'syntheticPlatformEvidenceChainGoldStates', 'latest', {
@@ -802,7 +965,10 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
       rubricApplicationId,
       growthEventId,
       processGrowthEventId,
+      reportShareConsentId,
+      reportShareRequestId,
     },
+    routeProofReferences,
     usage: 'Use this canonical state for the platform HQ-to-passport evidence-chain certification path.',
     evidenceChain: 'HQ setup -> educator evidence -> proof -> rubric -> server-owned growth -> portfolio -> guardian passport -> site evidence health',
     serverOwnedGrowth: true,

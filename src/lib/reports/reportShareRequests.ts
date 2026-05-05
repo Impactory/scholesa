@@ -22,6 +22,10 @@ interface RevokeReportShareRequestParams {
   reason?: string;
 }
 
+interface ReportShareConsentDecisionParams {
+  consentId?: string | null;
+}
+
 export type ReportShareRequestSkipReason =
   | 'incomplete_delivery'
   | 'missing_metadata'
@@ -173,6 +177,40 @@ export async function revokeReportShareRequest({
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('Unable to revoke report share request.', error);
+    }
+    return false;
+  }
+}
+
+export async function grantReportShareConsent({
+  consentId,
+}: ReportShareConsentDecisionParams): Promise<boolean> {
+  if (!consentId) return false;
+
+  try {
+    const callable = httpsCallable(functions, 'grantReportShareConsent');
+    await callable({ consentId });
+    return true;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Unable to grant report share consent.', error);
+    }
+    return false;
+  }
+}
+
+export async function revokeReportShareConsent({
+  consentId,
+}: ReportShareConsentDecisionParams): Promise<boolean> {
+  if (!consentId) return false;
+
+  try {
+    const callable = httpsCallable(functions, 'revokeReportShareConsent');
+    await callable({ consentId });
+    return true;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Unable to revoke report share consent.', error);
     }
     return false;
   }

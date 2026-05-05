@@ -56,6 +56,7 @@ export interface ReportShareRequestWriteParams {
   surface?: string;
   cta?: string;
   fileName?: string;
+  explicitConsentId?: string;
   sharePolicy: {
     requiresEvidenceProvenance: boolean;
     requiresGuardianContext: boolean;
@@ -88,6 +89,7 @@ export function buildReportShareRequestRecord(id: string, params: ReportShareReq
     ...(params.surface ? { surface: params.surface } : {}),
     ...(params.cta ? { cta: params.cta } : {}),
     ...(params.fileName ? { fileName: params.fileName } : {}),
+    ...(params.explicitConsentId ? { explicitConsentId: params.explicitConsentId } : {}),
     sharePolicy: params.sharePolicy,
     provenance: params.provenance,
     expiresAt: Timestamp.fromDate(params.expiresAt),
