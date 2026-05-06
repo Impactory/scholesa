@@ -904,6 +904,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'docs', 'PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md'),
       'utf8'
     );
+    const blanketGoldAchievementPlanSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md'),
+      'utf8'
+    );
     const browserEvidenceChainSource = fs.readFileSync(
       path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
       'utf8'
@@ -932,6 +936,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(masterPlanSource).toContain('Work Package 2 - Certify The Full Evidence Chain');
     expect(masterPlanSource).toContain('Do not call the platform blanket gold-ready');
     expect(masterPlanSource).toContain('PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md');
+    expect(masterPlanSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
     expect(masterPlanSource).toContain('test/e2e/evidence-chain-cross-role.e2e.spec.ts');
     expect(routeMatrixSource).toContain('route coverage is classified, but blanket platform gold is still blocked');
     expect(routeMatrixSource).toContain('/hq/capability-frameworks` -> `/hq/rubric-builder` -> `/educator/today`');
@@ -959,6 +964,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(masterPlanSource).toContain('local operator release proof');
     expect(masterPlanSource).toContain('read-only Cloud Run release state probe');
     expect(finalSignoffSource).toContain('NO-GO for blanket platform gold');
+    expect(finalSignoffSource).toContain('Steps Required To Convert This Signoff To GO');
+    expect(finalSignoffSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
     expect(finalSignoffSource).toContain('Live six-role operator browser cutover has not been executed and recorded');
@@ -975,6 +982,11 @@ describe('Renderers delegate to real evidence components', () => {
     expect(cloudRunReleaseStateProbeSource).toContain('empire-web-00072-fw6');
     expect(cloudRunReleaseStateProbeSource).toContain('scholesa-compliance-00037-bvx');
     expect(cloudRunReleaseStateProbeSource).toContain('expected unauthenticated compliance status to return 403');
+    expect(blanketGoldAchievementPlanSource).toContain('Phase 0 - Freeze Scope And Record Baseline');
+    expect(blanketGoldAchievementPlanSource).toContain('Phase 3 - Rehearse Current-Worktree No-Traffic Deploys');
+    expect(blanketGoldAchievementPlanSource).toContain('Phase 5 - Promote Or Roll Back Under Operator Control');
+    expect(blanketGoldAchievementPlanSource).toContain('Final GO Checklist');
+    expect(blanketGoldAchievementPlanSource).toContain('Live operator cutover is missing');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/hq/rubric-builder')");
     expect(browserEvidenceChainSource).toContain('Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('Edited Live HQ Authored Evidence Rubric');

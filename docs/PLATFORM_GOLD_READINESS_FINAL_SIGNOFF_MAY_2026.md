@@ -4,6 +4,8 @@ Verdict: **NO-GO for blanket platform gold**.
 
 This signoff records the current evidence packet without converting bounded proof into a platform-wide gold claim. Scholesa has strong gold-candidate slices across the capability evidence chain, site ops proof, local operator release safety, and read-only Cloud Run release state, but the final operator cutover has not been executed and recorded.
 
+Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the required step-by-step runbook for converting this NO-GO packet into a GO packet.
+
 ## Evidence Recorded
 
 | Area | Evidence | Result |
@@ -27,6 +29,15 @@ This signoff records the current evidence packet without converting bounded proo
 
 - Live six-role operator browser cutover has not been executed and recorded.
 - Current-worktree live compliance deploy proof has not been executed and recorded.
+
+## Steps Required To Convert This Signoff To GO
+
+1. Complete every phase in `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md`.
+2. Attach current-worktree no-traffic web, Flutter web, and compliance deploy evidence.
+3. Attach six-role browser cutover evidence for HQ, site, educator, learner, guardian, and partner if partner is included.
+4. Attach traffic promotion or rollback/traffic-pinning evidence for `scholesa-web`, `empire-web`, and `scholesa-compliance`.
+5. Re-run the post-promotion smoke and source-contract gates.
+6. Replace the NO-GO verdict with GO only for the included web/Cloud Run scope, preserving native-channel and partner deferrals unless separately proven.
 
 ## Explicit Deferrals
 

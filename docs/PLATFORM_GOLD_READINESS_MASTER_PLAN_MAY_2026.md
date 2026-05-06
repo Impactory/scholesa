@@ -11,6 +11,7 @@ This document is the master certification queue. It does not replace the detaile
 | `src/lib/routing/workflowRoutes.ts` | Canonical web protected workflow paths, role access, and data modes. |
 | `docs/ROUTE_MODULE_MATRIX.md` | Current web and Flutter route inventory plus routing drift notes. |
 | `docs/PLATFORM_ROUTE_GOLD_MATRIX_MAY_2026.md` | Platform-wide route classification for blanket gold certification. |
+| `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` | Step-by-step operator plan for turning the current NO-GO packet into blanket Gold. |
 | `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` | Flutter route-level evidence-chain proof status. |
 | `docs/FLUTTER_MOBILE_GOLD_READINESS_PLAN_APRIL_30_2026.md` | Current mobile release-bundle and no-traffic rehearsal boundary. |
 | `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md` | Current MiloOS gold-candidate scope and truth boundary. |
@@ -141,6 +142,24 @@ Exit artifact:
 
 - `docs/PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md`
 
+## Blanket Gold Achievement Runbook
+
+Follow `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` to close the remaining NO-GO conditions. The runbook is the ordered path from the current gold-candidate packet to a blanket Gold claim for the included web/Cloud Run scope.
+
+Required phases:
+
+1. Freeze scope and record baseline.
+2. Reproduce the non-mutating gold gate.
+3. Run the full release reproducibility gate.
+4. Rehearse current-worktree no-traffic web, Flutter web, and compliance deploys.
+5. Verify no-traffic revisions before promotion.
+6. Run the six-role operator browser cutover.
+7. Promote or roll back under operator control.
+8. Run post-promotion smoke and trust checks.
+9. Convert the final signoff from NO-GO to GO only after every evidence item exists.
+
+Current status: phases 0-2 have reusable proof in the current packet, and local/read-only operator proof exists. Phases 3-7 still require live operator authority and deliberate production/rehearsal environment action.
+
 ## Stop Conditions
 
 Do not call the platform blanket gold-ready if any of these are true:
@@ -157,4 +176,4 @@ Do not call the platform blanket gold-ready if any of these are true:
 
 ## Current Recommendation
 
-Proceed with **Work Package 1** immediately, then use its first `partial` evidence-chain row to drive Work Package 2. The likely first certification target is HQ setup -> educator rubric application -> server-owned growth -> portfolio -> guardian passport/report, because it is the backbone of the platform's capability-first promise.
+Proceed with `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md`. The route matrix, evidence-chain browser proof, site ops proof, local operator release proof, read-only Cloud Run state proof, and native-channel deferral are already in the packet. The remaining work is live operator execution: current-worktree no-traffic deploy proof, six-role browser cutover, traffic promotion or rollback/traffic-pinning proof, and final signoff conversion from NO-GO to GO.
