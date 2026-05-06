@@ -963,6 +963,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
     expect(finalSignoffSource).toContain('Live six-role operator browser cutover has not been executed and recorded');
     expect(finalSignoffSource).toContain('Current-worktree live compliance deploy proof has not been executed and recorded');
+    expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
+    expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
+    expect(masterPlanSource).toContain('native-channel app-store release operations explicitly deferred');
     expect(operatorReleaseProofSource).toContain('rc3_big_bang_cutover_entrypoint.sh --print-only');
     expect(operatorReleaseProofSource).toContain('append_no_traffic_arg');
     expect(operatorReleaseProofSource).toContain('COMPLIANCE_ALLOW_UNAUTH=0');

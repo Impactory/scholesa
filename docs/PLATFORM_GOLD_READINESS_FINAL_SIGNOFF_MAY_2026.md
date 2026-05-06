@@ -13,6 +13,7 @@ This signoff records the current evidence packet without converting bounded proo
 | Source contracts | `npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts` | Passed, 191 tests |
 | Local operator release safety | `bash ./scripts/operator_release_proof.sh` | Passed |
 | Read-only Cloud Run release state | `bash ./scripts/cloud_run_release_state_probe.sh` | Passed |
+| Native-channel release scope | Explicitly deferred from this blanket platform packet | Deferred |
 | TypeScript and lint | `npm run typecheck && npm run lint` | Passed |
 
 ## Operator Proof Summary
@@ -26,8 +27,11 @@ This signoff records the current evidence packet without converting bounded proo
 
 - Live six-role operator browser cutover has not been executed and recorded.
 - Current-worktree live compliance deploy proof has not been executed and recorded.
-- Native-channel inclusion or explicit deferral is not recorded in this final packet.
+
+## Explicit Deferrals
+
+- Native-channel app-store release operations are deferred from this blanket platform packet. The validated mobile evidence-chain and Flutter web/Cloud Run slices remain gold-candidate evidence, but iOS, macOS, Android store distribution, signing, notarization, and app-store promotion are not included in this signoff.
 
 ## Boundary
 
-This artifact supports a **gold-candidate** readiness packet for the proven slices above. It must not be used to describe Scholesa as blanket platform gold-ready until the remaining NO-GO conditions are closed with live operator evidence.
+This artifact supports a **gold-candidate** readiness packet for the proven slices above. It must not be used to describe Scholesa as blanket platform gold-ready until the remaining NO-GO conditions are closed with live operator evidence and any future native-channel inclusion is separately proven.
