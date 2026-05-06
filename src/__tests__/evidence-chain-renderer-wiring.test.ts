@@ -904,6 +904,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
       'utf8'
     );
+    const workflowRoutesBrowserSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'workflow-routes.e2e.spec.ts'),
+      'utf8'
+    );
 
     expect(masterPlanSource).toContain('not blanket platform gold-ready yet');
     expect(masterPlanSource).toContain('Master Matrix');
@@ -931,7 +935,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(routeMatrixSource).toContain('live-authored template is selected and applied');
     expect(routeMatrixSource).toContain('test/e2e/evidence-chain-cross-role.e2e.spec.ts');
     expect(routeMatrixSource).toContain('educator/site session evidence coverage');
-    expect(routeMatrixSource).toContain('fail-closed export/provenance if report export is in scope');
+    expect(routeMatrixSource).toContain('operator proof depth beyond that route lifecycle');
+    expect(routeMatrixSource).toContain('`/site/ops` can create and resolve a site-scoped operator event');
+    expect(routeMatrixSource).toContain('site_ops.event_resolved');
+    expect(masterPlanSource).toContain('operator proof depth beyond the site ops event lifecycle');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/hq/rubric-builder')");
     expect(browserEvidenceChainSource).toContain('Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('Edited Live HQ Authored Evidence Rubric');
@@ -956,6 +963,12 @@ describe('Renderers delegate to real evidence components', () => {
     expect(browserEvidenceChainSource).toContain('Request consent');
     expect(browserEvidenceChainSource).toContain("getByRole('button', { name: 'Grant' })");
     expect(browserEvidenceChainSource).toContain('Active share:');
+    expect(workflowRoutesBrowserSource).toContain("page.goto('/en/site/ops')");
+    expect(workflowRoutesBrowserSource).toContain('release-cutover-drill');
+    expect(workflowRoutesBrowserSource).toContain('siteOpsEvents');
+    expect(workflowRoutesBrowserSource).toContain('site_ops.event_resolved');
+    expect(workflowRoutesBrowserSource).toContain('auditLogs');
+    expect(workflowRoutesBrowserSource).toContain('Status: resolved');
     expect(masterPlanSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest');
     expect(masterPlanSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest.routeProofReferences');
     expect(masterPlanSource).toContain('consent-backed broader share records');

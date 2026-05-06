@@ -273,6 +273,57 @@ test('site workflow redirects to site default and provisions guardian links', as
   await expect(record).toContainText('Status: active');
 });
 
+test('site ops workflow logs and resolves operator events with audit proof', async ({ page }) => {
+  await signInAs(page, USERS.site);
+
+  await page.goto('/en/site/ops');
+  await expect(page.getByTestId('workflow-route-header')).toContainText('Site Operations');
+  await openWorkflowCreateForm(page);
+  await page.getByTestId('workflow-field-eventType').fill('release-cutover-drill');
+  await page.getByTestId('workflow-field-details').fill('Operator verified site ops event lifecycle during route smoke.');
+  await page.getByTestId('workflow-create-submit').click();
+
+  const record = workflowRecord(page, 'release-cutover-drill');
+  await expect(record).toContainText('Status: open');
+  await expect(record).toContainText('Operator Proof');
+  await expect.poll(async () => {
+    const events = await getCollection(page, 'siteOpsEvents');
+    return events.some((entry) => (
+      entry.siteId === SITE_ALPHA &&
+      entry.eventType === 'release-cutover-drill' &&
+      entry.status === 'open' &&
+      entry.createdBy === USERS.site.uid
+    ));
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
+
+  await record.getByRole('button', { name: 'Resolve event' }).click();
+  await expect(record).toContainText('Status: resolved');
+  await page.reload();
+  await expect(workflowRecord(page, 'release-cutover-drill')).toContainText('Status: resolved');
+
+  await expect.poll(async () => {
+    const [events, auditLogs] = await Promise.all([
+      getCollection(page, 'siteOpsEvents'),
+      getCollection(page, 'auditLogs'),
+    ]);
+    const resolvedEvent = events.find((entry) => (
+      entry.siteId === SITE_ALPHA &&
+      entry.eventType === 'release-cutover-drill' &&
+      entry.status === 'resolved' &&
+      entry.resolvedBy === USERS.site.uid
+    ));
+    return Boolean(resolvedEvent) && auditLogs.some((entry) => (
+      entry.action === 'site_ops.event_resolved' &&
+      entry.documentId === resolvedEvent?.id &&
+      entry.siteId === SITE_ALPHA
+    ));
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
+});
+
 test('site is denied partner routes and returns to site default', async ({ page }) => {
   await signInAs(page, USERS.site);
 

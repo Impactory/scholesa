@@ -107,6 +107,20 @@ type AttendanceRecord = {
   updatedAt: string;
 };
 
+type SiteOpsEventRecord = {
+  id: string;
+  siteId: string;
+  eventType: string;
+  title: string;
+  details: string;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
+};
+
 type PortfolioRecord = {
   id: string;
   learnerId: string;
@@ -403,6 +417,7 @@ type StoreState = {
   guardianLinks: GuardianLinkRecord[];
   learnerProgress: LearnerProgressRecord[];
   attendanceRecords: AttendanceRecord[];
+  siteOpsEvents: SiteOpsEventRecord[];
   portfolioItems: PortfolioRecord[];
   missionAttempts: MissionAttemptRecord[];
   learnerReflections: LearnerReflectionRecord[];
@@ -566,6 +581,7 @@ function defaultState(): StoreState {
         updatedAt: DEFAULT_TIMESTAMP,
       },
     ],
+    siteOpsEvents: [],
     portfolioItems: [
       {
         id: 'portfolio-linked-alpha',
@@ -2042,6 +2058,53 @@ export async function loadE2EWorkflowRecords(ctx: WorkflowContext): Promise<Work
         })),
     };
   }
+  case '/site/ops': {
+    const siteId = activeSiteIdFromContext(ctx) || '';
+    return {
+      ...emptyResult(),
+      canCreate: true,
+      createLabel: 'Log ops event',
+      createConfig: {
+        title: 'Log ops event',
+        submitLabel: 'Create event',
+        fields: [
+          {
+            name: 'eventType',
+            label: 'Event type',
+            type: 'text',
+            required: true,
+            placeholder: 'staffing-gap',
+          },
+          {
+            name: 'details',
+            label: 'Details',
+            type: 'textarea',
+            required: true,
+          },
+        ],
+      },
+      records: state.siteOpsEvents
+        .filter((entry) => entry.siteId === siteId)
+        .map((entry) => toRecord({
+          id: entry.id,
+          title: entry.title || entry.eventType,
+          subtitle: entry.details,
+          status: entry.status,
+          updatedAt: entry.updatedAt,
+          siteId: entry.siteId,
+          collectionName: 'siteOpsEvents',
+          routePath: ctx.routePath,
+          canEdit: true,
+          canDelete: false,
+          primaryActionLabel: entry.status === 'resolved' ? 'Reopen event' : 'Resolve event',
+          metadata: {
+            eventType: entry.eventType,
+            createdBy: entry.createdBy,
+            operatorProof: 'ops event persisted with audit trail',
+          },
+        })),
+    };
+  }
   case '/site/clever':
     return {
       ...emptyResult(),
@@ -2168,6 +2231,37 @@ export async function createE2EWorkflowRecord(ctx: WorkflowContext, input: Workf
     });
     break;
   }
+  case '/site/ops': {
+    const createdAt = nowIso();
+    const siteId = activeSiteIdFromContext(ctx) || 'site-alpha';
+    const eventType = typeof values.eventType === 'string' ? values.eventType : 'ops-event';
+    const details = typeof values.details === 'string' ? values.details : '';
+    const id = nextId('site-ops-event');
+    state.siteOpsEvents.push({
+      id,
+      siteId,
+      eventType,
+      title: eventType,
+      details,
+      status: 'open',
+      createdBy: ctx.uid,
+      createdAt,
+      updatedAt: createdAt,
+      resolvedBy: null,
+      resolvedAt: null,
+    });
+    state.auditLogs = mergeById(state.auditLogs, [{
+      id: nextId('audit-site-ops-created'),
+      userId: ctx.uid,
+      action: 'site_ops.event_created',
+      collection: 'siteOpsEvents',
+      documentId: id,
+      siteId,
+      timestamp: Date.now(),
+      details: { eventType, siteId, status: 'open' },
+    }]);
+    break;
+  }
   case '/site/clever':
     break;
   case '/partner/listings':
@@ -2225,6 +2319,28 @@ export async function updateE2EWorkflowRecord(ctx: WorkflowContext, target: Work
     }
     break;
   }
+  case '/site/ops': {
+    const event = state.siteOpsEvents.find((entry) => entry.id === target.id);
+    if (event) {
+      const updatedAt = nowIso();
+      const nextStatus = event.status === 'resolved' ? 'open' : 'resolved';
+      event.status = nextStatus;
+      event.updatedAt = updatedAt;
+      event.resolvedBy = nextStatus === 'resolved' ? ctx.uid : null;
+      event.resolvedAt = nextStatus === 'resolved' ? updatedAt : null;
+      state.auditLogs = mergeById(state.auditLogs, [{
+        id: nextId('audit-site-ops-updated'),
+        userId: ctx.uid,
+        action: nextStatus === 'resolved' ? 'site_ops.event_resolved' : 'site_ops.event_reopened',
+        collection: 'siteOpsEvents',
+        documentId: event.id,
+        siteId: event.siteId,
+        timestamp: Date.now(),
+        details: { eventType: event.eventType, siteId: event.siteId, status: nextStatus },
+      }]);
+    }
+    break;
+  }
   default:
     break;
   }
@@ -2238,6 +2354,7 @@ export async function deleteE2EWorkflowRecord(target: WorkflowMutationTarget): P
     guardianLinks: state.guardianLinks,
     marketplaceListings: state.marketplaceListings,
     attendanceRecords: state.attendanceRecords,
+    siteOpsEvents: state.siteOpsEvents,
     missionAttempts: state.missionAttempts,
     sites: state.sites,
   };
