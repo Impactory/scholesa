@@ -1285,6 +1285,12 @@ function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
   return Array.from(nextById.values());
 }
 
+function mergeUsersByUid(current: SeedUser[], incoming: SeedUser[]): SeedUser[] {
+  const nextByUid = new Map(current.map((record) => [record.uid, record]));
+  incoming.forEach((record) => nextByUid.set(record.uid, cloneState(record)));
+  return Array.from(nextByUid.values());
+}
+
 export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
   const state = readStore();
 
@@ -1325,7 +1331,7 @@ export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
     state.auditLogs = mergeById(state.auditLogs, records.auditLogs);
   }
   if (records.users) {
-    state.users = mergeById(state.users, records.users);
+    state.users = mergeUsersByUid(state.users, records.users);
   }
   if (records.guardianLinks) {
     state.guardianLinks = mergeById(state.guardianLinks, records.guardianLinks);

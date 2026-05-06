@@ -948,6 +948,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(browserEvidenceChainSource).toContain('capabilityGrowthEvents');
     expect(browserEvidenceChainSource).toContain('rubricTemplates');
     expect(browserEvidenceChainSource).toContain('reportShareRequests');
+    expect(browserEvidenceChainSource).toContain('learner-weak-report');
+    expect(browserEvidenceChainSource).toContain('report.delivery_blocked');
+    expect(browserEvidenceChainSource).toContain("reportBlockReason: 'missing_provenance'");
+    expect(browserEvidenceChainSource).toContain('report_missing_provenance_signals');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/missions/review')");
     expect(browserEvidenceChainSource).toContain('Request consent');
     expect(browserEvidenceChainSource).toContain("getByRole('button', { name: 'Grant' })");
