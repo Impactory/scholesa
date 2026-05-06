@@ -900,12 +900,24 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'AUDIT_TODO_APRIL_2026.md'),
       'utf8'
     );
+    const finalSignoffSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md'),
+      'utf8'
+    );
     const browserEvidenceChainSource = fs.readFileSync(
       path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
       'utf8'
     );
     const workflowRoutesBrowserSource = fs.readFileSync(
       path.join(process.cwd(), 'test', 'e2e', 'workflow-routes.e2e.spec.ts'),
+      'utf8'
+    );
+    const operatorReleaseProofSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'operator_release_proof.sh'),
+      'utf8'
+    );
+    const cloudRunReleaseStateProbeSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'cloud_run_release_state_probe.sh'),
       'utf8'
     );
 
@@ -938,7 +950,28 @@ describe('Renderers delegate to real evidence components', () => {
     expect(routeMatrixSource).toContain('operator proof depth beyond that route lifecycle');
     expect(routeMatrixSource).toContain('`/site/ops` can create and resolve a site-scoped operator event');
     expect(routeMatrixSource).toContain('site_ops.event_resolved');
+    expect(routeMatrixSource).toContain('local compliance runtime endpoints smoke');
+    expect(routeMatrixSource).toContain('unauthenticated `/compliance/status` 401');
+    expect(routeMatrixSource).toContain('local operator release proof');
+    expect(routeMatrixSource).toContain('read-only Cloud Run release state probe');
     expect(masterPlanSource).toContain('operator proof depth beyond the site ops event lifecycle');
+    expect(masterPlanSource).toContain('local compliance runtime smoke');
+    expect(masterPlanSource).toContain('local operator release proof');
+    expect(masterPlanSource).toContain('read-only Cloud Run release state probe');
+    expect(finalSignoffSource).toContain('NO-GO for blanket platform gold');
+    expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
+    expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
+    expect(finalSignoffSource).toContain('Live six-role operator browser cutover has not been executed and recorded');
+    expect(finalSignoffSource).toContain('Current-worktree live compliance deploy proof has not been executed and recorded');
+    expect(operatorReleaseProofSource).toContain('rc3_big_bang_cutover_entrypoint.sh --print-only');
+    expect(operatorReleaseProofSource).toContain('append_no_traffic_arg');
+    expect(operatorReleaseProofSource).toContain('COMPLIANCE_ALLOW_UNAUTH=0');
+    expect(operatorReleaseProofSource).toContain('declare NO-GO and rollback the full release');
+    expect(cloudRunReleaseStateProbeSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS=1');
+    expect(cloudRunReleaseStateProbeSource).toContain('scholesa-web-00040-qpw');
+    expect(cloudRunReleaseStateProbeSource).toContain('empire-web-00072-fw6');
+    expect(cloudRunReleaseStateProbeSource).toContain('scholesa-compliance-00037-bvx');
+    expect(cloudRunReleaseStateProbeSource).toContain('expected unauthenticated compliance status to return 403');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/hq/rubric-builder')");
     expect(browserEvidenceChainSource).toContain('Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('Edited Live HQ Authored Evidence Rubric');

@@ -49,7 +49,7 @@ This document is the master certification queue. It does not replace the detaile
 | Functions and growth engine | `applyRubricToEvidence`, `processCheckpointMasteryUpdate`, `verifyProofOfLearning`, parent bundles, report share callables, AI runtimes | Release gate, Functions build/tests, evidence-chain emulator tests | Aligned and reusable | Final platform packet must pin that proof verification remains authenticity-only and growth is server-owned | Include focused callable assertions in the final blanket gate, especially no client-owned mastery/growth writes. |
 | Firestore and Storage rules | Role/site scoping, parent raw-event denial, partner evidence boundaries, append-only growth | Firestore rules integration, route proof matrix references | Aligned and reusable | Storage artifact rules need explicit inclusion if storage-backed evidence is in release scope | Decide storage scope; run Firestore plus Storage rules gates in the final packet. |
 | AI transparency and internal-only policy | MiloOS support, AI disclosure, internal inference guard, audit trail | MiloOS tests, AI honesty tests, internal-only policy gate references | Gold-candidate for MiloOS | Broader AI-assisted evidence/report paths need final disclosure and audit proof | Run `npm run ai:internal-only:all` and certify AI disclosure visibility on portfolio/report outputs. |
-| Deploy and operator readiness | Release gate, Cloud Run web no-traffic rehearsal, full deploy script, compliance operator, native build paths if in scope | `./scripts/deploy.sh release-gate`, `CLOUD_RUN_NO_TRAFFIC=1 ... ./scripts/deploy.sh web`, `./scripts/deploy.sh all` terminal pass | Gold-candidate for web deploy path | Blanket gold still needs operator/browser cutover evidence, compliance deploy proof, rollback proof, and native-channel decision | Run six-role operator smoke against rehearsed/live environment and record compliance/native inclusion or deferral. |
+| Deploy and operator readiness | Release gate, Cloud Run web no-traffic rehearsal, full deploy script, compliance operator, native build paths if in scope | `./scripts/deploy.sh release-gate`, `CLOUD_RUN_NO_TRAFFIC=1 ... ./scripts/deploy.sh web`, `./scripts/deploy.sh all` terminal pass, local compliance runtime smoke (`/` 200, `/health` 200, unauthenticated `/compliance/status` 401), local operator release proof (`bash ./scripts/operator_release_proof.sh`), read-only Cloud Run release state probe (`bash ./scripts/cloud_run_release_state_probe.sh`: web/Flutter traffic pinned to prior serving revisions, compliance latest serving, unauth compliance edge 403) | Gold-candidate for web deploy path | Blanket gold still needs live operator/browser cutover evidence, current-worktree live compliance deploy proof, and native-channel decision | Run six-role operator smoke against rehearsed/live environment and record compliance/native inclusion or deferral. |
 | Compliance and trust operations | Compliance operator, audit logs, COPPA/report lifecycle, consent and revocation | Compliance docs, parent consent/report-share tests, deploy targets | Reusable with modification | Compliance operator deploy rehearsal and final operator evidence are not yet recorded in this master packet | Run or explicitly defer compliance operator no-traffic/live rehearsal; record audit and consent proof. |
 
 ## First Gold-Critical Gap
@@ -132,8 +132,10 @@ Tasks:
 - Record `./scripts/deploy.sh release-gate` output.
 - Record no-traffic Cloud Run revisions and traffic allocations.
 - Record compliance operator deploy or explicit deferral.
+- Record `bash ./scripts/operator_release_proof.sh` output for the cutover guide, traffic-pinning guards, compliance auth posture, and rollback rule.
+- Record `bash ./scripts/cloud_run_release_state_probe.sh` output for read-only Cloud Run traffic state and unauthenticated compliance edge denial.
 - Run six-role browser smoke: HQ, site, educator, learner, guardian, partner if included.
-- Record rollback or traffic-pinning proof.
+- Record live rollback or traffic-pinning execution evidence if the rehearsed/live environment is available.
 
 Exit artifact:
 
