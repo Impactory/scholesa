@@ -115,6 +115,28 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       return;
     }
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setCheckpointDefinitions(
+          getE2ECollection('checkpoints')
+            .filter((checkpoint) => checkpoint.siteId === siteId && checkpoint.status === 'active')
+            .map((checkpoint) => ({
+              id: String(checkpoint.id),
+              title: String(checkpoint.title || ''),
+              description: typeof checkpoint.description === 'string' ? checkpoint.description : null,
+              missionId: typeof checkpoint.missionId === 'string' ? checkpoint.missionId : null,
+              missionTitle: typeof checkpoint.missionTitle === 'string' ? checkpoint.missionTitle : null,
+              checkpointNumber: typeof checkpoint.checkpointNumber === 'number' ? checkpoint.checkpointNumber : null,
+              capabilityId: String(checkpoint.capabilityId || ''),
+              capabilityTitle: typeof checkpoint.capabilityTitle === 'string' ? checkpoint.capabilityTitle : null,
+              pillarCode: typeof checkpoint.pillarCode === 'string'
+                ? (checkpoint.pillarCode as PortfolioItem['pillarCodes'][number])
+                : null,
+            }))
+        );
+        return;
+      }
+
       const snap = await getDocs(
         query(
           checkpointsCollection,
@@ -166,6 +188,42 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     setLoading(true);
     setError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const portfolioItems = getE2ECollection('portfolioItems');
+        setRecords(
+          getE2ECollection('checkpointHistory')
+            .filter((record) => record.learnerId === learnerId && record.siteId === siteId)
+            .map((record) => {
+              const portfolioItemId = typeof record.portfolioItemId === 'string' ? record.portfolioItemId : null;
+              const portfolioItem = portfolioItems.find((item) => item.id === portfolioItemId);
+              return {
+                id: String(record.id),
+                checkpointDefinitionId: typeof record.checkpointDefinitionId === 'string' ? record.checkpointDefinitionId : null,
+                checkpointLabel: typeof record.checkpointLabel === 'string' ? record.checkpointLabel : null,
+                missionId: typeof record.missionId === 'string' ? record.missionId : null,
+                missionTitle: typeof record.missionTitle === 'string' ? record.missionTitle : null,
+                checkpointNumber: typeof record.checkpointNumber === 'number' ? record.checkpointNumber : null,
+                capabilityId: typeof record.capabilityId === 'string' ? record.capabilityId : null,
+                capabilityTitle: typeof record.capabilityTitle === 'string' ? record.capabilityTitle : null,
+                answer: typeof record.answer === 'string' ? record.answer : null,
+                explainItBack: typeof record.explainItBack === 'string' ? record.explainItBack : null,
+                explainItBackRequired: record.explainItBackRequired === true,
+                status: (typeof record.status === 'string' ? record.status : 'submitted') as CheckpointRecord['status'],
+                isCorrect: typeof record.isCorrect === 'boolean' ? record.isCorrect : null,
+                feedback: typeof record.feedback === 'string' ? record.feedback : null,
+                aiAssistanceUsed: record.aiAssistanceUsed === true,
+                portfolioItemId,
+                proofOfLearningStatus: typeof portfolioItem?.proofOfLearningStatus === 'string'
+                  ? (portfolioItem.proofOfLearningStatus as CheckpointRecord['proofOfLearningStatus'])
+                  : null,
+                createdAt: typeof record.createdAt === 'string' ? record.createdAt : null,
+              };
+            })
+        );
+        return;
+      }
+
       const snap = await getDocs(
         query(
           collection(firestore, 'checkpointHistory'),
@@ -256,6 +314,78 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     setSubmitting(true);
     setSubmitError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+        const selectedCheckpoint =
+          checkpointDefinitions.find((checkpoint) => checkpoint.id === selectedCheckpointId) ?? null;
+        if (!selectedCheckpoint) {
+          setSubmitError('The selected checkpoint could not be found. Refresh and try again.');
+          setSubmitting(false);
+          return;
+        }
+        const createdAt = new Date().toISOString();
+        const portfolioItemId = `e2e-checkpoint-portfolio-${Date.now()}`;
+        const checkpointHistoryId = `e2e-checkpoint-history-${Date.now()}`;
+        const explainItBackText = explainItBack.trim();
+        upsertE2ECollectionRecord('portfolioItems', {
+          id: portfolioItemId,
+          learnerId,
+          siteId,
+          title: selectedCheckpoint.missionTitle
+            ? `Checkpoint: ${selectedCheckpoint.missionTitle} - ${selectedCheckpoint.title}`
+            : `Checkpoint: ${selectedCheckpoint.title}`,
+          description: answer.trim(),
+          checkpointDefinitionId: selectedCheckpoint.id,
+          pillarCodes: selectedCheckpoint.pillarCode ? [selectedCheckpoint.pillarCode] : [],
+          artifacts: [],
+          capabilityIds: [selectedCheckpoint.capabilityId],
+          capabilityTitles: selectedCheckpoint.capabilityTitle ? [selectedCheckpoint.capabilityTitle] : [],
+          aiAssistanceUsed: aiUsed,
+          aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined,
+          aiDisclosureStatus: aiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          verificationStatus: 'pending',
+          proofOfLearningStatus: explainItBackText ? 'partial' : 'missing',
+          proofHasExplainItBack: explainItBackText.length > 0,
+          proofHasOralCheck: false,
+          proofHasMiniRebuild: false,
+          proofCheckpointCount: explainItBackText.length > 0 ? 1 : 0,
+          proofExplainItBackExcerpt: explainItBackText || undefined,
+          source: 'checkpoint_submission',
+          createdAt,
+          updatedAt: createdAt,
+        });
+        upsertE2ECollectionRecord('checkpointHistory', {
+          id: checkpointHistoryId,
+          learnerId,
+          siteId,
+          checkpointDefinitionId: selectedCheckpoint.id,
+          checkpointLabel: selectedCheckpoint.title,
+          missionId: selectedCheckpoint.missionId,
+          missionTitle: selectedCheckpoint.missionTitle,
+          checkpointNumber: selectedCheckpoint.checkpointNumber,
+          capabilityId: selectedCheckpoint.capabilityId,
+          capabilityTitle: selectedCheckpoint.capabilityTitle,
+          answer: answer.trim(),
+          explainItBack: explainItBackText || null,
+          explainItBackRequired: explainItBackText.length > 0,
+          status: 'submitted',
+          isCorrect: null,
+          feedback: null,
+          aiAssistanceUsed: aiUsed,
+          aiAssistanceDetails: aiUsed ? aiDetails.trim() : null,
+          portfolioItemId,
+          createdAt,
+        });
+        setAnswer('');
+        setExplainItBack('');
+        setAiUsed(false);
+        setAiDetails('');
+        setSelectedCheckpointId('');
+        setShowForm(false);
+        await loadCheckpoints();
+        return;
+      }
+
       const batch = writeBatch(firestore);
       const checkpointRef = doc(collection(firestore, 'checkpointHistory'));
       const portfolioRef = doc(portfolioItemsCollection);
@@ -397,6 +527,8 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
             {checkpointDefinitions.length > 0 ? (
               <>
                 <select
+                  data-testid="learner-checkpoint-select"
+                  aria-label="Checkpoint"
                   value={selectedCheckpointId}
                   onChange={(e) => setSelectedCheckpointId(e.target.value)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
@@ -444,6 +576,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
               Your answer <span className="text-red-500">*</span>
             </label>
             <textarea
+              data-testid="learner-checkpoint-answer"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               rows={4}
@@ -457,6 +590,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
               Explain it back <span className="text-xs text-gray-400">(explain what you learned in your own words)</span>
             </label>
             <textarea
+              data-testid="learner-checkpoint-explain"
               value={explainItBack}
               onChange={(e) => setExplainItBack(e.target.value)}
               rows={3}
@@ -493,6 +627,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
             <button
               type="button"
               onClick={handleSubmit}
+              data-testid="learner-checkpoint-submit"
               disabled={submitting || !answer.trim() || !selectedCheckpointId}
               className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >

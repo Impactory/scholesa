@@ -118,8 +118,18 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'EducatorEvidenceCaptureRenderer.tsx'
     );
+    const captureSource = readSrcFile('components', 'evidence', 'EducatorEvidenceCapture.tsx');
+    const browserEvidenceChainSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
+      'utf8'
+    );
     expect(source).toContain('EducatorEvidenceCapture');
     expect(source).toContain('@/src/components/evidence/EducatorEvidenceCapture');
+    expect(captureSource).toContain('buildE2ECaptureData');
+    expect(captureSource).toContain('upsertE2ECollectionRecord');
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/evidence')");
+    expect(browserEvidenceChainSource).toContain('liveCaptureStartedAt');
+    expect(browserEvidenceChainSource).toContain('toBeLessThan(10_000)');
   });
 
   it('EducatorProofReviewRenderer → ProofOfLearningVerification', () => {
@@ -154,14 +164,33 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('learnerId');
     expect(source).toContain('writeBatch');
     expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain('learner-checkpoint-submit');
+
+    const browserEvidenceChainSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
+      'utf8'
+    );
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/learner/checkpoints')");
+    expect(browserEvidenceChainSource).toContain('checkpoint-prototype-iteration');
   });
 
   it('LearnerMissionsRenderer → LearnerEvidenceSubmission', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerMissionsRenderer.tsx'
     );
+    const submissionSource = readSrcFile('components', 'evidence', 'LearnerEvidenceSubmission.tsx');
     expect(source).toContain('LearnerEvidenceSubmission');
     expect(source).toContain('@/src/components/evidence/LearnerEvidenceSubmission');
+    expect(submissionSource).toContain('upsertE2ECollectionRecord');
+
+    const browserEvidenceChainSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
+      'utf8'
+    );
+    expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/learner/missions')");
+    expect(browserEvidenceChainSource).toContain('Learner-created artifact for gold proof');
+    expect(browserEvidenceChainSource).toContain('learnerReflections');
+    expect(browserEvidenceChainSource).toContain('checkpointHistory');
   });
 
   it('LearnerTodayRenderer uses the dedicated learner dashboard for /learner/today', () => {
@@ -892,7 +921,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(routeMatrixSource).toContain('/hq/capability-frameworks` -> `/hq/rubric-builder` -> `/educator/today`');
     expect(routeMatrixSource).toContain('Gold-Critical Route Proof References');
     expect(routeMatrixSource).toContain('syntheticPlatformEvidenceChainGoldStates/latest');
-    expect(routeMatrixSource).toContain('/educator/rubrics/apply` joined to `/parent/passport');
+    expect(routeMatrixSource).toContain('Educator live queue and capture');
     expect(routeMatrixSource).toContain('| `/partner/deliverables` | partner | generic | External evidence-facing deliverables | deferred |');
     expect(routeMatrixSource).toContain('Work Package 1 is complete for the first gold-critical route chain');
     expect(routeMatrixSource).toContain('routeProofReferences.educatorRubricApply');
@@ -901,6 +930,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(routeMatrixSource).toContain('newly authored and edited HQ rubric template');
     expect(routeMatrixSource).toContain('live-authored template is selected and applied');
     expect(routeMatrixSource).toContain('test/e2e/evidence-chain-cross-role.e2e.spec.ts');
+    expect(routeMatrixSource).toContain('educator/site session evidence coverage');
+    expect(routeMatrixSource).toContain('fail-closed export/provenance if report export is in scope');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/hq/rubric-builder')");
     expect(browserEvidenceChainSource).toContain('Live HQ Authored Evidence Rubric');
     expect(browserEvidenceChainSource).toContain('Edited Live HQ Authored Evidence Rubric');
@@ -1301,6 +1332,12 @@ describe('EducatorSessionsRenderer evidence-enriched session view', () => {
   });
 
   it('has harness-backed browser proof for educator and site session coverage', () => {
+    const browserEvidenceChainSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'evidence-chain-cross-role.e2e.spec.ts'),
+      'utf8'
+    );
+    const workflowDataSource = readSrcFile('features', 'workflows', 'workflowData.ts');
+
     expect(source).toContain('NEXT_PUBLIC_E2E_TEST_MODE');
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/educator/sessions')");
     expect(browserEvidenceChainSource).toContain("gotoProtectedRoute(page, '/en/site/sessions')");

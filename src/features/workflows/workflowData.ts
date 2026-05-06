@@ -2494,7 +2494,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           ]),
         };
       }
-    case '/site/sessions':
+    case '/site/sessions': {
       const sessionRecords = applyRouteActionLabels(await queryCollectionRecords({
         routePath: ctx.routePath,
         collectionName: 'sessions',
@@ -2540,6 +2540,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           },
         ]),
       };
+    }
     case '/site/ops':
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({

@@ -122,6 +122,27 @@ export function LearnerEvidenceSubmission() {
 
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        setPortfolio(
+          getE2ECollection('portfolioItems')
+            .filter((item) => item.learnerId === learnerId && item.siteId === siteId)
+            .map((item) => ({
+              id: String(item.id),
+              title: String(item.title || ''),
+              description: String(item.description || ''),
+              artifacts: Array.isArray(item.artifacts) ? item.artifacts.map(String) : [],
+              capabilityTitles: Array.isArray(item.capabilityIds)
+                ? item.capabilityIds.map((cid) => resolveTitle(String(cid)))
+                : [],
+              aiAssistanceUsed: item.aiAssistanceUsed === true,
+              verificationStatus: typeof item.verificationStatus === 'string' ? item.verificationStatus : undefined,
+              proofOfLearningStatus: typeof item.proofOfLearningStatus === 'string' ? item.proofOfLearningStatus : undefined,
+            }))
+        );
+        return;
+      }
+
       const snap = await getDocs(
         query(
           portfolioItemsCollection,
@@ -164,6 +185,11 @@ export function LearnerEvidenceSubmission() {
     }
 
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        setRevisions([]);
+        return;
+      }
+
       const snap = await getDocs(
         query(
           missionAttemptsCollection,
@@ -309,6 +335,16 @@ export function LearnerEvidenceSubmission() {
     if (!siteId) return;
     void (async () => {
       try {
+        if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+          const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+          setMissions(
+            getE2ECollection('missions')
+              .filter((mission) => mission.siteId === siteId || typeof mission.siteId === 'undefined')
+              .map((mission) => ({ ...mission, id: String(mission.id) } as Mission))
+          );
+          return;
+        }
+
         const snap = await getDocs(query(missionsCollection, where('siteId', '==', siteId), limit(100)));
         setMissions(snap.docs.map((d) => ({ ...d.data(), id: d.id } as Mission)));
       } catch (err) {
@@ -331,6 +367,41 @@ export function LearnerEvidenceSubmission() {
     try {
       const artifacts = artifactUrl.trim() ? [artifactUrl.trim()] : [];
       const pillarCodes = derivedPillarCodes.length > 0 ? derivedPillarCodes : selectedPillarCodes;
+
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+        const createdAt = new Date().toISOString();
+        upsertE2ECollectionRecord('portfolioItems', {
+          id: `e2e-learner-artifact-${Date.now()}`,
+          learnerId,
+          siteId,
+          title: artifactTitle.trim(),
+          description: artifactDescription.trim(),
+          pillarCodes,
+          artifacts,
+          capabilityIds: selectedCapabilityIds,
+          capabilityTitles: selectedCapabilityIds.map((cid) => resolveTitle(cid)),
+          aiAssistanceUsed: aiUsed,
+          aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined,
+          aiDisclosureStatus: aiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          verificationStatus: 'pending',
+          proofOfLearningStatus: 'not-available',
+          source: 'learner_submission',
+          createdAt,
+          updatedAt: createdAt,
+        });
+
+        setSuccessMessage('Artifact submitted to your portfolio!');
+        setArtifactTitle('');
+        setArtifactDescription('');
+        setArtifactUrl('');
+        setSelectedCapabilityIds([]);
+        setSelectedPillarCodes([]);
+        setAiUsed(false);
+        setAiDetails('');
+        void loadPortfolio();
+        return;
+      }
 
       await addDoc(portfolioItemsCollection, {
         learnerId,
@@ -379,6 +450,53 @@ export function LearnerEvidenceSubmission() {
     setSuccessMessage(null);
     setSubmitError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+        const createdAt = new Date().toISOString();
+        const portfolioItemId = `e2e-learner-reflection-portfolio-${Date.now()}`;
+        const reflectionId = `e2e-learner-reflection-${Date.now()}`;
+        upsertE2ECollectionRecord('portfolioItems', {
+          id: portfolioItemId,
+          learnerId,
+          siteId,
+          title: `Reflection: ${reflectionContent.trim().slice(0, 60)}`,
+          description: reflectionContent.trim(),
+          pillarCodes: [],
+          artifacts: [],
+          capabilityIds: reflectionCapabilityIds,
+          capabilityTitles: reflectionCapabilityIds.map((cid) => resolveTitle(cid)),
+          reflectionIds: [reflectionId],
+          aiAssistanceUsed: reflectionAiUsed,
+          aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
+          aiDisclosureStatus: reflectionAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          verificationStatus: 'pending',
+          proofOfLearningStatus: 'not-available',
+          source: 'reflection',
+          createdAt,
+          updatedAt: createdAt,
+        });
+        upsertE2ECollectionRecord('learnerReflections', {
+          id: reflectionId,
+          learnerId,
+          siteId,
+          content: reflectionContent.trim(),
+          portfolioItemId,
+          capabilityIds: reflectionCapabilityIds,
+          aiAssistanceUsed: reflectionAiUsed,
+          aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
+          createdAt,
+          updatedAt: createdAt,
+        });
+
+        setSuccessMessage('Reflection saved!');
+        setReflectionContent('');
+        setReflectionCapabilityIds([]);
+        setReflectionAiUsed(false);
+        setReflectionAiDetails('');
+        void loadPortfolio();
+        return;
+      }
+
       // Create portfolio item first so reflection can reference it
       const reflectionPillarCodes: PillarCode[] = [];
       const reflectionArtifacts: string[] = [];
@@ -452,6 +570,58 @@ export function LearnerEvidenceSubmission() {
       const attachmentUrls = checkpointAttachmentUrl.trim()
         ? [checkpointAttachmentUrl.trim()]
         : [];
+
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+        const createdAt = new Date().toISOString();
+        const attemptId = `e2e-learner-mission-attempt-${Date.now()}`;
+        upsertE2ECollectionRecord('missionAttempts', {
+          id: attemptId,
+          learnerId,
+          missionId: checkpointMissionId,
+          missionTitle: mission?.title ?? '',
+          siteId,
+          status: 'submitted',
+          content: checkpointContent.trim(),
+          notes: checkpointContent.trim(),
+          attachmentUrls,
+          capabilityId: capIds[0],
+          aiAssistanceUsed: checkpointAiUsed,
+          aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined,
+          aiDisclosureStatus: checkpointAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          submittedAt: createdAt,
+          updatedAt: createdAt,
+        });
+        upsertE2ECollectionRecord('portfolioItems', {
+          id: `e2e-learner-checkpoint-portfolio-${Date.now()}`,
+          learnerId,
+          siteId,
+          title: `Checkpoint: ${mission?.title ?? 'Unknown'}`,
+          description: checkpointContent.trim(),
+          pillarCodes,
+          artifacts: attachmentUrls,
+          capabilityIds: capIds,
+          capabilityTitles: capIds.map((cid: string) => resolveTitle(cid)),
+          missionAttemptId: attemptId,
+          aiAssistanceUsed: checkpointAiUsed,
+          aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined,
+          aiDisclosureStatus: checkpointAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          verificationStatus: 'pending',
+          proofOfLearningStatus: 'not-available',
+          source: 'checkpoint_submission',
+          createdAt,
+          updatedAt: createdAt,
+        });
+
+        setSuccessMessage('Checkpoint evidence submitted!');
+        setCheckpointMissionId('');
+        setCheckpointContent('');
+        setCheckpointAttachmentUrl('');
+        setCheckpointAiUsed(false);
+        setCheckpointAiDetails('');
+        void loadPortfolio();
+        return;
+      }
 
       // Create mission attempt
       const attemptRef = await addDoc(missionAttemptsCollection, {

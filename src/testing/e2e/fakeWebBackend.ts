@@ -46,6 +46,9 @@ type MissionRecord = {
   description: string;
   status: string;
   updatedAt: string;
+  siteId?: string;
+  capabilityIds?: string[];
+  pillarCodes?: string[];
 };
 
 type SessionRecord = {
@@ -150,6 +153,56 @@ type MissionAttemptRecord = {
   capabilityId?: string;
   proofOfLearningStatus?: string;
   updatedAt: string;
+};
+
+type LearnerReflectionRecord = {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  content: string;
+  portfolioItemId?: string;
+  capabilityIds?: string[];
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type CheckpointDefinitionRecord = {
+  id: string;
+  siteId: string;
+  title: string;
+  description?: string;
+  missionId?: string;
+  missionTitle?: string;
+  checkpointNumber?: number;
+  capabilityId: string;
+  capabilityTitle?: string;
+  pillarCode?: string;
+  status: string;
+};
+
+type CheckpointHistoryRecord = {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  checkpointDefinitionId: string;
+  checkpointLabel: string;
+  missionId?: string | null;
+  missionTitle?: string | null;
+  checkpointNumber?: number | null;
+  capabilityId: string;
+  capabilityTitle?: string | null;
+  answer: string;
+  explainItBack?: string | null;
+  explainItBackRequired: boolean;
+  status: string;
+  isCorrect?: boolean | null;
+  feedback?: string | null;
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string | null;
+  portfolioItemId: string;
+  createdAt: string;
 };
 
 type MarketplaceListingRecord = {
@@ -335,6 +388,9 @@ type StoreState = {
   attendanceRecords: AttendanceRecord[];
   portfolioItems: PortfolioRecord[];
   missionAttempts: MissionAttemptRecord[];
+  learnerReflections: LearnerReflectionRecord[];
+  checkpoints: CheckpointDefinitionRecord[];
+  checkpointHistory: CheckpointHistoryRecord[];
   marketplaceListings: MarketplaceListingRecord[];
   interactionEvents: InteractionEventRecord[];
   syntheticMiloOSGoldStates: SyntheticMiloOSGoldStateRecord[];
@@ -442,6 +498,9 @@ function defaultState(): StoreState {
         title: 'Robotics Mission',
         description: 'Build and document a robotics prototype.',
         status: 'active',
+        siteId: 'site-alpha',
+        capabilityIds: ['capability-prototype-iteration'],
+        pillarCodes: ['FUTURE_SKILLS'],
         updatedAt: DEFAULT_TIMESTAMP,
       },
     ],
@@ -512,6 +571,23 @@ function defaultState(): StoreState {
       },
     ],
     missionAttempts: [],
+    learnerReflections: [],
+    checkpoints: [
+      {
+        id: 'checkpoint-prototype-iteration',
+        siteId: 'site-alpha',
+        title: 'Prototype iteration evidence check',
+        description: 'Explain how test evidence changed your next prototype iteration.',
+        missionId: 'mission-robotics',
+        missionTitle: 'Robotics Mission',
+        checkpointNumber: 1,
+        capabilityId: 'capability-prototype-iteration',
+        capabilityTitle: 'Prototype iteration and testing',
+        pillarCode: 'FUTURE_SKILLS',
+        status: 'active',
+      },
+    ],
+    checkpointHistory: [],
     marketplaceListings: [],
     interactionEvents: [],
     syntheticMiloOSGoldStates: [],
@@ -760,6 +836,11 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
 }
 
 type EvidenceChainCollectionName = keyof Pick<StoreState,
+  | 'portfolioItems'
+  | 'missionAttempts'
+  | 'learnerReflections'
+  | 'checkpoints'
+  | 'checkpointHistory'
   | 'capabilities'
   | 'processDomains'
   | 'evidenceRecords'
@@ -776,10 +857,11 @@ type EvidenceChainCollectionName = keyof Pick<StoreState,
 
 export function upsertE2ECollectionRecord(
   collectionName: EvidenceChainCollectionName,
-  record: EvidenceChainRecord
-): EvidenceChainRecord {
+  record: { id: string } & Record<string, unknown>
+): { id: string } & Record<string, unknown> {
   const state = readStore();
-  state[collectionName] = mergeById(state[collectionName], [record]);
+  const collections = state as unknown as Record<EvidenceChainCollectionName, Array<{ id: string }>>;
+  collections[collectionName] = mergeById(collections[collectionName], [record]);
   writeStore(state);
   return cloneState(record);
 }

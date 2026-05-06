@@ -503,6 +503,133 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
   await expect(siteSession).toContainText('1');
   await expect(siteSession).toContainText('Observed Learner Count:');
 
+  await signInAs(page, EDUCATOR_ALPHA);
+  await gotoProtectedRoute(page, '/en/educator/evidence');
+
+  await expect(page.getByTestId('evidence-capture-page')).toBeVisible();
+  await expect(page.getByTestId('evidence-roster-source')).toContainText('Showing present learners');
+  const liveCaptureStartedAt = Date.now();
+  await page.getByTestId('evidence-learner').selectOption(LEARNER_ALPHA);
+  await page.getByTestId('evidence-phase').selectOption('build_sprint');
+  await page
+    .getByTestId('evidence-description')
+    .fill('Used test evidence to choose the next prototype sensor mount change.');
+  await page.getByTestId('evidence-capability').selectOption(CAPABILITY_ID);
+  await page.getByTestId('evidence-submit').click();
+  await expect(page.getByTestId('evidence-success')).toContainText('Logged for Learner Alpha');
+  expect(Date.now() - liveCaptureStartedAt).toBeLessThan(10_000);
+
+  const liveCapturedEvidence = (await getCollection(page, 'evidenceRecords')).find(
+    (record) => record.description === 'Used test evidence to choose the next prototype sensor mount change.'
+  );
+  expect(liveCapturedEvidence).toEqual(
+    expect.objectContaining({
+      learnerId: LEARNER_ALPHA,
+      educatorId: EDUCATOR_ALPHA,
+      siteId: 'site-alpha',
+      sessionOccurrenceId: 'session-future-skills',
+      capabilityId: CAPABILITY_ID,
+      capabilityMapped: true,
+      rubricStatus: 'pending',
+      growthStatus: 'pending',
+    })
+  );
+
+  await gotoProtectedRoute(page, '/en/educator/sessions');
+  await expect(page.getByRole('button', { name: /Skills Studio/ })).toContainText('2 evidence');
+
+  await signInAs(page, LEARNER_ALPHA);
+  await gotoProtectedRoute(page, '/en/learner/missions');
+
+  await expect(page.getByTestId('learner-evidence-page')).toBeVisible();
+  await page.getByTestId('artifact-title').fill('Learner-created artifact for gold proof');
+  await page
+    .getByTestId('artifact-description')
+    .fill('I built a revised sensor mount and linked it to the prototype iteration capability.');
+  await page.getByTestId('artifact-url').fill('https://example.test/learner-artifact');
+  await page.getByTestId('artifact-form').getByLabel(/Prototype iteration and testing/).check();
+  await page.getByTestId('artifact-submit').click();
+  await expect(page.getByTestId('submission-success')).toContainText('Artifact submitted');
+
+  await page.getByRole('button', { name: 'Write Reflection' }).click();
+  await page
+    .getByTestId('reflection-content')
+    .fill('The test evidence showed me that one small mount change made the sensor more reliable.');
+  await page.getByTestId('reflection-form').getByLabel('Prototype iteration and testing').check();
+  await page.getByTestId('reflection-submit').click();
+  await expect(page.getByTestId('submission-success')).toContainText('Reflection saved');
+
+  await page.getByRole('button', { name: 'Checkpoint Evidence' }).click();
+  await page.getByTestId('checkpoint-mission-select').selectOption('mission-robotics');
+  await page
+    .getByTestId('checkpoint-content')
+    .fill('I can demonstrate how test evidence changed the next prototype iteration.');
+  await page.getByTestId('checkpoint-submit').click();
+  await expect(page.getByTestId('submission-success')).toContainText('Checkpoint evidence submitted');
+
+  await gotoProtectedRoute(page, '/en/learner/checkpoints');
+  await page.getByRole('button', { name: 'Submit checkpoint' }).click();
+  await page.getByTestId('learner-checkpoint-select').selectOption('checkpoint-prototype-iteration');
+  await page
+    .getByTestId('learner-checkpoint-answer')
+    .fill('My checkpoint answer explains the prototype test evidence and what I changed.');
+  await page
+    .getByTestId('learner-checkpoint-explain')
+    .fill('In my own words, the reliable sensor result showed the mount change worked.');
+  await page.getByTestId('learner-checkpoint-submit').click();
+  await expect(page.getByText('Prototype iteration evidence check')).toBeVisible();
+
+  expect(await getCollection(page, 'portfolioItems')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        title: 'Learner-created artifact for gold proof',
+        learnerId: LEARNER_ALPHA,
+        siteId: 'site-alpha',
+        source: 'learner_submission',
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+      }),
+      expect.objectContaining({
+        source: 'reflection',
+        learnerId: LEARNER_ALPHA,
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+      }),
+      expect.objectContaining({
+        source: 'checkpoint_submission',
+        learnerId: LEARNER_ALPHA,
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+      }),
+    ])
+  );
+  expect(await getCollection(page, 'learnerReflections')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        learnerId: LEARNER_ALPHA,
+        siteId: 'site-alpha',
+        capabilityIds: expect.arrayContaining([CAPABILITY_ID]),
+      }),
+    ])
+  );
+  expect(await getCollection(page, 'missionAttempts')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        learnerId: LEARNER_ALPHA,
+        missionId: 'mission-robotics',
+        status: 'submitted',
+        capabilityId: CAPABILITY_ID,
+      }),
+    ])
+  );
+  expect(await getCollection(page, 'checkpointHistory')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        learnerId: LEARNER_ALPHA,
+        checkpointDefinitionId: 'checkpoint-prototype-iteration',
+        capabilityId: CAPABILITY_ID,
+        portfolioItemId: expect.any(String),
+      }),
+    ])
+  );
+
   const evidenceRecords = await getCollection(page, 'evidenceRecords');
   expect(evidenceRecords).toEqual(
     expect.arrayContaining([

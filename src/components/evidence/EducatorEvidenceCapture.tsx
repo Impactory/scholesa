@@ -101,6 +101,77 @@ function formatSessionTime(value: unknown): string | null {
   return null;
 }
 
+function buildE2ECaptureData(params: {
+  siteId: string;
+  educatorId: string;
+  users: Record<string, unknown>[];
+  sessions: Record<string, unknown>[];
+  enrollments: Record<string, unknown>[];
+  attendanceRecords: Record<string, unknown>[];
+  evidenceRecords: Record<string, unknown>[];
+}): {
+  siteLearners: LearnerOption[];
+  todaySessions: SessionOption[];
+  recentEvidence: RecentEvidence[];
+} {
+  const siteLearners = params.users
+    .filter((entry) => entry.role === 'learner' && Array.isArray(entry.siteIds) && entry.siteIds.includes(params.siteId))
+    .map((entry) => ({
+      uid: asString(entry.uid, asString(entry.id, '')),
+      displayName: asString(entry.displayName, asString(entry.uid, 'Learner')),
+    }))
+    .filter((entry) => entry.uid.length > 0)
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
+  const learnerNames = new Map(siteLearners.map((learner) => [learner.uid, learner.displayName]));
+
+  const todaySessions = params.sessions
+    .filter((entry) => entry.siteId === params.siteId && Array.isArray(entry.educatorIds) && entry.educatorIds.includes(params.educatorId))
+    .map((entry) => {
+      const sessionId = asString(entry.id, '');
+      const attendance = params.attendanceRecords.filter((record) => record.sessionOccurrenceId === sessionId);
+      const liveLearnerIds = attendance.length > 0
+        ? attendance
+            .filter((record) => record.status === 'present' || record.status === 'late')
+            .map((record) => asString(record.learnerId || record.userId, ''))
+        : params.enrollments
+            .filter((record) => record.sessionId === sessionId && record.status === 'active')
+            .map((record) => asString(record.learnerId, ''));
+      return {
+        occurrenceId: sessionId,
+        sessionId,
+        label: asString(entry.title || entry.name, 'Session'),
+        status: asString(entry.status, 'scheduled'),
+        rosterSource: attendance.length > 0 ? 'attendance' : liveLearnerIds.length > 0 ? 'enrollment' : 'none',
+        learners: liveLearnerIds
+          .filter((learnerId) => learnerId.length > 0)
+          .map((learnerId) => ({
+            uid: learnerId,
+            displayName: learnerNames.get(learnerId) ?? learnerId,
+          }))
+          .sort((left, right) => left.displayName.localeCompare(right.displayName)),
+      } satisfies SessionOption;
+    })
+    .sort((left, right) => left.label.localeCompare(right.label));
+
+  const recentEvidence = params.evidenceRecords
+    .filter((record) => record.siteId === params.siteId)
+    .map((record) => ({
+      id: asString(record.id, ''),
+      learnerName: learnerNames.get(asString(record.learnerId, '')) ?? asString(record.learnerId, ''),
+      learnerId: asString(record.learnerId, ''),
+      description: asString(record.description, ''),
+      capabilityId: typeof record.capabilityId === 'string' ? record.capabilityId : undefined,
+      capabilityMapped: record.capabilityMapped === true,
+      rubricStatus: asString(record.rubricStatus, 'pending'),
+      phaseKey: typeof record.phaseKey === 'string' ? record.phaseKey : null,
+      portfolioCandidate: record.portfolioCandidate === true,
+    }))
+    .filter((record) => record.id.length > 0)
+    .slice(0, 20);
+
+  return { siteLearners, todaySessions, recentEvidence };
+}
+
 export function EducatorEvidenceCapture() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = resolveActiveSiteId(profile);
@@ -160,6 +231,23 @@ export function EducatorEvidenceCapture() {
     }
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const e2eData = buildE2ECaptureData({
+          siteId,
+          educatorId: user.uid,
+          users: getE2ECollection('users'),
+          sessions: getE2ECollection('sessions'),
+          enrollments: getE2ECollection('enrollments'),
+          attendanceRecords: getE2ECollection('attendanceRecords'),
+          evidenceRecords: getE2ECollection('evidenceRecords'),
+        });
+        setTodaySessions(e2eData.todaySessions);
+        setSiteLearners(e2eData.siteLearners);
+        setRecentEvidence(e2eData.recentEvidence);
+        return;
+      }
+
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
@@ -457,6 +545,50 @@ export function EducatorEvidenceCapture() {
     const mapped = !!capabilityId;
 
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { upsertE2ECollectionRecord } = await import('@/src/testing/e2e/fakeWebBackend');
+        const evidenceId = `e2e-live-evidence-${Date.now()}`;
+        const createdAt = new Date().toISOString();
+        upsertE2ECollectionRecord('evidenceRecords', {
+          id: evidenceId,
+          learnerId: selectedLearnerId,
+          educatorId: user.uid,
+          siteId,
+          sessionOccurrenceId: selectedSession?.occurrenceId,
+          description: trimmed,
+          capabilityId: capabilityId ?? undefined,
+          capabilityIds: capabilityId ? [capabilityId] : [],
+          capabilityMapped: mapped,
+          phaseKey,
+          portfolioCandidate,
+          aiAssistanceNoted,
+          rubricStatus: 'pending',
+          growthStatus: 'pending',
+          createdAt,
+          updatedAt: createdAt,
+          source: 'educator_observation',
+        });
+
+        const learnerName = learnerNameMap.get(selectedLearnerId) ?? selectedLearnerId;
+        setSuccessMessage(`Logged for ${learnerName}`);
+        resetForm();
+        setRecentEvidence((prev: RecentEvidence[]) => [
+          {
+            id: evidenceId,
+            learnerName,
+            learnerId: selectedLearnerId,
+            description: trimmed,
+            capabilityId: capabilityId ?? undefined,
+            capabilityMapped: mapped,
+            rubricStatus: 'pending',
+            phaseKey: phaseKey ?? null,
+            portfolioCandidate,
+          },
+          ...prev.slice(0, 19),
+        ]);
+        return;
+      }
+
       const evidenceRef = await addDoc(evidenceRecordsCollection, {
         learnerId: selectedLearnerId,
         educatorId: user.uid,
