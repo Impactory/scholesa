@@ -50,6 +50,25 @@ export async function recordReportDeliveryAudit({
   if (!siteId || !learnerId || !metadata) return null;
 
   try {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { recordE2EReportDeliveryAudit } = await import('@/src/testing/e2e/fakeWebBackend');
+      const response = await recordE2EReportDeliveryAudit({
+        siteId,
+        learnerId,
+        reportAction,
+        reportDelivery,
+        reportBlockReason:
+          reportDelivery === 'contract-failed' ? resolveReportDeliveryBlockReason(metadata) : undefined,
+        module,
+        surface,
+        cta,
+        fileName,
+        shareRequestId: shareRequestId ?? undefined,
+        metadata: metadata as unknown as Record<string, unknown>,
+      });
+      return response.id;
+    }
+
     const callable = httpsCallable(functions, 'recordReportDeliveryAudit');
     const response = await callable({
       siteId,

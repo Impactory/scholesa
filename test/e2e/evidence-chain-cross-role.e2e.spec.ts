@@ -27,6 +27,7 @@ const RUBRIC_APPLICATION_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricApplication
 const RUBRIC_TEMPLATE_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.rubricTemplateId;
 const GROWTH_EVENT_ID = PLATFORM_EVIDENCE_CHAIN_GOLD_IDS.growthEventId;
 const LEARNER_CREATED_PORTFOLIO_ITEM_ID = 'portfolio-learner-created-proof';
+const WEAK_REPORT_LEARNER_ID = 'learner-weak-report';
 
 async function waitForE2EHarness(page: Page): Promise<void> {
   await page.waitForFunction(() =>
@@ -626,6 +627,75 @@ test('verified proof and rubric growth are consumed by educator, guardian, and s
         checkpointDefinitionId: 'checkpoint-prototype-iteration',
         capabilityId: CAPABILITY_ID,
         portfolioItemId: expect.any(String),
+      }),
+    ])
+  );
+
+  await page.evaluate(
+    ({ learnerId, parentId }) => {
+      (window as Window & {
+        __scholesaE2E: E2EWindowApi;
+      }).__scholesaE2E.seedEvidenceChain({
+        users: [
+          {
+            uid: learnerId,
+            email: 'learner.weak.report@scholesa.test',
+            displayName: 'Learner Weak Report',
+            role: 'learner',
+            siteIds: ['site-alpha'],
+            activeSiteId: 'site-alpha',
+            parentIds: [parentId],
+          },
+        ],
+        guardianLinks: [
+          {
+            id: 'guardian-link-weak-report',
+            parentId,
+            parentName: 'Parent Alpha',
+            learnerId,
+            learnerName: 'Learner Weak Report',
+            siteId: 'site-alpha',
+            relationship: 'guardian',
+            status: 'active',
+            isPrimary: false,
+            updatedAt: '2026-03-07T19:00:00.000Z',
+          },
+        ],
+      });
+    },
+    { learnerId: WEAK_REPORT_LEARNER_ID, parentId: PARENT_ALPHA }
+  );
+
+  await signInAs(page, PARENT_ALPHA);
+  await gotoProtectedRoute(page, '/en/parent/passport');
+  const weakReportPassport = page.getByTestId(`ideation-passport-${WEAK_REPORT_LEARNER_ID}`);
+  await expect(weakReportPassport).toBeVisible();
+  await weakReportPassport.getByRole('button', { name: 'Export text' }).click();
+  await expect(page.getByTestId(`guardian-passport-share-feedback-${WEAK_REPORT_LEARNER_ID}`))
+    .toContainText('Export is blocked because this report is missing evidence provenance or sharing policy.');
+
+  await expect
+    .poll(async () => getCollection(page, 'auditLogs'))
+    .toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'report.delivery_blocked',
+          learnerId: WEAK_REPORT_LEARNER_ID,
+          reportAction: 'export_text',
+          reportDelivery: 'contract-failed',
+          reportBlockReason: 'missing_provenance',
+          metadata: expect.objectContaining({
+            report_meets_delivery_contract: false,
+            report_missing_provenance_signals: expect.arrayContaining(['mission', 'proof']),
+          }),
+        }),
+      ])
+    );
+  expect(await getCollection(page, 'reportShareRequests')).not.toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        learnerId: WEAK_REPORT_LEARNER_ID,
+        status: 'active',
       }),
     ])
   );

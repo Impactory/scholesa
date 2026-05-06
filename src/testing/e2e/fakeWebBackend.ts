@@ -270,10 +270,13 @@ type EvidenceChainSeedInput = Partial<Pick<StoreState,
   | 'processDomainGrowthEvents'
   | 'reportShareConsents'
   | 'reportShareRequests'
+  | 'auditLogs'
   | 'rubricTemplates'
 >> & {
   portfolioItems?: PortfolioRecord[];
   missionAttempts?: MissionAttemptRecord[];
+  users?: SeedUser[];
+  guardianLinks?: GuardianLinkRecord[];
 };
 
 function buildSessionCoverageMetadata(params: {
@@ -376,6 +379,20 @@ type CreateExplicitE2EReportShareRequestInput = {
   metadata: Record<string, unknown>;
 };
 
+type RecordE2EReportDeliveryAuditInput = {
+  siteId: string;
+  learnerId: string;
+  reportAction: string;
+  reportDelivery: string;
+  reportBlockReason?: string;
+  module: string;
+  surface: string;
+  cta: string;
+  fileName?: string;
+  shareRequestId?: string;
+  metadata: Record<string, unknown>;
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -405,6 +422,7 @@ type StoreState = {
   processDomainGrowthEvents: EvidenceChainRecord[];
   reportShareConsents: EvidenceChainRecord[];
   reportShareRequests: EvidenceChainRecord[];
+  auditLogs: EvidenceChainRecord[];
   rubricTemplates: EvidenceChainRecord[];
 };
 
@@ -602,6 +620,7 @@ function defaultState(): StoreState {
     processDomainGrowthEvents: [],
     reportShareConsents: [],
     reportShareRequests: [],
+    auditLogs: [],
     rubricTemplates: [],
   };
 }
@@ -1086,6 +1105,49 @@ export async function createExplicitE2EReportShareRequest(
   return { id };
 }
 
+export async function recordE2EReportDeliveryAudit(
+  input: RecordE2EReportDeliveryAuditInput
+): Promise<{ id: string }> {
+  const state = readStore();
+  const createdAt = nowIso();
+  const id = nextId('e2e-report-delivery-audit');
+  state.auditLogs = mergeById(state.auditLogs, [{
+    id,
+    actorId: currentUserId() || 'e2e-actor',
+    userId: currentUserId() || 'e2e-actor',
+    action: input.reportDelivery === 'contract-failed'
+      ? 'report.delivery_blocked'
+      : 'report.delivery_recorded',
+    entityType: 'learnerReport',
+    entityId: input.learnerId,
+    targetType: 'learner',
+    targetId: input.learnerId,
+    siteId: input.siteId,
+    learnerId: input.learnerId,
+    reportAction: input.reportAction,
+    reportDelivery: input.reportDelivery,
+    reportBlockReason: input.reportBlockReason,
+    module: input.module,
+    surface: input.surface,
+    cta: input.cta,
+    fileName: input.fileName,
+    shareRequestId: input.shareRequestId,
+    metadata: input.metadata,
+    details: {
+      module: input.module,
+      surface: input.surface,
+      cta: input.cta,
+      fileName: input.fileName,
+      shareRequestId: input.shareRequestId,
+      reportBlockReason: input.reportBlockReason,
+      ...input.metadata,
+    },
+    createdAt,
+  }]);
+  writeStore(state);
+  return { id };
+}
+
 export async function applyE2ERubricToEvidence(
   input: ApplyE2ERubricInput
 ): Promise<{ rubricApplicationId: string }> {
@@ -1258,6 +1320,15 @@ export function seedE2EEvidenceChain(records: EvidenceChainSeedInput): void {
   }
   if (records.reportShareRequests) {
     state.reportShareRequests = mergeById(state.reportShareRequests, records.reportShareRequests);
+  }
+  if (records.auditLogs) {
+    state.auditLogs = mergeById(state.auditLogs, records.auditLogs);
+  }
+  if (records.users) {
+    state.users = mergeById(state.users, records.users);
+  }
+  if (records.guardianLinks) {
+    state.guardianLinks = mergeById(state.guardianLinks, records.guardianLinks);
   }
   if (records.rubricTemplates) {
     state.rubricTemplates = mergeById(state.rubricTemplates, records.rubricTemplates);
