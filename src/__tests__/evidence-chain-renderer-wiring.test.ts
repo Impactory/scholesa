@@ -920,6 +920,18 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'scripts', 'operator_release_proof.sh'),
       'utf8'
     );
+    const deployScriptSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'deploy.sh'),
+      'utf8'
+    );
+    const primaryWebDockerfileSource = fs.readFileSync(
+      path.join(process.cwd(), 'Dockerfile'),
+      'utf8'
+    );
+    const primaryWebCloudBuildSource = fs.readFileSync(
+      path.join(process.cwd(), 'cloudbuild.web.yaml'),
+      'utf8'
+    );
     const cloudRunReleaseStateProbeSource = fs.readFileSync(
       path.join(process.cwd(), 'scripts', 'cloud_run_release_state_probe.sh'),
       'utf8'
@@ -977,6 +989,13 @@ describe('Renderers delegate to real evidence components', () => {
     expect(operatorReleaseProofSource).toContain('append_no_traffic_arg');
     expect(operatorReleaseProofSource).toContain('COMPLIANCE_ALLOW_UNAUTH=0');
     expect(operatorReleaseProofSource).toContain('declare NO-GO and rollback the full release');
+    expect(primaryWebDockerfileSource).toContain('ARG NEXT_PUBLIC_FIREBASE_API_KEY');
+    expect(primaryWebDockerfileSource).toContain('ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}');
+    expect(primaryWebCloudBuildSource).toContain('NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}');
+    expect(primaryWebCloudBuildSource).toContain('NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}');
+    expect(deployScriptSource).toContain('cloudbuild.web.yaml');
+    expect(deployScriptSource).toContain('Missing $key for primary web build');
+    expect(deployScriptSource).toContain('SERVICE_STATE_JSON');
     expect(cloudRunReleaseStateProbeSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS=1');
     expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_WEB_REHEARSAL_REVISION:-');
     expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_FLUTTER_REHEARSAL_REVISION:-');

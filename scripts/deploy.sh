@@ -380,8 +380,57 @@ deploy_primary_web() {
 
   ensure_no_traffic_service_exists "$project_id" "$region" "$service"
 
+  local service_state_json
+  service_state_json="$(gcloud run services describe "$service" \
+    --project "$project_id" \
+    --region "$region" \
+    --format=json)" || fail "Unable to read primary web Cloud Run service state"
+
+  resolve_primary_web_env_value() {
+    local key="$1"
+    local local_value="${!key:-}"
+    if [[ -n "$local_value" ]]; then
+      printf '%s' "$local_value"
+      return 0
+    fi
+
+    SERVICE_STATE_JSON="$service_state_json" node -e '
+      const key = process.argv[1];
+      const data = JSON.parse(process.env.SERVICE_STATE_JSON || "{}");
+      const env = data.spec?.template?.spec?.containers?.[0]?.env ?? data.spec?.containers?.[0]?.env ?? [];
+      const found = env.find((entry) => entry.name === key);
+      process.stdout.write(found?.value ?? "");
+    ' "$key"
+  }
+
+  local -a env_keys resolved_env_values
+  env_keys=(
+    NEXT_PUBLIC_FIREBASE_API_KEY
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    NEXT_PUBLIC_FIREBASE_APP_ID
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    NEXT_PUBLIC_ENABLE_SW
+  )
+
+  local substitutions
+  substitutions="_TAG=${image_tag}"
+  for key in "${env_keys[@]}"; do
+    local value
+    value="$(resolve_primary_web_env_value "$key")"
+    if [[ -z "$value" && "$key" == "NEXT_PUBLIC_ENABLE_SW" ]]; then
+      value="false"
+    fi
+    if [[ -z "$value" ]]; then
+      fail "Missing $key for primary web build. Set it locally or keep it on the existing Cloud Run service."
+    fi
+    resolved_env_values+=("$value")
+    substitutions+=",_${key}=${value}"
+  done
+
   log "Building primary web image with Cloud Build (project=$project_id service=$service region=$region tag=$image_tag)..."
-  (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --tag "$image") || fail "Primary web Cloud Build failed"
+  (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --config cloudbuild.web.yaml --substitutions "$substitutions") || fail "Primary web Cloud Build failed"
 
   local -a deploy_args
   deploy_args=(
@@ -396,26 +445,16 @@ deploy_primary_web() {
   append_no_traffic_arg deploy_args
 
   local env_arg=""
-  local env_keys=(
-    NEXT_PUBLIC_FIREBASE_API_KEY
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    NEXT_PUBLIC_FIREBASE_APP_ID
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    NEXT_PUBLIC_ENABLE_SW
-  )
-  for key in "${env_keys[@]}"; do
-    if [[ -n "${!key:-}" ]]; then
-      if [[ -n "$env_arg" ]]; then
-        env_arg+=","
-      fi
-      env_arg+="${key}=${!key}"
+  for i in "${!env_keys[@]}"; do
+    local key value
+    key="${env_keys[$i]}"
+    value="${resolved_env_values[$i]}"
+    if [[ -n "$env_arg" ]]; then
+      env_arg+=","
     fi
+    env_arg+="${key}=${value}"
   done
-  if [[ -n "$env_arg" ]]; then
-    deploy_args+=(--set-env-vars "$env_arg")
-  fi
+  deploy_args+=(--set-env-vars "$env_arg")
 
   if [[ -n "${FIREBASE_SERVICE_ACCOUNT_SECRET:-}" ]]; then
     deploy_args+=(--update-secrets "FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT_SECRET}:latest")
