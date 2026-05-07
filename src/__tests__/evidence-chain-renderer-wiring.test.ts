@@ -1550,6 +1550,9 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
   );
   const rulesSource = readSrcFile('..', 'firestore.rules');
   const rulesTestSource = readSrcFile('..', 'test', 'firestore-rules.test.js');
+  const firestoreIndexes = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), 'firestore.indexes.json'), 'utf8')
+  ) as { indexes?: Array<{ collectionGroup?: string; fields?: Array<{ fieldPath?: string; order?: string; arrayConfig?: string }> }> };
 
   it('imports EducatorFeedbackForm', () => {
     expect(source).toContain('EducatorFeedbackForm');
@@ -1581,6 +1584,22 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
     expect(source).toContain('support signals and verification gaps, not capability mastery');
     expect(source).toContain('data-testid={`miloos-support-${s.learnerId}`}');
     expect(source).toContain('data-testid="educator-ai-audit-site-required"');
+  });
+
+  it('keeps the educator AI audit interaction log query backed by a composite index', () => {
+    const hasAiInteractionLogIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'aiInteractionLogs'
+        && fields[0]?.fieldPath === 'siteId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'createdAt'
+        && fields[1]?.order === 'DESCENDING';
+    }) === true;
+
+    expect(source).toContain("collection(firestore, 'aiInteractionLogs')");
+    expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain("orderBy('createdAt', 'desc')");
+    expect(hasAiInteractionLogIndex).toBe(true);
   });
 
   it('allows educator reads of interactionEvents only through site-scoped rules', () => {
