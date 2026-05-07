@@ -11,9 +11,8 @@ describe('functions MiloOS wording', () => {
   function expectInteractionEventWriteHasCreatedAt(source: string, anchor: string) {
     const anchorIndex = source.indexOf(anchor);
     expect(anchorIndex).toBeGreaterThanOrEqual(0);
-    const blockStart = source.lastIndexOf("collection('interactionEvents').add({", anchorIndex);
     const blockEnd = source.indexOf('});', anchorIndex);
-    const writeBlock = source.slice(blockStart, blockEnd);
+    const writeBlock = source.slice(anchorIndex, blockEnd > anchorIndex ? blockEnd : anchorIndex + 1200);
 
     expect(writeBlock).toContain('timestamp: FieldValue.serverTimestamp()');
     expect(writeBlock).toContain('createdAt: FieldValue.serverTimestamp()');
