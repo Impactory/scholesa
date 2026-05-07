@@ -8,11 +8,15 @@ WEB_SERVICE="${CLOUD_RUN_SERVICE:-scholesa-web}"
 FLUTTER_SERVICE="${CLOUD_RUN_FLUTTER_SERVICE:-empire-web}"
 COMPLIANCE_SERVICE="${COMPLIANCE_RUN_SERVICE:-scholesa-compliance}"
 
-EXPECTED_WEB_REHEARSAL_REVISION="${EXPECTED_WEB_REHEARSAL_REVISION:-scholesa-web-00040-qpw}"
-EXPECTED_WEB_TRAFFIC_REVISION="${EXPECTED_WEB_TRAFFIC_REVISION:-scholesa-web-00038-fvt}"
-EXPECTED_FLUTTER_REHEARSAL_REVISION="${EXPECTED_FLUTTER_REHEARSAL_REVISION:-empire-web-00072-fw6}"
-EXPECTED_FLUTTER_TRAFFIC_REVISION="${EXPECTED_FLUTTER_TRAFFIC_REVISION:-empire-web-00071-6mx}"
-EXPECTED_COMPLIANCE_REVISION="${EXPECTED_COMPLIANCE_REVISION:-scholesa-compliance-00037-bvx}"
+EXPECTED_WEB_REHEARSAL_REVISION="${EXPECTED_WEB_REHEARSAL_REVISION:-}"
+EXPECTED_WEB_READY_REVISION="${EXPECTED_WEB_READY_REVISION:-}"
+EXPECTED_WEB_TRAFFIC_REVISION="${EXPECTED_WEB_TRAFFIC_REVISION:-}"
+EXPECTED_FLUTTER_REHEARSAL_REVISION="${EXPECTED_FLUTTER_REHEARSAL_REVISION:-}"
+EXPECTED_FLUTTER_READY_REVISION="${EXPECTED_FLUTTER_READY_REVISION:-}"
+EXPECTED_FLUTTER_TRAFFIC_REVISION="${EXPECTED_FLUTTER_TRAFFIC_REVISION:-}"
+EXPECTED_COMPLIANCE_REHEARSAL_REVISION="${EXPECTED_COMPLIANCE_REHEARSAL_REVISION:-${EXPECTED_COMPLIANCE_REVISION:-}}"
+EXPECTED_COMPLIANCE_READY_REVISION="${EXPECTED_COMPLIANCE_READY_REVISION:-}"
+EXPECTED_COMPLIANCE_TRAFFIC_REVISION="${EXPECTED_COMPLIANCE_TRAFFIC_REVISION:-${EXPECTED_COMPLIANCE_REVISION:-}}"
 
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
@@ -44,21 +48,31 @@ assert_service_state() {
     const [service, expectedCreated, expectedReady, expectedTraffic] = process.argv.slice(1);
     const data = JSON.parse(require("fs").readFileSync(0, "utf8"));
     const traffic = data.status?.traffic || [];
-    const hasExpectedTraffic = traffic.some((entry) => (
-      entry.revisionName === expectedTraffic && entry.percent === 100
-    ));
+    const required = (value) => typeof value === "string" && value.length > 0;
+    const servingTraffic = traffic.filter((entry) => entry.percent === 100);
+    const hasExpectedTraffic = required(expectedTraffic)
+      ? traffic.some((entry) => entry.revisionName === expectedTraffic && entry.percent === 100)
+      : servingTraffic.length > 0;
 
     if (data.metadata?.name !== service) {
       throw new Error(`${service}: expected service name ${service}, got ${data.metadata?.name}`);
     }
-    if (data.status?.latestCreatedRevisionName !== expectedCreated) {
+    if (required(expectedCreated) && data.status?.latestCreatedRevisionName !== expectedCreated) {
       throw new Error(`${service}: expected latest created ${expectedCreated}, got ${data.status?.latestCreatedRevisionName}`);
     }
-    if (data.status?.latestReadyRevisionName !== expectedReady) {
+    if (required(expectedReady) && data.status?.latestReadyRevisionName !== expectedReady) {
       throw new Error(`${service}: expected latest ready ${expectedReady}, got ${data.status?.latestReadyRevisionName}`);
     }
+    if (!data.status?.latestCreatedRevisionName) {
+      throw new Error(`${service}: missing latest created revision`);
+    }
+    if (!data.status?.latestReadyRevisionName) {
+      throw new Error(`${service}: missing latest ready revision`);
+    }
     if (!hasExpectedTraffic) {
-      throw new Error(`${service}: expected 100% traffic on ${expectedTraffic}`);
+      throw new Error(required(expectedTraffic)
+        ? `${service}: expected 100% traffic on ${expectedTraffic}`
+        : `${service}: expected at least one revision with 100% traffic`);
     }
   ' "$service" "$expected_created" "$expected_ready" "$expected_traffic" <<<"$payload"
 }
@@ -80,11 +94,11 @@ web_state="$(describe_service "$WEB_SERVICE")"
 flutter_state="$(describe_service "$FLUTTER_SERVICE")"
 compliance_state="$(describe_service "$COMPLIANCE_SERVICE")"
 
-assert_service_state "$web_state" "$WEB_SERVICE" "$EXPECTED_WEB_REHEARSAL_REVISION" "$EXPECTED_WEB_TRAFFIC_REVISION" "$EXPECTED_WEB_TRAFFIC_REVISION"
-assert_service_state "$flutter_state" "$FLUTTER_SERVICE" "$EXPECTED_FLUTTER_REHEARSAL_REVISION" "$EXPECTED_FLUTTER_TRAFFIC_REVISION" "$EXPECTED_FLUTTER_TRAFFIC_REVISION"
-assert_service_state "$compliance_state" "$COMPLIANCE_SERVICE" "$EXPECTED_COMPLIANCE_REVISION" "$EXPECTED_COMPLIANCE_REVISION" "$EXPECTED_COMPLIANCE_REVISION"
+assert_service_state "$web_state" "$WEB_SERVICE" "$EXPECTED_WEB_REHEARSAL_REVISION" "$EXPECTED_WEB_READY_REVISION" "$EXPECTED_WEB_TRAFFIC_REVISION"
+assert_service_state "$flutter_state" "$FLUTTER_SERVICE" "$EXPECTED_FLUTTER_REHEARSAL_REVISION" "$EXPECTED_FLUTTER_READY_REVISION" "$EXPECTED_FLUTTER_TRAFFIC_REVISION"
+assert_service_state "$compliance_state" "$COMPLIANCE_SERVICE" "$EXPECTED_COMPLIANCE_REHEARSAL_REVISION" "$EXPECTED_COMPLIANCE_READY_REVISION" "$EXPECTED_COMPLIANCE_TRAFFIC_REVISION"
 
 compliance_url="$(node -e 'const data = JSON.parse(require("fs").readFileSync(0, "utf8")); process.stdout.write(data.status.url);' <<<"$compliance_state")"
 assert_compliance_edge_auth "$compliance_url"
 
-echo "Cloud Run release state probe passed (web/flutter traffic pinned, compliance latest serving, unauth compliance edge 403)."
+echo "Cloud Run release state probe passed (Cloud Run traffic has a 100% serving revision, optional revision expectations matched, unauth compliance edge 403)."

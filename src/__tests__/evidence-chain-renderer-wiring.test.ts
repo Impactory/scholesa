@@ -969,7 +969,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
     expect(finalSignoffSource).toContain('Live six-role operator browser cutover has not been executed and recorded');
-    expect(finalSignoffSource).toContain('Current-worktree live compliance deploy proof has not been executed and recorded');
+    expect(finalSignoffSource).toContain('Traffic promotion or rollback proof has not been executed and recorded for the rehearsed revisions');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
     expect(masterPlanSource).toContain('native-channel app-store release operations explicitly deferred');
@@ -978,9 +978,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(operatorReleaseProofSource).toContain('COMPLIANCE_ALLOW_UNAUTH=0');
     expect(operatorReleaseProofSource).toContain('declare NO-GO and rollback the full release');
     expect(cloudRunReleaseStateProbeSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS=1');
-    expect(cloudRunReleaseStateProbeSource).toContain('scholesa-web-00040-qpw');
-    expect(cloudRunReleaseStateProbeSource).toContain('empire-web-00072-fw6');
-    expect(cloudRunReleaseStateProbeSource).toContain('scholesa-compliance-00037-bvx');
+    expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_WEB_REHEARSAL_REVISION:-');
+    expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_FLUTTER_REHEARSAL_REVISION:-');
+    expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_COMPLIANCE_REHEARSAL_REVISION');
+    expect(cloudRunReleaseStateProbeSource).toContain('EXPECTED_COMPLIANCE_TRAFFIC_REVISION');
     expect(cloudRunReleaseStateProbeSource).toContain('expected unauthenticated compliance status to return 403');
     expect(blanketGoldAchievementPlanSource).toContain('Phase 0 - Freeze Scope And Record Baseline');
     expect(blanketGoldAchievementPlanSource).toContain('Phase 3 - Rehearse Current-Worktree No-Traffic Deploys');

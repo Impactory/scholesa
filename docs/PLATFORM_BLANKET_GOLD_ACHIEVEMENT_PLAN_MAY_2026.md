@@ -156,7 +156,7 @@ Stop if:
 
 Goal: prove the new revisions can serve the included scope before any traffic change.
 
-Run service-level checks against revision URLs or approved authenticated preview paths. At minimum record:
+Run service-level checks against revision URLs or approved authenticated preview paths. If the rehearsal deploys are untagged, attach a temporary no-traffic preview tag first, then verify traffic allocation has not moved. At minimum record:
 
 - Primary web root/login path resolves.
 - Flutter web root resolves.
@@ -252,7 +252,8 @@ export EXPECTED_WEB_REHEARSAL_REVISION="NEW_WEB_REVISION"
 export EXPECTED_WEB_TRAFFIC_REVISION="NEW_WEB_REVISION"
 export EXPECTED_FLUTTER_REHEARSAL_REVISION="NEW_FLUTTER_REVISION"
 export EXPECTED_FLUTTER_TRAFFIC_REVISION="NEW_FLUTTER_REVISION"
-export EXPECTED_COMPLIANCE_REVISION="NEW_COMPLIANCE_REVISION"
+export EXPECTED_COMPLIANCE_REHEARSAL_REVISION="NEW_COMPLIANCE_REVISION"
+export EXPECTED_COMPLIANCE_TRAFFIC_REVISION="NEW_COMPLIANCE_REVISION"
 ```
 
 Capture:
