@@ -1025,8 +1025,15 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
   const siteId = 'pilot-site-001';
   const learnerId = 'test-learner-001';
   const educatorId = 'test-educator-001';
+  const parentId = 'test-parent-001';
+  const siteLeadId = 'test-site-001';
+  const hqId = 'test-hq-001';
+  const partnerId = 'test-partner-001';
   const sessionId = 'pilot-session-001';
   const sessionOccurrenceId = 'synthetic-dashboard-occurrence-001';
+  const enrollmentId = 'synthetic-dashboard-enrollment-001';
+  const attendanceId = 'synthetic-dashboard-attendance-present-001';
+  const guardianLinkId = 'synthetic-dashboard-guardian-link-001';
   const evidenceId = 'synthetic-dashboard-evidence-prototype-iteration';
   const portfolioItemId = 'synthetic-dashboard-portfolio-prototype-iteration';
   const proofBundleId = 'synthetic-dashboard-proof-prototype-iteration';
@@ -1074,6 +1081,91 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
     proficient: 'Can independently improve a prototype and explain the evidence behind the change.',
     advanced: 'Can coach peers on using evidence to make better build decisions.',
   };
+  const occurrenceStart = new Date(startedAt);
+  occurrenceStart.setHours(10, 0, 0, 0);
+  const occurrenceEnd = new Date(occurrenceStart.getTime() + 90 * 60 * 1000);
+
+  const roleUsers = [
+    {
+      id: learnerId,
+      email: 'learner@scholesa.dev',
+      role: 'learner',
+      displayName: 'Seed Pilot Learner 001',
+      learnerIds: [learnerId],
+      parentIds: [parentId],
+      educatorIds: [educatorId],
+    },
+    {
+      id: educatorId,
+      email: 'educator@scholesa.dev',
+      role: 'educator',
+      displayName: 'Seed Pilot Educator 001',
+      learnerIds: [learnerId],
+    },
+    {
+      id: parentId,
+      email: 'parent@scholesa.dev',
+      role: 'parent',
+      displayName: 'Seed Pilot Parent 001',
+      learnerIds: [learnerId],
+      parentIds: [learnerId],
+    },
+    {
+      id: siteLeadId,
+      email: 'site@scholesa.dev',
+      role: 'site',
+      displayName: 'Seed Pilot Site Lead 001',
+      learnerIds: [learnerId],
+    },
+    {
+      id: hqId,
+      email: 'hq@scholesa.dev',
+      role: 'hq',
+      displayName: 'Seed Pilot HQ 001',
+    },
+    {
+      id: partnerId,
+      email: 'partner@scholesa.dev',
+      role: 'partner',
+      displayName: 'Seed Pilot Partner 001',
+    },
+  ];
+
+  for (const user of roleUsers) {
+    upsertDoc(bundle, 'users', user.id, {
+      uid: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      siteId,
+      activeSiteId: siteId,
+      siteIds: ['site-1', siteId],
+      learnerIds: user.learnerIds || [],
+      parentIds: user.parentIds || [],
+      educatorIds: user.educatorIds || [],
+      isActive: true,
+      status: 'active',
+      updatedAt: startedAt,
+      synthetic: true,
+      sourcePack,
+    });
+  }
+
+  upsertDoc(bundle, 'sites', siteId, {
+    id: siteId,
+    name: 'Pilot Evidence Studio',
+    status: 'active',
+    siteLeadIds: [siteLeadId],
+    educatorIds: [educatorId],
+    learnerIds: [learnerId],
+    parentIds: [parentId],
+    hqIds: [hqId],
+    partnerIds: [partnerId],
+    updatedAt: startedAt,
+    createdAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
 
   for (const capability of capabilityDocs) {
     upsertDoc(bundle, 'capabilities', capability.id, {
@@ -1112,6 +1204,28 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
     sourcePack,
   });
 
+  upsertDoc(bundle, 'sessions', sessionId, {
+    id: sessionId,
+    title: 'Synthetic Dashboard Evidence Studio',
+    name: 'Synthetic Dashboard Evidence Studio',
+    description: 'Live cutover session seeded with evidence-backed capability growth.',
+    siteId,
+    educatorId,
+    educatorIds: [educatorId],
+    teacherId: educatorId,
+    teacherIds: [educatorId],
+    learnerIds: [learnerId],
+    startDate: occurrenceStart,
+    endDate: occurrenceEnd,
+    startTime: occurrenceStart,
+    endTime: occurrenceEnd,
+    status: 'scheduled',
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+
   upsertDoc(bundle, 'sessionOccurrences', sessionOccurrenceId, {
     id: sessionOccurrenceId,
     sessionId,
@@ -1120,9 +1234,59 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
     educatorIds: [educatorId],
     learnerIds: [learnerId],
     title: 'Synthetic Dashboard Evidence Studio',
-    startsAt: startedAt,
-    endsAt: startedAt,
-    status: 'completed',
+    date: occurrenceStart,
+    startsAt: occurrenceStart,
+    endsAt: occurrenceEnd,
+    startTime: occurrenceStart,
+    endTime: occurrenceEnd,
+    status: 'scheduled',
+    enrolledCount: 1,
+    presentCount: 1,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'enrollments', enrollmentId, {
+    id: enrollmentId,
+    sessionId,
+    sessionOccurrenceId,
+    learnerId,
+    userId: learnerId,
+    siteId,
+    educatorId,
+    educatorIds: [educatorId],
+    status: 'active',
+    enrolledAt: startedAt,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'attendanceRecords', attendanceId, {
+    id: attendanceId,
+    sessionId,
+    sessionOccurrenceId,
+    learnerId,
+    userId: learnerId,
+    learnerName: 'Seed Pilot Learner 001',
+    siteId,
+    educatorId,
+    status: 'present',
+    timestamp: occurrenceStart,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'guardianLinks', guardianLinkId, {
+    id: guardianLinkId,
+    siteId,
+    parentId,
+    learnerId,
+    relationship: 'Parent',
+    isPrimary: true,
+    createdBy: siteLeadId,
     createdAt: startedAt,
     updatedAt: startedAt,
     synthetic: true,
@@ -1138,6 +1302,8 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
     capabilityMapped: true,
     phaseKey: 'build.iterate',
     description: 'Learner revised a Scratch game after peer testing and explained the evidence behind the change.',
+    notes: 'Learner revised a Scratch game after peer testing and explained the evidence behind the change.',
+    status: 'reviewed',
     rubricStatus: 'applied',
     growthStatus: 'recorded',
     portfolioCandidate: true,
@@ -1419,9 +1585,15 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
   });
 
   const sourceCounts = {
+    cutoverDashboardUsers: roleUsers.length,
+    cutoverDashboardSites: 1,
     cutoverDashboardCoppaSchoolConsents: 1,
+    cutoverDashboardGuardianLinks: 1,
     cutoverDashboardCapabilities: capabilityDocs.length,
+    cutoverDashboardSessions: 1,
     cutoverDashboardSessionOccurrences: 1,
+    cutoverDashboardEnrollments: 1,
+    cutoverDashboardAttendanceRecords: 1,
     cutoverDashboardEvidenceRecords: 1,
     cutoverDashboardProofBundles: 1,
     cutoverDashboardPortfolioItems: 1,
@@ -1443,12 +1615,22 @@ function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
     purpose: 'Live learner dashboard readiness slice with evidence-backed growth, portfolio proof, mission activity, and MiloOS learner-loop signals.',
     ids: {
       sessionOccurrenceId,
+      sessionId,
+      enrollmentId,
+      attendanceId,
+      guardianLinkId,
       evidenceId,
       portfolioItemId,
       proofBundleId,
       rubricTemplateId,
       rubricApplicationId,
       missionAttemptId,
+      learnerId,
+      educatorId,
+      parentId,
+      siteLeadId,
+      hqId,
+      partnerId,
       capabilityIds: capabilityDocs.map((capability) => capability.id),
     },
     evidenceChain: 'educator evidence -> proof bundle -> rubric application -> server-owned growth events -> portfolio item -> learner dashboard -> MiloOS support snapshot',

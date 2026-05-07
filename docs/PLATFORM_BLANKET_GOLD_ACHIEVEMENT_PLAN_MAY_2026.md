@@ -11,7 +11,7 @@ This is the operator-facing plan for turning the current gold-candidate packet i
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Deferred unless a release owner explicitly includes partner evidence-facing outputs and runs partner permission/evidence proof. |
-| Current hard blockers | Full live six-role operator browser cutover; traffic promotion or traffic-pinning/rollback proof. |
+| Current hard blockers | Role-cutover Firestore indexes not deployed because Firebase auth needs reauth; updated canonical synthetic role-readiness seed not live-applied; full live six-role operator browser cutover; traffic promotion or traffic-pinning/rollback proof. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
 
 ## Evidence Bundle To Preserve
@@ -104,6 +104,7 @@ Capture:
 If the live cutover environment needs canonical synthetic data, apply the starter pack with merge-only writes and verify the manifest docs before browser proof:
 
 ```bash
+firebase deploy --only firestore:indexes --project studio-3328096157-e3f79
 FIREBASE_PROJECT_ID=studio-3328096157-e3f79 node scripts/import_synthetic_data.js --mode starter --apply --batch-size 400
 ```
 
@@ -113,6 +114,8 @@ Capture:
 - `syntheticPlatformEvidenceChainGoldStates/latest`
 - `syntheticDashboardReadinessStates/latest`
 - Dashboard readiness docs for `test-learner-001` at `pilot-site-001`, including evidence/proof/rubric/growth/portfolio/MiloOS learner-loop provenance.
+- Pilot role-readiness seed counts: 6 users, 1 pilot site, 1 session, 1 session occurrence, 1 enrollment, 1 attendance record, and 1 guardian link.
+- READY state for the educator/site cutover index shapes: `sessionOccurrences(siteId, educatorId, date)`, `enrollments(sessionId, status)`, `evidenceRecords(siteId, createdAt)`, `evidenceRecords(siteId, educatorId, createdAt)`, and `users(siteIds array-contains, role)`.
 
 Stop if:
 
@@ -120,6 +123,7 @@ Stop if:
 - AI dependency/import/domain/egress policy fails.
 - Synthetic dry-run output drifts from source contracts without an intentional update.
 - Live synthetic apply cannot be read back from Firestore or does not map to the cutover account under test.
+- Firebase or Cloud auth cannot deploy indexes or apply/read back the canonical seed.
 
 ## Phase 3 - Rehearse Current-Worktree No-Traffic Deploys
 
@@ -182,6 +186,17 @@ Then run the six-role browser sweep against the rehearsed environment using:
 - `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
 - `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
+For the canonical pilot synthetic cutover path, use this coherent account set with password `Test123!`:
+
+| Role | Account | Required route |
+| --- | --- | --- |
+| Learner | `learner@scholesa.dev` | `/en/learner/today` |
+| Educator | `educator@scholesa.dev` | `/en/educator/today` |
+| Guardian | `parent@scholesa.dev` | `/en/parent/summary` |
+| Site | `site@scholesa.dev` | `/en/site/dashboard` and `/en/site/evidence-health` |
+| HQ | `hq@scholesa.dev` | `/en/hq/sites` |
+| Partner, if included | `partner@scholesa.dev` | `/en/partner/listings` |
+
 Required role checks:
 
 | Role | Required proof |
@@ -201,10 +216,13 @@ Capture:
 - Per-role GO / NO-GO.
 - Screenshots or concise route notes for every role.
 - For learner dashboard readiness, record that `/en/learner/today` renders capability assessments, recent growth, active missions, and MiloOS support signals from live synthetic Firestore/Functions data without empty-state or index errors.
+- For site readiness, record that `/en/site/dashboard` resolves past `Loading implementation health...` and shows evidence coverage plus MiloOS support health from live same-site data.
+- For educator readiness, record that `/en/educator/today` resolves past index errors and shows the live session plus under-10-second evidence capture controls.
 
 Stop if:
 
 - Any included role fails primary CTA, persistence, provenance, or scope boundary.
+- Any included role hits a Firestore index error or an unresolved loading state.
 - Learner-facing AI fabricates low-confidence help instead of escalating safely.
 - Partner/native scope drifts from the recorded inclusion decision.
 
@@ -325,6 +343,7 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [ ] Full release reproducibility gate passed.
 - [ ] AI internal-only gate passed.
 - [ ] Synthetic dry-run passed.
+- [ ] Firestore role-cutover indexes deployed and READY.
 - [ ] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
 - [ ] Current-worktree web/Flutter no-traffic revisions created and verified.
 - [ ] Current-worktree compliance operator deploy proof recorded.

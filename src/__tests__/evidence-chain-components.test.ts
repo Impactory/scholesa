@@ -339,21 +339,17 @@ describe('EducatorTodayRenderer site context', () => {
     expect(source).toContain(
       'Select a capability before flagging this observation as portfolio evidence.'
     );
-    expect(source).toContain('capabilityId: selectedCapabilityId || undefined');
+    expect(source).toContain('if (selectedCapabilityId) evidenceRecord.capabilityId = selectedCapabilityId;');
+    expect(source).toContain('notes: trimmed');
     expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
     expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
   });
 
   it('writes quick observations against sessionOccurrenceId instead of legacy sessionId', () => {
-    const addDocBlock = source.slice(
-      source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')"),
-      source.indexOf(
-        '});',
-        source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')")
-      ) + 3
+    expect(source).toContain(
+      'if (sessionOccurrenceId) evidenceRecord.sessionOccurrenceId = sessionOccurrenceId;'
     );
-    expect(addDocBlock).toContain('sessionOccurrenceId: sessionOccurrenceId || undefined');
-    expect(addDocBlock).not.toContain('sessionId: sessionId || null');
+    expect(source).not.toContain('sessionId: sessionId || null');
   });
 
   it('renders a live session selector and roster source banner for quick capture', () => {

@@ -130,20 +130,24 @@ function QuickEvidenceCapture({
     setSubmitError(null);
     try {
       const selectedCapability = capabilityList.find((cap) => cap.id === selectedCapabilityId) ?? null;
-      const evidenceRef = await addDoc(collection(firestore, 'evidenceRecords'), {
+      const evidenceRecord: Record<string, unknown> = {
         learnerId,
         educatorId,
         siteId,
-        sessionOccurrenceId: sessionOccurrenceId || undefined,
         description: trimmed,
-        capabilityId: selectedCapabilityId || undefined,
+        notes: trimmed,
         capabilityMapped: Boolean(selectedCapabilityId),
         portfolioCandidate,
         rubricStatus: 'pending',
         growthStatus: 'pending',
+        status: 'captured',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+      if (sessionOccurrenceId) evidenceRecord.sessionOccurrenceId = sessionOccurrenceId;
+      if (selectedCapabilityId) evidenceRecord.capabilityId = selectedCapabilityId;
+
+      const evidenceRef = await addDoc(collection(firestore, 'evidenceRecords'), evidenceRecord);
 
       // When flagged as portfolio candidate, also create a linked portfolioItem
       if (portfolioCandidate) {

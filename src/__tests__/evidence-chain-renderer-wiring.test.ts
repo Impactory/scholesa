@@ -207,7 +207,7 @@ describe('Renderers delegate to real evidence components', () => {
     const insightsHelperSource = readSrcFile('lib', 'miloos', 'learnerLoopInsights.ts');
     const firestoreIndexes = JSON.parse(
       fs.readFileSync(path.join(process.cwd(), 'firestore.indexes.json'), 'utf8')
-    ) as { indexes?: Array<{ collectionGroup?: string; fields?: Array<{ fieldPath?: string; order?: string }> }> };
+    ) as { indexes?: Array<{ collectionGroup?: string; fields?: Array<{ fieldPath?: string; order?: string; arrayConfig?: string }> }> };
     const hasCapabilityGrowthDashboardIndex = firestoreIndexes.indexes?.some((index) => {
       const fields = index.fields ?? [];
       return index.collectionGroup === 'capabilityGrowthEvents'
@@ -240,6 +240,58 @@ describe('Renderers delegate to real evidence components', () => {
         && fields[3]?.fieldPath === 'updatedAt'
         && fields[3]?.order === 'DESCENDING';
     }) === true;
+    const hasEducatorTodayOccurrenceIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'sessionOccurrences'
+        && fields[0]?.fieldPath === 'siteId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'educatorId'
+        && fields[1]?.order === 'ASCENDING'
+        && fields[2]?.fieldPath === 'date'
+        && fields[2]?.order === 'ASCENDING';
+    }) === true;
+    const hasEnrollmentSessionStatusIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'enrollments'
+        && fields[0]?.fieldPath === 'sessionId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'status'
+        && fields[1]?.order === 'ASCENDING';
+    }) === true;
+    const hasEvidenceHealthIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'evidenceRecords'
+        && fields[0]?.fieldPath === 'siteId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'createdAt'
+        && fields[1]?.order === 'DESCENDING';
+    }) === true;
+    const hasEvidenceHealthRangeIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'evidenceRecords'
+        && fields[0]?.fieldPath === 'siteId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'createdAt'
+        && fields[1]?.order === 'ASCENDING';
+    }) === true;
+    const hasEducatorObservationIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'evidenceRecords'
+        && fields[0]?.fieldPath === 'siteId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'educatorId'
+        && fields[1]?.order === 'ASCENDING'
+        && fields[2]?.fieldPath === 'createdAt'
+        && fields[2]?.order === 'DESCENDING';
+    }) === true;
+    const hasUsersSiteRoleIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'users'
+        && fields[0]?.fieldPath === 'siteIds'
+        && fields[0]?.arrayConfig === 'CONTAINS'
+        && fields[1]?.fieldPath === 'role'
+        && fields[1]?.order === 'ASCENDING';
+    }) === true;
     expect(registrySource).toContain("'/learner/today': LearnerTodayRenderer");
     expect(source).toContain('LearnerDashboardToday');
     expect(source).toContain('@/src/components/dashboards/LearnerDashboardToday');
@@ -250,6 +302,12 @@ describe('Renderers delegate to real evidence components', () => {
     expect(hasCapabilityGrowthDashboardIndex).toBe(true);
     expect(hasPortfolioDashboardIndex).toBe(true);
     expect(hasMissionAttemptRevisionIndex).toBe(true);
+    expect(hasEducatorTodayOccurrenceIndex).toBe(true);
+    expect(hasEnrollmentSessionStatusIndex).toBe(true);
+    expect(hasEvidenceHealthIndex).toBe(true);
+    expect(hasEvidenceHealthRangeIndex).toBe(true);
+    expect(hasEducatorObservationIndex).toBe(true);
+    expect(hasUsersSiteRoleIndex).toBe(true);
     expect(dashboardSource).toContain('MiloOSLearnerSupportSnapshot');
     expect(supportSnapshotSource).toContain('getMiloOSLearnerLoopInsights');
     expect(supportSnapshotSource).toContain('AICoachScreen');
@@ -1020,8 +1078,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
-    expect(finalSignoffSource).toContain('Full live six-role operator browser cutover has not been executed and recorded');
-    expect(finalSignoffSource).toContain('The learner dashboard slice is recorded');
+    expect(finalSignoffSource).toContain('Role-cutover Firestore indexes have been added locally but not deployed');
+    expect(finalSignoffSource).toContain('Full live six-role operator browser cutover has not passed and been recorded');
+    expect(finalSignoffSource).toContain('Learner, guardian, HQ, and partner route access are recorded on the rehearsal tag');
     expect(finalSignoffSource).toContain('Traffic promotion or rollback proof has not been executed and recorded for the rehearsed revisions');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
