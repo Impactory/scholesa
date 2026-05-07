@@ -232,7 +232,7 @@ describe('Collection naming consistency', () => {
     );
 
     const verifyStart = source.indexOf('export const verifyProofOfLearning');
-    const verifyEnd = source.indexOf('\n});', verifyStart);
+    const verifyEnd = source.indexOf('\n// ---------------------------------------------------------------------------', verifyStart);
     const verifyFn = source.slice(verifyStart, verifyEnd > verifyStart ? verifyEnd + 4 : verifyStart + 8000);
 
     expect(verifyFn).toContain("'failed-precondition'");
@@ -401,7 +401,7 @@ describe('verifyProofOfLearning evidence chain writes', () => {
     );
 
     const proofStart = source.indexOf('export const verifyProofOfLearning');
-    const proofEnd = source.indexOf('\n});', proofStart);
+    const proofEnd = source.indexOf('\n// ---------------------------------------------------------------------------', proofStart);
     const proofFn = source.slice(proofStart, proofEnd > proofStart ? proofEnd + 4 : proofStart + 8000);
 
     expect(proofFn).toContain("collection('portfolioItems')");
