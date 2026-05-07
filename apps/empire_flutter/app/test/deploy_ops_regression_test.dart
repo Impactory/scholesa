@@ -553,7 +553,9 @@ void main() {
             'Manual deploy script must avoid bash4-only mapfile usage so it runs on default macOS Bash',
       );
       expect(
-        content.contains(r'gcloud builds submit --project "$project_id" --tag "$image"'),
+        content.contains(
+          r'gcloud builds submit --project "$project_id" --config cloudbuild.web.yaml --substitutions "$substitutions"',
+        ),
         isTrue,
         reason:
             'Manual primary web deploy must use Cloud Build so local machine architecture does not break Cloud Run deploys',
