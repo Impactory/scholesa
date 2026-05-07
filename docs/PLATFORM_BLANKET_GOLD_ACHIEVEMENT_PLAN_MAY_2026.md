@@ -134,8 +134,11 @@ Use a unique tag, for example:
 ```bash
 export IMAGE_TAG="gold-$(date -u +%Y%m%d-%H%M%S)"
 export CLOUD_RUN_NO_TRAFFIC=1
+export CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 ```
+
+No-traffic Cloud Run deploys retag `gold-rehearsal` to the latest created revision by default while preserving the existing 100% production traffic allocation. Set `CLOUD_RUN_REHEARSAL_TAG=` only when a rehearsal must intentionally skip tag retargeting.
 
 Run web and Flutter web rehearsal:
 

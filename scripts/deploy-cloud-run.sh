@@ -7,6 +7,7 @@ GCP_REGION=${2:-us-central1}
 CLOUD_RUN_SERVICE=${3:-empire-web}
 IMAGE_TAG=${4:-latest}
 NO_TRAFFIC_DEPLOY="${CLOUD_RUN_NO_TRAFFIC:-0}"
+REHEARSAL_TAG="${CLOUD_RUN_REHEARSAL_TAG-gold-rehearsal}"
 
 if [ -z "$GCP_PROJECT_ID" ]; then
   echo "Usage: $0 <GCP_PROJECT_ID> [GCP_REGION] [CLOUD_RUN_SERVICE] [IMAGE_TAG]"
@@ -91,6 +92,24 @@ if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
     --region "$GCP_REGION" \
     --platform managed \
     --to-latest
+elif [[ -n "$REHEARSAL_TAG" ]]; then
+  latest_created_revision="$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
+    --project "$GCP_PROJECT_ID" \
+    --region "$GCP_REGION" \
+    --format='value(status.latestCreatedRevisionName)')"
+  if [[ -z "$latest_created_revision" ]]; then
+    echo "Cloud Run service '$CLOUD_RUN_SERVICE' did not report a latest created revision." >&2
+    exit 1
+  fi
+  echo "Tagging no-traffic revision $latest_created_revision as $REHEARSAL_TAG for $CLOUD_RUN_SERVICE"
+  gcloud run services update-traffic "$CLOUD_RUN_SERVICE" \
+    --quiet \
+    --project "$GCP_PROJECT_ID" \
+    --region "$GCP_REGION" \
+    --platform managed \
+    --update-tags "$REHEARSAL_TAG=$latest_created_revision"
+else
+  echo "Skipping rehearsal tag update because CLOUD_RUN_REHEARSAL_TAG is empty."
 fi
 
 echo "Deployment finished."

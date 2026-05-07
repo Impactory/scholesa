@@ -69,6 +69,38 @@ ensure_no_traffic_service_exists() {
   fail "Cloud Run service '$service' does not exist in project '$project_id' region '$region'. Cloud Run does not support --no-traffic on first deploy; create the service once without CLOUD_RUN_NO_TRAFFIC=1, then rerun the rehearsal."
 }
 
+tag_no_traffic_rehearsal_revision() {
+  local project_id="$1"
+  local region="$2"
+  local service="$3"
+
+  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+    return 0
+  fi
+
+  local rehearsal_tag="${CLOUD_RUN_REHEARSAL_TAG-gold-rehearsal}"
+  if [[ -z "$rehearsal_tag" ]]; then
+    warn "Skipping rehearsal tag update because CLOUD_RUN_REHEARSAL_TAG is empty."
+    return 0
+  fi
+
+  local latest_created_revision
+  latest_created_revision="$(gcloud run services describe "$service" \
+    --project "$project_id" \
+    --region "$region" \
+    --format='value(status.latestCreatedRevisionName)')" || fail "Unable to read latest Cloud Run revision for $service"
+
+  [[ -n "$latest_created_revision" ]] || fail "Cloud Run service '$service' did not report a latest created revision."
+
+  log "Tagging no-traffic revision $latest_created_revision as $rehearsal_tag for $service..."
+  gcloud run services update-traffic "$service" \
+    --quiet \
+    --project "$project_id" \
+    --region "$region" \
+    --platform managed \
+    --update-tags "$rehearsal_tag=$latest_created_revision" || fail "Unable to tag no-traffic rehearsal revision for $service"
+}
+
 flutter_cmd() {
   if [[ -x "$FVM_FLUTTER" ]]; then
     "$FVM_FLUTTER" "$@"
@@ -463,7 +495,9 @@ deploy_primary_web() {
   log "Deploying primary web to Cloud Run..."
   "${deploy_args[@]}" || fail "Primary web Cloud Run deploy failed"
 
-  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+  if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
+    tag_no_traffic_rehearsal_revision "$project_id" "$region" "$service"
+  else
     log "Routing primary web traffic to latest revision..."
     gcloud run services update-traffic "$service" \
       --quiet \
@@ -534,7 +568,9 @@ deploy_compliance_operator() {
   log "Deploying compliance operator to Cloud Run (service=$service region=$region)..."
   (cd "$REPO_ROOT" && "${compliance_deploy_args[@]}")
 
-  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+  if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
+    tag_no_traffic_rehearsal_revision "$project_id" "$region" "$service"
+  else
     log "Routing compliance operator traffic to latest revision..."
     (cd "$REPO_ROOT" && gcloud run services update-traffic "$service" \
       --quiet \

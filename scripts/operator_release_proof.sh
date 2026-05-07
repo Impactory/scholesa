@@ -33,6 +33,8 @@ require_output_contains "$cutover_output" "declare NO-GO and rollback the full r
 
 require_file_contains scripts/deploy.sh "append_no_traffic_arg"
 require_file_contains scripts/deploy.sh "ensure_no_traffic_service_exists"
+require_file_contains scripts/deploy.sh "tag_no_traffic_rehearsal_revision"
+require_file_contains scripts/deploy.sh "--update-tags"
 require_file_contains scripts/deploy.sh "Cloud Run does not support --no-traffic on first deploy"
 require_file_contains scripts/deploy.sh "deploy_compliance_operator"
 require_file_contains scripts/deploy.sh "--no-allow-unauthenticated"
@@ -41,6 +43,8 @@ require_file_contains scripts/deploy.sh "gcloud run services update-traffic"
 require_file_contains scripts/deploy.sh "Routing compliance operator traffic to latest revision"
 
 require_file_contains scripts/deploy-cloud-run.sh "no_traffic_args+=(--no-traffic)"
+require_file_contains scripts/deploy-cloud-run.sh "REHEARSAL_TAG"
+require_file_contains scripts/deploy-cloud-run.sh "--update-tags"
 require_file_contains scripts/deploy-cloud-run.sh "gcloud run services update-traffic"
 require_file_contains scripts/deploy-cloud-run.sh "Routing traffic to latest revision"
 
