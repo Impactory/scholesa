@@ -85,7 +85,50 @@
     "loading": "載入中..."
   },
   "aiCoach": {
-    "voiceRequirements": "請先登入、啟用麥克風權限，並完成語音設定後再使用語音幫助。"
+    "title": "MiloOS",
+    "tooltip": "取得幫助",
+    "openAria": "開啟 MiloOS",
+    "minimizeAria": "收起 MiloOS",
+    "teacherGuidance": "使用 MiloOS 前，請先和老師確認。",
+    "howCanIHelp": "今天我可以怎麼幫你？",
+    "mode": {
+      "hint": {
+        "label": "給我一個提示",
+        "placeholder": "你卡在哪一步了？"
+      },
+      "rubric": {
+        "label": "檢查我的作業",
+        "placeholder": "你已經完成了什麼？"
+      },
+      "debug": {
+        "label": "幫我排查問題",
+        "placeholder": "哪裡沒有照預期運作？"
+      },
+      "critique": {
+        "label": "給我回饋",
+        "placeholder": "你想聽哪方面的回饋？"
+      }
+    },
+    "back": "返回",
+    "questionPlaceholder": "輸入你的問題，或使用麥克風...",
+    "listening": "正在聆聽...",
+    "speakQuestion": "說出你的問題",
+    "thinking": "正在思考...",
+    "wasHelpful": "這有幫助嗎？",
+    "helpfulYes": "有",
+    "helpfulNo": "沒有",
+    "feedbackThanks": "感謝你的回饋！",
+    "feedbackTryDifferent": "感謝回饋。你可以換一種問法再試試。",
+    "basedOn": "依據：",
+    "tryNext": "接下來可以試試：",
+    "explainBackPrompt": "現在用你自己的話講一遍吧！",
+    "explainBackPlaceholder": "說說你學到了什麼...",
+    "submitExplanation": "提交說明",
+    "voiceRequirements": "請先登入、啟用麥克風權限，並完成語音設定後再使用語音幫助。",
+    "askAnother": "再問一個問題",
+    "footerTip": "請記住：AI 幫助你思考，不替你完成任務。",
+    "spokenResponseHeadline": "MiloOS 已用語音回答。",
+    "replaySpokenResponse": "再次播放語音回答"
   },
   "dashboard": {
     "redirecting": "正在跳轉到你的工作區..."

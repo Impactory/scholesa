@@ -30,6 +30,10 @@ describe('protected web logout availability', () => {
     expect(navigationSource).toContain('await signOut();');
     expect(navigationSource).toContain("t('navigation.signOut')");
     expect(navigationSource).toContain('<Button');
+    expect(navigationSource).toContain("import Image from 'next/image';");
+    expect(navigationSource).toContain('src="/scholesa.svg"');
+    expect(navigationSource).toContain('aria-label="Scholesa dashboard"');
+    expect(navigationSource).toContain('<ThemeModeToggle');
   });
 
   it('provides localized shared Navigation copy in every root locale', () => {

@@ -11,7 +11,7 @@ This is the operator-facing plan for turning the current gold-candidate packet i
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Deferred unless a release owner explicitly includes partner evidence-facing outputs and runs partner permission/evidence proof. |
-| Current hard blockers | Role-cutover Firestore indexes not deployed because Firebase auth needs reauth; updated canonical synthetic role-readiness seed not live-applied; full live six-role operator browser cutover; traffic promotion or traffic-pinning/rollback proof. |
+| Current hard blockers | Release-owner decision to either promote traffic or explicitly accept recorded traffic-pinning as the final release control; final GO source-contract update. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, traffic-pinning proof, and post-pinning smoke are now recorded in the final signoff. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
 
 ## Evidence Bundle To Preserve
@@ -343,14 +343,14 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [ ] Full release reproducibility gate passed.
 - [ ] AI internal-only gate passed.
 - [ ] Synthetic dry-run passed.
-- [ ] Firestore role-cutover indexes deployed and READY.
-- [ ] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
-- [ ] Current-worktree web/Flutter no-traffic revisions created and verified.
-- [ ] Current-worktree compliance operator deploy proof recorded.
-- [ ] Six-role browser cutover passed.
-- [ ] Traffic promotion or traffic-pinning proof recorded.
+- [x] Firestore role-cutover indexes deployed and READY.
+- [x] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
+- [x] Current-worktree web/Flutter no-traffic revisions created and verified.
+- [x] Current-worktree compliance operator deploy proof recorded.
+- [x] Six-role browser cutover passed for the web cutover slice.
+- [x] Traffic promotion or traffic-pinning proof recorded.
 - [ ] Rollback proof recorded or release owner accepts traffic-pinning proof as the rollback control.
-- [ ] Post-promotion smoke passed.
+- [x] Post-promotion or post-pinning smoke passed.
 - [ ] Final signoff converted from NO-GO to GO with evidence.
 - [ ] Source-contract tests pass after signoff update.
 

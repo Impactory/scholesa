@@ -436,14 +436,19 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
 
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
 const PUBLIC_TELEMETRY_EVENTS: Set<string> = new Set(['cms.page.viewed', 'cta.clicked']);
-const TELEMETRY_CALLABLE_CORS: Array<string | RegExp> = [
+const WEB_CALLABLE_CORS: Array<string | RegExp> = [
   /^https:\/\/(?:[a-z0-9-]+\.)?scholesa\.com$/,
+  /^https:\/\/(?:[a-z0-9-]+---)?(?:scholesa-web|empire-web)-[a-z0-9]+-uc\.a\.run\.app$/,
   /^http:\/\/localhost(?::\d+)?$/,
   /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
 ];
 const TELEMETRY_CALLABLE_OPTIONS = {
   region: SCHOLESA_GEN2_REGION,
-  cors: TELEMETRY_CALLABLE_CORS,
+  cors: WEB_CALLABLE_CORS,
+};
+const MILOOS_CALLABLE_OPTIONS = {
+  region: SCHOLESA_GEN2_REGION,
+  cors: WEB_CALLABLE_CORS,
 };
 const TELEMETRY_PII_KEY_BLOCKLIST = new Set<string>([
   'name',
@@ -1351,7 +1356,7 @@ async function generateCoachResponseWithInference(input: {
   };
 }
 
-export const genAiCoach = onCall(async (request) => {
+export const genAiCoach = onCall(MILOOS_CALLABLE_OPTIONS, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
@@ -1681,7 +1686,7 @@ export const genAiCoach = onCall(async (request) => {
   };
 });
 
-export const submitExplainBack = onCall(async (request) => {
+export const submitExplainBack = onCall(MILOOS_CALLABLE_OPTIONS, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
@@ -1935,7 +1940,7 @@ function resolveTelemetryGradeBand(
 
 function isTelemetryOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return false;
-  return TELEMETRY_CALLABLE_CORS.some((allowedOrigin) => {
+  return WEB_CALLABLE_CORS.some((allowedOrigin) => {
     if (typeof allowedOrigin === 'string') {
       return allowedOrigin === origin;
     }

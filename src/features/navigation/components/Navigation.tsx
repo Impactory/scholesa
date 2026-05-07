@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Button } from '@/src/components/ui/Button';
@@ -47,7 +48,22 @@ export function Navigation() {
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-2">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0 flex items-center">
-              <span className="font-bold text-xl text-app-foreground">Scholesa</span>
+              <Link
+                href={`/${locale}/dashboard`}
+                className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-primary"
+                aria-label="Scholesa dashboard"
+              >
+                <Image
+                  src="/scholesa.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={32}
+                  height={32}
+                  priority
+                  className="h-8 w-8 shrink-0"
+                />
+                <span className="font-bold text-xl text-app-foreground">Scholesa</span>
+              </Link>
             </div>
             <div className="hidden xl:flex flex-wrap items-center gap-2">
               {roleRoutes.map((routePath) => {

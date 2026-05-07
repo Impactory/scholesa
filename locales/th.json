@@ -53,7 +53,50 @@
     "loading": "กำลังโหลด..."
   },
   "aiCoach": {
-    "voiceRequirements": "ลงชื่อเข้าใช้ เปิดสิทธิ์ไมโครโฟน และตั้งค่าเสียงให้เสร็จก่อนใช้ความช่วยเหลือด้วยเสียง"
+    "title": "MiloOS",
+    "tooltip": "ขอความช่วยเหลือ",
+    "openAria": "เปิด MiloOS",
+    "minimizeAria": "ย่อ MiloOS",
+    "teacherGuidance": "ถามครูก่อนใช้ MiloOS",
+    "howCanIHelp": "วันนี้ฉันช่วยอะไรได้บ้าง?",
+    "mode": {
+      "hint": {
+        "label": "ขอคำใบ้",
+        "placeholder": "คุณติดตรงไหนอยู่?"
+      },
+      "rubric": {
+        "label": "ช่วยดูงานของฉัน",
+        "placeholder": "คุณทำส่วนไหนเสร็จแล้ว?"
+      },
+      "debug": {
+        "label": "ช่วยหาปัญหา",
+        "placeholder": "ส่วนไหนยังใช้งานไม่ได้?"
+      },
+      "critique": {
+        "label": "ขอคำแนะนำ",
+        "placeholder": "คุณอยากได้คำแนะนำเรื่องไหน?"
+      }
+    },
+    "back": "กลับ",
+    "questionPlaceholder": "พิมพ์คำถามของคุณหรือใช้ไมโครโฟน...",
+    "listening": "กำลังฟัง...",
+    "speakQuestion": "พูดคำถามของคุณ",
+    "thinking": "กำลังคิด...",
+    "wasHelpful": "สิ่งนี้ช่วยได้ไหม?",
+    "helpfulYes": "ได้",
+    "helpfulNo": "ไม่",
+    "feedbackThanks": "ขอบคุณสำหรับความคิดเห็น!",
+    "feedbackTryDifferent": "ขอบคุณสำหรับความคิดเห็น ลองถามอีกแบบหนึ่งดู",
+    "basedOn": "อ้างอิงจาก:",
+    "tryNext": "ลองทำสิ่งเหล่านี้ต่อ:",
+    "explainBackPrompt": "ตอนนี้ลองอธิบายกลับด้วยคำของคุณเอง",
+    "explainBackPlaceholder": "เล่าว่าคุณเรียนรู้อะไรไปบ้าง...",
+    "submitExplanation": "ส่งคำอธิบาย",
+    "voiceRequirements": "ลงชื่อเข้าใช้ เปิดสิทธิ์ไมโครโฟน และตั้งค่าเสียงให้เสร็จก่อนใช้ความช่วยเหลือด้วยเสียง",
+    "askAnother": "ถามอีกคำถาม",
+    "footerTip": "จำไว้ว่า AI ช่วยให้คุณคิด ไม่ได้ทำงานแทนคุณ",
+    "spokenResponseHeadline": "MiloOS ตอบด้วยเสียงแล้ว",
+    "replaySpokenResponse": "เล่นเสียงตอบกลับอีกครั้ง"
   },
   "dashboard": {
     "redirecting": "กำลังพาไปยังพื้นที่ทำงานของคุณ..."

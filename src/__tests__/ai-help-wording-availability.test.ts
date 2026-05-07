@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { translate } from '@/src/lib/i18n/messages';
 
 const repoRoot = path.resolve(__dirname, '../..');
 
@@ -7,7 +8,50 @@ function readRepoFile(...relativePath: string[]): string {
   return fs.readFileSync(path.join(repoRoot, ...relativePath), 'utf8');
 }
 
+function getJsonPath(value: unknown, key: string): unknown {
+  return key.split('.').reduce<unknown>((currentValue, segment) => {
+    if (!currentValue || typeof currentValue !== 'object' || Array.isArray(currentValue)) {
+      return undefined;
+    }
+    return (currentValue as Record<string, unknown>)[segment];
+  }, value);
+}
+
 describe('AI help wording availability', () => {
+  it('loads canonical shared MiloOS labels through the web runtime catalog', () => {
+    expect(translate('en', 'aiCoach.openAria')).toBe('Open MiloOS');
+    expect(translate('zh-CN', 'aiCoach.openAria')).toBe('打开 MiloOS');
+    expect(translate('zh-TW', 'aiCoach.openAria')).toBe('開啟 MiloOS');
+    expect(translate('th', 'aiCoach.openAria')).toBe('เปิด MiloOS');
+    expect(translate('en', 'aiCoach.tooltip')).toBe('Ask for help');
+    expect(translate('en', 'auth.login.title')).toBe('Welcome back');
+  });
+
+  it('resolves every web AI popup aiCoach key through the runtime catalog', () => {
+    const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
+    const keys = Array.from(popupSource.matchAll(/t\('((?:aiCoach|common)\.[^']+)'\)/g))
+      .map((match) => match[1]);
+
+    expect(keys.length).toBeGreaterThan(20);
+    for (const key of Array.from(new Set(keys))) {
+      expect(translate('en', key)).not.toBe(key);
+    }
+  });
+
+  it('keeps every web AI popup aiCoach key in the root web locale catalogs', () => {
+    const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
+    const keys = Array.from(popupSource.matchAll(/t\('(aiCoach\.[^']+)'\)/g))
+      .map((match) => match[1]);
+
+    expect(keys.length).toBeGreaterThan(20);
+    for (const locale of ['en', 'zh-CN', 'zh-TW', 'th']) {
+      const messages = JSON.parse(readRepoFile('locales', `${locale}.json`));
+      for (const key of Array.from(new Set(keys))) {
+        expect(getJsonPath(messages, key)).toEqual(expect.any(String));
+      }
+    }
+  });
+
   it('keeps the web AI popup wired to friendly aiCoach locale keys at visible UI touchpoints', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
@@ -158,6 +202,19 @@ describe('AI help wording availability', () => {
       expect(source).not.toContain('AI 教練現在還不能提供足夠可靠的回答。');
       expect(source).not.toContain('โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้');
     }
+  });
+
+  it('keeps MiloOS callable endpoints available to Cloud Run rehearsal web origins', () => {
+    const functionIndexSource = readRepoFile('functions', 'src', 'index.ts');
+
+    expect(functionIndexSource).toContain('const WEB_CALLABLE_CORS: Array<string | RegExp> = [');
+    expect(functionIndexSource).toContain(
+      '/^https:\\/\\/(?:[a-z0-9-]+---)?(?:scholesa-web|empire-web)-[a-z0-9]+-uc\\.a\\.run\\.app$/'
+    );
+    expect(functionIndexSource).toContain('const MILOOS_CALLABLE_OPTIONS = {');
+    expect(functionIndexSource).toContain('export const genAiCoach = onCall(MILOOS_CALLABLE_OPTIONS');
+    expect(functionIndexSource).toContain('export const submitExplainBack = onCall(MILOOS_CALLABLE_OPTIONS');
+    expect(functionIndexSource).toContain('cors: WEB_CALLABLE_CORS');
   });
 
   it('keeps shared web locale catalogs on friendly AI help and learning signal wording', () => {

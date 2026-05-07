@@ -1078,10 +1078,11 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
-    expect(finalSignoffSource).toContain('Role-cutover Firestore indexes have been added locally but not deployed');
-    expect(finalSignoffSource).toContain('Full live six-role operator browser cutover has not passed and been recorded');
-    expect(finalSignoffSource).toContain('Learner, guardian, HQ, and partner route access are recorded on the rehearsal tag');
-    expect(finalSignoffSource).toContain('Traffic promotion or rollback proof has not been executed and recorded for the rehearsed revisions');
+    expect(finalSignoffSource).toContain('Role-cutover Firestore index contracts');
+    expect(finalSignoffSource).toContain('Passed; `sessionOccurrences`, `enrollments`, `evidenceRecords`, and `users` role-cutover indexes are READY');
+    expect(finalSignoffSource).toContain('The live role sweep proves learner, educator, guardian, site, HQ, and partner web access on the rehearsal tag');
+    expect(finalSignoffSource).toContain('Traffic-pinning proof confirms `scholesa-web` production traffic remains 100% on `scholesa-web-00038-fvt`');
+    expect(finalSignoffSource).toContain('The release owner has not explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
     expect(masterPlanSource).toContain('native-channel app-store release operations explicitly deferred');

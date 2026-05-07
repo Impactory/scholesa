@@ -2,17 +2,55 @@ import enMessages from '@/locales/en.json';
 import zhCNMessages from '@/locales/zh-CN.json';
 import zhTWMessages from '@/locales/zh-TW.json';
 import thMessages from '@/locales/th.json';
+import sharedEnMessages from '@/packages/i18n/locales/en.json';
+import sharedZhCNMessages from '@/packages/i18n/locales/zh-CN.json';
+import sharedZhTWMessages from '@/packages/i18n/locales/zh-TW.json';
+import sharedThMessages from '@/packages/i18n/locales/th.json';
 import { getFallbackChain, type SupportedLocale } from './config';
 
 type MessageDictionary = Record<string, unknown>;
 
 type TranslationParams = Record<string, string | number>;
 
+function isMessageDictionary(value: unknown): value is MessageDictionary {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeMessageDictionaries(
+  baseMessages: MessageDictionary,
+  overrideMessages: MessageDictionary,
+): MessageDictionary {
+  const mergedMessages: MessageDictionary = { ...baseMessages };
+
+  for (const [key, overrideValue] of Object.entries(overrideMessages)) {
+    const baseValue = mergedMessages[key];
+    if (isMessageDictionary(baseValue) && isMessageDictionary(overrideValue)) {
+      mergedMessages[key] = mergeMessageDictionaries(baseValue, overrideValue);
+      continue;
+    }
+    mergedMessages[key] = overrideValue;
+  }
+
+  return mergedMessages;
+}
+
 const CATALOGS: Record<SupportedLocale, MessageDictionary> = {
-  en: enMessages as MessageDictionary,
-  'zh-CN': zhCNMessages as MessageDictionary,
-  'zh-TW': zhTWMessages as MessageDictionary,
-  th: thMessages as MessageDictionary,
+  en: mergeMessageDictionaries(
+    sharedEnMessages as MessageDictionary,
+    enMessages as MessageDictionary,
+  ),
+  'zh-CN': mergeMessageDictionaries(
+    sharedZhCNMessages as MessageDictionary,
+    zhCNMessages as MessageDictionary,
+  ),
+  'zh-TW': mergeMessageDictionaries(
+    sharedZhTWMessages as MessageDictionary,
+    zhTWMessages as MessageDictionary,
+  ),
+  th: mergeMessageDictionaries(
+    sharedThMessages as MessageDictionary,
+    thMessages as MessageDictionary,
+  ),
 };
 
 function getMessageByPath(messages: MessageDictionary, key: string): unknown {

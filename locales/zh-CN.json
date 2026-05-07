@@ -85,7 +85,50 @@
     "loading": "加载中..."
   },
   "aiCoach": {
-    "voiceRequirements": "请先登录、启用麦克风权限，并完成语音设置后再使用语音帮助。"
+    "title": "MiloOS",
+    "tooltip": "获取帮助",
+    "openAria": "打开 MiloOS",
+    "minimizeAria": "收起 MiloOS",
+    "teacherGuidance": "使用 MiloOS 前，请先和老师确认。",
+    "howCanIHelp": "今天我可以怎么帮你？",
+    "mode": {
+      "hint": {
+        "label": "给我一个提示",
+        "placeholder": "你卡在哪一步了？"
+      },
+      "rubric": {
+        "label": "检查我的作业",
+        "placeholder": "你已经完成了什么？"
+      },
+      "debug": {
+        "label": "帮我排查问题",
+        "placeholder": "哪里没有按预期工作？"
+      },
+      "critique": {
+        "label": "给我反馈",
+        "placeholder": "你想听哪方面的反馈？"
+      }
+    },
+    "back": "返回",
+    "questionPlaceholder": "输入你的问题，或使用麦克风...",
+    "listening": "正在聆听...",
+    "speakQuestion": "说出你的问题",
+    "thinking": "正在思考...",
+    "wasHelpful": "这有帮助吗？",
+    "helpfulYes": "有",
+    "helpfulNo": "没有",
+    "feedbackThanks": "感谢你的反馈！",
+    "feedbackTryDifferent": "感谢反馈。你可以换一种问法再试试。",
+    "basedOn": "依据：",
+    "tryNext": "接下来可以试试：",
+    "explainBackPrompt": "现在用你自己的话讲一遍吧！",
+    "explainBackPlaceholder": "说说你学到了什么...",
+    "submitExplanation": "提交说明",
+    "voiceRequirements": "请先登录、启用麦克风权限，并完成语音设置后再使用语音帮助。",
+    "askAnother": "再问一个问题",
+    "footerTip": "请记住：AI 帮助你思考，不替你完成任务。",
+    "spokenResponseHeadline": "MiloOS 已用语音回答。",
+    "replaySpokenResponse": "再次播放语音回答"
   },
   "dashboard": {
     "redirecting": "正在跳转到你的工作区..."

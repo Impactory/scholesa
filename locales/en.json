@@ -53,7 +53,50 @@
     "loading": "Loading..."
   },
   "aiCoach": {
-    "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help."
+    "title": "MiloOS",
+    "tooltip": "Ask for help",
+    "openAria": "Open MiloOS",
+    "minimizeAria": "Minimize MiloOS",
+    "teacherGuidance": "Check with your teacher before using MiloOS.",
+    "howCanIHelp": "How can I help you today?",
+    "mode": {
+      "hint": {
+        "label": "Get a Hint",
+        "placeholder": "What are you stuck on?"
+      },
+      "rubric": {
+        "label": "Check My Work",
+        "placeholder": "What did you complete?"
+      },
+      "debug": {
+        "label": "Help Me Debug",
+        "placeholder": "What is not working?"
+      },
+      "critique": {
+        "label": "Give Feedback",
+        "placeholder": "What would you like feedback on?"
+      }
+    },
+    "back": "Back",
+    "questionPlaceholder": "Type your question or use the microphone...",
+    "listening": "Listening...",
+    "speakQuestion": "Speak Your Question",
+    "thinking": "Thinking...",
+    "wasHelpful": "Was this helpful?",
+    "helpfulYes": "Yes",
+    "helpfulNo": "No",
+    "feedbackThanks": "Thanks for the feedback!",
+    "feedbackTryDifferent": "Thanks for the feedback. Try asking differently.",
+    "basedOn": "Based on:",
+    "tryNext": "Try these next:",
+    "explainBackPrompt": "Now explain it back!",
+    "explainBackPlaceholder": "Tell me what you learned...",
+    "submitExplanation": "Submit Explanation",
+    "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help.",
+    "askAnother": "Ask another question",
+    "footerTip": "Remember: AI helps you think, not do the work.",
+    "spokenResponseHeadline": "MiloOS answered out loud.",
+    "replaySpokenResponse": "Replay spoken response"
   },
   "dashboard": {
     "redirecting": "Redirecting to your workspace..."
