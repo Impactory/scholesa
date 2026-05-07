@@ -132,6 +132,13 @@ describe('ProofOfLearningVerification site context', () => {
     expect(source).toContain('?portfolioItemId=${encodeURIComponent(item.id)}');
   });
 
+  it('keeps the verification queue scoped to the status-backed composite index', () => {
+    expect(source).toContain('UNVERIFIED_PORTFOLIO_STATUSES');
+    expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain("where('verificationStatus', 'in', UNVERIFIED_PORTFOLIO_STATUSES)");
+    expect(source).toContain("orderBy('createdAt', 'desc')");
+  });
+
   it('prefills educator proof review from the saved portfolio proof fields', () => {
     expect(source).toContain('item.proofHasExplainItBack === true');
     expect(source).toContain('item.proofExplainItBackExcerpt');

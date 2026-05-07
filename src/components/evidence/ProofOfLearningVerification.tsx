@@ -36,6 +36,8 @@ const STATUS_COLORS: Record<string, string> = {
   'needs-resubmission': 'bg-red-100 text-red-800',
 };
 
+const UNVERIFIED_PORTFOLIO_STATUSES = ['pending', 'reviewed'] as const;
+
 interface VerifyProofOfLearningResult {
   capabilitiesReadyForRubric?: number;
 }
@@ -89,6 +91,7 @@ export function ProofOfLearningVerification() {
       // Site-scoped to prevent cross-site data access
       const constraints = [
         where('siteId', '==', siteId),
+        where('verificationStatus', 'in', UNVERIFIED_PORTFOLIO_STATUSES),
         orderBy('createdAt', 'desc'),
         limit(100),
       ];
