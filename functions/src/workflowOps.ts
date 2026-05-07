@@ -5261,7 +5261,7 @@ export const upsertCohortLaunch = onCall(async (request: CallableRequest) => {
     siteId,
     cohortName: asTrimmedString(request.data?.cohortName) || `Cohort ${id.slice(-6)}`,
     ageBand: asTrimmedString(request.data?.ageBand) || 'mixed',
-    scheduleLabel: asTrimmedString(request.data?.scheduleLabel) || 'TBD',
+    scheduleLabel: asTrimmedString(request.data?.scheduleLabel) || 'Schedule pending',
     programFormat: asTrimmedString(request.data?.programFormat) || 'gold',
     curriculumTerm: asTrimmedString(request.data?.curriculumTerm) || 'Term 1',
     instructorId: asTrimmedString(request.data?.instructorId) || null,

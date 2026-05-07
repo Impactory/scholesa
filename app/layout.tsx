@@ -14,10 +14,10 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
-      { url: '/scholesa.svg', type: 'image/svg+xml' },
+      { url: '/logo/scholesa-logo-192.png', type: 'image/png', sizes: '192x192' },
     ],
-    shortcut: ['/scholesa.svg'],
-    apple: [{ url: '/scholesa.svg', type: 'image/svg+xml' }],
+    shortcut: ['/logo/scholesa-logo-192.png'],
+    apple: [{ url: '/logo/scholesa-logo-192.png', type: 'image/png', sizes: '192x192' }],
   },
 };
 

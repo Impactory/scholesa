@@ -567,6 +567,7 @@
     "submitExplanation": "Submit Explanation",
     "explainBackSuccess": "Great explanation!",
     "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help.",
+    "submitQuestion": "Ask MiloOS",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
     "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help.",

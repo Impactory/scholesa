@@ -1,6 +1,32 @@
 import { __voiceSystemInternals } from './voiceSystem';
 
-const { resolveClientOrchestrationState, resolveClientMvlContext } = __voiceSystemInternals;
+const { resolveClientOrchestrationState, resolveClientMvlContext, resolveRuntimeProjectId } =
+  __voiceSystemInternals;
+
+describe('resolveRuntimeProjectId', () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it('uses Gen 2 runtime project env aliases for voice token signing', () => {
+    delete process.env.GOOGLE_CLOUD_PROJECT;
+    process.env.GCLOUD_PROJECT = 'studio-runtime-project';
+
+    expect(resolveRuntimeProjectId()).toBe('studio-runtime-project');
+  });
+
+  it('uses Firebase config projectId when direct project env vars are absent', () => {
+    delete process.env.GOOGLE_CLOUD_PROJECT;
+    delete process.env.GCLOUD_PROJECT;
+    delete process.env.GCP_PROJECT;
+    delete process.env.FIREBASE_PROJECT_ID;
+    process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: 'studio-firebase-config' });
+
+    expect(resolveRuntimeProjectId()).toBe('studio-firebase-config');
+  });
+});
 
 describe('resolveClientOrchestrationState', () => {
   it('returns null for undefined context', () => {

@@ -125,6 +125,7 @@
     "explainBackPlaceholder": "說說你學到了什麼...",
     "submitExplanation": "提交說明",
     "voiceRequirements": "請先登入、啟用麥克風權限，並完成語音設定後再使用語音幫助。",
+    "submitQuestion": "詢問 MiloOS",
     "askAnother": "再問一個問題",
     "footerTip": "請記住：AI 幫助你思考，不替你完成任務。",
     "spokenResponseHeadline": "MiloOS 已用語音回答。",

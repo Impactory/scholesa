@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
@@ -15,6 +16,15 @@ export default function LandingPage() {
         <ThemeModeToggle compact />
       </div>
       <div className="text-center">
+        <Image
+          src="/logo/scholesa-logo-192.png"
+          alt=""
+          aria-hidden="true"
+          width={80}
+          height={80}
+          priority
+          className="mx-auto mb-6 h-20 w-20"
+        />
         <h1 className="text-4xl font-bold tracking-tight text-app-foreground sm:text-6xl">
           {t('landing.title')}
         </h1>

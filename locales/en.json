@@ -93,6 +93,7 @@
     "explainBackPlaceholder": "Tell me what you learned...",
     "submitExplanation": "Submit Explanation",
     "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help.",
+    "submitQuestion": "Ask MiloOS",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
     "spokenResponseHeadline": "MiloOS answered out loud.",

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -141,6 +142,15 @@ export default function RegisterPage() {
       </div>
       <div className="w-full max-w-md space-y-8 rounded-lg bg-app-surface p-8 shadow-md border border-app">
         <div className="text-center">
+          <Image
+            src="/logo/scholesa-logo-192.png"
+            alt=""
+            aria-hidden="true"
+            width={56}
+            height={56}
+            priority
+            className="mx-auto mb-4 h-14 w-14"
+          />
           <h2 className="text-3xl font-bold tracking-tight text-app-foreground">{t('auth.register.title')}</h2>
           <p className="mt-2 text-sm text-app-muted">{t('auth.register.subtitle')}</p>
         </div>

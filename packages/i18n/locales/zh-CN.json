@@ -567,6 +567,7 @@
     "submitExplanation": "提交说明",
     "explainBackSuccess": "解释得很好！",
     "voiceRequirements": "请先登录、启用麦克风权限，并完成语音设置后再使用语音帮助。",
+    "submitQuestion": "询问 MiloOS",
     "askAnother": "再问一个问题",
     "footerTip": "请记住：AI 帮助你思考，不替你完成任务。",
     "errorFallback": "我现在遇到了一点问题。请换一种问法，或请老师提供帮助。",

@@ -33,6 +33,7 @@ type VoiceIntent =
 type VoiceComplexity = 'low' | 'medium' | 'high';
 type VoiceEmotionalState = 'frustrated' | 'confused' | 'bored' | 'neutral' | 'curious' | 'confident' | 'excited';
 type VoiceResponseMode = 'hint' | 'explain' | 'translate' | 'plan' | 'safety';
+type VoiceInputModality = 'voice' | 'typed' | 'unknown';
 type UnderstandingSource = 'heuristic' | 'model' | 'blended';
 type ResponseGenerationSource = 'local' | 'model' | 'guardrail';
 
@@ -944,6 +945,19 @@ function resolveTraceId(req: Request, body: Record<string, unknown>): string {
   return randomUUID();
 }
 
+function resolveVoiceInputModality(body: Record<string, unknown>): VoiceInputModality {
+  const context = body.context && typeof body.context === 'object'
+    ? body.context as Record<string, unknown>
+    : undefined;
+  const raw = normalizeString(
+    body.inputModality ?? body.modality ?? context?.inputModality ?? context?.modality ?? context?.source,
+  )?.toLowerCase();
+  if (!raw) return 'unknown';
+  if (raw.includes('typed') || raw.includes('text') || raw.includes('keyboard')) return 'typed';
+  if (raw.includes('voice') || raw.includes('speech') || raw.includes('microphone')) return 'voice';
+  return 'unknown';
+}
+
 function normalizeGradeBand(rawBand: unknown, rawGrade: unknown): GradeBand {
   const band = typeof rawBand === 'string' ? rawBand.trim().toUpperCase() : '';
   if (band === 'K-5' || band === 'K_5' || band === 'K5' || band === 'GRADES_1_3' || band === 'GRADES_4_6') return 'K-5';
@@ -1442,8 +1456,35 @@ function buildAdaptiveLocalizedResponse(
   return pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 }
 
-function requiresStrictStudentConfidence(role: VoiceRequesterRole): boolean {
-  return role === 'student';
+function requiresStrictStudentConfidence(
+  role: VoiceRequesterRole,
+  inputModality: VoiceInputModality = 'voice',
+): boolean {
+  return role === 'student' && inputModality !== 'typed';
+}
+
+function buildTypedStudentLocalResponse(
+  locale: VoiceLocale,
+  category: SafetyDecision['category'],
+  understanding: VoiceUnderstandingSignal,
+  message: string,
+): string {
+  if (locale !== 'en') {
+    return buildAdaptiveLocalizedResponse('student', locale, category, understanding);
+  }
+
+  const lowerMessage = message.toLowerCase();
+  if (/prototype|iteration|iterate|evidence|artifact|portfolio/.test(lowerMessage)) {
+    return 'Nice effort. Pick one change between your first version and this version, then capture the proof: a photo, note, or test result. Write one sentence that says what changed, why you changed it, and what you will test next. Keep the work yours; I can help you tighten the evidence after you try that step.';
+  }
+  if (/checkpoint|rubric|capability|skill/.test(lowerMessage)) {
+    return 'Nice effort. Start with the capability named in the checkpoint, then point to one piece of your work that proves it. Use this frame: I can show ___ because my evidence shows ___. After that, ask your educator to verify the claim.';
+  }
+  if (/reflect|reflection|explain|learned/.test(lowerMessage)) {
+    return 'Nice effort. Explain one decision you made, one thing you changed after feedback, and one question you still have. That gives your educator evidence of thinking, not just completion.';
+  }
+
+  return buildAdaptiveLocalizedResponse('student', locale, category, understanding);
 }
 
 function buildStudentConfidenceGuardResponse(locale: VoiceLocale): string {
@@ -1960,8 +2001,37 @@ function normalizeSpeechText(text: string): string {
   return collapsed.slice(0, 2000);
 }
 
+function resolveRuntimeProjectId(): string {
+  const directProjectId =
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT ||
+    process.env.FIREBASE_PROJECT_ID;
+  if (directProjectId) return directProjectId;
+
+  if (process.env.FIREBASE_CONFIG) {
+    try {
+      const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG) as { projectId?: unknown };
+      if (typeof firebaseConfig.projectId === 'string' && firebaseConfig.projectId.trim()) {
+        return firebaseConfig.projectId.trim();
+      }
+    } catch {
+      // Fall through to the Firebase Admin app option if the env payload is malformed.
+    }
+  }
+
+  if (admin.apps.length > 0) {
+    const projectId = admin.app().options.projectId;
+    if (typeof projectId === 'string' && projectId.trim()) {
+      return projectId.trim();
+    }
+  }
+
+  return '';
+}
+
 function tokenSecret(): string {
-  const secret = process.env.VOICE_SIGNING_SECRET || process.env.GOOGLE_CLOUD_PROJECT;
+  const secret = process.env.VOICE_SIGNING_SECRET || resolveRuntimeProjectId();
   if (!secret) {
     throw new Error('VOICE_SIGNING_SECRET or GOOGLE_CLOUD_PROJECT must be set for token signing');
   }
@@ -3006,6 +3076,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       loadRoleIntelligenceContext(authContext, body),
     ]);
     const requestContext = asRecord(body.context);
+    const inputModality = resolveVoiceInputModality(body);
     const bosContext = resolveBosInteractionContext(body, authContext);
     const personaInstructions = normalizeString(requestContext?.personaInstructions);
 
@@ -3015,7 +3086,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
-      ? buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, safety.category, understanding)
+      ? authContext.requesterRole === 'student' && inputModality === 'typed'
+        ? buildTypedStudentLocalResponse(locale, safety.category, understanding, message)
+        : buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, safety.category, understanding)
       : safety.localizedMessage;
     let candidateText = baselineCandidateText;
     let responseGenerationSource: ResponseGenerationSource = safety.safetyOutcome === 'allowed' ? 'local' : 'guardrail';
@@ -3088,7 +3161,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       }
       if (llmResult.ok && suggestedText) {
         if (
-          requiresStrictStudentConfidence(authContext.requesterRole) &&
+          requiresStrictStudentConfidence(authContext.requesterRole, inputModality) &&
           (certifiedModelConfidence === undefined ||
             certifiedModelConfidence < MIN_AUTONOMOUS_STUDENT_CONFIDENCE)
         ) {
@@ -3111,7 +3184,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           }
         }
       } else if (llmResult.ok) {
-        if (requiresStrictStudentConfidence(authContext.requesterRole)) {
+        if (requiresStrictStudentConfidence(authContext.requesterRole, inputModality)) {
           candidateText = buildStudentInferenceUnavailableResponse(locale);
           responseGenerationSource = 'guardrail';
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_empty_inference_response');
@@ -3122,7 +3195,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
         }
       } else {
-        if (requiresStrictStudentConfidence(authContext.requesterRole)) {
+        if (requiresStrictStudentConfidence(authContext.requesterRole, inputModality)) {
           candidateText = buildStudentInferenceUnavailableResponse(locale);
           responseGenerationSource = 'guardrail';
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_inference_unavailable');
@@ -3133,6 +3206,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
 
       if (
         authContext.requesterRole === 'student' &&
+        inputModality !== 'typed' &&
         responseGenerationSource === 'local' &&
         understandingSource === 'heuristic'
       ) {
@@ -3263,10 +3337,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const languageCompatible = detectLanguageCompatibility(candidateText, locale);
     const responseText = languageCompatible
       ? candidateText
-      : requiresStrictStudentConfidence(authContext.requesterRole)
+      : requiresStrictStudentConfidence(authContext.requesterRole, inputModality)
       ? buildStudentConfidenceGuardResponse(locale)
       : buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, 'generic', understanding);
-    if (!languageCompatible && requiresStrictStudentConfidence(authContext.requesterRole)) {
+    if (!languageCompatible && requiresStrictStudentConfidence(authContext.requesterRole, inputModality)) {
       effectiveSafetyOutcome = 'escalated';
       effectiveSafetyReasonCode = 'output_language_mismatch_guard';
     }
@@ -4285,6 +4359,7 @@ export const __voiceSystemInternals = {
   resolveClientMvlContext,
   resolveClientOrchestrationState,
   resolveLocale,
+  resolveRuntimeProjectId,
   resolveTraceId,
   selectToolCalls,
   synthesizeAudioWave,

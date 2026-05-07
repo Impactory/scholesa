@@ -31,7 +31,7 @@ describe('protected web logout availability', () => {
     expect(navigationSource).toContain("t('navigation.signOut')");
     expect(navigationSource).toContain('<Button');
     expect(navigationSource).toContain("import Image from 'next/image';");
-    expect(navigationSource).toContain('src="/scholesa.svg"');
+    expect(navigationSource).toContain('src="/logo/scholesa-logo-192.png"');
     expect(navigationSource).toContain('aria-label="Scholesa dashboard"');
     expect(navigationSource).toContain('<ThemeModeToggle');
   });
@@ -44,6 +44,20 @@ describe('protected web logout availability', () => {
 
       expect(messages.navigation.signedInAs).toContain('{{identity}}');
       expect(messages.navigation.signOut).toBeTruthy();
+    }
+  });
+
+  it('uses the canonical Scholesa logo on public entry surfaces', () => {
+    for (const filePath of [
+      'app/[locale]/page.tsx',
+      'app/[locale]/(auth)/login/page.tsx',
+      'app/[locale]/(auth)/register/page.tsx',
+    ]) {
+      const source = fs.readFileSync(path.join(repoRoot, filePath), 'utf8');
+
+      expect(source).toContain("import Image from 'next/image';");
+      expect(source).toContain('src="/logo/scholesa-logo-192.png"');
+      expect(source).toContain('aria-hidden="true"');
     }
   });
 

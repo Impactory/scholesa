@@ -137,6 +137,7 @@ export function AICoachPopup({
   const [isMinimized, setIsMinimized] = useState(true);
   const [mode, setMode] = useState<CoachMode | null>(null);
   const [question, setQuestion] = useState('');
+  const [typedQuestion, setTypedQuestion] = useState('');
   const [response, setResponse] = useState<AIServiceResponse | null>(null);
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
@@ -202,6 +203,7 @@ export function AICoachPopup({
     onTranscript: async ({ transcript, metadata }) => {
       setStatusMessage(null);
       setQuestion(transcript);
+      setTypedQuestion(transcript);
       if (metadata?.traceId) {
         setVoiceInputTraceId(metadata.traceId);
         trackVoiceTelemetry('voice.transcribe', {
@@ -330,6 +332,7 @@ export function AICoachPopup({
     if (!resolvedQuestion || !mode) return;
 
     setQuestion(resolvedQuestion);
+    setTypedQuestion(resolvedQuestion);
 
     try {
       setLoading(true);
@@ -539,6 +542,7 @@ Guidance: ${
 
       setResponse(null);
       setQuestion('');
+      setTypedQuestion('');
       setExplainBack('');
       setMode(null);
       setCurrentLogId(null);
@@ -563,6 +567,7 @@ Guidance: ${
   const reset = () => {
     setMode(null);
     setQuestion('');
+    setTypedQuestion('');
     setResponse(null);
     setExplainBack('');
     setStatusMessage(null);
@@ -704,9 +709,21 @@ Guidance: ${
                   ? t('aiCoach.speakQuestion')
                   : t('aiCoach.questionPlaceholder')}
               </p>
-              <p className="mt-2 min-h-10 rounded-lg bg-app-surface px-3 py-2 text-sm text-app-foreground">
-                {question || '...'}
-              </p>
+              <textarea
+                value={typedQuestion}
+                onChange={(event) => setTypedQuestion(event.target.value)}
+                rows={3}
+                placeholder={t('aiCoach.questionPlaceholder')}
+                className="mt-2 w-full rounded-lg border border-app bg-app-surface px-3 py-2 text-sm text-app-foreground placeholder:text-app-muted focus:outline-none focus:ring-2 focus:ring-app-ring"
+              />
+              <button
+                type="button"
+                onClick={() => void handleAsk(typedQuestion)}
+                disabled={!typedQuestion.trim() || loading || isTranscribing}
+                className="mt-3 w-full rounded-lg bg-app-primary px-4 py-2 text-sm font-medium text-app-primary-foreground transition-colors hover:bg-app-primary-emphasis disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? t('aiCoach.thinking') : t('aiCoach.submitQuestion')}
+              </button>
             </div>
 
             {/* Speech input button */}

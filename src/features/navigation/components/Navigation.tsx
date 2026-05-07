@@ -54,7 +54,7 @@ export function Navigation() {
                 aria-label="Scholesa dashboard"
               >
                 <Image
-                  src="/scholesa.svg"
+                  src="/logo/scholesa-logo-192.png"
                   alt=""
                   aria-hidden="true"
                   width={32}

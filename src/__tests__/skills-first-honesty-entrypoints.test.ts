@@ -44,6 +44,9 @@ describe('skills-first honesty entrypoints', () => {
     const hqDashboard = readRepoFile('src/features/dashboards/hq/components/HqDashboard.tsx');
 
     expect(manifest).toContain('Skills-First Learning OS');
+    expect(manifest).toContain('/logo/scholesa-logo-192.png');
+    expect(manifest).toContain('/logo/scholesa-logo-512.png');
+    expect(manifest).not.toContain('/scholesa.svg');
     expect(manifest).not.toContain('Future Skills Academy');
 
     expect(sharedEn).toContain('Skills-first learning OS');
