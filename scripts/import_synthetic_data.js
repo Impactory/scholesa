@@ -3,6 +3,10 @@ const path = require('path');
 const {
   buildBosMiaSyntheticTrainingArtifacts,
 } = require('./lib/bos_mia_synthetic_training');
+const {
+  getGcloudAccessToken,
+  resolveProjectId,
+} = require('./firebase_runtime_auth');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FULL_PACK_DIR = path.join(
@@ -1016,6 +1020,450 @@ function addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt) {
   });
 }
 
+function addCutoverDashboardReadinessSyntheticData(bundle, startedAt) {
+  const sourcePack = 'cutover-dashboard-readiness';
+  const siteId = 'pilot-site-001';
+  const learnerId = 'test-learner-001';
+  const educatorId = 'test-educator-001';
+  const sessionId = 'pilot-session-001';
+  const sessionOccurrenceId = 'synthetic-dashboard-occurrence-001';
+  const evidenceId = 'synthetic-dashboard-evidence-prototype-iteration';
+  const portfolioItemId = 'synthetic-dashboard-portfolio-prototype-iteration';
+  const proofBundleId = 'synthetic-dashboard-proof-prototype-iteration';
+  const rubricTemplateId = 'synthetic-dashboard-rubric-prototype-iteration';
+  const rubricApplicationId = 'synthetic-dashboard-rubric-application-prototype-iteration';
+  const missionAttemptId = 'synthetic-dashboard-mission-attempt-prototype-iteration';
+  const capabilityDocs = [
+    {
+      id: 'pilot-capability-prototype-iteration',
+      name: 'Prototype Iteration',
+      title: 'Prototype Iteration',
+      normalizedTitle: 'prototype iteration',
+      domain: 'technical',
+      pillarCode: 'tech',
+      description: 'Improve a working prototype using feedback and observed evidence.',
+      descriptor: 'Learner can improve a build from evidence rather than preference.',
+      sortOrder: 10,
+    },
+    {
+      id: 'pilot-capability-evidence-explanation',
+      name: 'Evidence Explanation',
+      title: 'Evidence Explanation',
+      normalizedTitle: 'evidence explanation',
+      domain: 'human',
+      pillarCode: 'lead',
+      description: 'Explain what evidence proves and what still needs verification.',
+      descriptor: 'Learner can explain how their artifact proves progress.',
+      sortOrder: 20,
+    },
+    {
+      id: 'pilot-capability-impact-check',
+      name: 'Impact Check',
+      title: 'Impact Check',
+      normalizedTitle: 'impact check',
+      domain: 'human',
+      pillarCode: 'impact',
+      description: 'Connect a build decision to the user or community it affects.',
+      descriptor: 'Learner can describe who benefits and what evidence supports that claim.',
+      sortOrder: 30,
+    },
+  ];
+  const progressionDescriptors = {
+    beginning: 'Can identify one change they made when prompted.',
+    developing: 'Can explain a change using feedback or observed evidence.',
+    proficient: 'Can independently improve a prototype and explain the evidence behind the change.',
+    advanced: 'Can coach peers on using evidence to make better build decisions.',
+  };
+
+  for (const capability of capabilityDocs) {
+    upsertDoc(bundle, 'capabilities', capability.id, {
+      ...capability,
+      siteId,
+      progressionDescriptors,
+      status: 'active',
+      unitMappings: [sessionId],
+      checkpointMappings: [{ checkpointId: 'pilot-checkpoint-prototype-demo', weight: 1 }],
+      teacherLookFors: [
+        'Names the evidence that motivated the change.',
+        'Explains what improved between versions.',
+        'Identifies a next test or user signal.',
+      ],
+      createdAt: startedAt,
+      updatedAt: startedAt,
+      synthetic: true,
+      sourcePack,
+    });
+  }
+
+  upsertDoc(bundle, 'coppaSchoolConsents', siteId, {
+    id: siteId,
+    siteId,
+    active: true,
+    agreementSigned: true,
+    educationalUseOnly: true,
+    parentNoticeProvided: true,
+    noStudentMarketing: true,
+    consentSource: 'synthetic-cutover-dashboard-readiness',
+    signedBy: educatorId,
+    signedAt: startedAt,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+
+  upsertDoc(bundle, 'sessionOccurrences', sessionOccurrenceId, {
+    id: sessionOccurrenceId,
+    sessionId,
+    siteId,
+    educatorId,
+    educatorIds: [educatorId],
+    learnerIds: [learnerId],
+    title: 'Synthetic Dashboard Evidence Studio',
+    startsAt: startedAt,
+    endsAt: startedAt,
+    status: 'completed',
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'evidenceRecords', evidenceId, {
+    id: evidenceId,
+    learnerId,
+    educatorId,
+    siteId,
+    sessionOccurrenceId,
+    capabilityId: 'pilot-capability-prototype-iteration',
+    capabilityMapped: true,
+    phaseKey: 'build.iterate',
+    description: 'Learner revised a Scratch game after peer testing and explained the evidence behind the change.',
+    rubricStatus: 'applied',
+    growthStatus: 'recorded',
+    portfolioCandidate: true,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'rubricTemplates', rubricTemplateId, {
+    id: rubricTemplateId,
+    siteId,
+    title: 'Prototype Iteration Evidence Rubric',
+    name: 'Prototype Iteration Evidence Rubric',
+    capabilityIds: capabilityDocs.map((capability) => capability.id),
+    criteria: capabilityDocs.map((capability, index) => ({
+      id: `${capability.id}-criterion`,
+      criterionId: `${capability.id}-criterion`,
+      capabilityId: capability.id,
+      label: capability.title,
+      description: capability.description,
+      maxScore: 4,
+      sortOrder: index + 1,
+    })),
+    status: 'published',
+    createdBy: educatorId,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'rubricApplications', rubricApplicationId, {
+    id: rubricApplicationId,
+    learnerId,
+    educatorId,
+    siteId,
+    rubricTemplateId,
+    evidenceRecordIds: [evidenceId],
+    missionAttemptId,
+    capabilityId: 'pilot-capability-prototype-iteration',
+    scores: [
+      { criterionId: 'pilot-capability-prototype-iteration-criterion', capabilityId: 'pilot-capability-prototype-iteration', score: 3 },
+      { criterionId: 'pilot-capability-evidence-explanation-criterion', capabilityId: 'pilot-capability-evidence-explanation', score: 2 },
+      { criterionId: 'pilot-capability-impact-check-criterion', capabilityId: 'pilot-capability-impact-check', score: 2 },
+    ],
+    status: 'growth-recorded',
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'proofOfLearningBundles', proofBundleId, {
+    id: proofBundleId,
+    learnerId,
+    siteId,
+    portfolioItemId,
+    capabilityId: 'pilot-capability-prototype-iteration',
+    hasExplainItBack: true,
+    hasOralCheck: true,
+    hasMiniRebuild: true,
+    explainItBackExcerpt: 'I changed the enemy speed because two testers got stuck in the first ten seconds.',
+    oralCheckExcerpt: 'Learner explained the bug, the evidence, and why the next test should isolate one variable.',
+    miniRebuildExcerpt: 'Learner rebuilt the loop condition live and narrated the fix without prompts.',
+    verificationStatus: 'verified',
+    educatorVerifierId: educatorId,
+    version: 1,
+    createdAt: startedAt,
+    updatedAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'portfolioItems', portfolioItemId, {
+    id: portfolioItemId,
+    learnerId,
+    siteId,
+    title: 'Scratch Game Iteration Evidence',
+    description: 'Before/after prototype evidence with learner explanation and educator verification.',
+    pillarCodes: ['tech', 'lead', 'impact'],
+    artifacts: ['https://example.scholesa.dev/synthetic/scratch-game-iteration.png'],
+    evidenceRecordIds: [evidenceId],
+    capabilityIds: capabilityDocs.map((capability) => capability.id),
+    capabilityTitles: capabilityDocs.map((capability) => capability.title),
+    growthEventIds: [
+      'synthetic-dashboard-growth-prototype-iteration',
+      'synthetic-dashboard-growth-evidence-explanation',
+      'synthetic-dashboard-growth-impact-check',
+    ],
+    missionAttemptId,
+    rubricApplicationId,
+    proofBundleId,
+    proofOfLearningStatus: 'verified',
+    proofHasExplainItBack: true,
+    proofHasOralCheck: true,
+    proofHasMiniRebuild: true,
+    proofCheckpointCount: 3,
+    proofExplainItBackExcerpt: 'I changed the enemy speed because two testers got stuck in the first ten seconds.',
+    proofOralCheckExcerpt: 'Explained the bug and evidence behind the change.',
+    proofMiniRebuildExcerpt: 'Rebuilt the loop condition live.',
+    aiAssistanceUsed: true,
+    aiAssistanceDetails: 'AI suggested debug questions; learner selected and implemented the fix independently.',
+    aiDisclosureStatus: 'learner-ai-verified',
+    educatorId,
+    verificationPrompt: 'Explain why this iteration improved the game for a tester.',
+    verificationNotes: 'Verified through explain-it-back, oral check, and mini rebuild.',
+    verificationStatus: 'verified',
+    source: 'synthetic-cutover-dashboard-readiness',
+    createdAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'missionAttempts', missionAttemptId, {
+    id: missionAttemptId,
+    learnerId,
+    missionId: 'pilot-mission-001',
+    missionTitle: 'Build a Scratch Game',
+    sessionOccurrenceId,
+    siteId,
+    status: 'in_progress',
+    content: 'Iteration in progress with verified proof already attached to the portfolio item.',
+    notes: 'Synthetic cutover dashboard mission slice; not a mastery shortcut.',
+    attachmentUrls: ['https://example.scholesa.dev/synthetic/scratch-game-iteration.png'],
+    startedAt: startedAt,
+    submittedAt: startedAt,
+    updatedAt: startedAt,
+    proofBundleId,
+    aiAssistanceUsed: true,
+    aiAssistanceDetails: 'AI debug prompts disclosed and verified through proof-of-learning.',
+    aiDisclosureStatus: 'learner-ai-verified',
+    synthetic: true,
+    sourcePack,
+  });
+
+  const masteryRows = [
+    ['pilot-capability-prototype-iteration', 'tech', 'proficient', 'developing', ['synthetic-dashboard-growth-prototype-iteration'], 3, 4],
+    ['pilot-capability-evidence-explanation', 'lead', 'developing', 'emerging', ['synthetic-dashboard-growth-evidence-explanation'], 2, 4],
+    ['pilot-capability-impact-check', 'impact', 'developing', 'emerging', ['synthetic-dashboard-growth-impact-check'], 2, 4],
+  ];
+  for (const [capabilityId, pillarCode, level, previousLevel, growthIds, rawScore, maxScore] of masteryRows) {
+    const growthEventId = growthIds[0];
+    upsertDoc(bundle, 'capabilityMastery', `${learnerId}_${capabilityId}`, {
+      id: `${learnerId}_${capabilityId}`,
+      learnerId,
+      capabilityId,
+      pillarCode,
+      currentLevel: level,
+      latestLevel: level,
+      previousLevel,
+      evidenceCount: 1,
+      evidenceIds: [evidenceId],
+      lastAssessedBy: educatorId,
+      lastAssessedAt: startedAt,
+      updatedAt: startedAt,
+      synthetic: true,
+      sourcePack,
+    });
+    upsertDoc(bundle, 'capabilityGrowthEvents', growthEventId, {
+      id: growthEventId,
+      learnerId,
+      capabilityId,
+      level,
+      fromLevel: previousLevel,
+      toLevel: level,
+      educatorId,
+      siteId,
+      rubricApplicationId,
+      evidenceIds: [evidenceId],
+      linkedEvidenceRecordIds: [evidenceId],
+      linkedPortfolioItemIds: [portfolioItemId],
+      rawScore,
+      maxScore,
+      createdAt: startedAt,
+      synthetic: true,
+      sourcePack,
+      interpretationOwner: 'server',
+    });
+  }
+
+  upsertDoc(bundle, 'orchestrationStates', 'synthetic-dashboard-state-current', {
+    id: 'synthetic-dashboard-state-current',
+    siteId,
+    learnerId,
+    x_hat: { cognition: 0.78, engagement: 0.74, integrity: 0.88 },
+    lastUpdatedAt: startedAt,
+    createdAt: startedAt,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'orchestrationStates', 'synthetic-dashboard-state-baseline', {
+    id: 'synthetic-dashboard-state-baseline',
+    siteId,
+    learnerId,
+    x_hat: { cognition: 0.62, engagement: 0.58, integrity: 0.81 },
+    lastUpdatedAt: new Date(startedAt.getTime() - 7 * 24 * 60 * 60 * 1000),
+    createdAt: new Date(startedAt.getTime() - 7 * 24 * 60 * 60 * 1000),
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'interactionEvents', 'synthetic-dashboard-ai-help-opened', {
+    id: 'synthetic-dashboard-ai-help-opened',
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_help_opened',
+    mode: 'debug_prompt',
+    studentInput: 'Why does my enemy sprite freeze after the first collision?',
+    createdAt: startedAt,
+    timestamp: startedAt,
+    payload: { mode: 'debug_prompt', capabilityId: 'pilot-capability-prototype-iteration' },
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'interactionEvents', 'synthetic-dashboard-ai-help-used', {
+    id: 'synthetic-dashboard-ai-help-used',
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_help_used',
+    interactionId: 'synthetic-dashboard-ai-help-opened',
+    createdAt: startedAt,
+    timestamp: startedAt,
+    payload: { learnerChange: 'Learner changed the loop condition and retested with peers.' },
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'interactionEvents', 'synthetic-dashboard-explain-back', {
+    id: 'synthetic-dashboard-explain-back',
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'explain_it_back_submitted',
+    interactionId: 'synthetic-dashboard-ai-help-opened',
+    aiHelpOpenedEventId: 'synthetic-dashboard-ai-help-opened',
+    createdAt: startedAt,
+    timestamp: startedAt,
+    payload: { aiHelpOpenedEventId: 'synthetic-dashboard-ai-help-opened' },
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'interactionEvents', 'synthetic-dashboard-goal-updated', {
+    id: 'synthetic-dashboard-goal-updated',
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_learning_goal_updated',
+    createdAt: startedAt,
+    timestamp: startedAt,
+    payload: { latest_goal: 'Use tester evidence before changing game difficulty.' },
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'mvlEpisodes', 'synthetic-dashboard-mvl-active', {
+    id: 'synthetic-dashboard-mvl-active',
+    siteId,
+    learnerId,
+    createdAt: startedAt,
+    triggerReason: 'ai_dependency_verification',
+    evidenceRecordId: evidenceId,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'mvlEpisodes', 'synthetic-dashboard-mvl-passed', {
+    id: 'synthetic-dashboard-mvl-passed',
+    siteId,
+    learnerId,
+    createdAt: startedAt,
+    resolution: 'passed',
+    evidenceRecordId: evidenceId,
+    synthetic: true,
+    sourcePack,
+  });
+  upsertDoc(bundle, 'mvlEpisodes', 'synthetic-dashboard-mvl-needs-review', {
+    id: 'synthetic-dashboard-mvl-needs-review',
+    siteId,
+    learnerId,
+    createdAt: startedAt,
+    resolution: 'failed',
+    evidenceRecordId: evidenceId,
+    synthetic: true,
+    sourcePack,
+  });
+
+  const sourceCounts = {
+    cutoverDashboardCoppaSchoolConsents: 1,
+    cutoverDashboardCapabilities: capabilityDocs.length,
+    cutoverDashboardSessionOccurrences: 1,
+    cutoverDashboardEvidenceRecords: 1,
+    cutoverDashboardProofBundles: 1,
+    cutoverDashboardPortfolioItems: 1,
+    cutoverDashboardRubricTemplates: 1,
+    cutoverDashboardRubricApplications: 1,
+    cutoverDashboardMissionAttempts: 1,
+    cutoverDashboardMasteryRecords: masteryRows.length,
+    cutoverDashboardGrowthEvents: masteryRows.length,
+    cutoverDashboardOrchestrationStates: 2,
+    cutoverDashboardInteractionEvents: 4,
+    cutoverDashboardMvlEpisodes: 3,
+  };
+  upsertDoc(bundle, 'syntheticDashboardReadinessStates', 'latest', {
+    id: 'latest',
+    siteId,
+    learnerId,
+    educatorId,
+    modeSupport: ['starter', 'full', 'all'],
+    purpose: 'Live learner dashboard readiness slice with evidence-backed growth, portfolio proof, mission activity, and MiloOS learner-loop signals.',
+    ids: {
+      sessionOccurrenceId,
+      evidenceId,
+      portfolioItemId,
+      proofBundleId,
+      rubricTemplateId,
+      rubricApplicationId,
+      missionAttemptId,
+      capabilityIds: capabilityDocs.map((capability) => capability.id),
+    },
+    evidenceChain: 'educator evidence -> proof bundle -> rubric application -> server-owned growth events -> portfolio item -> learner dashboard -> MiloOS support snapshot',
+    sourceCounts,
+    serverOwnedGrowth: true,
+    noClientMasteryWrites: true,
+    synthetic: true,
+    sourcePack,
+    importedAt: startedAt,
+  });
+  Object.entries(sourceCounts).forEach(([key, value]) => {
+    incrementCount(bundle.sourceCounts, key, value);
+  });
+}
+
 function starterContextForRow(row) {
   const unitSlug = slugify(row.unit_family || 'starter-unit');
   const gradeSlug = slugify(row.grade_band || 'starter');
@@ -1755,6 +2203,7 @@ function buildImportBundle(options) {
 
   addMiloOSGoldSyntheticStates(bundle, startedAt);
   addPlatformEvidenceChainGoldSyntheticState(bundle, startedAt);
+  addCutoverDashboardReadinessSyntheticData(bundle, startedAt);
 
   const trainingArtifacts = buildBosMiaSyntheticTrainingArtifacts({
     importedAt: startedAt,
@@ -1806,6 +2255,12 @@ function buildImportBundle(options) {
       seedModes: ['starter', 'full', 'all'],
       purpose: 'Platform HQ-to-passport evidence-chain certification without local browser-only fixtures.',
     },
+    dashboardReadinessState: {
+      collection: 'syntheticDashboardReadinessStates',
+      documentId: 'latest',
+      seedModes: ['starter', 'full', 'all'],
+      purpose: 'Live learner dashboard cutover proof for test-learner-001 at pilot-site-001.',
+    },
     synthetic: true,
   };
   upsertDoc(bundle, 'syntheticDatasetImports', summary.id, summary);
@@ -1837,7 +2292,8 @@ async function writeBundleToFirestore(bundle, batchSize) {
   const { getFirestore } = require('firebase-admin/firestore');
 
   if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    throw new Error('Set GOOGLE_APPLICATION_CREDENTIALS to your service account JSON path before using --apply.');
+    await writeBundleToFirestoreRest(bundle, batchSize);
+    return admin;
   }
 
   if (getApps().length === 0) {
@@ -1861,6 +2317,81 @@ async function writeBundleToFirestore(bundle, batchSize) {
     }
   }
   return admin;
+}
+
+function encodeDocumentPath(...segments) {
+  return segments.map((segment) => encodeURIComponent(String(segment))).join('/');
+}
+
+function encodeFirestoreValue(value) {
+  if (typeof value === 'undefined' || value === null) return { nullValue: null };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
+  if (Array.isArray(value)) {
+    return { arrayValue: { values: value.map((entry) => encodeFirestoreValue(entry)) } };
+  }
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+  }
+  if (value && typeof value === 'object') {
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(value)
+            .filter(([, entry]) => typeof entry !== 'undefined')
+            .map(([key, entry]) => [key, encodeFirestoreValue(entry)]),
+        ),
+      },
+    };
+  }
+  return { stringValue: String(value) };
+}
+
+function buildRestWrite(projectId, collectionName, id, data) {
+  const fieldEntries = Object.entries(data || {}).filter(([, value]) => typeof value !== 'undefined');
+  return {
+    update: {
+      name: `projects/${projectId}/databases/(default)/documents/${encodeDocumentPath(collectionName, id)}`,
+      fields: Object.fromEntries(fieldEntries.map(([key, value]) => [key, encodeFirestoreValue(value)])),
+    },
+    updateMask: {
+      fieldPaths: fieldEntries.map(([key]) => key),
+    },
+  };
+}
+
+async function writeBundleToFirestoreRest(bundle, batchSize) {
+  const projectId = resolveProjectId(process.env.FIREBASE_PROJECT_ID, null);
+  if (!projectId) {
+    throw new Error('Unable to resolve project ID for gcloud-auth synthetic import.');
+  }
+  const accessToken = getGcloudAccessToken();
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:batchWrite`;
+  const maxBatchSize = Math.min(batchSize, 500);
+  for (const [collectionName, docs] of bundle.collections.entries()) {
+    const entries = Array.from(docs.entries());
+    for (let index = 0; index < entries.length; index += maxBatchSize) {
+      const slice = entries.slice(index, index + maxBatchSize);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'x-goog-user-project': projectId,
+        },
+        body: JSON.stringify({
+          writes: slice.map(([id, data]) => buildRestWrite(projectId, collectionName, id, data)),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = payload?.error?.message || `${response.status} ${response.statusText}`;
+        throw new Error(`Synthetic Firestore REST import failed for ${collectionName}: ${message}`);
+      }
+      console.log(`Committed ${collectionName} REST batch ${Math.floor(index / maxBatchSize) + 1} (${slice.length} docs)`);
+    }
+  }
 }
 
 async function main() {

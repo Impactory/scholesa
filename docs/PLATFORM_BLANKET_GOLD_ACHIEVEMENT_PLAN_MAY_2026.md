@@ -11,7 +11,7 @@ This is the operator-facing plan for turning the current gold-candidate packet i
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Deferred unless a release owner explicitly includes partner evidence-facing outputs and runs partner permission/evidence proof. |
-| Current hard blockers | Live six-role operator browser cutover; current-worktree live compliance deploy proof. |
+| Current hard blockers | Full live six-role operator browser cutover; traffic promotion or traffic-pinning/rollback proof. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
 
 ## Evidence Bundle To Preserve
@@ -101,11 +101,25 @@ Capture:
 - AI internal-only gate output.
 - Synthetic dry-run source-count output.
 
+If the live cutover environment needs canonical synthetic data, apply the starter pack with merge-only writes and verify the manifest docs before browser proof:
+
+```bash
+FIREBASE_PROJECT_ID=studio-3328096157-e3f79 node scripts/import_synthetic_data.js --mode starter --apply --batch-size 400
+```
+
+Capture:
+
+- `syntheticMiloOSGoldStates/latest`
+- `syntheticPlatformEvidenceChainGoldStates/latest`
+- `syntheticDashboardReadinessStates/latest`
+- Dashboard readiness docs for `test-learner-001` at `pilot-site-001`, including evidence/proof/rubric/growth/portfolio/MiloOS learner-loop provenance.
+
 Stop if:
 
 - Release gate fails.
 - AI dependency/import/domain/egress policy fails.
 - Synthetic dry-run output drifts from source contracts without an intentional update.
+- Live synthetic apply cannot be read back from Firestore or does not map to the cutover account under test.
 
 ## Phase 3 - Rehearse Current-Worktree No-Traffic Deploys
 
@@ -186,6 +200,7 @@ Capture:
 - Browser and environment.
 - Per-role GO / NO-GO.
 - Screenshots or concise route notes for every role.
+- For learner dashboard readiness, record that `/en/learner/today` renders capability assessments, recent growth, active missions, and MiloOS support signals from live synthetic Firestore/Functions data without empty-state or index errors.
 
 Stop if:
 
@@ -310,6 +325,7 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [ ] Full release reproducibility gate passed.
 - [ ] AI internal-only gate passed.
 - [ ] Synthetic dry-run passed.
+- [ ] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
 - [ ] Current-worktree web/Flutter no-traffic revisions created and verified.
 - [ ] Current-worktree compliance operator deploy proof recorded.
 - [ ] Six-role browser cutover passed.

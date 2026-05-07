@@ -2,7 +2,7 @@
 
 Verdict: **NO-GO for blanket platform gold**.
 
-This signoff records the current evidence packet without converting bounded proof into a platform-wide gold claim. Scholesa has strong gold-candidate slices across the capability evidence chain, site ops proof, local operator release safety, Cloud Run no-traffic deploy rehearsal, and read-only Cloud Run release state, but the final operator cutover has not been executed and recorded.
+This signoff records the current evidence packet without converting bounded proof into a platform-wide gold claim. Scholesa has strong gold-candidate slices across the capability evidence chain, site ops proof, local operator release safety, Cloud Run no-traffic deploy rehearsal, live synthetic dashboard readiness, and read-only Cloud Run release state, but the full six-role operator cutover has not been executed and recorded.
 
 Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the required step-by-step runbook for converting this NO-GO packet into a GO packet.
 
@@ -18,6 +18,10 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 | Full release reproducibility gate | `./scripts/deploy.sh release-gate` | Passed |
 | AI internal-only policy | `npm run ai:internal-only:all` | Passed |
 | Synthetic data dry-run | `npm run seed:synthetic-data:dry-run` | Passed |
+| Live synthetic data import | `FIREBASE_PROJECT_ID=studio-3328096157-e3f79 node scripts/import_synthetic_data.js --mode starter --apply --batch-size 400` | Passed; merge-only gcloud OAuth import wrote canonical starter docs plus dashboard readiness state |
+| Learner dashboard Firestore indexes | `firebase deploy --only firestore:indexes --project studio-3328096157-e3f79` and exact `gcloud firestore indexes composite list` check | Passed; `capabilityGrowthEvents`, `portfolioItems`, and `missionAttempts` dashboard indexes READY |
+| MiloOS learner-loop backend contract | `cd functions && npm test -- --runTestsByPath src/bosRuntimeHonesty.test.ts src/bosRuntime.test.ts`, `npm run build`, `firebase deploy --only functions:bosGetLearnerLoopInsights` | Passed; callable returns support/opened/explain-back verification fields consumed by web |
+| Learner dashboard live smoke | `gold-rehearsal` `/en/learner/today` as `test-learner-001` / `pilot-site-001` | Passed; capability assessments, growth events, active mission, and MiloOS support snapshot render from live data |
 | Current-worktree no-traffic deploy rehearsal | `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web` and `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh compliance-operator` | Passed; rehearsal revisions created with 0% production traffic |
 | Tagged rehearsal smoke | `gold-rehearsal` Cloud Run tag URLs | Primary web `/` 200, primary web `/en/login` 200, Flutter root 200, compliance unauthenticated endpoints 403 |
 | Native-channel release scope | Explicitly deferred from this blanket platform packet | Deferred |
@@ -29,11 +33,13 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 - Local compliance runtime smoke verifies `/` 200, `/health` 200, and unauthenticated `/compliance/status` 401.
 - Local operator release proof verifies the cutover guide, no-traffic guards, compliance auth posture, and rollback rule without deploying.
 - Read-only Cloud Run release state probe verifies Cloud Run traffic has 100% serving revisions, optional exact revision expectations can be supplied for rehearsals/promotions, and unauthenticated compliance edge access returns 403.
-- Current-worktree no-traffic rehearsal created `scholesa-web-00041-zxw`, `empire-web-00073-9wk`, and `scholesa-compliance-00038-dt7` while keeping traffic pinned to `scholesa-web-00038-fvt`, `empire-web-00071-6mx`, and `scholesa-compliance-00037-bvx`.
+- Current-worktree no-traffic rehearsal created fixed primary web revision `scholesa-web-00042-2jl`, Flutter web revision `empire-web-00073-9wk`, and compliance revision `scholesa-compliance-00038-dt7` while keeping traffic pinned to `scholesa-web-00038-fvt`, `empire-web-00071-6mx`, and `scholesa-compliance-00037-bvx`.
+- Canonical live synthetic data now includes `syntheticMiloOSGoldStates/latest`, `syntheticPlatformEvidenceChainGoldStates/latest`, and `syntheticDashboardReadinessStates/latest`.
+- Learner dashboard proof for `test-learner-001` at `pilot-site-001` shows 3 capability assessments, 3 growth observations, verified MiloOS learner-loop signals, and one active mission backed by seeded evidence/proof/rubric/growth/portfolio records.
 
 ## Remaining NO-GO Conditions
 
-- Live six-role operator browser cutover has not been executed and recorded.
+- Full live six-role operator browser cutover has not been executed and recorded. The learner dashboard slice is recorded, but HQ, site, educator, guardian, and any included partner cutover proof remain outstanding.
 - Traffic promotion or rollback proof has not been executed and recorded for the rehearsed revisions.
 
 ## Steps Required To Convert This Signoff To GO

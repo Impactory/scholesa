@@ -205,11 +205,51 @@ describe('Renderers delegate to real evidence components', () => {
       'components', 'dashboards', 'MiloOSLearnerSupportSnapshot.tsx'
     );
     const insightsHelperSource = readSrcFile('lib', 'miloos', 'learnerLoopInsights.ts');
+    const firestoreIndexes = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), 'firestore.indexes.json'), 'utf8')
+    ) as { indexes?: Array<{ collectionGroup?: string; fields?: Array<{ fieldPath?: string; order?: string }> }> };
+    const hasCapabilityGrowthDashboardIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'capabilityGrowthEvents'
+        && fields[0]?.fieldPath === 'learnerId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'siteId'
+        && fields[1]?.order === 'ASCENDING'
+        && fields[2]?.fieldPath === 'createdAt'
+        && fields[2]?.order === 'DESCENDING';
+    }) === true;
+    const hasPortfolioDashboardIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'portfolioItems'
+        && fields[0]?.fieldPath === 'learnerId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'siteId'
+        && fields[1]?.order === 'ASCENDING'
+        && fields[2]?.fieldPath === 'createdAt'
+        && fields[2]?.order === 'DESCENDING';
+    }) === true;
+    const hasMissionAttemptRevisionIndex = firestoreIndexes.indexes?.some((index) => {
+      const fields = index.fields ?? [];
+      return index.collectionGroup === 'missionAttempts'
+        && fields[0]?.fieldPath === 'learnerId'
+        && fields[0]?.order === 'ASCENDING'
+        && fields[1]?.fieldPath === 'siteId'
+        && fields[1]?.order === 'ASCENDING'
+        && fields[2]?.fieldPath === 'status'
+        && fields[2]?.order === 'ASCENDING'
+        && fields[3]?.fieldPath === 'updatedAt'
+        && fields[3]?.order === 'DESCENDING';
+    }) === true;
     expect(registrySource).toContain("'/learner/today': LearnerTodayRenderer");
     expect(source).toContain('LearnerDashboardToday');
     expect(source).toContain('@/src/components/dashboards/LearnerDashboardToday');
     expect(dashboardSource).toContain('resolveActiveSiteId');
     expect(dashboardSource).toContain("where('siteId', '==', siteId)");
+    expect(dashboardSource).toContain('capabilityGrowthEventsCollection');
+    expect(dashboardSource).toContain("orderBy('createdAt', 'desc')");
+    expect(hasCapabilityGrowthDashboardIndex).toBe(true);
+    expect(hasPortfolioDashboardIndex).toBe(true);
+    expect(hasMissionAttemptRevisionIndex).toBe(true);
     expect(dashboardSource).toContain('MiloOSLearnerSupportSnapshot');
     expect(supportSnapshotSource).toContain('getMiloOSLearnerLoopInsights');
     expect(supportSnapshotSource).toContain('AICoachScreen');
@@ -980,7 +1020,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
-    expect(finalSignoffSource).toContain('Live six-role operator browser cutover has not been executed and recorded');
+    expect(finalSignoffSource).toContain('Full live six-role operator browser cutover has not been executed and recorded');
+    expect(finalSignoffSource).toContain('The learner dashboard slice is recorded');
     expect(finalSignoffSource).toContain('Traffic promotion or rollback proof has not been executed and recorded for the rehearsed revisions');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
