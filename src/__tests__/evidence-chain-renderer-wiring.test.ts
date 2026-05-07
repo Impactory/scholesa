@@ -1082,10 +1082,14 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('Passed; `sessionOccurrences`, `enrollments`, `evidenceRecords`, and `users` role-cutover indexes are READY');
     expect(finalSignoffSource).toContain('The live role sweep proves learner, educator, guardian, site, HQ, and partner web access on the rehearsal tag');
     expect(finalSignoffSource).toContain('MiloOS learner callable browser proof');
+    expect(finalSignoffSource).toContain('MiloOS typed input intelligence');
+    expect(finalSignoffSource).toContain('Logo source/render proof');
+    expect(finalSignoffSource).toContain('Fail-closed Firebase placeholder proof');
     expect(finalSignoffSource).toContain('scholesa-web-00045-pm9');
     expect(finalSignoffSource).toContain('genAiCoach` preflight accepts the `gold-rehearsal` origin');
     expect(finalSignoffSource).toContain('Traffic-pinning proof confirms `scholesa-web` production traffic remains 100% on `scholesa-web-00038-fvt`');
     expect(finalSignoffSource).toContain('The release owner has not explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion');
+    expect(finalSignoffSource).toContain('latest current-worktree documentation and MiloOS typed-input test changes have not been rehearsed as no-traffic Cloud Run revisions');
     expect(blanketGoldAchievementPlanSource).toContain('CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');

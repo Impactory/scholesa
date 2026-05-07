@@ -15,9 +15,13 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 | Source contracts | `npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts src/__tests__/evidence-chain-components.test.ts` | Passed, 343 tests |
 | Local operator release safety | `bash ./scripts/operator_release_proof.sh` | Passed |
 | Read-only Cloud Run release state | `bash ./scripts/cloud_run_release_state_probe.sh` | Passed |
-| Full release reproducibility gate | `./scripts/deploy.sh release-gate` | Passed |
+| Full release reproducibility gate | `./scripts/deploy.sh release-gate`; latest local log `/tmp/scholesa-release-gate-20260507-154309.log` | Passed; release gate stayed non-deploying and ended with `Release reproducibility gate passed` |
 | AI internal-only policy | `npm run ai:internal-only:all` | Passed |
-| Synthetic data dry-run | `npm run seed:synthetic-data:dry-run` | Passed |
+| Synthetic data dry-run | `npm run seed:synthetic-data:dry-run` | Passed; dry-run import `synthetic-import-2026-05-07T22-42-18-171Z`, mode `all`, packs `starter` and `full`, no Firestore writes |
+| MiloOS typed input intelligence | `npm --prefix functions run test -- --runInBand src/voiceSystem.test.ts` | Passed, 19 tests; typed learner questions receive evidence/prototype guidance while voice/unknown student input keeps strict confidence guardrails |
+| MiloOS source and browser proof | Focused Jest for MiloOS support/provenance plus `npx playwright test --config playwright.config.ts` across the MiloOS E2E specs | Passed; 5 focused source suites / 15 tests and 13 browser tests across learner, educator, guardian, site, mobile, keyboard, accessibility, and cross-role provenance |
+| Logo source/render proof | `src/__tests__/navigation-signout-availability.test.ts`, `src/__tests__/skills-first-honesty-entrypoints.test.ts`, and Playwright image inspection on `/en`, `/en/login`, `/en/register`, and protected learner navigation | Passed; rendered images load through `/logo/scholesa-logo-192.png` with nonzero natural dimensions on public entrypoints and authenticated navigation |
+| Fail-closed Firebase placeholder proof | Local browser boot without Firebase client env vars on port 3000 | Passed; browser runtime refused demo placeholders with `Missing required Firebase client env vars. Refusing to initialize the client SDK with demo placeholders.` |
 | Live synthetic data import | `FIREBASE_PROJECT_ID=studio-3328096157-e3f79 node scripts/import_synthetic_data.js --mode starter --apply --batch-size 400` | Passed; merge-only gcloud OAuth import wrote canonical starter docs plus dashboard readiness state |
 | Learner dashboard Firestore indexes | `firebase deploy --only firestore:indexes --project studio-3328096157-e3f79` and exact `gcloud firestore indexes composite list` check | Passed; `capabilityGrowthEvents`, `portfolioItems`, and `missionAttempts` dashboard indexes READY |
 | MiloOS learner-loop backend contract | `cd functions && npm test -- --runTestsByPath src/bosRuntimeHonesty.test.ts src/bosRuntime.test.ts`, `npm run build`, `firebase deploy --only functions:bosGetLearnerLoopInsights` | Passed; callable returns support/opened/explain-back verification fields consumed by web |
@@ -51,11 +55,15 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 - Site evidence-health shows Learner Coverage `100%`, Total Evidence `2`, Capability Mapped `50%`, Rubric Applied `50%`, and educator capture rows from live `pilot-site-001` evidence.
 - Educator quick observation save on `/en/educator/today` persisted a live non-portfolio observation without selecting a capability; Firestore readback confirmed the optional capability path stores no undefined fields.
 - MiloOS learner browser proof on `/en/learner/miloos` shows the floating assistant label no longer leaks raw `aiCoach.*` keys, the Scholesa logo link renders in protected navigation, the `genAiCoach` preflight accepts the `gold-rehearsal` origin, and the authenticated learner receives a support response with transcript, next steps, and explain-back prompt.
+- Current MiloOS typed input intelligence proof confirms typed learner questions can receive actionable evidence/prototype scaffolding without converting support into mastery, while voice and unknown student inputs continue to require strict confidence.
+- Current logo render proof confirms `/en`, `/en/login`, `/en/register`, and protected learner navigation render the canonical PNG logo through Next image optimization with loaded natural dimensions.
+- Current placeholder proof confirms real browser runtime fails closed without Firebase client env vars instead of initializing with demo placeholders; demo Firebase config remains limited to server/build/E2E harness mode.
 
 ## Remaining NO-GO Conditions
 
 - Production traffic promotion has not been executed.
 - The release owner has not explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion.
+- The latest current-worktree documentation and MiloOS typed-input test changes have not been rehearsed as no-traffic Cloud Run revisions; that live rehearsal requires explicit operator authorization.
 - Final GO source-contract update has not been made because this artifact must remain NO-GO until the promotion-or-pinning decision boundary is closed.
 
 ## Steps Required To Convert This Signoff To GO

@@ -1,7 +1,54 @@
 import { __voiceSystemInternals } from './voiceSystem';
 
-const { resolveClientOrchestrationState, resolveClientMvlContext, resolveRuntimeProjectId } =
-  __voiceSystemInternals;
+const {
+  buildTypedStudentLocalResponse,
+  requiresStrictStudentConfidence,
+  resolveClientOrchestrationState,
+  resolveClientMvlContext,
+  resolveRuntimeProjectId,
+  resolveVoiceInputModality,
+} = __voiceSystemInternals;
+
+const prototypeUnderstanding = {
+  intent: 'hint_request' as const,
+  complexity: 'medium' as const,
+  needsScaffold: true,
+  emotionalState: 'curious' as const,
+  confidence: 0.88,
+  responseMode: 'hint' as const,
+  topicTags: ['prototype'],
+};
+
+describe('MiloOS typed input intelligence', () => {
+  it('detects typed, keyboard, and voice input sources', () => {
+    expect(resolveVoiceInputModality({ inputModality: 'typed' })).toBe('typed');
+    expect(resolveVoiceInputModality({ context: { source: 'keyboard-entry' } })).toBe('typed');
+    expect(resolveVoiceInputModality({ context: { modality: 'microphone' } })).toBe('voice');
+    expect(resolveVoiceInputModality({})).toBe('unknown');
+  });
+
+  it('keeps strict confidence for voice but allows typed learner support to stay useful', () => {
+    expect(requiresStrictStudentConfidence('student', 'voice')).toBe(true);
+    expect(requiresStrictStudentConfidence('student', 'unknown')).toBe(true);
+    expect(requiresStrictStudentConfidence('student', 'typed')).toBe(false);
+    expect(requiresStrictStudentConfidence('teacher', 'voice')).toBe(false);
+  });
+
+  it('gives typed learners actionable evidence guidance without claiming mastery', () => {
+    const response = buildTypedStudentLocalResponse(
+      'en',
+      'focus_nudge',
+      prototypeUnderstanding,
+      'How can I improve this prototype iteration and add portfolio evidence?'
+    );
+
+    expect(response).toContain('Pick one change between your first version and this version');
+    expect(response).toContain('capture the proof');
+    expect(response).toContain('what you will test next');
+    expect(response).toContain('Keep the work yours');
+    expect(response).not.toMatch(/mastery|grade|score/i);
+  });
+});
 
 describe('resolveRuntimeProjectId', () => {
   const originalEnv = { ...process.env };
