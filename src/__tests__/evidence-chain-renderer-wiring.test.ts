@@ -1026,6 +1026,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'scripts', 'operator_release_proof.sh'),
       'utf8'
     );
+    const proofVerificationIndexReadinessSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'proof_verification_index_readiness.js'),
+      'utf8'
+    );
     const deployScriptSource = fs.readFileSync(
       path.join(process.cwd(), 'scripts', 'deploy.sh'),
       'utf8'
@@ -1094,7 +1098,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('Role-cutover Firestore index contracts');
     expect(finalSignoffSource).toContain('Passed; `sessionOccurrences`, `enrollments`, `evidenceRecords`, and `users` role-cutover indexes are READY');
     expect(finalSignoffSource).toContain('Proof/verification Firestore indexes');
+    expect(finalSignoffSource).toContain('May 8 read-only `node scripts/proof_verification_index_readiness.js` after reauth');
     expect(finalSignoffSource).toContain('all READY (`READY=6`, `MISSING=0`)');
+    expect(finalSignoffSource).toContain('May 8 post-reauth read-only checks passed');
     expect(finalSignoffSource).toContain('The live role sweep proves learner, educator, guardian, site, HQ, and partner web access on the rehearsal tag');
     expect(finalSignoffSource).toContain('MiloOS learner callable browser proof');
     expect(finalSignoffSource).toContain('MiloOS typed input intelligence');
@@ -1116,6 +1122,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('Proof-of-learning verification queue hardening');
     expect(blanketGoldAchievementPlanSource).toContain('Theme mode switch presentation');
     expect(blanketGoldAchievementPlanSource).toContain('READY=6');
+    expect(blanketGoldAchievementPlanSource).toContain('node scripts/proof_verification_index_readiness.js');
+    expect(blanketGoldAchievementPlanSource).toContain('May 8 post-reauth read-only `node scripts/proof_verification_index_readiness.js` check confirmed the six proof/verification index shapes are READY');
+    expect(proofVerificationIndexReadinessSource).toContain('proofOfLearningBundles');
+    expect(proofVerificationIndexReadinessSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS');
     expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');
     expect(blanketGoldAchievementPlanSource).toContain('PLAYWRIGHT_BASE_URL="https://gold-rehearsal---<web-service-url>"');
     expect(finalSignoffSource).toContain('--grep "public entrypoints"');

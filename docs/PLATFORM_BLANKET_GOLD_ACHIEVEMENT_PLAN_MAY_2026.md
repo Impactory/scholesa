@@ -22,7 +22,7 @@ Current late-cycle changes that must be included in the next deploy proof:
 
 - Proof-of-learning verification queue hardening: educator proof review now uses the status-backed portfolio item query and the Firestore manifest includes the related proof bundle indexes.
 - Theme mode switch presentation: the public/protected theme selector must render as icon-only controls for system, light, and dark mode. The May 7 browser screenshot that still shows visible `System`, `Light`, and `Dark` text is a NO-GO runtime artifact for the currently viewed bundle until a fresh no-traffic rehearsal screenshot proves icon-only rendering.
-- Firestore index posture: the May 7 read-only `gcloud firestore indexes composite list` check confirmed the six proof/verification index shapes are READY (`READY=6`, `MISSING=0`). Re-run the same readiness check before final GO and stop on any missing or building release-critical shape.
+- Firestore index posture: the May 8 post-reauth read-only `node scripts/proof_verification_index_readiness.js` check confirmed the six proof/verification index shapes are READY (`READY=6`, `MISSING=0`). Re-run the same readiness check before final GO and stop on any missing or building release-critical shape.
 - Worktree hygiene: `.firebase/logs/vsce-debug.log` is generated tooling noise and must be excluded from the release artifact unless an operator intentionally records it.
 
 Deployment continuation order:
@@ -91,6 +91,7 @@ npm run typecheck
 npm run lint
 npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts
 npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts src/__tests__/firestore-index-coverage.test.ts src/__tests__/navigation-signout-availability.test.ts
+node scripts/proof_verification_index_readiness.js
 bash ./scripts/operator_release_proof.sh
 bash ./scripts/cloud_run_release_state_probe.sh
 npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts
@@ -146,7 +147,7 @@ Capture:
 - Dashboard readiness docs for `test-learner-001` at `pilot-site-001`, including evidence/proof/rubric/growth/portfolio/MiloOS learner-loop provenance.
 - Pilot role-readiness seed counts: 6 users, 1 pilot site, 1 session, 1 session occurrence, 1 enrollment, 1 attendance record, and 1 guardian link.
 - READY state for the educator/site cutover index shapes: `sessionOccurrences(siteId, educatorId, date)`, `enrollments(sessionId, status)`, `evidenceRecords(siteId, createdAt)`, `evidenceRecords(siteId, educatorId, createdAt)`, and `users(siteIds array-contains, role)`.
-- READY state for proof/verification index shapes used by the included screens: `portfolioItems(siteId, verificationStatus, createdAt)`, `portfolioItems(siteId, createdAt)`, `proofOfLearningBundles(siteId, verificationStatus, createdAt)`, `proofOfLearningBundles(verificationStatus, createdAt)`, `proofOfLearningBundles(learnerId, createdAt)`, and `proofOfLearningBundles(learnerId, updatedAt)`. The latest May 7 read-only check recorded all six as READY; re-check immediately before final signoff.
+- READY state for proof/verification index shapes used by the included screens: `portfolioItems(siteId, verificationStatus, createdAt)`, `portfolioItems(siteId, createdAt)`, `proofOfLearningBundles(siteId, verificationStatus, createdAt)`, `proofOfLearningBundles(verificationStatus, createdAt)`, `proofOfLearningBundles(learnerId, createdAt)`, and `proofOfLearningBundles(learnerId, updatedAt)`. The latest May 8 post-reauth `node scripts/proof_verification_index_readiness.js` check recorded all six as READY; re-check immediately before final signoff.
 
 Stop if:
 
