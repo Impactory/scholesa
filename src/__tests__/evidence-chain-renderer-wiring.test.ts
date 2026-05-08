@@ -1126,6 +1126,12 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('gold-theme-proof-20260508-144726');
     expect(finalSignoffSource).toContain('Educator proof-review / verification rehearsal proof');
     expect(finalSignoffSource).toContain('do not show `Failed to load verification queue` or Firestore index errors');
+    expect(finalSignoffSource).toContain('Partner web evidence-facing proof');
+    expect(finalSignoffSource).toContain('scholesa-web-00050-fs9');
+    expect(finalSignoffSource).toContain('561c4e87-70af-4d3e-bed7-3f1f10afd2b4');
+    expect(finalSignoffSource).toContain('gold-partner-proof-20260508-152550');
+    expect(finalSignoffSource).toContain('contract `W3rtDqJ7GJqt2tAjQD3q` and deliverable `6C1WhwTodWrlkSjZnZGf`');
+    expect(finalSignoffSource).toContain('https://example.com/scholesa-gold-partner-evidence');
     expect(finalSignoffSource).toContain('Fail-closed Firebase placeholder proof');
     expect(finalSignoffSource).toContain('0346e4be-94f6-45c9-84d7-8d4cd17f872f');
     expect(finalSignoffSource).toContain('scholesa-web-00045-pm9');
@@ -1134,8 +1140,11 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('The release owner explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion');
     expect(finalSignoffSource).toContain('Current remote public theme proof against `scholesa-web-00049-rmm` passed');
     expect(finalSignoffSource).toContain('authenticated educator browser proof for `/en/educator/proof-review` plus `/en/educator/verification` rendered `Proof-of-Learning Verification`');
+    expect(finalSignoffSource).toContain('partner evidence-facing web workflows');
+    expect(finalSignoffSource).toContain('must not be used to claim native-channel app-store Gold');
     expect(blanketGoldAchievementPlanSource).toContain('Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**');
     expect(blanketGoldAchievementPlanSource).toContain('None for the included web/Cloud Run scope');
+    expect(blanketGoldAchievementPlanSource).toContain('Partner scope | Included for partner web evidence-facing workflows');
     expect(blanketGoldAchievementPlanSource).toContain('May 7 Continuation Delta - Broad Gold Deployment');
     expect(blanketGoldAchievementPlanSource).toContain('Proof-of-learning verification queue hardening');
     expect(blanketGoldAchievementPlanSource).toContain('Theme mode switch presentation');
@@ -1146,6 +1155,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('[x] Current-worktree proof queue fix and icon-only theme switch included in a no-traffic web revision.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Theme mode switch renders icon-only controls on public and protected shells.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.');
     expect(proofVerificationIndexReadinessSource).toContain('proofOfLearningBundles');
     expect(proofVerificationIndexReadinessSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS');
     expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');
