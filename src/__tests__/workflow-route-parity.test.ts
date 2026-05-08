@@ -353,6 +353,57 @@ describe('workflow route parity', () => {
     }));
   });
 
+  it('loads partner deliverables through partner-owned contract and deliverable queries', async () => {
+    getDocsMock
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'contract-1',
+          data: () => ({
+            title: 'Contract One',
+            partnerId: 'partner-1',
+            updatedAt: '2026-03-18T01:00:00.000Z',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'contract-1',
+          data: () => ({
+            title: 'Contract One',
+            partnerId: 'partner-1',
+            siteId: 'site-1',
+            updatedAt: '2026-03-18T01:00:00.000Z',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'deliverable-1',
+          data: () => ({
+            partnerId: 'partner-1',
+            contractId: 'contract-1',
+            title: 'Launch checklist',
+            status: 'submitted',
+            submittedAt: '2026-03-18T02:00:00.000Z',
+          }),
+        }],
+      });
+
+    const result = await loadWorkflowRecords(makeContext('/partner/deliverables', {
+      role: 'partner',
+      uid: 'partner-1',
+      profile: {
+        role: 'partner',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(result.records).toHaveLength(1);
+    expect(whereMock).toHaveBeenCalledWith('partnerId', '==', 'partner-1');
+    expect(whereMock).toHaveBeenCalledWith('contractId', 'in', ['contract-1']);
+  });
+
   it('creates partner deliverables in the live collection with submitted status', async () => {
     await createWorkflowRecord(makeContext('/partner/deliverables', {
       role: 'partner',

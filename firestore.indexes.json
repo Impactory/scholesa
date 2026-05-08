@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "partnerDeliverables",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "partnerId", "order": "ASCENDING" },
+        { "fieldPath": "contractId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "telemetryEvents",
       "queryScope": "COLLECTION",
       "fields": [

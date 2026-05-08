@@ -2,7 +2,7 @@
 
 Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**.
 
-This is the operator-facing plan and historical checklist for the current scoped Blanket Gold signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. The May 8 release-owner decision accepted traffic-pinning proof as the final release control, so the included web/Cloud Run scope is now GO while native-channel and partner scope remain deferred.
+This is the operator-facing plan and historical checklist for the current scoped Blanket Gold signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. The May 8 release-owner decision accepted traffic-pinning proof as the final release control, so the included web/Cloud Run scope is now GO while native-channel scope remains deferred.
 
 ## Scope And Boundaries
 
@@ -10,9 +10,9 @@ This is the operator-facing plan and historical checklist for the current scoped
 | --- | --- |
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
-| Partner scope | Deferred unless a release owner explicitly includes partner evidence-facing outputs and runs partner permission/evidence proof. |
-| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, and final source-contract validation are recorded in the final signoff. |
-| Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
+| Partner scope | Included for partner web evidence-facing workflows after the May 8 partner route sweep, partner integration/deliverable index proof, browser-created contract, browser-created evidence URL deliverable, and Firestore readback. |
+| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, partner web evidence-facing proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, and final source-contract validation are recorded in the final signoff. |
+| Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native-channel app-store scope must remain outside the claim. |
 
 ## May 7 Continuation Delta - Broad Gold Deployment
 
@@ -72,7 +72,7 @@ Capture:
 - Commit SHA.
 - Clean worktree or exact intentional diffs.
 - Explicit native-channel deferral.
-- Partner inclusion decision.
+- Partner inclusion decision and evidence-facing proof result.
 
 Stop if:
 
@@ -383,7 +383,7 @@ Stop if:
 Blanket platform Gold for the included web/Cloud Run scope is achieved only when every item is checked:
 
 - [x] Scope frozen; native-channel app-store operations deferred or separately proven.
-- [x] Partner scope deferred or separately proven.
+- [x] Partner scope included and separately proven.
 - [x] Clean commit SHA recorded.
 - [x] Non-mutating gold gate passed.
 - [x] Full release reproducibility gate passed.
@@ -401,6 +401,7 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [x] Post-promotion or post-pinning smoke passed.
 - [x] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.
 - [x] Theme mode switch renders icon-only controls on public and protected shells.
+- [x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.
 - [x] Final signoff converted from NO-GO to GO with evidence.
 - [x] Source-contract tests pass after signoff update.
 
@@ -414,4 +415,4 @@ Do not claim blanket Gold if any of these remain true:
 - Any included report/passport/portfolio output lacks evidence provenance.
 - Any client path writes mastery/growth directly.
 - Any completion, attendance, support, XP, or engagement signal is presented as mastery.
-- Any deferred native or partner scope is accidentally included in the claim.
+- Any deferred native scope is accidentally included in the claim.

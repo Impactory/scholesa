@@ -597,7 +597,17 @@ deploy_flutter_ios() {
 deploy_flutter_macos() {
   ensure_flutter_gate
   log "Building Flutter macOS (release)..."
-  (cd "$FLUTTER_APP" && flutter_cmd build macos --release --no-tree-shake-icons)
+  # Ad-hoc sign + disable ODR so local builds work without a Mac Development cert
+  # for team CEUD8LB243. Distribution still requires a Developer ID cert + notarization.
+  (
+    cd "$FLUTTER_APP" && \
+    FLUTTER_XCODE_CODE_SIGN_IDENTITY="${FLUTTER_XCODE_CODE_SIGN_IDENTITY:--}" \
+    FLUTTER_XCODE_CODE_SIGNING_REQUIRED="${FLUTTER_XCODE_CODE_SIGNING_REQUIRED:-NO}" \
+    FLUTTER_XCODE_CODE_SIGNING_ALLOWED="${FLUTTER_XCODE_CODE_SIGNING_ALLOWED:-NO}" \
+    FLUTTER_XCODE_DEVELOPMENT_TEAM="${FLUTTER_XCODE_DEVELOPMENT_TEAM-}" \
+    FLUTTER_XCODE_ENABLE_ON_DEMAND_RESOURCES="${FLUTTER_XCODE_ENABLE_ON_DEMAND_RESOURCES:-NO}" \
+    flutter_cmd build macos --release --no-tree-shake-icons
+  )
   log "macOS build complete. Sign + notarize before distribution."
 }
 

@@ -1559,6 +1559,7 @@ async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<Work
       const deliverableSnap = await getDocs(
         query(
           collection(firestore, 'partnerDeliverables'),
+          where('partnerId', '==', ctx.uid),
           where('contractId', 'in', chunk),
           limit(50),
         ),
