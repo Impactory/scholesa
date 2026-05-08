@@ -1,10 +1,10 @@
 # Platform Gold Readiness Final Signoff - May 2026
 
-Verdict: **NO-GO for blanket platform gold**.
+Verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**.
 
-This signoff records the current evidence packet without converting bounded proof into a platform-wide gold claim. Scholesa has strong gold-candidate slices across the capability evidence chain, site ops proof, local operator release safety, Cloud Run no-traffic deploy rehearsal, live synthetic dashboard readiness, pilot-account role access, six-role web browser cutover, educator quick-capture persistence, MiloOS learner callable proof, read-only Cloud Run release state, traffic-pinning proof, and post-pinning smoke. Production traffic was not promoted, so blanket GO still requires either an explicit promotion or an explicit release-owner decision that the recorded traffic-pinning proof is the final release control.
+This signoff records the current evidence packet and converts the included web/Cloud Run scope to Gold after the release owner accepted recorded traffic-pinning proof as the final release control. Scholesa has live evidence across the capability evidence chain, site ops proof, local operator release safety, Cloud Run no-traffic deploy rehearsal, live synthetic dashboard readiness, pilot-account role access, six-role web browser cutover, educator quick-capture persistence, MiloOS learner callable proof, read-only Cloud Run release state, traffic-pinning proof, post-pinning smoke, current theme runtime proof, and authenticated proof-review / verification route proof. Production traffic was not promoted; the accepted release control is explicit traffic pinning with no production traffic movement.
 
-Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the required step-by-step runbook for converting this NO-GO packet into a GO packet.
+Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` remains the operator runbook and historical checklist for this GO packet.
 
 ## Evidence Recorded
 
@@ -24,6 +24,8 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 | Logo source/render proof | `src/__tests__/navigation-signout-availability.test.ts`, `src/__tests__/skills-first-honesty-entrypoints.test.ts`, and Playwright image inspection on `/en`, `/en/login`, `/en/register`, and protected learner navigation | Passed; rendered images load through `/logo/scholesa-logo-192.png` with nonzero natural dimensions on public entrypoints and authenticated navigation |
 | Theme icon-only source/browser proof | `src/__tests__/navigation-signout-availability.test.ts` and `npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts` | Passed locally; public entrypoints and protected navigation render system, light, and dark controls as accessible icon-only buttons with no visible `System`, `Light`, or `Dark` text in the switch |
 | Theme rehearsal-mode browser proof | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3010 npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"` | Passed against a separately started local server; this proves the same external-base-url path operators must use against the no-traffic `gold-rehearsal` Cloud Run URL without Playwright starting a local web server |
+| Prior stale `gold-rehearsal` theme runtime proof | `PLAYWRIGHT_BASE_URL=https://gold-rehearsal---scholesa-web-gu5vyrn2tq-uc.a.run.app npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"` against `scholesa-web-00047-7px` | Failed as expected for the stale tagged runtime; Playwright received visible text `SystemLightDark`, matching the screenshot and proving source proof alone was insufficient |
+| Current `gold-rehearsal` theme runtime proof | `PLAYWRIGHT_BASE_URL=https://gold-rehearsal---scholesa-web-gu5vyrn2tq-uc.a.run.app npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"` against `scholesa-web-00049-rmm` | Passed; no-traffic primary web rehearsal `scholesa-web-00049-rmm` from Cloud Build `bebf1e7d-ff33-4339-8df6-c217ce74c400` / image `gcr.io/studio-3328096157-e3f79/scholesa:gold-theme-proof-20260508-144726` renders public theme controls as icon-only buttons with no visible `System`, `Light`, or `Dark` switch text |
 | Fail-closed Firebase placeholder proof | Local browser boot without Firebase client env vars on port 3000 | Passed; browser runtime refused demo placeholders with `Missing required Firebase client env vars. Refusing to initialize the client SDK with demo placeholders.` |
 | Live synthetic data import | `FIREBASE_PROJECT_ID=studio-3328096157-e3f79 node scripts/import_synthetic_data.js --mode starter --apply --batch-size 400` | Passed; merge-only gcloud OAuth import wrote canonical starter docs plus dashboard readiness state |
 | Learner dashboard Firestore indexes | `firebase deploy --only firestore:indexes --project studio-3328096157-e3f79` and exact `gcloud firestore indexes composite list` check | Passed; `capabilityGrowthEvents`, `portfolioItems`, and `missionAttempts` dashboard indexes READY |
@@ -34,15 +36,21 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 | Educator quick-capture live persistence | Browser save on `gold-rehearsal` `/en/educator/today`, followed by Firestore REST readback of `evidenceRecords` for `pilot-site-001` | Passed; live record `rGNkJv1pn5SX37o8NMC0` persisted with `status: captured`, `capabilityId: null`, and `capabilityMapped: false` for the non-portfolio observation path |
 | Role-cutover Firestore index contracts | `firestore.indexes.json`, `firebase deploy --only firestore:indexes --project studio-3328096157-e3f79`, and exact `gcloud firestore indexes composite list` check | Passed; `sessionOccurrences`, `enrollments`, `evidenceRecords`, and `users` role-cutover indexes are READY, including `evidenceRecords(siteId ASC, createdAt ASC)` for site evidence-health |
 | Proof/verification Firestore indexes | May 8 read-only `node scripts/proof_verification_index_readiness.js` after reauth | Passed; `portfolioItems(siteId, verificationStatus, createdAt)`, `portfolioItems(siteId, createdAt)`, `proofOfLearningBundles(siteId, verificationStatus, createdAt)`, `proofOfLearningBundles(verificationStatus, createdAt)`, `proofOfLearningBundles(learnerId, createdAt)`, and `proofOfLearningBundles(learnerId, updatedAt)` all READY (`READY=6`, `MISSING=0`) |
+| Educator proof-review / verification rehearsal proof | Authenticated browser check on `gold-rehearsal` as `educator@scholesa.dev` / `Test123!` for `/en/educator/proof-review` and `/en/educator/verification` | Passed against `scholesa-web-00049-rmm`; both routes render `Proof-of-Learning Verification`, show the empty queue state, and do not show `Failed to load verification queue` or Firestore index errors |
 | Synthetic role-readiness dry-run | `node scripts/import_synthetic_data.js --mode starter --dry-run` | Passed locally; manifest includes 6 pilot role users, 1 pilot site, 1 session, 1 occurrence, 1 guardian link, and 1 attendance record for cutover dashboard readiness |
 | Current-worktree no-traffic deploy rehearsal | `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web`, `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh compliance-operator`, `GCP_PROJECT_ID=studio-3328096157-e3f79 CLOUD_RUN_NO_TRAFFIC=1 IMAGE_TAG=gold-rehearsal-20260507-miloos-root-locale-fix bash ./scripts/deploy.sh primary-web`, and manual `gcloud run services update-traffic --update-tags gold-rehearsal=scholesa-web-00045-pm9` before the script hardening | Passed; web MiloOS/root-locale fix deployed as rehearsal revision `scholesa-web-00045-pm9` with 0% production traffic, and `gold-rehearsal` tag points to that revision |
+| Current-worktree theme/proof queue no-traffic web rehearsal | `GCP_PROJECT_ID=studio-3328096157-e3f79 GCP_REGION=us-central1 CLOUD_RUN_NO_TRAFFIC=1 CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal IMAGE_TAG=gold-theme-proof-20260508-144726 ./scripts/deploy.sh primary-web` followed by `node scripts/cloud_run_rehearsal_urls.js` | Passed; `gold-rehearsal` now points to `scholesa-web-00049-rmm` at `https://gold-rehearsal---scholesa-web-gu5vyrn2tq-uc.a.run.app`, while production traffic remains 100% on `scholesa-web-00048-s92` |
 | Tagged rehearsal smoke | `gold-rehearsal` Cloud Run tag URLs | Primary web `/` 200, primary web `/en/login` 200, Flutter root 200, compliance unauthenticated endpoints 403 |
 | Traffic-pinning proof | `EXPECTED_WEB_REHEARSAL_REVISION=scholesa-web-00045-pm9 EXPECTED_WEB_TRAFFIC_REVISION=scholesa-web-00038-fvt EXPECTED_FLUTTER_REHEARSAL_REVISION=empire-web-00073-9wk EXPECTED_FLUTTER_TRAFFIC_REVISION=empire-web-00071-6mx EXPECTED_COMPLIANCE_REHEARSAL_REVISION=scholesa-compliance-00038-dt7 EXPECTED_COMPLIANCE_TRAFFIC_REVISION=scholesa-compliance-00037-bvx bash ./scripts/cloud_run_release_state_probe.sh` | Passed; production traffic remains pinned to the previous serving revisions while rehearsal tags point to the newer candidate revisions, and unauthenticated compliance edge endpoints return 403 |
 | Post-pinning smoke | Curl smoke of production and `gold-rehearsal` URLs for primary web, Flutter web, and compliance | Passed; web prod/root/login 200, web rehearsal/root/login 200, Flutter prod/rehearsal root 200, compliance prod/rehearsal root/health/status 403 |
 | Native-channel release scope | Explicitly deferred from this blanket platform packet | Deferred |
 | Current local validation | `node --check scripts/import_synthetic_data.js`, `git diff --check`, focused Jest, full `npm test`, `npm run typecheck`, `npm run lint`, and Cloud Build `npm run build` | Passed; full Jest: 39 suites / 545 tests |
+| Final signoff validation | Commit `9ea389cf`; `npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts`; `npm run typecheck`; `npm run lint`; `git diff --check -- docs/PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md src/__tests__/evidence-chain-renderer-wiring.test.ts`; `node scripts/proof_verification_index_readiness.js`; `bash ./scripts/cloud_run_release_state_probe.sh` | Passed; source-contract signoff test `192` tests, TypeScript and ESLint passed, proof/verification indexes remain `READY=6` / `MISSING=0`, and Cloud Run release state probe passed |
 
 ## Operator Proof Summary
+
+- Final release-control decision: release owner accepted traffic-pinning proof as the final release control on May 8, 2026. No production traffic promotion was executed.
+- Final commit recorded for this evidence packet: `9ea389cf`.
 
 - `/site/ops` can create and resolve a site-scoped operator event with refresh persistence and `site_ops.event_resolved` audit proof.
 - Local compliance runtime smoke verifies `/` 200, `/health` 200, and unauthenticated `/compliance/status` 401.
@@ -64,26 +72,21 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 - Current MiloOS typed input intelligence proof confirms typed learner questions can receive actionable evidence/prototype scaffolding without converting support into mastery, while voice and unknown student inputs continue to require strict confidence.
 - Current logo render proof confirms `/en`, `/en/login`, `/en/register`, and protected learner navigation render the canonical PNG logo through Next image optimization with loaded natural dimensions.
 - Current placeholder proof confirms real browser runtime fails closed without Firebase client env vars instead of initializing with demo placeholders; demo Firebase config remains limited to server/build/E2E harness mode.
+- Prior `gold-rehearsal` theme proof against `scholesa-web-00047-7px` failed with visible `SystemLightDark`, confirming the tagged web runtime was stale for the icon-only theme fix even though local source/browser proof passed.
+- Current theme/proof queue web rehearsal created primary web revision `scholesa-web-00049-rmm` from Cloud Build `bebf1e7d-ff33-4339-8df6-c217ce74c400` / image `gold-theme-proof-20260508-144726`; `gold-rehearsal` now points to that revision while production traffic remains 100% on `scholesa-web-00048-s92`.
+- Current remote public theme proof against `scholesa-web-00049-rmm` passed with `1 passed (6.7s)`, and authenticated educator browser proof for `/en/educator/proof-review` plus `/en/educator/verification` rendered `Proof-of-Learning Verification` with no queue or index error text.
 
-## Remaining NO-GO Conditions
+## Release Controls Closed
 
-- Production traffic promotion has not been executed.
-- The release owner has not explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion.
-- The latest current-worktree proof verification queue and icon-only theme switch changes have not been rehearsed as a no-traffic Cloud Run web revision; that live rehearsal requires explicit operator authorization.
-- The May 7 browser screenshot still shows visible `System`, `Light`, and `Dark` labels in the theme switch, so the currently viewed runtime bundle cannot be accepted as Gold evidence even though the source-level icon-only change exists locally.
-- Final GO source-contract update has not been made because this artifact must remain NO-GO until the promotion-or-pinning decision boundary is closed.
+- Production traffic promotion was intentionally not executed.
+- The release owner explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion.
+- Final source-contract validation passed after this GO signoff update.
 
-## Steps Required To Convert This Signoff To GO
+## Included Scope
 
-1. Complete every phase in `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md`.
-2. Attach current-worktree no-traffic web, Flutter web, and compliance deploy evidence.
-3. Verify proof-review queue loading and icon-only theme switch rendering on the rehearsed web revision, with fresh browser proof that no visible `System`, `Light`, or `Dark` label text remains inside the switch.
-4. Resolve the tagged web rehearsal URL with `node scripts/cloud_run_rehearsal_urls.js`, then run `npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts` against the current worktree and repeat the public icon-only check against the rehearsed Cloud Run URL with `PLAYWRIGHT_BASE_URL="<scholesa-web REHEARSAL_URL>" npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"`.
-5. Re-check all release-critical Firestore indexes are READY immediately before the final release-control decision.
-6. Either authorize production traffic promotion for the rehearsed revisions or explicitly accept the recorded traffic-pinning proof as the final release-control substitute.
-7. If production traffic is promoted, re-run the post-promotion smoke across web, Flutter web, and compliance endpoints.
-8. Re-run source-contract gates after the final signoff wording update.
-9. Replace the NO-GO verdict with GO only for the included web/Cloud Run scope, preserving native-channel and partner deferrals unless separately proven.
+- Web app on Cloud Run and Firebase-backed web workflows included in this evidence packet.
+- Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces, and role-gated web access are included to the extent proven above.
+- Native-channel app-store release operations and partner-facing Gold claims remain outside this signoff unless separately proven.
 
 ## Explicit Deferrals
 
@@ -91,4 +94,4 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 
 ## Boundary
 
-This artifact supports a **gold-candidate** readiness packet for the proven slices above. It must not be used to describe Scholesa as blanket platform gold-ready until the remaining NO-GO conditions are closed with live operator evidence and any future native-channel inclusion is separately proven.
+This artifact supports **Gold for the included web/Cloud Run scope** above. It must not be used to claim native-channel app-store Gold or partner-facing Gold unless those deferred scopes are separately proven with live operator evidence.

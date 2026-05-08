@@ -1,8 +1,8 @@
 # Platform Blanket Gold Achievement Plan - May 2026
 
-Current verdict: **NO-GO for blanket platform gold**.
+Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**.
 
-This is the operator-facing plan for turning the current gold-candidate packet into a blanket platform Gold signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. Do not convert the final signoff to GO until every required step below has current-worktree evidence.
+This is the operator-facing plan and historical checklist for the current scoped Blanket Gold signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. The May 8 release-owner decision accepted traffic-pinning proof as the final release control, so the included web/Cloud Run scope is now GO while native-channel and partner scope remain deferred.
 
 ## Scope And Boundaries
 
@@ -11,7 +11,7 @@ This is the operator-facing plan for turning the current gold-candidate packet i
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Deferred unless a release owner explicitly includes partner evidence-facing outputs and runs partner permission/evidence proof. |
-| Current hard blockers | Release-owner decision to either promote traffic or explicitly accept recorded traffic-pinning as the final release control; final GO source-contract update. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, traffic-pinning proof, and post-pinning smoke are now recorded in the final signoff. |
+| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, and final source-contract validation are recorded in the final signoff. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
 
 ## May 7 Continuation Delta - Broad Gold Deployment
@@ -21,7 +21,7 @@ This delta is the current broad deployment plan from the latest worktree. It doe
 Current late-cycle changes that must be included in the next deploy proof:
 
 - Proof-of-learning verification queue hardening: educator proof review now uses the status-backed portfolio item query and the Firestore manifest includes the related proof bundle indexes.
-- Theme mode switch presentation: the public/protected theme selector must render as icon-only controls for system, light, and dark mode. The May 7 browser screenshot that still shows visible `System`, `Light`, and `Dark` text is a NO-GO runtime artifact for the currently viewed bundle until a fresh no-traffic rehearsal screenshot proves icon-only rendering.
+- Theme mode switch presentation: the public/protected theme selector must render as icon-only controls for system, light, and dark mode. The stale `scholesa-web-00047-7px` rehearsal matched the May 7 screenshot and failed with visible `SystemLightDark`; the current `scholesa-web-00049-rmm` no-traffic rehearsal passed the remote public theme proof.
 - Firestore index posture: the May 8 post-reauth read-only `node scripts/proof_verification_index_readiness.js` check confirmed the six proof/verification index shapes are READY (`READY=6`, `MISSING=0`). Re-run the same readiness check before final GO and stop on any missing or building release-critical shape.
 - Worktree hygiene: `.firebase/logs/vsce-debug.log` is generated tooling noise and must be excluded from the release artifact unless an operator intentionally records it.
 
@@ -31,9 +31,9 @@ Deployment continuation order:
 2. Re-run focused verification for the proof queue, Firestore index coverage, theme icon controls, evidence-chain contracts, and navigation/logo contracts.
 3. Re-run broad non-mutating local gates.
 4. Verify Firebase index readiness for all release-critical proof/verification, dashboard, role-cutover, and evidence-chain query shapes.
-5. Create a new current-worktree no-traffic web revision that includes the proof queue and icon-only theme switch changes.
+5. Confirm the current `gold-rehearsal` no-traffic web revision remains `scholesa-web-00049-rmm` or create a newer current-worktree no-traffic web revision if additional web changes land.
 6. Smoke the tagged rehearsal URL before any traffic movement.
-7. Run the six-role browser sweep against the rehearsal URL, with explicit checks for proof-review queue loading and icon-only theme controls. Capture a screenshot or browser accessibility note proving `System`, `Light`, and `Dark` are available only through `aria-label`/`title`, not as visible text inside the switch.
+7. Preserve the May 8 authenticated browser note: `/en/educator/proof-review` and `/en/educator/verification` render `Proof-of-Learning Verification` without `Failed to load verification queue`, and the theme switch exposes `System`, `Light`, and `Dark` only through `aria-label`/`title`, not visible text.
 8. Ask the release owner to choose exactly one final control: traffic promotion, rollback drill, or documented traffic-pinning acceptance.
 9. Convert the final signoff to GO only after the chosen control is recorded and source-contract gates pass.
 
@@ -382,27 +382,27 @@ Stop if:
 
 Blanket platform Gold for the included web/Cloud Run scope is achieved only when every item is checked:
 
-- [ ] Scope frozen; native-channel app-store operations deferred or separately proven.
-- [ ] Partner scope deferred or separately proven.
-- [ ] Clean commit SHA recorded.
-- [ ] Non-mutating gold gate passed.
-- [ ] Full release reproducibility gate passed.
-- [ ] AI internal-only gate passed.
-- [ ] Synthetic dry-run passed.
+- [x] Scope frozen; native-channel app-store operations deferred or separately proven.
+- [x] Partner scope deferred or separately proven.
+- [x] Clean commit SHA recorded.
+- [x] Non-mutating gold gate passed.
+- [x] Full release reproducibility gate passed.
+- [x] AI internal-only gate passed.
+- [x] Synthetic dry-run passed.
 - [x] Firestore role-cutover indexes deployed and READY.
 - [x] Firestore proof/verification indexes deployed and READY in the May 7 read-only check; re-check immediately before final release-control decision.
 - [x] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
-- [ ] Current-worktree proof queue fix and icon-only theme switch included in a no-traffic web revision.
+- [x] Current-worktree proof queue fix and icon-only theme switch included in a no-traffic web revision.
 - [x] Current-worktree web/Flutter no-traffic revisions created and verified.
 - [x] Current-worktree compliance operator deploy proof recorded.
 - [x] Six-role browser cutover passed for the web cutover slice.
 - [x] Traffic promotion or traffic-pinning proof recorded.
-- [ ] Rollback proof recorded or release owner accepts traffic-pinning proof as the rollback control.
+- [x] Rollback proof recorded or release owner accepts traffic-pinning proof as the rollback control.
 - [x] Post-promotion or post-pinning smoke passed.
-- [ ] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.
-- [ ] Theme mode switch renders icon-only controls on public and protected shells.
-- [ ] Final signoff converted from NO-GO to GO with evidence.
-- [ ] Source-contract tests pass after signoff update.
+- [x] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.
+- [x] Theme mode switch renders icon-only controls on public and protected shells.
+- [x] Final signoff converted from NO-GO to GO with evidence.
+- [x] Source-contract tests pass after signoff update.
 
 ## Absolute Stop Conditions
 
