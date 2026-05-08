@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "integrationConnections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUserId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "telemetryEvents",
       "queryScope": "COLLECTION",
       "fields": [

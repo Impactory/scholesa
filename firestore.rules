@@ -766,7 +766,7 @@ service cloud.firestore {
     // --- Integration Collections (HQ/Server only) ---
 
     match /integrationConnections/{id} {
-      allow read: if isHQ();
+      allow read: if isHQ() || (isAuthenticated() && resource.data.keys().hasAny(['ownerUserId']) && resource.data.ownerUserId == request.auth.uid);
       allow write: if false; // Server-only
     }
     match /externalCourseLinks/{id} {

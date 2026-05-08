@@ -1545,6 +1545,33 @@ describe('Partner Ownership Rules', () => {
       acceptedBy: partnerUser.uid,
     }));
   });
+
+  test('partner can read only owned integration connections', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'integrationConnections', 'owned-connection'), {
+        ownerUserId: partnerUser.uid,
+        provider: 'clever',
+        status: 'connected',
+        createdAt: new Date('2026-05-08T00:00:00.000Z'),
+      });
+      await setDoc(doc(adminDb, 'integrationConnections', 'foreign-connection'), {
+        ownerUserId: 'partner-2',
+        provider: 'google-classroom',
+        status: 'connected',
+        createdAt: new Date('2026-05-08T00:01:00.000Z'),
+      });
+    });
+
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'integrationConnections', 'owned-connection')));
+    await assertFails(getDoc(doc(db, 'integrationConnections', 'foreign-connection')));
+    await assertSucceeds(getDocs(query(
+      collection(db, 'integrationConnections'),
+      where('ownerUserId', '==', partnerUser.uid),
+      orderBy('createdAt', 'desc'),
+    )));
+  });
 });
 
 describe('Default Deny', () => {
