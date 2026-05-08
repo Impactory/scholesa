@@ -191,11 +191,13 @@ gcloud run services describe SERVICE_NAME \
   --project studio-3328096157-e3f79 \
   --region us-central1 \
   --format='json(metadata.name,status.url,status.traffic,status.latestCreatedRevisionName,status.latestReadyRevisionName)'
+node scripts/cloud_run_rehearsal_urls.js
 ```
 
 Capture:
 
 - New no-traffic revision names.
+- `gold-rehearsal` tagged URLs from `node scripts/cloud_run_rehearsal_urls.js`; use the `scholesa-web` `REHEARSAL_URL` as `PLAYWRIGHT_BASE_URL` for the public theme proof.
 - Current traffic allocation proving production traffic did not move.
 - Compliance unauthenticated edge denial result.
 
@@ -208,6 +210,13 @@ Stop if:
 ## Phase 4 - Verify No-Traffic Revisions Before Promotion
 
 Goal: prove the new revisions can serve the included scope before any traffic change.
+
+Resolve the tagged web rehearsal URL:
+
+```bash
+node scripts/cloud_run_rehearsal_urls.js
+export PLAYWRIGHT_BASE_URL="<scholesa-web REHEARSAL_URL>"
+```
 
 Run service-level checks against revision URLs or approved authenticated preview paths. If the rehearsal deploys are untagged, attach a temporary no-traffic preview tag first, then verify traffic allocation has not moved. At minimum record:
 

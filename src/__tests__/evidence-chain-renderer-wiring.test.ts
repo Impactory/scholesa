@@ -1030,6 +1030,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'scripts', 'proof_verification_index_readiness.js'),
       'utf8'
     );
+    const cloudRunRehearsalUrlsSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'cloud_run_rehearsal_urls.js'),
+      'utf8'
+    );
     const deployScriptSource = fs.readFileSync(
       path.join(process.cwd(), 'scripts', 'deploy.sh'),
       'utf8'
@@ -1129,6 +1133,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');
     expect(blanketGoldAchievementPlanSource).toContain('PLAYWRIGHT_BASE_URL="https://gold-rehearsal---<web-service-url>"');
     expect(finalSignoffSource).toContain('--grep "public entrypoints"');
+    expect(finalSignoffSource).toContain('node scripts/cloud_run_rehearsal_urls.js');
+    expect(blanketGoldAchievementPlanSource).toContain('REHEARSAL_URL');
     expect(blanketGoldAchievementPlanSource).toContain('fresh no-traffic rehearsal screenshot proves icon-only rendering');
     expect(masterPlanSource).toContain('fresh rehearsal screenshot proving the theme switch no longer renders visible `System`, `Light`, or `Dark` labels');
     expect(masterPlanSource).toContain('test/e2e/theme-mode-toggle.e2e.spec.ts');
@@ -1137,6 +1143,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(themeModeToggleBrowserSource).toContain('Protected icon-only proof uses the local E2E auth harness');
     expect(playwrightConfigSource).toContain('const hasExternalBaseURL = Boolean(process.env.PLAYWRIGHT_BASE_URL);');
     expect(playwrightConfigSource).toContain('...(hasExternalBaseURL');
+    expect(cloudRunRehearsalUrlsSource).toContain('CLOUD_RUN_REHEARSAL_TAG');
+    expect(cloudRunRehearsalUrlsSource).toContain('REHEARSAL_URL=');
     expect(blanketGoldAchievementPlanSource).toContain('CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');

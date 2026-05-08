@@ -78,7 +78,7 @@ Forward plan: `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md` is the r
 1. Complete every phase in `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md`.
 2. Attach current-worktree no-traffic web, Flutter web, and compliance deploy evidence.
 3. Verify proof-review queue loading and icon-only theme switch rendering on the rehearsed web revision, with fresh browser proof that no visible `System`, `Light`, or `Dark` label text remains inside the switch.
-4. Run `npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts` against the current worktree and repeat the public icon-only check against the rehearsed Cloud Run URL with `PLAYWRIGHT_BASE_URL="https://gold-rehearsal---<web-service-url>" npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"`.
+4. Resolve the tagged web rehearsal URL with `node scripts/cloud_run_rehearsal_urls.js`, then run `npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts` against the current worktree and repeat the public icon-only check against the rehearsed Cloud Run URL with `PLAYWRIGHT_BASE_URL="<scholesa-web REHEARSAL_URL>" npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"`.
 5. Re-check all release-critical Firestore indexes are READY immediately before the final release-control decision.
 6. Either authorize production traffic promotion for the rehearsed revisions or explicitly accept the recorded traffic-pinning proof as the final release-control substitute.
 7. If production traffic is promoted, re-run the post-promotion smoke across web, Flutter web, and compliance endpoints.
