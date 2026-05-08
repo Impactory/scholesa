@@ -14,6 +14,31 @@ This is the operator-facing plan for turning the current gold-candidate packet i
 | Current hard blockers | Release-owner decision to either promote traffic or explicitly accept recorded traffic-pinning as the final release control; final GO source-contract update. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, traffic-pinning proof, and post-pinning smoke are now recorded in the final signoff. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native/partner scope must remain outside the claim. |
 
+## May 7 Continuation Delta - Broad Gold Deployment
+
+This delta is the current broad deployment plan from the latest worktree. It does not authorize live traffic changes by itself.
+
+Current late-cycle changes that must be included in the next deploy proof:
+
+- Proof-of-learning verification queue hardening: educator proof review now uses the status-backed portfolio item query and the Firestore manifest includes the related proof bundle indexes.
+- Theme mode switch presentation: the public/protected theme selector must render as icon-only controls for system, light, and dark mode. The May 7 browser screenshot that still shows visible `System`, `Light`, and `Dark` text is a NO-GO runtime artifact for the currently viewed bundle until a fresh no-traffic rehearsal screenshot proves icon-only rendering.
+- Firestore index posture: the May 7 read-only `gcloud firestore indexes composite list` check confirmed the six proof/verification index shapes are READY (`READY=6`, `MISSING=0`). Re-run the same readiness check before final GO and stop on any missing or building release-critical shape.
+- Worktree hygiene: `.firebase/logs/vsce-debug.log` is generated tooling noise and must be excluded from the release artifact unless an operator intentionally records it.
+
+Deployment continuation order:
+
+1. Freeze the worktree and classify intentional diffs.
+2. Re-run focused verification for the proof queue, Firestore index coverage, theme icon controls, evidence-chain contracts, and navigation/logo contracts.
+3. Re-run broad non-mutating local gates.
+4. Verify Firebase index readiness for all release-critical proof/verification, dashboard, role-cutover, and evidence-chain query shapes.
+5. Create a new current-worktree no-traffic web revision that includes the proof queue and icon-only theme switch changes.
+6. Smoke the tagged rehearsal URL before any traffic movement.
+7. Run the six-role browser sweep against the rehearsal URL, with explicit checks for proof-review queue loading and icon-only theme controls. Capture a screenshot or browser accessibility note proving `System`, `Light`, and `Dark` are available only through `aria-label`/`title`, not as visible text inside the switch.
+8. Ask the release owner to choose exactly one final control: traffic promotion, rollback drill, or documented traffic-pinning acceptance.
+9. Convert the final signoff to GO only after the chosen control is recorded and source-contract gates pass.
+
+Stop if any included screen still shows text `System`, `Light`, or `Dark` inside the theme switch, any proof-review route shows `Failed to load verification queue`, any Firestore index is missing for a release-critical query, or the release owner has not closed the promotion-versus-pinning decision.
+
 ## Evidence Bundle To Preserve
 
 Create or update a dated evidence bundle before running live steps. The bundle must include command output, operator identity, timestamp, project, region, commit SHA, Cloud Run revisions, traffic allocation, screenshots or browser notes for each role, and final GO / NO-GO.
@@ -65,8 +90,11 @@ Run:
 npm run typecheck
 npm run lint
 npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts
+npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts src/__tests__/firestore-index-coverage.test.ts src/__tests__/navigation-signout-availability.test.ts
 bash ./scripts/operator_release_proof.sh
 bash ./scripts/cloud_run_release_state_probe.sh
+npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts
+PLAYWRIGHT_BASE_URL="https://gold-rehearsal---<web-service-url>" npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts --grep "public entrypoints"
 npx playwright test test/e2e/evidence-chain-cross-role.e2e.spec.ts
 npx playwright test test/e2e/workflow-routes.e2e.spec.ts --grep "site ops workflow"
 git diff --check
@@ -76,6 +104,8 @@ Capture:
 
 - Passing output for every command.
 - Browser proof pass counts.
+- Browser proof that public entrypoints and protected navigation render the theme switch as icon-only buttons with `System`, `Light`, and `Dark` available only as accessibility metadata.
+- Rehearsal URL browser proof using `PLAYWRIGHT_BASE_URL` so Playwright does not start a local web server when validating the tagged no-traffic revision.
 - Cloud Run release state probe output.
 
 Stop if:
@@ -116,6 +146,7 @@ Capture:
 - Dashboard readiness docs for `test-learner-001` at `pilot-site-001`, including evidence/proof/rubric/growth/portfolio/MiloOS learner-loop provenance.
 - Pilot role-readiness seed counts: 6 users, 1 pilot site, 1 session, 1 session occurrence, 1 enrollment, 1 attendance record, and 1 guardian link.
 - READY state for the educator/site cutover index shapes: `sessionOccurrences(siteId, educatorId, date)`, `enrollments(sessionId, status)`, `evidenceRecords(siteId, createdAt)`, `evidenceRecords(siteId, educatorId, createdAt)`, and `users(siteIds array-contains, role)`.
+- READY state for proof/verification index shapes used by the included screens: `portfolioItems(siteId, verificationStatus, createdAt)`, `portfolioItems(siteId, createdAt)`, `proofOfLearningBundles(siteId, verificationStatus, createdAt)`, `proofOfLearningBundles(verificationStatus, createdAt)`, `proofOfLearningBundles(learnerId, createdAt)`, and `proofOfLearningBundles(learnerId, updatedAt)`. The latest May 7 read-only check recorded all six as READY; re-check immediately before final signoff.
 
 Stop if:
 
@@ -228,6 +259,8 @@ Stop if:
 - Any included role hits a Firestore index error or an unresolved loading state.
 - Learner-facing AI fabricates low-confidence help instead of escalating safely.
 - Partner/native scope drifts from the recorded inclusion decision.
+- `/educator/proof-review` or `/educator/verification` shows `Failed to load verification queue`.
+- The theme mode switch renders visible text labels instead of the expected system, sun, and moon icons.
 
 ## Phase 5 - Promote Or Roll Back Under Operator Control
 
@@ -347,13 +380,17 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [ ] AI internal-only gate passed.
 - [ ] Synthetic dry-run passed.
 - [x] Firestore role-cutover indexes deployed and READY.
+- [x] Firestore proof/verification indexes deployed and READY in the May 7 read-only check; re-check immediately before final release-control decision.
 - [x] Live synthetic data applied and read back for the cutover environment, if synthetic data is used for the browser proof.
+- [ ] Current-worktree proof queue fix and icon-only theme switch included in a no-traffic web revision.
 - [x] Current-worktree web/Flutter no-traffic revisions created and verified.
 - [x] Current-worktree compliance operator deploy proof recorded.
 - [x] Six-role browser cutover passed for the web cutover slice.
 - [x] Traffic promotion or traffic-pinning proof recorded.
 - [ ] Rollback proof recorded or release owner accepts traffic-pinning proof as the rollback control.
 - [x] Post-promotion or post-pinning smoke passed.
+- [ ] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.
+- [ ] Theme mode switch renders icon-only controls on public and protected shells.
 - [ ] Final signoff converted from NO-GO to GO with evidence.
 - [ ] Source-contract tests pass after signoff update.
 

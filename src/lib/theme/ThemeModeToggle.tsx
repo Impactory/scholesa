@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { MonitorIcon, MoonIcon, SunIcon } from 'lucide-react';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useThemeContext } from './ThemeProvider';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
@@ -23,9 +24,9 @@ export function ThemeModeToggle({
   const options = useMemo(
     () =>
       [
-        { value: 'system', label: t('navigation.themeSystem') },
-        { value: 'light', label: t('navigation.themeLight') },
-        { value: 'dark', label: t('navigation.themeDark') },
+        { value: 'system', label: t('navigation.themeSystem'), icon: MonitorIcon },
+        { value: 'light', label: t('navigation.themeLight'), icon: SunIcon },
+        { value: 'dark', label: t('navigation.themeDark'), icon: MoonIcon },
       ] as const,
     [t],
   );
@@ -40,12 +41,17 @@ export function ThemeModeToggle({
     >
       {options.map((option) => {
         const isActive = preference === option.value;
+        const Icon = option.icon;
+        const pressedProps = isActive
+          ? ({ 'aria-pressed': true } as const)
+          : ({ 'aria-pressed': false } as const);
         return (
           <button
             key={option.value}
             type="button"
+            {...pressedProps}
             aria-label={`${t('navigation.themeLabel')}: ${option.label}`}
-            aria-pressed={isActive}
+            title={option.label}
             onClick={() => {
               trackInteraction('feature_discovered', {
                 cta: 'theme_mode_toggle',
@@ -55,13 +61,15 @@ export function ThemeModeToggle({
               setPreference(option.value);
               onPreferenceChange?.(option.value);
             }}
-            className={`min-touch-target rounded-md px-3 py-2 font-medium transition-colors ${
+            className={`min-touch-target inline-flex items-center justify-center rounded-md ${
+              compact ? 'h-9 w-9' : 'h-10 w-10'
+            } transition-colors ${
               isActive
                 ? 'bg-app-primary text-app-primary-foreground'
                 : 'text-app-foreground hover:bg-app-surface-muted'
             }`}
           >
-            {option.label}
+            <Icon aria-hidden="true" className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
           </button>
         );
       })}

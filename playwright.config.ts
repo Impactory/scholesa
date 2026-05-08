@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const hasExternalBaseURL = Boolean(process.env.PLAYWRIGHT_BASE_URL);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3002';
 
 const nextEnv = [
@@ -38,10 +39,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: `bash -lc '${nextEnv} PORT=3002 npx next dev --webpack -H 127.0.0.1 -p 3002'`,
-    url: baseURL,
-    timeout: 300_000,
-    reuseExistingServer: false,
-  },
+  ...(hasExternalBaseURL
+    ? {}
+    : {
+        webServer: {
+          command: `bash -lc '${nextEnv} PORT=3002 npx next dev --webpack -H 127.0.0.1 -p 3002'`,
+          url: baseURL,
+          timeout: 300_000,
+          reuseExistingServer: false,
+        },
+      }),
 });

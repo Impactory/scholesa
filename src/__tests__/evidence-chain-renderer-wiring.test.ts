@@ -1014,6 +1014,14 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'test', 'e2e', 'workflow-routes.e2e.spec.ts'),
       'utf8'
     );
+    const themeModeToggleBrowserSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'theme-mode-toggle.e2e.spec.ts'),
+      'utf8'
+    );
+    const playwrightConfigSource = fs.readFileSync(
+      path.join(process.cwd(), 'playwright.config.ts'),
+      'utf8'
+    );
     const operatorReleaseProofSource = fs.readFileSync(
       path.join(process.cwd(), 'scripts', 'operator_release_proof.sh'),
       'utf8'
@@ -1076,20 +1084,49 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('NO-GO for blanket platform gold');
     expect(finalSignoffSource).toContain('Steps Required To Convert This Signoff To GO');
     expect(finalSignoffSource).toContain('PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md');
+    expect(finalSignoffSource).toContain('/tmp/scholesa-release-gate-20260508-001144.log');
+    expect(finalSignoffSource).toContain('full Flutter gate passed `1087` tests');
+    expect(finalSignoffSource).toContain('Production web build');
+    expect(finalSignoffSource).toContain('/[locale]/educator/proof-review');
+    expect(finalSignoffSource).toContain('synthetic-import-2026-05-08T00-04-56-329Z');
     expect(finalSignoffSource).toContain('bash ./scripts/operator_release_proof.sh');
     expect(finalSignoffSource).toContain('bash ./scripts/cloud_run_release_state_probe.sh');
     expect(finalSignoffSource).toContain('Role-cutover Firestore index contracts');
     expect(finalSignoffSource).toContain('Passed; `sessionOccurrences`, `enrollments`, `evidenceRecords`, and `users` role-cutover indexes are READY');
+    expect(finalSignoffSource).toContain('Proof/verification Firestore indexes');
+    expect(finalSignoffSource).toContain('all READY (`READY=6`, `MISSING=0`)');
     expect(finalSignoffSource).toContain('The live role sweep proves learner, educator, guardian, site, HQ, and partner web access on the rehearsal tag');
     expect(finalSignoffSource).toContain('MiloOS learner callable browser proof');
     expect(finalSignoffSource).toContain('MiloOS typed input intelligence');
     expect(finalSignoffSource).toContain('Logo source/render proof');
+    expect(finalSignoffSource).toContain('Theme icon-only source/browser proof');
+    expect(finalSignoffSource).toContain('Theme rehearsal-mode browser proof');
+    expect(finalSignoffSource).toContain('PLAYWRIGHT_BASE_URL=http://127.0.0.1:3010');
+    expect(finalSignoffSource).toContain('without Playwright starting a local web server');
     expect(finalSignoffSource).toContain('Fail-closed Firebase placeholder proof');
+    expect(finalSignoffSource).toContain('0346e4be-94f6-45c9-84d7-8d4cd17f872f');
     expect(finalSignoffSource).toContain('scholesa-web-00045-pm9');
     expect(finalSignoffSource).toContain('genAiCoach` preflight accepts the `gold-rehearsal` origin');
     expect(finalSignoffSource).toContain('Traffic-pinning proof confirms `scholesa-web` production traffic remains 100% on `scholesa-web-00038-fvt`');
     expect(finalSignoffSource).toContain('The release owner has not explicitly accepted traffic-pinning proof as the final release-control substitute for production promotion');
-    expect(finalSignoffSource).toContain('latest current-worktree documentation and MiloOS typed-input test changes have not been rehearsed as no-traffic Cloud Run revisions');
+    expect(finalSignoffSource).toContain('latest current-worktree proof verification queue and icon-only theme switch changes have not been rehearsed as a no-traffic Cloud Run web revision');
+    expect(finalSignoffSource).toContain('Verify proof-review queue loading and icon-only theme switch rendering on the rehearsed web revision');
+    expect(finalSignoffSource).toContain('May 7 browser screenshot still shows visible `System`, `Light`, and `Dark` labels');
+    expect(blanketGoldAchievementPlanSource).toContain('May 7 Continuation Delta - Broad Gold Deployment');
+    expect(blanketGoldAchievementPlanSource).toContain('Proof-of-learning verification queue hardening');
+    expect(blanketGoldAchievementPlanSource).toContain('Theme mode switch presentation');
+    expect(blanketGoldAchievementPlanSource).toContain('READY=6');
+    expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');
+    expect(blanketGoldAchievementPlanSource).toContain('PLAYWRIGHT_BASE_URL="https://gold-rehearsal---<web-service-url>"');
+    expect(finalSignoffSource).toContain('--grep "public entrypoints"');
+    expect(blanketGoldAchievementPlanSource).toContain('fresh no-traffic rehearsal screenshot proves icon-only rendering');
+    expect(masterPlanSource).toContain('fresh rehearsal screenshot proving the theme switch no longer renders visible `System`, `Light`, or `Dark` labels');
+    expect(masterPlanSource).toContain('test/e2e/theme-mode-toggle.e2e.spec.ts');
+    expect(themeModeToggleBrowserSource).toContain('await expect(themeGroup).not.toContainText(/System|Light|Dark/)');
+    expect(themeModeToggleBrowserSource).toContain("await expect(button).toHaveText('')");
+    expect(themeModeToggleBrowserSource).toContain('Protected icon-only proof uses the local E2E auth harness');
+    expect(playwrightConfigSource).toContain('const hasExternalBaseURL = Boolean(process.env.PLAYWRIGHT_BASE_URL);');
+    expect(playwrightConfigSource).toContain('...(hasExternalBaseURL');
     expect(blanketGoldAchievementPlanSource).toContain('CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
     expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');

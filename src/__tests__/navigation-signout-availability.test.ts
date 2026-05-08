@@ -36,6 +36,22 @@ describe('protected web logout availability', () => {
     expect(navigationSource).toContain('<ThemeModeToggle');
   });
 
+  it('renders theme controls as accessible icon buttons', () => {
+    const themeToggleSource = fs.readFileSync(
+      path.join(repoRoot, 'src/lib/theme/ThemeModeToggle.tsx'),
+      'utf8',
+    );
+
+    expect(themeToggleSource).toContain('MonitorIcon');
+    expect(themeToggleSource).toContain('SunIcon');
+    expect(themeToggleSource).toContain('MoonIcon');
+    expect(themeToggleSource).toContain('title={option.label}');
+    expect(themeToggleSource).toContain('aria-label={`${t(\'navigation.themeLabel\')}: ${option.label}`}');
+    expect(themeToggleSource).toContain('aria-hidden="true"');
+    expect(themeToggleSource).not.toContain('{option.label}</button>');
+    expect(themeToggleSource).not.toContain('className="sr-only"');
+  });
+
   it('provides localized shared Navigation copy in every root locale', () => {
     for (const locale of ['en', 'es', 'th', 'zh-CN', 'zh-TW']) {
       const messages = JSON.parse(
