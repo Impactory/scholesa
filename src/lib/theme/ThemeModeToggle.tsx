@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { MonitorIcon, MoonIcon, SunIcon } from 'lucide-react';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useThemeContext } from './ThemeProvider';
-import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -19,7 +18,6 @@ export function ThemeModeToggle({
 }: ThemeModeToggleProps) {
   const { t } = useI18n();
   const { preference, setPreference } = useThemeContext();
-  const trackInteraction = useInteractionTracking();
 
   const options = useMemo(
     () =>
@@ -53,11 +51,6 @@ export function ThemeModeToggle({
             aria-label={`${t('navigation.themeLabel')}: ${option.label}`}
             title={option.label}
             onClick={() => {
-              trackInteraction('feature_discovered', {
-                cta: 'theme_mode_toggle',
-                theme: option.value,
-                compact,
-              });
               setPreference(option.value);
               onPreferenceChange?.(option.value);
             }}

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { AuthProvider, useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -16,6 +16,14 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <AuthProvider>
+      <ProtectedShell>{children}</ProtectedShell>
+    </AuthProvider>
+  );
+}
+
+function ProtectedShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthContext();
   const router = useRouter();
   const { locale, t } = useI18n();
