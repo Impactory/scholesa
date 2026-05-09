@@ -11,7 +11,7 @@ This is the operator-facing plan and historical checklist for the current scoped
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Included for partner web evidence-facing workflows after the May 8 partner route sweep, partner integration/deliverable index proof, browser-created contract, browser-created evidence URL deliverable, and Firestore readback. |
-| Native build proof | macOS local release build now passes through `./scripts/deploy.sh flutter-macos`; iOS local release build now passes through `./scripts/deploy.sh flutter-ios` with codesigning disabled; Android local release build now passes through `./scripts/deploy.sh flutter-android` after installing the Android SDK/toolchain; distribution remains deferred until Developer ID signing, notarization, App Store Connect, Google Play credentials, and release signing assets are installed and proven. |
+| Native build proof | macOS local release build now passes through `./scripts/deploy.sh flutter-macos`; iOS local release build now passes through `./scripts/deploy.sh flutter-ios` with codesigning disabled; Android local release build now passes through `./scripts/deploy.sh flutter-android` after installing the Android SDK/toolchain; iOS, Android, and macOS distribution automation is present and fail-closed; distribution remains deferred until Developer ID signing, notarization, App Store Connect, Google Play credentials, and release signing assets are installed and proven. |
 | Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, partner web evidence-facing proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, macOS/iOS/Android local release build proof, and final source-contract validation are recorded in the final signoff. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native-channel app-store scope must remain outside the claim. |
 
@@ -404,8 +404,17 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [x] Theme mode switch renders icon-only controls on public and protected shells.
 - [x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.
 - [x] macOS local release build passes while native app-store distribution remains fail-closed behind signing/notarization/store credentials.
+- [x] May 9 macOS local release refresh passed through `./scripts/deploy.sh flutter-macos` with `1087` Flutter tests and `scholesa_app.app` at `137.0MB`.
 - [x] iOS local release build passes with codesigning disabled while App Store distribution remains fail-closed behind App Store Connect credentials.
 - [x] Android local release build passes after Android SDK/toolchain install, with Google Play distribution still fail-closed behind credentials and release signing assets.
+- [x] macOS Developer ID signing/notarization automation exists locally and in `.github/workflows/macos-release.yml`, with live distribution proof deferred until external credentials are installed.
+- [x] Apple GitHub-secret helper can publish macOS Developer ID certificate secrets for `.github/workflows/macos-release.yml` when external signing assets are available.
+- [x] Android GitHub-secret helper can publish Google Play and release signing secrets for `.github/workflows/android-release.yml` when external signing assets are available.
+- [x] Android local signing helper can create ignored `key.properties` and release-keystore files from an external keystore for local Play-release preflight.
+- [x] Apple local signing helper can import external iOS Distribution and macOS Developer ID `.p12` assets for local TestFlight/notarization preflight.
+- [x] Aggregate native distribution readiness gate reports iOS, Android, and macOS local distribution blockers in one fail-closed command.
+- [x] Guarded native distribution proof runner exists for live TestFlight, Google Play internal, and macOS notarization proof once external credentials are installed.
+- [x] Guarded aggregate CI workflow exists for remote native distribution proof artifacts across TestFlight, Google Play internal, and macOS notarization once GitHub secrets are installed.
 - [x] Final signoff converted from NO-GO to GO with evidence.
 - [x] Source-contract tests pass after signoff update.
 

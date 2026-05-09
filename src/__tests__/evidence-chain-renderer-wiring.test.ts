@@ -1050,6 +1050,42 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'scripts', 'macos_release_local.sh'),
       'utf8'
     );
+    const nativeDistributionReadinessSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'native_distribution_readiness.sh'),
+      'utf8'
+    );
+    const nativeDistributionProofSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'native_distribution_proof.sh'),
+      'utf8'
+    );
+    const macosReleaseCiSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'macos_release_ci.sh'),
+      'utf8'
+    );
+    const setAppleGithubSecretsSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'set_apple_github_secrets.sh'),
+      'utf8'
+    );
+    const setAndroidGithubSecretsSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'set_android_github_secrets.sh'),
+      'utf8'
+    );
+    const setupAndroidSigningSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'setup_android_signing.sh'),
+      'utf8'
+    );
+    const setupAppleSigningSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'setup_apple_signing.sh'),
+      'utf8'
+    );
+    const macosReleaseWorkflowSource = fs.readFileSync(
+      path.join(process.cwd(), '.github', 'workflows', 'macos-release.yml'),
+      'utf8'
+    );
+    const nativeDistributionProofWorkflowSource = fs.readFileSync(
+      path.join(process.cwd(), '.github', 'workflows', 'native-distribution-proof.yml'),
+      'utf8'
+    );
     const appleReleaseAutomationSource = fs.readFileSync(
       path.join(process.cwd(), 'docs', 'APPLE_RELEASE_AUTOMATION.md'),
       'utf8'
@@ -1062,6 +1098,15 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'docs', 'MACOS_RELEASE_AUTOMATION.md'),
       'utf8'
     );
+    const githubActionsSecretsSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'GITHUB_ACTIONS_SECRETS.md'),
+      'utf8'
+    );
+    const goldReadyDeploymentGuideSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'GOLD_READY_DEPLOYMENT_GUIDE.md'),
+      'utf8'
+    );
+    const rootGitignoreSource = fs.readFileSync(path.join(process.cwd(), '.gitignore'), 'utf8');
     const primaryWebDockerfileSource = fs.readFileSync(
       path.join(process.cwd(), 'Dockerfile'),
       'utf8'
@@ -1160,6 +1205,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('`./scripts/deploy.sh flutter-macos`');
     expect(finalSignoffSource).toContain('Flutter gate passed `1087` tests');
     expect(finalSignoffSource).toContain('build/macos/Build/Products/Release/scholesa_app.app` at `137.0MB`');
+    expect(finalSignoffSource).toContain('May 9 native macOS refresh proof also passed');
+    expect(finalSignoffSource).toContain('/tmp/scholesa-flutter-macos-verify-20260509115514.log');
     expect(finalSignoffSource).toContain('Native iOS local release build');
     expect(finalSignoffSource).toContain('`./scripts/deploy.sh flutter-ios`');
     expect(finalSignoffSource).toContain('build/ios/iphoneos/Runner.app` at `76.3MB`');
@@ -1183,12 +1230,80 @@ describe('Renderers delegate to real evidence components', () => {
     expect(androidReleaseLocalSource).toContain('Local Android release prerequisites are incomplete');
     expect(macosReleaseLocalSource).toContain('require_developer_id_identity');
     expect(macosReleaseLocalSource).toContain('Local macOS distribution prerequisites are incomplete');
+    expect(macosReleaseLocalSource).toContain('sign_notarize_staple');
+    expect(nativeDistributionReadinessSource).toContain('./scripts/apple_release_local.sh verify_local_release');
+    expect(nativeDistributionReadinessSource).toContain('./scripts/android_release_local.sh verify_local_release');
+    expect(nativeDistributionReadinessSource).toContain('./scripts/macos_release_local.sh verify_local_release');
+    expect(nativeDistributionReadinessSource).toContain('Native-channel distribution is not gold-ready.');
+    expect(nativeDistributionProofSource).toContain('SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM');
+    expect(nativeDistributionProofSource).toContain('I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS');
+    expect(nativeDistributionProofSource).toContain('./scripts/apple_release_local.sh upload_testflight');
+    expect(nativeDistributionProofSource).toContain('./scripts/android_release_local.sh upload_internal');
+    expect(nativeDistributionProofSource).toContain('./scripts/macos_release_local.sh sign_notarize_staple');
+    expect(nativeDistributionProofSource).toContain('docs/native-distribution-proof-$TIMESTAMP');
+    expect(macosReleaseCiSource).toContain('validate-macos-release');
+    expect(macosReleaseCiSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_BASE64');
+    expect(macosReleaseCiSource).toContain('notarize_and_staple_macos_app');
+    expect(macosReleaseCiSource).toContain('spctl --assess --type execute --verbose=4');
+    expect(setAppleGithubSecretsSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_PATH');
+    expect(setAppleGithubSecretsSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_BASE64');
+    expect(macosReleaseWorkflowSource).toContain('name: macOS Release');
+    expect(macosReleaseWorkflowSource).toContain('verify-macos-notary');
+    expect(macosReleaseWorkflowSource).toContain('sign-notarize-staple');
+    expect(nativeDistributionProofWorkflowSource).toContain('name: Native Distribution Proof');
+    expect(nativeDistributionProofWorkflowSource).toContain('native_distribution_confirmation');
+    expect(nativeDistributionProofWorkflowSource).toContain('I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS');
+    expect(nativeDistributionProofWorkflowSource).toContain('ios-testflight-proof');
+    expect(nativeDistributionProofWorkflowSource).toContain('android-play-proof');
+    expect(nativeDistributionProofWorkflowSource).toContain('macos-notarization-proof');
+    expect(nativeDistributionProofWorkflowSource).toContain('native-distribution-proof-ios');
+    expect(nativeDistributionProofWorkflowSource).toContain('native-distribution-proof-android');
+    expect(nativeDistributionProofWorkflowSource).toContain('native-distribution-proof-macos');
     expect(appleReleaseAutomationSource).toContain('reports all missing local prerequisites in one pass');
     expect(appleReleaseAutomationSource).toContain('a local Apple Distribution identity');
+    expect(appleReleaseAutomationSource).toContain('./scripts/setup_apple_signing.sh ios');
+    expect(setupAppleSigningSource).toContain('IOS_SIGNING_CERT_PASSWORD');
+    expect(setupAppleSigningSource).toContain('MACOS_DEVELOPER_ID_CERT_PASSWORD');
+    expect(setupAppleSigningSource).toContain('Provisioning profile app identifier mismatch');
     expect(androidReleaseAutomationSource).toContain('reports all missing local prerequisites in one pass');
     expect(androidReleaseAutomationSource).toContain('apps/empire_flutter/app/android/key.properties');
+    expect(androidReleaseAutomationSource).toContain('./scripts/set_android_github_secrets.sh');
+    expect(androidReleaseAutomationSource).toContain('./scripts/setup_android_signing.sh');
+    expect(setAndroidGithubSecretsSource).toContain('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64');
+    expect(setAndroidGithubSecretsSource).toContain('ANDROID_KEYSTORE_BASE64');
+    expect(setAndroidGithubSecretsSource).toContain('ANDROID_KEY_PROPERTIES_PATH');
+    expect(setupAndroidSigningSource).toContain('ANDROID_KEYSTORE_PASSWORD');
+    expect(setupAndroidSigningSource).toContain('keytool -list -keystore');
+    expect(setupAndroidSigningSource).toContain('app/release-keystore.jks');
     expect(macosReleaseAutomationSource).toContain('./scripts/macos_release_local.sh verify_local_release');
+    expect(macosReleaseAutomationSource).toContain('./scripts/setup_apple_signing.sh macos');
     expect(macosReleaseAutomationSource).toContain('macOS distribution Gold requires Developer ID signing plus notarization proof');
+    expect(macosReleaseAutomationSource).toContain('.github/workflows/macos-release.yml');
+    expect(macosReleaseAutomationSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_BASE64');
+    expect(macosReleaseAutomationSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_PATH=/absolute/path/to/developer-id-application.p12');
+    expect(appleReleaseAutomationSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_PATH');
+    expect(githubActionsSecretsSource).toContain('.github/workflows/native-distribution-proof.yml');
+    expect(githubActionsSecretsSource).toContain('IOS_SIGNING_CERT_P12_BASE64');
+    expect(githubActionsSecretsSource).toContain('IOS_PROVISIONING_PROFILE_BASE64');
+    expect(githubActionsSecretsSource).toContain('MACOS_DEVELOPER_ID_CERT_P12_BASE64');
+    expect(githubActionsSecretsSource).toContain('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64');
+    expect(githubActionsSecretsSource).toContain('ANDROID_KEYSTORE_BASE64');
+    expect(githubActionsSecretsSource).toContain('native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS');
+    expect(goldReadyDeploymentGuideSource).toContain('.github/workflows/native-distribution-proof.yml');
+    expect(goldReadyDeploymentGuideSource).toContain('GOLD-8: Native distribution proof (macOS Developer ID notarization)');
+    expect(goldReadyDeploymentGuideSource).toContain('Do not declare native-channel Gold without verified TestFlight, Google Play internal, and macOS Developer ID notarization proof');
+    expect(rootGitignoreSource).toContain('*.p12');
+    expect(rootGitignoreSource).toContain('*.mobileprovision');
+    expect(rootGitignoreSource).toContain('*.provisionprofile');
+    expect(finalSignoffSource).toContain('.github/workflows/macos-release.yml');
+    expect(finalSignoffSource).toContain('macOS Developer ID notarization paths');
+    expect(finalSignoffSource).toContain('`./scripts/set_apple_github_secrets.sh` now publishes optional macOS Developer ID secrets');
+    expect(finalSignoffSource).toContain('`./scripts/set_android_github_secrets.sh` publishes Google Play/signing secrets');
+    expect(finalSignoffSource).toContain('`./scripts/setup_android_signing.sh` can install ignored local Android signing files');
+    expect(finalSignoffSource).toContain('`./scripts/setup_apple_signing.sh` can install local iOS Distribution / macOS Developer ID signing assets');
+    expect(finalSignoffSource).toContain('`./scripts/native_distribution_readiness.sh` aggregates the iOS, Android, and macOS local distribution preflights');
+    expect(finalSignoffSource).toContain('`./scripts/native_distribution_proof.sh execute-live` is the guarded native proof runner');
+    expect(finalSignoffSource).toContain('`.github/workflows/native-distribution-proof.yml` is the guarded aggregate CI proof path');
     expect(finalSignoffSource).toContain('Fail-closed Firebase placeholder proof');
     expect(finalSignoffSource).toContain('0346e4be-94f6-45c9-84d7-8d4cd17f872f');
     expect(finalSignoffSource).toContain('scholesa-web-00045-pm9');
@@ -1217,8 +1332,17 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('[x] Theme mode switch renders icon-only controls on public and protected shells.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] macOS local release build passes while native app-store distribution remains fail-closed behind signing/notarization/store credentials.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] May 9 macOS local release refresh passed through `./scripts/deploy.sh flutter-macos` with `1087` Flutter tests and `scholesa_app.app` at `137.0MB`.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] iOS local release build passes with codesigning disabled while App Store distribution remains fail-closed behind App Store Connect credentials.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Android local release build passes after Android SDK/toolchain install, with Google Play distribution still fail-closed behind credentials and release signing assets.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] macOS Developer ID signing/notarization automation exists locally and in `.github/workflows/macos-release.yml`, with live distribution proof deferred until external credentials are installed.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Apple GitHub-secret helper can publish macOS Developer ID certificate secrets for `.github/workflows/macos-release.yml` when external signing assets are available.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Android GitHub-secret helper can publish Google Play and release signing secrets for `.github/workflows/android-release.yml` when external signing assets are available.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Android local signing helper can create ignored `key.properties` and release-keystore files from an external keystore for local Play-release preflight.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Apple local signing helper can import external iOS Distribution and macOS Developer ID `.p12` assets for local TestFlight/notarization preflight.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Aggregate native distribution readiness gate reports iOS, Android, and macOS local distribution blockers in one fail-closed command.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Guarded native distribution proof runner exists for live TestFlight, Google Play internal, and macOS notarization proof once external credentials are installed.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Guarded aggregate CI workflow exists for remote native distribution proof artifacts across TestFlight, Google Play internal, and macOS notarization once GitHub secrets are installed.');
     expect(proofVerificationIndexReadinessSource).toContain('proofOfLearningBundles');
     expect(proofVerificationIndexReadinessSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS');
     expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');

@@ -54,4 +54,11 @@ if [[ -n "${IOS_SIGNING_CERT_P12_PATH:-}" ]]; then
   printf '%s' "$IOS_SIGNING_CERT_PASSWORD" | gh secret set IOS_SIGNING_CERT_PASSWORD -R "$REPO_SLUG" -b-
 fi
 
+if [[ -n "${MACOS_DEVELOPER_ID_CERT_P12_PATH:-}" ]]; then
+  [[ -f "$MACOS_DEVELOPER_ID_CERT_P12_PATH" ]] || fail "MACOS_DEVELOPER_ID_CERT_P12_PATH is set but the file does not exist: $MACOS_DEVELOPER_ID_CERT_P12_PATH"
+  [[ -n "${MACOS_DEVELOPER_ID_CERT_PASSWORD:-}" ]] || fail "MACOS_DEVELOPER_ID_CERT_PASSWORD is required when MACOS_DEVELOPER_ID_CERT_P12_PATH is set."
+  base64 < "$MACOS_DEVELOPER_ID_CERT_P12_PATH" | tr -d '\n' | gh secret set MACOS_DEVELOPER_ID_CERT_P12_BASE64 -R "$REPO_SLUG" -b-
+  printf '%s' "$MACOS_DEVELOPER_ID_CERT_PASSWORD" | gh secret set MACOS_DEVELOPER_ID_CERT_PASSWORD -R "$REPO_SLUG" -b-
+fi
+
 echo "[apple-gh-secrets] Updated Apple GitHub secrets for $REPO_SLUG"

@@ -1,0 +1,245 @@
+name: Native Distribution Proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      native_distribution_confirmation:
+        description: Type I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS to upload native builds and capture proof
+        required: true
+        type: string
+
+concurrency:
+  group: native-distribution-proof-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-confirmation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate explicit native distribution confirmation
+        env:
+          CONFIRMATION: ${{ inputs.native_distribution_confirmation }}
+        run: |
+          if [[ "$CONFIRMATION" != "I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS" ]]; then
+            echo "Native distribution proof uploads TestFlight, Google Play internal, and notarized macOS builds."
+            echo "Set native_distribution_confirmation to I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS."
+            exit 1
+          fi
+
+  ios-testflight-proof:
+    needs: validate-confirmation
+    runs-on: macos-14
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+      IOS_APP_IDENTIFIER: com.scholesa.app
+      IOS_SIGNING_CERT_P12_BASE64: ${{ secrets.IOS_SIGNING_CERT_P12_BASE64 }}
+      IOS_SIGNING_CERT_PASSWORD: ${{ secrets.IOS_SIGNING_CERT_PASSWORD }}
+      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate iOS release secrets
+        run: ./scripts/apple_release_ci.sh validate-ios-release
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/ios
+
+      - name: Install Flutter dependencies
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/apple_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Import and validate iOS signing assets
+        run: ./scripts/apple_release_ci.sh import-signing-assets "$RUNNER_TEMP"
+
+      - name: Upload iOS build to TestFlight
+        run: |
+          set -o pipefail
+          cd apps/empire_flutter/app/ios
+          bundle exec fastlane ios upload_testflight 2>&1 | tee "$RUNNER_TEMP/ios-testflight.log"
+
+      - name: Write iOS proof summary
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-distribution-proof-ios"
+          cp "$RUNNER_TEMP/ios-testflight.log" "$RUNNER_TEMP/native-distribution-proof-ios/ios-testflight.log" 2>/dev/null || true
+          cat > "$RUNNER_TEMP/native-distribution-proof-ios/README.md" <<EOF
+          # iOS TestFlight Native Distribution Proof
+
+          Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Command: bundle exec fastlane ios upload_testflight
+          Required verification: release owner confirms the uploaded build is visible in App Store Connect TestFlight.
+          EOF
+
+      - name: Upload iOS proof artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-distribution-proof-ios
+          path: ${{ runner.temp }}/native-distribution-proof-ios
+
+  android-play-proof:
+    needs: validate-confirmation
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_APP_IDENTIFIER: com.scholesa.app
+      PLAY_TRACK: internal
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Android release secrets
+        run: ./scripts/android_release_ci.sh validate-android-release
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/android
+
+      - name: Materialize Google Play service account key
+        run: ./scripts/android_release_ci.sh materialize-play-store-key "$RUNNER_TEMP"
+
+      - name: Materialize Android signing
+        run: ./scripts/android_release_ci.sh materialize-android-signing "$RUNNER_TEMP"
+
+      - name: Upload Android build to Google Play internal testing
+        run: |
+          set -o pipefail
+          cd apps/empire_flutter/app/android
+          bundle exec fastlane android upload_internal 2>&1 | tee "$RUNNER_TEMP/android-play-internal.log"
+
+      - name: Write Android proof summary
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-distribution-proof-android"
+          cp "$RUNNER_TEMP/android-play-internal.log" "$RUNNER_TEMP/native-distribution-proof-android/android-play-internal.log" 2>/dev/null || true
+          cat > "$RUNNER_TEMP/native-distribution-proof-android/README.md" <<EOF
+          # Android Play Internal Native Distribution Proof
+
+          Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Command: bundle exec fastlane android upload_internal
+          Required verification: release owner confirms the uploaded release is visible in Google Play internal testing.
+          EOF
+
+      - name: Upload Android proof artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-distribution-proof-android
+          path: ${{ runner.temp }}/native-distribution-proof-android
+
+  macos-notarization-proof:
+    needs: validate-confirmation
+    runs-on: macos-14
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+      APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+      MACOS_DEVELOPER_ID_CERT_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_CERT_P12_BASE64 }}
+      MACOS_DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_CERT_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate macOS release secrets
+        run: ./scripts/macos_release_ci.sh validate-macos-release
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Flutter dependencies
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/macos_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Import and validate Developer ID certificate
+        run: ./scripts/macos_release_ci.sh import-developer-id-certificate "$RUNNER_TEMP"
+
+      - name: Build macOS release app
+        run: |
+          set -o pipefail
+          ./scripts/deploy.sh flutter-macos 2>&1 | tee "$RUNNER_TEMP/macos-build.log"
+
+      - name: Sign, notarize, and staple macOS app
+        run: |
+          set -o pipefail
+          ./scripts/macos_release_ci.sh sign-notarize-staple "$RUNNER_TEMP" 2>&1 | tee "$RUNNER_TEMP/macos-notarization.log"
+
+      - name: Write macOS proof summary
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-distribution-proof-macos"
+          cp "$RUNNER_TEMP/macos-build.log" "$RUNNER_TEMP/native-distribution-proof-macos/macos-build.log" 2>/dev/null || true
+          cp "$RUNNER_TEMP/macos-notarization.log" "$RUNNER_TEMP/native-distribution-proof-macos/macos-notarization.log" 2>/dev/null || true
+          cat > "$RUNNER_TEMP/native-distribution-proof-macos/README.md" <<EOF
+          # macOS Developer ID Native Distribution Proof
+
+          Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Commands: ./scripts/deploy.sh flutter-macos; ./scripts/macos_release_ci.sh sign-notarize-staple
+          Required verification: release owner confirms notarization succeeded, stapling succeeded, and spctl assessment passed.
+          EOF
+
+      - name: Upload macOS proof artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-distribution-proof-macos
+          path: ${{ runner.temp }}/native-distribution-proof-macos
+
+  native-proof-complete:
+    needs:
+      - ios-testflight-proof
+      - android-play-proof
+      - macos-notarization-proof
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm native distribution proof completion
+        run: |
+          echo "Native distribution proof jobs completed successfully."
+          echo "Release owner must inspect uploaded artifacts and distribution consoles before claiming native-channel Gold."

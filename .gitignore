@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 *.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
 .secrets/
 apps/empire_flutter/app/ios/.bundle/
 apps/empire_flutter/app/ios/vendor/bundle/

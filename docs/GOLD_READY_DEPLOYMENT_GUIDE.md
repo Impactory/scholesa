@@ -18,9 +18,9 @@ Scholesa is a **capability-first evidence platform** for K-12 schools and learni
 | Flutter WASM web | Google Cloud Run | `Dockerfile.flutter` | `./scripts/deploy.sh flutter-web` |
 | Firebase Functions v2 | Firebase | (built-in) | `firebase deploy --only functions` |
 | Compliance operator | Google Cloud Run | `Dockerfile.compliance` | `./scripts/deploy.sh compliance-operator` |
-| Flutter iOS | TestFlight | `scripts/apple_release_ci.sh` | `./scripts/deploy.sh flutter-ios` |
-| Flutter Android | Google Play | `scripts/android_release_ci.sh` | `./scripts/deploy.sh flutter-android` |
-| Flutter macOS | Direct | — | `./scripts/deploy.sh flutter-macos` |
+| Flutter iOS | TestFlight | `scripts/apple_release_ci.sh`, `.github/workflows/apple-release.yml` | `./scripts/deploy.sh flutter-ios` |
+| Flutter Android | Google Play | `scripts/android_release_ci.sh`, `.github/workflows/android-release.yml` | `./scripts/deploy.sh flutter-android` |
+| Flutter macOS | Developer ID notarization | `scripts/macos_release_ci.sh`, `.github/workflows/macos-release.yml` | `./scripts/deploy.sh flutter-macos` |
 
 Firebase project: `studio-3328096157-e3f79` (all surfaces use same project).
 
@@ -197,13 +197,15 @@ The offline queue (`lib/offline/offline_queue.dart`) has 10 OpTypes but evidence
 
 ### GOLD-8: Native Distribution Proof
 
-No verified TestFlight (iOS) or Google Play (Android) upload exists. Gold requires end-to-end native distribution proof, not just a successful local build.
+No verified TestFlight (iOS), Google Play internal (Android), or Developer ID notarized macOS distribution proof exists yet. Gold requires end-to-end native distribution proof, not just successful local builds.
 
-**Scripts exist:** `scripts/apple_release_ci.sh`, `scripts/android_release_ci.sh`
+**Local scripts exist:** `scripts/apple_release_local.sh`, `scripts/android_release_local.sh`, `scripts/macos_release_local.sh`, `scripts/native_distribution_readiness.sh`, and `scripts/native_distribution_proof.sh`.
+**CI workflows exist:** `.github/workflows/apple-release.yml`, `.github/workflows/android-release.yml`, `.github/workflows/macos-release.yml`, and `.github/workflows/native-distribution-proof.yml`.
 **What is needed:**
-- Successful `flutter build ipa` + upload to TestFlight via Fastlane or `xcrun altool`
-- Successful `flutter build appbundle` + upload to Google Play Internal Track
-- Screenshot evidence saved in `docs/` as part of release validation
+- Successful signed iOS upload to TestFlight through `./scripts/apple_release_local.sh upload_testflight` or `.github/workflows/native-distribution-proof.yml`.
+- Successful signed Android App Bundle upload to Google Play internal testing through `./scripts/android_release_local.sh upload_internal` or `.github/workflows/native-distribution-proof.yml`.
+- Successful macOS Developer ID signing, notarization, stapling, and `spctl` assessment through `./scripts/macos_release_local.sh sign_notarize_staple` or `.github/workflows/native-distribution-proof.yml`.
+- Proof logs or workflow artifacts saved in `docs/native-distribution-proof-<timestamp>/` or attached to the GitHub Actions run, plus release-owner verification in App Store Connect, Google Play Console, and notarization output.
 
 ---
 
@@ -331,8 +333,9 @@ Track progress here. Update as each item is resolved.
 | GOLD-5: Rubric template builder | OPEN | — | — |
 | GOLD-6: Passport/credential wallet | OPEN | — | — |
 | GOLD-7: Offline evidence queue coverage | OPEN | — | — |
-| GOLD-8: Native distribution proof (iOS) | OPEN | — | — |
-| GOLD-8: Native distribution proof (Android) | OPEN | — | — |
+| GOLD-8: Native distribution proof (iOS TestFlight) | OPEN — blocked by external App Store Connect, Apple Distribution, and provisioning assets | — | — |
+| GOLD-8: Native distribution proof (Android Play internal) | OPEN — blocked by external Google Play and release signing assets | — | — |
+| GOLD-8: Native distribution proof (macOS Developer ID notarization) | OPEN — blocked by external App Store Connect and Developer ID assets | — | — |
 
 ---
 
@@ -418,4 +421,4 @@ cd apps/empire_flutter/app && flutter test
 - **Traffic rehearsal first:** `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web` — validates Docker build and Cloud Run deploy without shifting traffic.
 - **All CI checks must pass** before merge to main.
 - **Do not deploy if evidence chain end-to-end tests are failing.** A broken portfolio display after educator review erodes trust more than no deploy.
-- **Native distribution:** Do not declare iOS or Android gold without a verified TestFlight or Google Play Internal upload screenshot saved in `docs/`.
+- **Native distribution:** Do not declare native-channel Gold without verified TestFlight, Google Play internal, and macOS Developer ID notarization proof captured through `./scripts/native_distribution_proof.sh execute-live` or `.github/workflows/native-distribution-proof.yml` and reviewed by the release owner.

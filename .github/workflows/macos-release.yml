@@ -1,0 +1,80 @@
+name: macOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      notarize_macos:
+        description: Sign and notarize the macOS release app
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: macos-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+  APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+  APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+  APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+  MACOS_DEVELOPER_ID_CERT_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_CERT_P12_BASE64 }}
+  MACOS_DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_CERT_PASSWORD }}
+
+jobs:
+  verify-macos-notary:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate macOS release secrets
+        run: ./scripts/macos_release_ci.sh validate-macos-release
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/macos_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Import and validate Developer ID certificate
+        run: ./scripts/macos_release_ci.sh import-developer-id-certificate "$RUNNER_TEMP"
+
+      - name: Verify notarization auth
+        run: ./scripts/macos_release_ci.sh verify-notary-auth
+
+  macos-notarize:
+    needs: verify-macos-notary
+    if: ${{ inputs.notarize_macos }}
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate macOS release secrets
+        run: ./scripts/macos_release_ci.sh validate-macos-release
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Flutter dependencies
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/macos_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Import and validate Developer ID certificate
+        run: ./scripts/macos_release_ci.sh import-developer-id-certificate "$RUNNER_TEMP"
+
+      - name: Build macOS release app
+        run: ./scripts/deploy.sh flutter-macos
+
+      - name: Sign, notarize, and staple macOS app
+        run: ./scripts/macos_release_ci.sh sign-notarize-staple "$RUNNER_TEMP"

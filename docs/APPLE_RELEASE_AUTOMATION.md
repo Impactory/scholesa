@@ -22,7 +22,16 @@ This document describes the local and GitHub Actions setup for App Store Connect
 ./scripts/apple_release_local.sh verify_api_key
 ```
 
-4. Verify local TestFlight signing prerequisites without uploading anything:
+4. Install local iOS distribution signing from external Apple signing assets:
+
+```bash
+IOS_SIGNING_CERT_PASSWORD=<p12-password> \
+./scripts/setup_apple_signing.sh ios /absolute/path/to/ios-distribution.p12 /absolute/path/to/profile.mobileprovision
+```
+
+This imports the Apple Distribution certificate into the local keychain and copies the provisioning profile into `~/Library/MobileDevice/Provisioning Profiles/scholesa-app-store.mobileprovision` after validating the profile app identifier against `com.scholesa.app`.
+
+5. Verify local TestFlight signing prerequisites without uploading anything:
 
 ```bash
 ./scripts/apple_release_local.sh verify_local_release
@@ -30,7 +39,7 @@ This document describes the local and GitHub Actions setup for App Store Connect
 
 This fails closed and reports all missing local prerequisites in one pass: `.env.app_store_connect.local`, App Store Connect issuer configuration, a local Apple Distribution identity, and at least one installed `.mobileprovision` profile.
 
-5. Upload a signed iOS build to TestFlight once signing is configured locally in Xcode:
+6. Upload a signed iOS build to TestFlight once signing is configured locally:
 
 ```bash
 ./scripts/apple_release_local.sh upload_testflight
@@ -49,6 +58,8 @@ Local configuration is sourced from `.env.app_store_connect.local`, which is ign
 - `APPLE_DEVELOPER_TEAM_ID`
 - `FLUTTER_BIN`
 
+`./scripts/setup_apple_signing.sh ios` consumes `IOS_SIGNING_CERT_PASSWORD` and the external `.p12` / `.mobileprovision` paths provided on the command line. It does not write those secrets to tracked files.
+
 ## GitHub Actions Secrets
 
 Required for App Store Connect auth:
@@ -63,6 +74,14 @@ Required for the `ios-testflight` workflow job:
 - `IOS_SIGNING_CERT_P12_BASE64`
 - `IOS_SIGNING_CERT_PASSWORD`
 - `IOS_PROVISIONING_PROFILE_BASE64`
+
+Required for the `macos-release` workflow jobs:
+
+- `APPLE_DEVELOPER_TEAM_ID`
+- `MACOS_DEVELOPER_ID_CERT_P12_BASE64`
+- `MACOS_DEVELOPER_ID_CERT_PASSWORD`
+
+After local App Store Connect setup, `./scripts/set_apple_github_secrets.sh` can publish the shared App Store Connect secrets and optional signing secrets. Set `IOS_SIGNING_CERT_P12_PATH` / `IOS_SIGNING_CERT_PASSWORD` for TestFlight signing and `MACOS_DEVELOPER_ID_CERT_P12_PATH` / `MACOS_DEVELOPER_ID_CERT_PASSWORD` for macOS Developer ID notarization before running it.
 
 ## Workflow
 
@@ -80,4 +99,7 @@ If VS Code shows `Context access might be invalid` on the workflow secret refere
 
 - The App Store Connect API key alone is not enough to upload builds. iOS upload still requires signing certificates and a provisioning profile.
 - `verify_local_release` is the honest local preflight for TestFlight readiness. It does not upload a build.
-- The current automation targets iOS TestFlight. macOS notarization remains a separate Apple signing/notary flow.
+- iOS TestFlight and macOS notarization share App Store Connect auth but use separate signing certificates. Keep Apple Distribution and Developer ID Application certificates distinct.
+- Use `./scripts/native_distribution_readiness.sh` when validating the full native-channel distribution boundary across iOS, Android, and macOS.
+- Use `./scripts/native_distribution_proof.sh execute-live` only when the release owner is ready to capture live native-channel distribution proof; it requires an explicit confirmation environment variable before uploading builds.
+- Use `.github/workflows/native-distribution-proof.yml` when proof should be captured in CI artifacts alongside Android and macOS proof. The workflow requires `native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS`.
