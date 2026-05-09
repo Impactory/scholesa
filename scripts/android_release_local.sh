@@ -15,8 +15,30 @@ fail() {
   exit 1
 }
 
+require_google_play_env() {
+  [[ -f "$LOCAL_ENV_FILE" ]] || {
+    printf '%s\n' "Missing $LOCAL_ENV_FILE. Run ./scripts/setup_google_play_key.sh first."
+    return 1
+  }
+
+  set -a
+  # shellcheck disable=SC1090
+  source "$LOCAL_ENV_FILE"
+  set +a
+
+  [[ -n "${GOOGLE_PLAY_JSON_KEY_PATH:-}" ]] || {
+    printf '%s\n' "GOOGLE_PLAY_JSON_KEY_PATH is empty in $LOCAL_ENV_FILE."
+    return 1
+  }
+}
+
 require_local_android_signing_prereqs() {
   local issues=()
+  local message
+
+  if ! message="$(require_google_play_env 2>&1)"; then
+    issues+=("$message")
+  fi
 
   if [[ ! -f "$KEY_PROPERTIES_FILE" ]]; then
     issues+=("Missing $KEY_PROPERTIES_FILE. Create it locally with Android release signing values.")
@@ -47,12 +69,9 @@ require_local_android_signing_prereqs() {
   fi
 }
 
-[[ -f "$LOCAL_ENV_FILE" ]] || fail "Missing $LOCAL_ENV_FILE. Run ./scripts/setup_google_play_key.sh first."
-
-set -a
-# shellcheck disable=SC1090
-source "$LOCAL_ENV_FILE"
-set +a
+if [[ "$COMMAND" != "verify_local_release" ]]; then
+  require_google_play_env || exit 1
+fi
 
 export ANDROID_APP_IDENTIFIER="${ANDROID_APP_IDENTIFIER:-com.scholesa.app}"
 export PLAY_TRACK="${PLAY_TRACK:-internal}"
@@ -61,8 +80,6 @@ export BUNDLE_PATH="${BUNDLE_PATH:-$BUNDLE_DIR}"
 export BUNDLE_APP_CONFIG
 export BUNDLE_USER_HOME="${BUNDLE_USER_HOME:-$BUNDLE_USER_HOME_DIR}"
 export BUNDLE_CACHE_PATH="${BUNDLE_CACHE_PATH:-$BUNDLE_USER_HOME/cache}"
-
-[[ -n "${GOOGLE_PLAY_JSON_KEY_PATH:-}" ]] || fail "GOOGLE_PLAY_JSON_KEY_PATH is empty in $LOCAL_ENV_FILE."
 
 FASTLANE_LANE="$COMMAND"
 

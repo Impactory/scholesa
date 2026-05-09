@@ -11,7 +11,8 @@ This is the operator-facing plan and historical checklist for the current scoped
 | Included release scope | Web app, Flutter web on Cloud Run, Firebase Functions/rules, compliance operator, evidence-chain workflows, guardian/passport/report outputs, site ops/readiness surfaces. |
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Included for partner web evidence-facing workflows after the May 8 partner route sweep, partner integration/deliverable index proof, browser-created contract, browser-created evidence URL deliverable, and Firestore readback. |
-| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, partner web evidence-facing proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, and final source-contract validation are recorded in the final signoff. |
+| Native build proof | macOS local release build now passes through `./scripts/deploy.sh flutter-macos`; iOS local release build now passes through `./scripts/deploy.sh flutter-ios` with codesigning disabled; Android local release build now passes through `./scripts/deploy.sh flutter-android` after installing the Android SDK/toolchain; distribution remains deferred until Developer ID signing, notarization, App Store Connect, Google Play credentials, and release signing assets are installed and proven. |
+| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, partner web evidence-facing proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, macOS/iOS/Android local release build proof, and final source-contract validation are recorded in the final signoff. |
 | Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native-channel app-store scope must remain outside the claim. |
 
 ## May 7 Continuation Delta - Broad Gold Deployment
@@ -77,7 +78,7 @@ Capture:
 Stop if:
 
 - Worktree has unexplained diffs.
-- Native-channel or partner scope is ambiguous.
+- Native-channel scope is ambiguous.
 - Operator cannot identify the target GCP/Firebase project and region.
 
 ## Phase 1 - Reproduce The Non-Mutating Gold Gate
@@ -375,7 +376,7 @@ git diff --check
 Stop if:
 
 - Any final signoff statement lacks evidence.
-- The signoff broadens into native-channel or partner scope without proof.
+- The signoff broadens into native-channel scope without proof.
 - Source-contract tests do not pin the GO boundary.
 
 ## Final GO Checklist
@@ -402,6 +403,9 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [x] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.
 - [x] Theme mode switch renders icon-only controls on public and protected shells.
 - [x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.
+- [x] macOS local release build passes while native app-store distribution remains fail-closed behind signing/notarization/store credentials.
+- [x] iOS local release build passes with codesigning disabled while App Store distribution remains fail-closed behind App Store Connect credentials.
+- [x] Android local release build passes after Android SDK/toolchain install, with Google Play distribution still fail-closed behind credentials and release signing assets.
 - [x] Final signoff converted from NO-GO to GO with evidence.
 - [x] Source-contract tests pass after signoff update.
 

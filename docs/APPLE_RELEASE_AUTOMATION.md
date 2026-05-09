@@ -28,7 +28,7 @@ This document describes the local and GitHub Actions setup for App Store Connect
 ./scripts/apple_release_local.sh verify_local_release
 ```
 
-This checks for both a local Apple Distribution identity and at least one installed `.mobileprovision` profile, then reuses the same App Store Connect API key validation path.
+This fails closed and reports all missing local prerequisites in one pass: `.env.app_store_connect.local`, App Store Connect issuer configuration, a local Apple Distribution identity, and at least one installed `.mobileprovision` profile.
 
 5. Upload a signed iOS build to TestFlight once signing is configured locally in Xcode:
 

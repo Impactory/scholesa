@@ -22,7 +22,7 @@ This document describes the local and GitHub Actions setup for Google Play authe
 ./scripts/android_release_local.sh verify_local_release
 ```
 
-This checks that `apps/empire_flutter/app/android/key.properties` exists locally, contains the expected signing values, and points at a real keystore file.
+This fails closed and reports all missing local prerequisites in one pass: `.env.google_play.local`, `GOOGLE_PLAY_JSON_KEY_PATH`, `apps/empire_flutter/app/android/key.properties`, required signing values, and the referenced keystore file.
 
 4. Upload a signed Android App Bundle to Google Play internal testing once signing is configured locally:
 

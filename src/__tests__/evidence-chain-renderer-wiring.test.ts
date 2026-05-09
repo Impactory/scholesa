@@ -1038,6 +1038,30 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'scripts', 'deploy.sh'),
       'utf8'
     );
+    const appleReleaseLocalSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'apple_release_local.sh'),
+      'utf8'
+    );
+    const androidReleaseLocalSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'android_release_local.sh'),
+      'utf8'
+    );
+    const macosReleaseLocalSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'macos_release_local.sh'),
+      'utf8'
+    );
+    const appleReleaseAutomationSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'APPLE_RELEASE_AUTOMATION.md'),
+      'utf8'
+    );
+    const androidReleaseAutomationSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'ANDROID_RELEASE_AUTOMATION.md'),
+      'utf8'
+    );
+    const macosReleaseAutomationSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'MACOS_RELEASE_AUTOMATION.md'),
+      'utf8'
+    );
     const primaryWebDockerfileSource = fs.readFileSync(
       path.join(process.cwd(), 'Dockerfile'),
       'utf8'
@@ -1132,6 +1156,39 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('gold-partner-proof-20260508-152550');
     expect(finalSignoffSource).toContain('contract `W3rtDqJ7GJqt2tAjQD3q` and deliverable `6C1WhwTodWrlkSjZnZGf`');
     expect(finalSignoffSource).toContain('https://example.com/scholesa-gold-partner-evidence');
+    expect(finalSignoffSource).toContain('Native macOS local release build');
+    expect(finalSignoffSource).toContain('`./scripts/deploy.sh flutter-macos`');
+    expect(finalSignoffSource).toContain('Flutter gate passed `1087` tests');
+    expect(finalSignoffSource).toContain('build/macos/Build/Products/Release/scholesa_app.app` at `137.0MB`');
+    expect(finalSignoffSource).toContain('Native iOS local release build');
+    expect(finalSignoffSource).toContain('`./scripts/deploy.sh flutter-ios`');
+    expect(finalSignoffSource).toContain('build/ios/iphoneos/Runner.app` at `76.3MB`');
+    expect(finalSignoffSource).toContain('Native Android local release build');
+    expect(finalSignoffSource).toContain('`./scripts/deploy.sh flutter-android`');
+    expect(finalSignoffSource).toContain('Build-Tools 36.0.0');
+    expect(finalSignoffSource).toContain('build/app/outputs/bundle/release/app-release.aab` at `56.6MB`');
+    expect(finalSignoffSource).toContain('build/app/outputs/flutter-apk/app-release.apk` at `78.2MB`');
+    expect(deployScriptSource).toContain('require_android_sdk');
+    expect(deployScriptSource).toContain('Android SDK not found. Install Android Studio command-line tools or set ANDROID_HOME');
+    expect(finalSignoffSource).toContain('`./scripts/macos_release_local.sh verify_local_release`');
+    expect(finalSignoffSource).toContain('missing Developer ID Application identity plus `.env.app_store_connect.local`');
+    expect(finalSignoffSource).toContain('no Apple Distribution / iOS Distribution identity');
+    expect(finalSignoffSource).toContain('no iOS provisioning profile');
+    expect(finalSignoffSource).toContain('no Android `apps/empire_flutter/app/android/key.properties` release signing file');
+    expect(appleReleaseLocalSource).toContain('require_app_store_connect_env');
+    expect(appleReleaseLocalSource).toContain('Missing local iOS provisioning profile');
+    expect(appleReleaseLocalSource).toContain('Local iOS distribution prerequisites are incomplete');
+    expect(androidReleaseLocalSource).toContain('require_google_play_env');
+    expect(androidReleaseLocalSource).toContain('Missing $KEY_PROPERTIES_FILE');
+    expect(androidReleaseLocalSource).toContain('Local Android release prerequisites are incomplete');
+    expect(macosReleaseLocalSource).toContain('require_developer_id_identity');
+    expect(macosReleaseLocalSource).toContain('Local macOS distribution prerequisites are incomplete');
+    expect(appleReleaseAutomationSource).toContain('reports all missing local prerequisites in one pass');
+    expect(appleReleaseAutomationSource).toContain('a local Apple Distribution identity');
+    expect(androidReleaseAutomationSource).toContain('reports all missing local prerequisites in one pass');
+    expect(androidReleaseAutomationSource).toContain('apps/empire_flutter/app/android/key.properties');
+    expect(macosReleaseAutomationSource).toContain('./scripts/macos_release_local.sh verify_local_release');
+    expect(macosReleaseAutomationSource).toContain('macOS distribution Gold requires Developer ID signing plus notarization proof');
     expect(finalSignoffSource).toContain('Fail-closed Firebase placeholder proof');
     expect(finalSignoffSource).toContain('0346e4be-94f6-45c9-84d7-8d4cd17f872f');
     expect(finalSignoffSource).toContain('scholesa-web-00045-pm9');
@@ -1145,6 +1202,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**');
     expect(blanketGoldAchievementPlanSource).toContain('None for the included web/Cloud Run scope');
     expect(blanketGoldAchievementPlanSource).toContain('Partner scope | Included for partner web evidence-facing workflows');
+    expect(blanketGoldAchievementPlanSource).toContain('Native build proof | macOS local release build now passes');
+    expect(blanketGoldAchievementPlanSource).toContain('iOS local release build now passes through `./scripts/deploy.sh flutter-ios`');
+    expect(blanketGoldAchievementPlanSource).toContain('Android local release build now passes through `./scripts/deploy.sh flutter-android`');
     expect(blanketGoldAchievementPlanSource).toContain('May 7 Continuation Delta - Broad Gold Deployment');
     expect(blanketGoldAchievementPlanSource).toContain('Proof-of-learning verification queue hardening');
     expect(blanketGoldAchievementPlanSource).toContain('Theme mode switch presentation');
@@ -1156,6 +1216,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(blanketGoldAchievementPlanSource).toContain('[x] Proof-review queue loads without index/load errors on the rehearsed or promoted web revision.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Theme mode switch renders icon-only controls on public and protected shells.');
     expect(blanketGoldAchievementPlanSource).toContain('[x] Partner evidence-facing web workflows render and persist a submitted evidence URL deliverable with permission-safe readback.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] macOS local release build passes while native app-store distribution remains fail-closed behind signing/notarization/store credentials.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] iOS local release build passes with codesigning disabled while App Store distribution remains fail-closed behind App Store Connect credentials.');
+    expect(blanketGoldAchievementPlanSource).toContain('[x] Android local release build passes after Android SDK/toolchain install, with Google Play distribution still fail-closed behind credentials and release signing assets.');
     expect(proofVerificationIndexReadinessSource).toContain('proofOfLearningBundles');
     expect(proofVerificationIndexReadinessSource).toContain('CLOUDSDK_CORE_DISABLE_PROMPTS');
     expect(blanketGoldAchievementPlanSource).toContain('npx playwright test test/e2e/theme-mode-toggle.e2e.spec.ts');
@@ -1175,7 +1238,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(cloudRunRehearsalUrlsSource).toContain('REHEARSAL_URL=');
     expect(blanketGoldAchievementPlanSource).toContain('CLOUD_RUN_REHEARSAL_TAG=gold-rehearsal');
     expect(finalSignoffSource).toContain('Native-channel app-store release operations are deferred');
-    expect(finalSignoffSource).toContain('iOS, macOS, Android store distribution');
+    expect(finalSignoffSource).toContain('iOS/macOS/Android store distribution');
     expect(masterPlanSource).toContain('native-channel app-store release operations explicitly deferred');
     expect(operatorReleaseProofSource).toContain('rc3_big_bang_cutover_entrypoint.sh --print-only');
     expect(operatorReleaseProofSource).toContain('append_no_traffic_arg');

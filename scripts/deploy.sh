@@ -111,6 +111,26 @@ flutter_cmd() {
   flutter "$@"
 }
 
+require_android_sdk() {
+  local sdk_dir="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+
+  if [[ -z "$sdk_dir" && -d "$HOME/Library/Android/sdk" ]]; then
+    sdk_dir="$HOME/Library/Android/sdk"
+  elif [[ -z "$sdk_dir" && -d "/opt/homebrew/share/android-commandlinetools" ]]; then
+    sdk_dir="/opt/homebrew/share/android-commandlinetools"
+  elif [[ -z "$sdk_dir" && -d "/usr/local/share/android-commandlinetools" ]]; then
+    sdk_dir="/usr/local/share/android-commandlinetools"
+  fi
+
+  if [[ -n "$sdk_dir" ]]; then
+    export ANDROID_HOME="$sdk_dir"
+    export ANDROID_SDK_ROOT="$sdk_dir"
+  fi
+
+  [[ -n "$sdk_dir" ]] || fail "Android SDK not found. Install Android Studio command-line tools or set ANDROID_HOME before running ./scripts/deploy.sh flutter-android."
+  [[ -d "$sdk_dir" ]] || fail "Android SDK directory not found at $sdk_dir. Set ANDROID_HOME to a valid Android SDK path before running ./scripts/deploy.sh flutter-android."
+}
+
 cleanup() {
   if [[ -n "$TEMP_GCP_CREDENTIALS" && -f "$TEMP_GCP_CREDENTIALS" ]]; then
     rm -f "$TEMP_GCP_CREDENTIALS"
@@ -612,6 +632,7 @@ deploy_flutter_macos() {
 }
 
 deploy_flutter_android() {
+  require_android_sdk
   ensure_flutter_gate
   log "Building Flutter Android App Bundle (release)..."
   (cd "$FLUTTER_APP" && flutter_cmd build appbundle --release)
