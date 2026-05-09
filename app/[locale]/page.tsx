@@ -47,10 +47,10 @@ const proofLanes = [
 ];
 
 const goldSignals = [
-  'Six-role web cutover proven on the rehearsal tag',
-  'Proof review and verification routes render without queue/index errors',
-  'Partner evidence URL deliverable persisted and read back from Firestore',
-  'Traffic-pinning accepted as the final web release control',
+  'Six-role web cutover proven against the Cloud Run rehearsal surface',
+  'Proof review and verification routes load without queue or index failures',
+  'Partner evidence deliverables persist and read back from Firestore',
+  'Traffic-pinning is the release control for every public Gold revision',
 ];
 
 const nativeSignals = [
@@ -110,22 +110,22 @@ export default function LandingPage() {
             <div className="max-w-4xl">
               <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Current Gold web packet: GO
+                Gold web release: evidence-backed and live-ready
               </div>
               <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl sm:leading-tight lg:text-5xl dark:text-white">
-                Capability growth, backed by evidence people can inspect.
+                The proof engine for real capability growth.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 dark:text-slate-300">
-                Scholesa connects classroom observations, learner artifacts, proof-of-learning,
-                rubric judgments, growth history, portfolios, reports, and partner outputs into one
-                traceable operating surface.
+                Scholesa turns classroom moments into inspectable proof: observations, learner
+                artifacts, explain-backs, rubric judgments, growth history, portfolios, reports,
+                and partner deliverables all tied to the evidence that earned the claim.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
                 <Link
                   href={`/${locale}/login`}
                   className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
                 >
-                  Enter Scholesa
+                  Enter the evidence engine
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <Link
@@ -140,8 +140,8 @@ export default function LandingPage() {
             <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label="Gold evidence command center">
               <div className="flex items-center justify-between gap-3 border-b border-cyan-100 pb-3 dark:border-slate-700">
                 <div>
-                  <p className="text-sm font-bold text-slate-950 dark:text-white">Gold proof surface</p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Web verified. Native gated.</p>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">Gold proof command</p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Web verified. Native proof-gated.</p>
                 </div>
                 <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
                   Web GO
@@ -161,8 +161,8 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
-                Native channel Gold is held at the proof gate until live TestFlight, Play internal,
-                and notarized macOS artifacts pass with external signing assets.
+                Native channel Gold stays locked until TestFlight, Play internal, and notarized
+                macOS artifacts pass with external signing assets. No proof, no claim.
               </div>
             </div>
 
@@ -190,11 +190,11 @@ export default function LandingPage() {
               <div>
                 <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">Role surfaces</p>
                 <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl dark:text-white">
-                  One evidence chain, six accountable views.
+                  Six roles. One chain of truth.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
-                  The current Gold packet proves learner, educator, guardian, site, HQ, and partner
-                  web access against the rehearsed Cloud Run surface.
+                  Learners see what they are building. Educators capture proof in the moment.
+                  Families, schools, HQ, and partners see the evidence behind every claim.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -225,7 +225,7 @@ export default function LandingPage() {
             <div className="rounded-md border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-800 dark:bg-slate-950">
               <div className="flex items-center gap-2 text-sm font-bold uppercase text-emerald-700 dark:text-emerald-300">
                 <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                Web Gold evidence
+                Web Gold proof
               </div>
               <ul className="mt-5 space-y-3">
                 {goldSignals.map((signal) => (
@@ -276,8 +276,8 @@ export default function LandingPage() {
               <div>
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">Evidence before confidence.</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                  Native app-store Gold waits for live TestFlight, Play internal, and macOS
-                  notarization proof. The web evidence packet is ready now.
+                    The web release is ready to publish. Native app-store Gold waits for live
+                    TestFlight, Play internal, and macOS notarization proof.
                 </p>
               </div>
             </div>

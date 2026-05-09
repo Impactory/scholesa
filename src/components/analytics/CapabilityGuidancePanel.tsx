@@ -218,16 +218,16 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${
-                    pillar.band === 'strong' ? 'bg-green-500' :
-                    pillar.band === 'developing' ? 'bg-blue-500' :
-                    pillar.band === 'emerging' ? 'bg-amber-400' : 'bg-gray-300'
-                  }`}
-                  style={{ width: `${Math.round((pillar.averageLevel / 4) * 100)}%` }}
-                />
-              </div>
+              <progress
+                aria-label={`${pillar.pillarLabel} capability level`}
+                className={`mb-2 h-2 w-full rounded-full bg-gray-100 ${
+                  pillar.band === 'strong' ? 'accent-green-500' :
+                  pillar.band === 'developing' ? 'accent-blue-500' :
+                  pillar.band === 'emerging' ? 'accent-amber-400' : 'accent-gray-300'
+                }`}
+                value={pillar.averageLevel}
+                max={4}
+              />
 
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span>Level {pillar.averageLevel}/4 — {LEVEL_DESCRIPTIONS[Math.round(pillar.averageLevel)] ?? 'In progress'}</span>

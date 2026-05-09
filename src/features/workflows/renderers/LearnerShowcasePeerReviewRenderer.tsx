@@ -268,7 +268,13 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
         <div className="bg-white border border-purple-200 rounded-lg p-4 space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-medium text-gray-900">Submit to Showcase</h3>
-            <button onClick={() => setShowSubmitForm(false)} className="text-gray-400 hover:text-gray-600">
+            <button
+              type="button"
+              onClick={() => setShowSubmitForm(false)}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Close showcase submission form"
+              title="Close showcase submission form"
+            >
               <XIcon className="h-4 w-4" />
             </button>
           </div>

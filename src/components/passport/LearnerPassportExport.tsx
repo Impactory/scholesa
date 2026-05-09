@@ -1360,6 +1360,7 @@ ${growthHtml}
           <div className="flex flex-wrap gap-2">
             {learners.length > 1 && (
               <select
+                aria-label="Select learner passport"
                 value={selectedIndex}
                 onChange={(e) => setSelectedIndex(Number(e.target.value))}
                 className="text-sm border border-gray-300 rounded-md px-3 py-2"
@@ -1745,12 +1746,12 @@ function PillarCard({ label, value }: { label: string; value: number | null }) {
     <div className={`rounded-lg border p-3 ${colors.bg} ${colors.border}`}>
       <div className={`text-xs font-medium ${colors.text}`}>{label}</div>
       <div className={`text-2xl font-bold mt-1 ${colors.text}`}>{pct(value)}</div>
-      <div className="mt-2 h-1.5 rounded-full bg-white/60">
-        <div
-          className="h-full rounded-full bg-current opacity-60"
-          style={{ width: `${Math.min(100, percentage)}%` }}
-        />
-      </div>
+      <progress
+        aria-label={`${label} progress`}
+        className="mt-2 h-1.5 w-full rounded-full bg-white/60 accent-current opacity-70"
+        value={Math.min(100, percentage)}
+        max={100}
+      />
     </div>
   );
 }

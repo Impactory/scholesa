@@ -204,8 +204,8 @@ function aiFieldsFromDisclosure(disclosure: AiDisclosure): {
   }
 }
 
-function levelBarWidth(level: number): string {
-  return `${Math.min(Math.max(level, 0), 4) * 25}%`;
+function clampMasteryLevel(level: number): number {
+  return Math.min(Math.max(level, 0), 4);
 }
 
 // ---------------------------------------------------------------------------
@@ -660,12 +660,12 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                               {resolveTitle(m.capabilityId)}
                             </span>
                             <div className="flex-1">
-                              <div className="h-2 rounded-full bg-app-canvas">
-                                <div
-                                  className="h-2 rounded-full bg-primary transition-all"
-                                  style={{ width: levelBarWidth(m.level) }}
-                                />
-                              </div>
+                              <progress
+                                aria-label={`${resolveTitle(m.capabilityId)} capability level`}
+                                className="h-2 w-full rounded-full bg-app-canvas accent-primary"
+                                value={clampMasteryLevel(m.level)}
+                                max={4}
+                              />
                             </div>
                             <span className="w-8 text-right text-xs font-semibold text-app-muted">
                               {m.level}/4

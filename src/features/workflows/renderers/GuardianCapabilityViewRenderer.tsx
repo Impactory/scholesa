@@ -1006,12 +1006,12 @@ function PillarProgressBar({
           {clampedPercent}% &middot; {pillar.bandLabel}
         </span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-app-canvas">
-        <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${clampedPercent}%` }}
-        />
-      </div>
+      <progress
+        aria-label={`${pillar.label} capability progress`}
+        className={`h-2.5 w-full overflow-hidden rounded-full bg-app-canvas ${barColor}`}
+        value={clampedPercent}
+        max={100}
+      />
     </div>
   );
 }
