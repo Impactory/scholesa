@@ -167,25 +167,48 @@ class ScholesaTheme {
 
   static ThemeData get light {
     final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: ScholesaColors.learner,
+      seedColor: ScholesaColors.primary,
       brightness: Brightness.light,
+    ).copyWith(
+      primary: ScholesaColors.primary,
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFCFFAFE),
+      onPrimaryContainer: const Color(0xFF164E63),
+      secondary: ScholesaColors.success,
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFD1FAE5),
+      onSecondaryContainer: const Color(0xFF064E3B),
+      tertiary: ScholesaColors.warning,
+      onTertiary: Colors.white,
+      tertiaryContainer: const Color(0xFFFEF3C7),
+      onTertiaryContainer: const Color(0xFF78350F),
+      error: ScholesaColors.error,
+      surface: ScholesaColors.surface,
+      surfaceContainerLowest: ScholesaColors.background,
+      surfaceContainerLow: ScholesaColors.surfaceVariant,
+      surfaceContainer: const Color(0xFFE0F2FE),
+      surfaceContainerHigh: const Color(0xFFEFF6FF),
+      surfaceContainerHighest: const Color(0xFFF8FAFC),
+      outline: const Color(0xFF94A3B8),
+      outlineVariant: ScholesaColors.border,
     );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       splashFactory: InkRipple.splashFactory,
-      scaffoldBackgroundColor: scheme.surfaceContainerLowest,
+      scaffoldBackgroundColor: ScholesaColors.background,
       canvasColor: scheme.surface,
       fontFamily: 'Inter',
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: ScholesaColors.surface,
         foregroundColor: scheme.onSurface,
         elevation: 0,
         centerTitle: true,
+        surfaceTintColor: Colors.transparent,
       ),
       cardTheme: CardThemeData(
-        color: scheme.surface,
-        surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.12),
+        color: ScholesaColors.surface,
+        surfaceTintColor: ScholesaColors.primary.withValues(alpha: 0.08),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -250,13 +273,48 @@ class ScholesaTheme {
           borderRadius: BorderRadius.circular(20),
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: ScholesaColors.surface,
+        indicatorColor: scheme.primaryContainer,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(color: scheme.onSurface, fontWeight: FontWeight.w600),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: ScholesaColors.surface,
+        indicatorColor: scheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
+        selectedLabelTextStyle: TextStyle(color: scheme.onPrimaryContainer),
+      ),
     );
   }
 
   static ThemeData get dark {
     final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: ScholesaColors.learner,
+      seedColor: ScholesaColors.primary,
       brightness: Brightness.dark,
+    ).copyWith(
+      primary: const Color(0xFF67E8F9),
+      onPrimary: const Color(0xFF083344),
+      primaryContainer: const Color(0xFF164E63),
+      onPrimaryContainer: const Color(0xFFCFFAFE),
+      secondary: const Color(0xFF6EE7B7),
+      onSecondary: const Color(0xFF022C22),
+      secondaryContainer: const Color(0xFF064E3B),
+      onSecondaryContainer: const Color(0xFFD1FAE5),
+      tertiary: const Color(0xFFFCD34D),
+      onTertiary: const Color(0xFF451A03),
+      tertiaryContainer: const Color(0xFF78350F),
+      onTertiaryContainer: const Color(0xFFFEF3C7),
+      error: const Color(0xFFFCA5A5),
+      surface: const Color(0xFF0F172A),
+      surfaceContainerLowest: const Color(0xFF020617),
+      surfaceContainerLow: const Color(0xFF111827),
+      surfaceContainer: const Color(0xFF1E293B),
+      surfaceContainerHigh: const Color(0xFF263244),
+      surfaceContainerHighest: const Color(0xFF334155),
+      outline: const Color(0xFF64748B),
+      outlineVariant: const Color(0xFF334155),
     );
     return ThemeData(
       useMaterial3: true,
@@ -270,6 +328,7 @@ class ScholesaTheme {
         foregroundColor: scheme.onSurface,
         elevation: 0,
         centerTitle: true,
+        surfaceTintColor: Colors.transparent,
       ),
       cardTheme: CardThemeData(
         color: scheme.surface,
@@ -337,6 +396,19 @@ class ScholesaTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primaryContainer,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(color: scheme.onSurface, fontWeight: FontWeight.w600),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
+        selectedLabelTextStyle: TextStyle(color: scheme.onPrimaryContainer),
       ),
     );
   }
