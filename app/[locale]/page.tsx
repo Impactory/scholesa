@@ -9,11 +9,9 @@ import {
   FileCheck2,
   GraduationCap,
   LineChart,
-  LockKeyhole,
   Network,
   School,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   Users,
 } from 'lucide-react';
@@ -46,24 +44,18 @@ const proofLanes = [
   { label: 'Communicate', value: 'portfolio + Passport', tone: 'bg-amber-500' },
 ];
 
-const goldSignals = [
-  'Six-role web cutover proven against the Cloud Run rehearsal surface',
-  'Proof review and verification routes load without queue or index failures',
-  'Partner evidence deliverables persist and read back from Firestore',
-  'Traffic-pinning is the release control for every public Gold revision',
+const trustSignals = [
+  'Every learner claim can point back to evidence, context, and reviewer judgment',
+  'Educators can capture meaningful observations during the live flow of class',
+  'Families see capability progress without reducing growth to marks or averages',
+  'School and HQ teams can trace implementation health through evidence coverage',
 ];
 
-const nativeSignals = [
-  { label: 'macOS local build', status: 'Proven', detail: 'release app built locally' },
-  { label: 'iOS local build', status: 'Proven', detail: 'no-codesign release app built' },
-  { label: 'Android local build', status: 'Proven', detail: 'AAB and APK built locally' },
-  { label: 'Store distribution', status: 'Blocked', detail: 'awaiting Apple and Google signing assets' },
-];
-
-const nativeProofGates = [
-  'TestFlight upload accepted with App Store Connect credentials',
-  'Google Play internal testing upload accepted with release signing',
-  'macOS Developer ID notarization and stapling proof captured',
+const trustOutcomes = [
+  { label: 'Learners', detail: 'know what they are creating, what they can explain, and what belongs in their portfolio' },
+  { label: 'Educators', detail: 'see the next evidence action without losing the rhythm of studio time' },
+  { label: 'Families', detail: 'understand growth through real work, not vague summaries or unexplained scores' },
+  { label: 'Leaders', detail: 'spot evidence gaps, support teachers, and protect the integrity of every claim' },
 ];
 
 export default function LandingPage() {
@@ -110,7 +102,7 @@ export default function LandingPage() {
             <div className="max-w-4xl">
               <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Gold web release: evidence-backed and live-ready
+                Capability learning, made visible
               </div>
               <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl sm:leading-tight lg:text-5xl dark:text-white">
                 The proof engine for real capability growth.
@@ -137,14 +129,14 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label="Gold evidence command center">
+            <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label="Evidence command center">
               <div className="flex items-center justify-between gap-3 border-b border-cyan-100 pb-3 dark:border-slate-700">
                 <div>
-                  <p className="text-sm font-bold text-slate-950 dark:text-white">Gold proof command</p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Web verified. Native proof-gated.</p>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">Evidence command center</p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Capture, verify, interpret, and communicate growth.</p>
                 </div>
                 <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                  Web GO
+                  Trusted
                 </span>
               </div>
               <div className="mt-4 grid gap-3">
@@ -160,9 +152,9 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
-                Native channel Gold stays locked until TestFlight, Play internal, and notarized
-                macOS artifacts pass with external signing assets. No proof, no claim.
+              <div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 p-3 text-sm leading-6 text-cyan-950 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-100">
+                Every view is designed to answer the same question: what can this learner do, and
+                what evidence makes that claim trustworthy?
               </div>
             </div>
 
@@ -193,7 +185,7 @@ export default function LandingPage() {
                   Six roles. One chain of truth.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
-                  Learners see what they are building. Educators capture proof in the moment.
+                  Learners see what they are creating. Educators capture proof in the moment.
                   Families, schools, HQ, and partners see the evidence behind every claim.
                 </p>
               </div>
@@ -225,10 +217,10 @@ export default function LandingPage() {
             <div className="rounded-md border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-800 dark:bg-slate-950">
               <div className="flex items-center gap-2 text-sm font-bold uppercase text-emerald-700 dark:text-emerald-300">
                 <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                Web Gold proof
+                Trust you can inspect
               </div>
               <ul className="mt-5 space-y-3">
-                {goldSignals.map((signal) => (
+                {trustSignals.map((signal) => (
                   <li key={signal} className="flex gap-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                     <span>{signal}</span>
@@ -236,34 +228,18 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-md border border-amber-200 bg-white p-5 shadow-sm dark:border-amber-800 dark:bg-slate-950">
-              <div className="flex items-center gap-2 text-sm font-bold uppercase text-amber-800 dark:text-amber-300">
-                <Smartphone className="h-5 w-5" aria-hidden="true" />
-                Native channel boundary
+            <div className="rounded-md border border-blue-200 bg-white p-5 shadow-sm dark:border-blue-800 dark:bg-slate-950">
+              <div className="flex items-center gap-2 text-sm font-bold uppercase text-blue-700 dark:text-blue-300">
+                <Users className="h-5 w-5" aria-hidden="true" />
+                Built for accountable growth
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {nativeSignals.map((signal) => (
-                  <div key={signal.label} className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-bold text-slate-950 dark:text-white">{signal.label}</p>
-                      <span className={`rounded-md px-2 py-1 text-xs font-bold ${signal.status === 'Proven' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
-                        {signal.status}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{signal.detail}</p>
+                {trustOutcomes.map((outcome) => (
+                  <div key={outcome.label} className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">{outcome.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{outcome.detail}</p>
                   </div>
                 ))}
-              </div>
-              <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-                <p className="text-sm font-bold text-amber-950 dark:text-amber-100">Native Gold proof still required</p>
-                <ul className="mt-3 space-y-2">
-                  {nativeProofGates.map((gate) => (
-                    <li key={gate} className="flex gap-2 text-sm leading-6 text-amber-950 dark:text-amber-100">
-                      <LockKeyhole className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span>{gate}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           </div>
@@ -272,12 +248,11 @@ export default function LandingPage() {
         <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 dark:bg-slate-950">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 rounded-md border border-cyan-200 bg-cyan-50 p-5 shadow-sm md:flex-row md:items-center md:justify-between dark:border-cyan-800 dark:bg-cyan-950/30">
             <div className="flex items-start gap-3">
-              <LockKeyhole className="mt-1 h-5 w-5 text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
+              <ShieldCheck className="mt-1 h-5 w-5 text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
               <div>
-                <h2 className="text-lg font-bold text-slate-950 dark:text-white">Evidence before confidence.</h2>
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">Make growth impossible to miss.</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                    The web release is ready to publish. Native app-store Gold waits for live
-                    TestFlight, Play internal, and macOS notarization proof.
+                  Bring proof, reflection, feedback, and portfolio-worthy work into one clear flow.
                 </p>
               </div>
             </div>
