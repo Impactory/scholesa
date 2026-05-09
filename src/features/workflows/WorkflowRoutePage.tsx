@@ -241,9 +241,10 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
   return (
     <RoleRouteGuard allowedRoles={route.allowedRoles}>
       <section className="space-y-6" data-testid="workflow-route-page">
-        <header className="rounded-xl border border-app bg-app-surface-raised p-6" data-testid="workflow-route-header">
-          <h1 className="text-2xl font-bold text-app-foreground">{route.title}</h1>
-          <p className="mt-2 text-sm text-app-muted">{route.description}</p>
+        <header className="rounded-md border border-cyan-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900" data-testid="workflow-route-header">
+          <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">Evidence workflow</p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{route.title}</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{route.description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {navigationTargets.map((target) => (
               <Link
@@ -258,8 +259,8 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
                 }
                 className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                   target === routePath
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-app-canvas text-app-muted hover:text-app-foreground'
+                    ? 'bg-cyan-700 text-white dark:bg-cyan-300 dark:text-slate-950'
+                    : 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                 }`}
               >
                 {target}
@@ -288,7 +289,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
               type="button"
               data-testid="workflow-create-toggle"
               onClick={() => setCreateOpen((prev) => !prev)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-md bg-cyan-700 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-800 dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
             >
               {data.createLabel}
             </button>
@@ -302,7 +303,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
         ) : null}
 
         {createOpen && data.canCreate && (
-          <div className="rounded-xl border border-app bg-app-surface p-4" data-testid="workflow-create-form">
+          <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900" data-testid="workflow-create-form">
             <h2 className="text-base font-semibold text-app-foreground">
               {data.createConfig?.title || 'Workflow action'}
             </h2>
@@ -310,7 +311,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
               {(data.createConfig?.fields || []).map((field) => {
                 const rawValue = createInput.values[field.name];
                 const stringValue = typeof rawValue === 'string' ? rawValue : '';
-                const sharedClassName = 'rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground';
+                const sharedClassName = 'rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
 
                 if (field.type === 'textarea') {
                   return (
@@ -420,7 +421,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
                 onClick={() => {
                   void submitCreate();
                 }}
-                className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                className="rounded-md bg-cyan-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 dark:bg-cyan-300 dark:text-slate-950"
               >
                 {mutatingId === 'create' ? 'Saving...' : data.createConfig?.submitLabel || 'Submit'}
               </button>
@@ -442,7 +443,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
         )}
 
         {loading || authLoading ? (
-          <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-app bg-app-surface">
+          <div className="flex min-h-[240px] items-center justify-center rounded-md border border-cyan-200 bg-white dark:border-slate-700 dark:bg-slate-900">
             <div className="flex items-center gap-2 text-app-muted">
               <Spinner />
               <span>Loading workflow data...</span>
@@ -451,7 +452,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" data-testid="workflow-error">{error}</div>
         ) : data.records.length === 0 ? (
-          <div className="rounded-xl border border-app bg-app-surface p-8 text-center text-app-muted" data-testid="workflow-empty">
+          <div className="rounded-md border border-cyan-200 bg-white p-8 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" data-testid="workflow-empty">
             No records found yet for this workflow.
           </div>
         ) : (
@@ -460,7 +461,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
               <li
                 key={record.id}
                 data-testid={`workflow-record-${record.id}`}
-                className="rounded-xl border border-app bg-app-surface-raised p-4"
+                className="rounded-md border border-cyan-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -498,7 +499,7 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
                             recordId: record.id,
                           });
                         }}
-                        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                        className="rounded-md bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 dark:bg-cyan-300 dark:text-slate-950"
                       >
                         {selectedRecordId === record.id
                           ? 'Close'

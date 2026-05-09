@@ -5,18 +5,18 @@ class ScholesaColors {
   ScholesaColors._();
 
   // Primary role colors
-  static const Color learner = Color(0xFF10B981);
+  static const Color learner = Color(0xFF0E7490);
   static const Color educator = Color(0xFF059669);
-  static const Color parent = Color(0xFFDB2777);
-  static const Color site = Color(0xFF7C3AED);
-  static const Color hq = Color(0xFF1E40AF);
-  static const Color partner = Color(0xFFF59E0B);
-  static const Color purple = Color(0xFF8B5CF6);
+  static const Color parent = Color(0xFF2563EB);
+  static const Color site = Color(0xFFD97706);
+  static const Color hq = Color(0xFFE11D48);
+  static const Color partner = Color(0xFF4F46E5);
+  static const Color purple = Color(0xFF6366F1);
 
   // Background colors
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFECFEFF);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF1F5F9);
+  static const Color surfaceVariant = Color(0xFFF0FDFA);
 
   // Text colors
   static const Color textPrimary = Color(0xFF1E293B);
@@ -28,31 +28,31 @@ class ScholesaColors {
   static const Color borderLight = Color(0xFFF1F5F9);
 
   // Primary brand color
-  static const Color primary = Color(0xFF10B981);
-  static const Color primaryDark = Color(0xFF059669);
+  static const Color primary = Color(0xFF0E7490);
+  static const Color primaryDark = Color(0xFF155E75);
 
   // Status colors
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
+  static const Color success = Color(0xFF059669);
+  static const Color warning = Color(0xFFD97706);
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
 
   // Pillar colors
   static const Color futureSkills = Color(0xFF3B82F6);
-  static const Color leadership = Color(0xFF8B5CF6);
-  static const Color impact = Color(0xFF10B981);
+  static const Color leadership = Color(0xFFE11D48);
+  static const Color impact = Color(0xFF059669);
 
   // Role gradients
   static const LinearGradient missionGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF10B981), Color(0xFF059669)],
+    colors: <Color>[Color(0xFF0E7490), Color(0xFF059669)],
   );
 
   static const LinearGradient learnerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF10B981), Color(0xFF059669)],
+    colors: <Color>[Color(0xFF0E7490), Color(0xFF06B6D4)],
   );
 
   static const LinearGradient educatorGradient = LinearGradient(
@@ -64,31 +64,31 @@ class ScholesaColors {
   static const LinearGradient parentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFFDB2777), Color(0xFFEC4899)],
+    colors: <Color>[Color(0xFF2563EB), Color(0xFF3B82F6)],
   );
 
   static const LinearGradient siteGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF7C3AED), Color(0xFF8B5CF6)],
+    colors: <Color>[Color(0xFFD97706), Color(0xFFF59E0B)],
   );
 
   static const LinearGradient hqGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF1E40AF), Color(0xFF3B82F6)],
+    colors: <Color>[Color(0xFFE11D48), Color(0xFFF43F5E)],
   );
 
   static const LinearGradient partnerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)],
+    colors: <Color>[Color(0xFF4F46E5), Color(0xFF6366F1)],
   );
 
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF10B981), Color(0xFF059669)],
+    colors: <Color>[Color(0xFF0E7490), Color(0xFF059669)],
   );
 
   // Feature gradients

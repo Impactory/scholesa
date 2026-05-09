@@ -43,7 +43,7 @@ export function Navigation() {
   }
 
   return (
-    <nav className="bg-app-surface border-b border-app">
+    <nav className="border-b border-cyan-200 bg-white/95 shadow-sm shadow-cyan-900/5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-2">
           <div className="flex items-center gap-4">
@@ -79,10 +79,10 @@ export function Navigation() {
                         routePath,
                       })
                     }
-                    className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                    className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                       active
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-app-muted hover:text-app-foreground hover:bg-app-canvas'
+                        ? 'bg-cyan-700 text-white dark:bg-cyan-300 dark:text-slate-950'
+                        : 'text-slate-600 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-cyan-200'
                     }`}
                   >
                     {formatRouteLabel(routePath)}
@@ -130,10 +130,10 @@ export function Navigation() {
                     routePath,
                   })
                 }
-                className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-app-muted hover:text-app-foreground hover:bg-app-canvas'
+                    ? 'bg-cyan-700 text-white dark:bg-cyan-300 dark:text-slate-950'
+                    : 'text-slate-600 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-cyan-200'
                 }`}
               >
                 {formatRouteLabel(routePath)}

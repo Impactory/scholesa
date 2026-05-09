@@ -23,20 +23,27 @@ import { useI18n } from '@/src/lib/i18n/useI18n';
 import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
 
 const evidenceChain = [
-  { label: 'HQ framework', detail: 'capabilities, rubrics, checkpoints', icon: Network },
-  { label: 'Live session', detail: 'teacher capture during studio time', icon: ClipboardCheck },
-  { label: 'Learner proof', detail: 'artifact, reflection, explain-back', icon: BookOpenCheck },
-  { label: 'Growth update', detail: 'rubric-linked capability history', icon: LineChart },
-  { label: 'Portfolio output', detail: 'best evidence with provenance', icon: FileCheck2 },
+  { label: 'HQ framework', detail: 'capabilities, rubrics, checkpoints', icon: Network, tone: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-200 dark:bg-cyan-950/30 dark:border-cyan-800' },
+  { label: 'Live session', detail: 'teacher capture during studio time', icon: ClipboardCheck, tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' },
+  { label: 'Learner proof', detail: 'artifact, reflection, explain-back', icon: BookOpenCheck, tone: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-200 dark:bg-blue-950/30 dark:border-blue-800' },
+  { label: 'Growth update', detail: 'rubric-linked capability history', icon: LineChart, tone: 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-200 dark:bg-rose-950/30 dark:border-rose-800' },
+  { label: 'Portfolio output', detail: 'best evidence with provenance', icon: FileCheck2, tone: 'text-amber-800 bg-amber-50 border-amber-200 dark:text-amber-200 dark:bg-amber-950/30 dark:border-amber-800' },
 ];
 
 const roleSurfaces = [
-  { role: 'Learner', path: '/learner/today', proof: 'missions, proof prompts, portfolio evidence', icon: GraduationCap },
-  { role: 'Educator', path: '/educator/today', proof: 'quick capture, proof review, verification queue', icon: ClipboardCheck },
-  { role: 'Guardian', path: '/parent/summary', proof: 'capability progress with evidence links', icon: Users },
-  { role: 'School', path: '/site/evidence-health', proof: 'implementation health and evidence coverage', icon: School },
-  { role: 'HQ', path: '/hq/capability-frameworks', proof: 'framework governance and rubric structure', icon: ShieldCheck },
-  { role: 'Partner', path: '/partner/deliverables', proof: 'evidence-facing deliverables and contracts', icon: BriefcaseBusiness },
+  { role: 'Learner', path: '/learner/today', proof: 'missions, proof prompts, portfolio evidence', icon: GraduationCap, tone: 'border-cyan-200 bg-cyan-50/80 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/25 dark:text-cyan-200' },
+  { role: 'Educator', path: '/educator/today', proof: 'quick capture, proof review, verification queue', icon: ClipboardCheck, tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/25 dark:text-emerald-200' },
+  { role: 'Guardian', path: '/parent/summary', proof: 'capability progress with evidence links', icon: Users, tone: 'border-blue-200 bg-blue-50/80 text-blue-700 dark:border-blue-800 dark:bg-blue-950/25 dark:text-blue-200' },
+  { role: 'School', path: '/site/evidence-health', proof: 'implementation health and evidence coverage', icon: School, tone: 'border-amber-200 bg-amber-50/80 text-amber-800 dark:border-amber-800 dark:bg-amber-950/25 dark:text-amber-200' },
+  { role: 'HQ', path: '/hq/capability-frameworks', proof: 'framework governance and rubric structure', icon: ShieldCheck, tone: 'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-800 dark:bg-rose-950/25 dark:text-rose-200' },
+  { role: 'Partner', path: '/partner/deliverables', proof: 'evidence-facing deliverables and contracts', icon: BriefcaseBusiness, tone: 'border-indigo-200 bg-indigo-50/80 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/25 dark:text-indigo-200' },
+];
+
+const proofLanes = [
+  { label: 'Capture', value: 'live observations', tone: 'bg-cyan-500' },
+  { label: 'Verify', value: 'proof review', tone: 'bg-emerald-500' },
+  { label: 'Interpret', value: 'growth events', tone: 'bg-rose-500' },
+  { label: 'Communicate', value: 'portfolio + Passport', tone: 'bg-amber-500' },
 ];
 
 const goldSignals = [
@@ -51,6 +58,12 @@ const nativeSignals = [
   { label: 'iOS local build', status: 'Proven', detail: 'no-codesign release app built' },
   { label: 'Android local build', status: 'Proven', detail: 'AAB and APK built locally' },
   { label: 'Store distribution', status: 'Blocked', detail: 'awaiting Apple and Google signing assets' },
+];
+
+const nativeProofGates = [
+  'TestFlight upload accepted with App Store Connect credentials',
+  'Google Play internal testing upload accepted with release signing',
+  'macOS Developer ID notarization and stapling proof captured',
 ];
 
 export default function LandingPage() {
@@ -92,35 +105,64 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="border-b border-app bg-app-surface">
-          <div className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl content-center gap-9 px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+        <section className="border-b border-app bg-cyan-50 dark:bg-slate-950">
+          <div className="mx-auto grid max-w-7xl content-center gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:min-h-[calc(100vh-72px)] lg:grid-cols-[1fr_0.86fr] lg:items-center lg:gap-9 lg:px-8 lg:py-14">
             <div className="max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-md border border-app bg-app-surface px-3 py-2 text-sm font-semibold text-app-primary shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                 Current Gold web packet: GO
               </div>
-              <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-tight text-app-foreground sm:text-5xl sm:leading-tight lg:text-6xl">
+              <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl sm:leading-tight lg:text-5xl dark:text-white">
                 Capability growth, backed by evidence people can inspect.
               </h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-app-muted sm:text-lg">
+              <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 dark:text-slate-300">
                 Scholesa connects classroom observations, learner artifacts, proof-of-learning,
                 rubric judgments, growth history, portfolios, reports, and partner outputs into one
                 traceable operating surface.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
                 <Link
                   href={`/${locale}/login`}
-                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-app-primary px-5 py-3 text-sm font-semibold text-app-primary-foreground shadow-sm hover:bg-app-primary-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
                 >
                   Enter Scholesa
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <Link
                   href={`/${locale}/register`}
-                  className="min-touch-target inline-flex items-center justify-center rounded-md border border-app bg-app-surface px-5 py-3 text-sm font-semibold text-app-foreground hover:bg-app-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+                  className="min-touch-target inline-flex items-center justify-center rounded-md border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
                 >
                   {t('landing.register')}
                 </Link>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label="Gold evidence command center">
+              <div className="flex items-center justify-between gap-3 border-b border-cyan-100 pb-3 dark:border-slate-700">
+                <div>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">Gold proof surface</p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Web verified. Native gated.</p>
+                </div>
+                <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                  Web GO
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {proofLanes.map((lane) => (
+                  <div key={lane.label} className="grid grid-cols-[0.35fr_1fr] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+                    <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">{lane.label}</p>
+                    <div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                        <div className={`h-full rounded-full ${lane.tone}`} />
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{lane.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                Native channel Gold is held at the proof gate until live TestFlight, Play internal,
+                and notarized macOS artifacts pass with external signing assets.
               </div>
             </div>
 
@@ -128,13 +170,13 @@ export default function LandingPage() {
               {evidenceChain.map((step, index) => {
                 const Icon = step.icon;
                 return (
-                  <div key={step.label} className="rounded-md border border-app bg-app-surface/90 p-4 shadow-sm">
+                  <div key={step.label} className={`rounded-md border p-4 shadow-sm ${step.tone}`}>
                     <div className="flex items-center justify-between gap-3">
-                      <Icon className="h-5 w-5 text-app-primary" aria-hidden="true" />
-                      <span className="text-xs font-bold text-app-muted">{index + 1}</span>
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                      <span className="text-xs font-bold opacity-70">{index + 1}</span>
                     </div>
-                    <h2 className="mt-4 text-base font-bold text-app-foreground">{step.label}</h2>
-                    <p className="mt-2 text-sm leading-6 text-app-muted">{step.detail}</p>
+                    <h2 className="mt-4 text-base font-bold">{step.label}</h2>
+                    <p className="mt-2 text-sm leading-6 opacity-80">{step.detail}</p>
                   </div>
                 );
               })}
@@ -142,15 +184,15 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-b border-app bg-app-canvas px-4 py-14 sm:px-6 lg:px-8">
+        <section className="border-b border-app bg-white px-4 py-14 sm:px-6 lg:px-8 dark:bg-slate-950">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
               <div>
-                <p className="text-sm font-bold uppercase text-app-primary">Role surfaces</p>
-                <h2 className="mt-3 text-3xl font-bold text-app-foreground sm:text-4xl">
+                <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">Role surfaces</p>
+                <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl dark:text-white">
                   One evidence chain, six accountable views.
                 </h2>
-                <p className="mt-4 text-base leading-7 text-app-muted">
+                <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
                   The current Gold packet proves learner, educator, guardian, site, HQ, and partner
                   web access against the rehearsed Cloud Run surface.
                 </p>
@@ -162,14 +204,14 @@ export default function LandingPage() {
                     <Link
                       key={surface.role}
                       href={`/${locale}${surface.path}`}
-                      className="group rounded-md border border-app bg-app-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-app-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+                      className={`group rounded-md border p-4 shadow-sm transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring ${surface.tone}`}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <Icon className="h-5 w-5 text-app-primary" aria-hidden="true" />
-                        <ArrowRight className="h-4 w-4 text-app-muted transition group-hover:translate-x-0.5" aria-hidden="true" />
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                        <ArrowRight className="h-4 w-4 opacity-70 transition group-hover:translate-x-0.5" aria-hidden="true" />
                       </div>
-                      <h3 className="mt-4 text-lg font-bold text-app-foreground">{surface.role}</h3>
-                      <p className="mt-2 text-sm leading-6 text-app-muted">{surface.proof}</p>
+                      <h3 className="mt-4 text-lg font-bold">{surface.role}</h3>
+                      <p className="mt-2 text-sm leading-6 opacity-80">{surface.proof}</p>
                     </Link>
                   );
                 })}
@@ -178,51 +220,62 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-b border-app bg-app-surface px-4 py-14 sm:px-6 lg:px-8">
+        <section className="border-b border-app bg-slate-50 px-4 py-14 sm:px-6 lg:px-8 dark:bg-slate-900">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-2">
-            <div className="rounded-md border border-app bg-app-canvas p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold uppercase text-app-primary">
+            <div className="rounded-md border border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-800 dark:bg-slate-950">
+              <div className="flex items-center gap-2 text-sm font-bold uppercase text-emerald-700 dark:text-emerald-300">
                 <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                 Web Gold evidence
               </div>
               <ul className="mt-5 space-y-3">
                 {goldSignals.map((signal) => (
-                  <li key={signal} className="flex gap-3 text-sm leading-6 text-app-muted">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
+                  <li key={signal} className="flex gap-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                     <span>{signal}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-md border border-app bg-app-canvas p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold uppercase text-app-primary">
+            <div className="rounded-md border border-amber-200 bg-white p-5 shadow-sm dark:border-amber-800 dark:bg-slate-950">
+              <div className="flex items-center gap-2 text-sm font-bold uppercase text-amber-800 dark:text-amber-300">
                 <Smartphone className="h-5 w-5" aria-hidden="true" />
                 Native channel boundary
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {nativeSignals.map((signal) => (
-                  <div key={signal.label} className="rounded-md border border-app bg-app-surface p-4">
+                  <div key={signal.label} className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-bold text-app-foreground">{signal.label}</p>
+                      <p className="text-sm font-bold text-slate-950 dark:text-white">{signal.label}</p>
                       <span className={`rounded-md px-2 py-1 text-xs font-bold ${signal.status === 'Proven' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
                         {signal.status}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-app-muted">{signal.detail}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{signal.detail}</p>
                   </div>
                 ))}
+              </div>
+              <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+                <p className="text-sm font-bold text-amber-950 dark:text-amber-100">Native Gold proof still required</p>
+                <ul className="mt-3 space-y-2">
+                  {nativeProofGates.map((gate) => (
+                    <li key={gate} className="flex gap-2 text-sm leading-6 text-amber-950 dark:text-amber-100">
+                      <LockKeyhole className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{gate}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-app-canvas px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 rounded-md border border-app bg-app-surface p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 dark:bg-slate-950">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 rounded-md border border-cyan-200 bg-cyan-50 p-5 shadow-sm md:flex-row md:items-center md:justify-between dark:border-cyan-800 dark:bg-cyan-950/30">
             <div className="flex items-start gap-3">
-              <LockKeyhole className="mt-1 h-5 w-5 text-app-primary" aria-hidden="true" />
+              <LockKeyhole className="mt-1 h-5 w-5 text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
               <div>
-                <h2 className="text-lg font-bold text-app-foreground">Evidence before confidence.</h2>
-                <p className="mt-1 text-sm leading-6 text-app-muted">
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">Evidence before confidence.</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
                   Native app-store Gold waits for live TestFlight, Play internal, and macOS
                   notarization proof. The web evidence packet is ready now.
                 </p>
@@ -230,7 +283,7 @@ export default function LandingPage() {
             </div>
             <Link
               href={`/${locale}/login`}
-              className="min-touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-app-primary px-5 py-3 text-sm font-semibold text-app-primary-foreground hover:bg-app-primary-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+              className="min-touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
             >
               Sign in
               <ArrowRight className="h-4 w-4" aria-hidden="true" />

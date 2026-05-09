@@ -86,6 +86,8 @@
     "ai:domain-ban": "node scripts/ai_domain_ban.js",
     "ai:egress-none": "node scripts/ai_egress_none.js",
     "ai:internal-only:all": "npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none",
+    "native:distribution:readiness": "bash scripts/native_distribution_readiness.sh",
+    "native:distribution:proof": "bash scripts/native_distribution_proof.sh verify",
     "compliance:scan": "node services/scholesa-compliance/src/cli.js --scan-only",
     "compliance:run": "node services/scholesa-compliance/src/cli.js --trigger=manual-cli",
     "compliance:gate": "npm run qa:secret-scan && npm run qa:coppa:guards && node services/scholesa-compliance/src/cli.js --trigger=ci",
