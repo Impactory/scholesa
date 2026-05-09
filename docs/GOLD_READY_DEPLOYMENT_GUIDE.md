@@ -1,6 +1,6 @@
 # GOLD_READY_DEPLOYMENT_GUIDE.md
 
-**Last verified: 2026-04-05**
+**Last verified: 2026-05-09**
 **Branch: main**
 **Purpose:** Living reference for every platform surface, current blocker inventory, and exact steps to reach Gold across Next.js web, Flutter web/native, Firebase Functions, and the compliance operator. Use this file as the single source of truth when resuming work from any machine.
 
@@ -26,174 +26,119 @@ Firebase project: `studio-3328096157-e3f79` (all surfaces use same project).
 
 ---
 
-## Current State (2026-04-05)
+## Current State (2026-05-09)
 
-### Verdict: Beta ready. Not gold ready.
+### Verdict: Web/Cloud Run Gold GO. Native-channel distribution not Gold yet.
+
+The current authoritative packet is `docs/PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md`, with the operator checklist in `docs/PLATFORM_BLANKET_GOLD_ACHIEVEMENT_PLAN_MAY_2026.md`. This guide is the quick deployment reference for that packet.
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Web TypeScript | **PASS** | `npm run typecheck` — clean |
-| Web lint | **FAIL** | 27 errors in `functions/src/index.ts`, `functions/src/voiceSystem.ts`, `app/layout.tsx`, `src/components/*` |
-| Web Jest | **FAIL** | 13 failures in 5 suites — evidence chain schema, models, route parity, legacy branding guard |
-| Functions build | **FAIL** | 7 TS errors in `functions/src/index.ts` — blocks Firebase Functions deploy |
-| Flutter analyze | Unknown — run `flutter analyze` from `apps/empire_flutter/app/` |
-| Flutter tests | **FAIL (7)** | 814 pass / 7 fail — **must run from `apps/empire_flutter/app/`** |
-| CI/CD | Present | `.github/workflows/ci.yml` — runs full suite on push to main |
-| Git state | **REBASE IN PROGRESS** | Must `git rebase --continue` before pushing |
+| Web/Cloud Run scope | **GO** | Release owner accepted traffic-pinning proof as the final release-control substitute; production traffic remains pinned while the no-traffic rehearsal evidence is recorded. |
+| Web TypeScript | **PASS** | `npm run typecheck` passes. |
+| Web lint | **PASS** | `npm run lint` passes. |
+| Web Jest | **PASS** | May 9 refresh passed full Jest at 40 suites / 597 tests; focused Gold source-contract runs pass at 192 tests. |
+| Production web build | **PASS** | `npm run build` passed in the final evidence packet. |
+| Functions / evidence-chain callables | **PASS for included packet** | MiloOS and evidence-chain callable proofs are recorded in the final signoff packet; May 9 `npm --prefix functions run build` passes. Deploy only through the gated release scripts. |
+| Flutter tests | **PASS** | Native build proofs pass the full Flutter gate with `1087` tests. |
+| Native local builds | **PASS** | macOS, iOS no-codesign, and Android local release builds are proven. |
+| Native distribution | **BLOCKED EXTERNALLY** | TestFlight, Google Play internal, and macOS Developer ID notarization are automated and fail closed, but live proof requires external signing/store credentials. |
+| Git state | **NO REBASE BLOCKER OBSERVED** | Use `git status --short --untracked-files=all` before release work; do not assume historical April rebase notes are current. |
 
 ---
 
-## Immediate Blockers (Must Fix Before Any Deploy)
+## Immediate Blockers
 
-### 1. Git Rebase In Progress
+### Native-channel distribution credentials and live proof
+
+Native-channel Gold cannot be claimed until all three channels are proven with live distribution evidence:
+
+1. iOS TestFlight upload with App Store Connect verification.
+2. Android Google Play internal-track upload with Play Console verification.
+3. macOS Developer ID signing, notarization, stapling, and `spctl` assessment.
+
+Current local readiness command:
 
 ```bash
-# Verify state
-git status
-
-# Complete the rebase (all conflicts are resolved — just needs continuation)
-git rebase --continue
-
-# Push to remote
-git push origin main
+./scripts/native_distribution_proof.sh verify
 ```
 
-### 2. Functions TypeScript Errors — `functions/src/index.ts`
+Expected current result until external assets are installed: fail closed with missing App Store Connect env, Apple Distribution identity, iOS provisioning profile, Google Play env, Android `key.properties`, and Developer ID Application identity.
 
-7 errors blocking `firebase deploy --only functions`:
+Once release credentials are installed, use one guarded proof path:
 
-```
-Line 2956, 2985: Cannot redeclare block-scoped variable 'capabilityId'
-  → Wrap both switch-case blocks in { } to create block scope
-
-Line 2986: '??' and '||' operations cannot be mixed without parentheses
-  → Add parentheses: (a ?? b) || c
-
-Line 8061, 8406: Type '"siteLead"' / '"admin"' not assignable to type 'Role'
-  → The Role union type does not include 'siteLead' or 'admin'
-  → Check src/types/schema.ts for Role definition and add missing roles
-    OR change 'siteLead' → 'site' and 'admin' → 'hq' if those are the correct roles
-```
-
-Fix command:
 ```bash
-npm --prefix functions run build  # must exit 0 before deploy
+SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS \
+  ./scripts/native_distribution_proof.sh execute-live
 ```
 
-### 3. Web Jest Failures (13 tests, 5 suites)
-
-| Suite | Failure Type |
-|-------|-------------|
-| `evidence-chain.test.ts` | Schema contracts — `progressionDescriptors`, `RubricTemplate`, `RubricTemplateCriterion` types missing or misnamed |
-| `evidence-chain-components.test.ts` | `EvidenceRecord.sessionOccurrenceId` field missing or renamed |
-| `models.test.ts` | Site scoping, pillar encoding, accountability cycle fields |
-| `assistant-legacy-branding-guard.test.ts` | Legacy assistant branding string found in active code paths |
-| `web-route-parity.test.ts` | Flutter route registry diverged from web route definitions |
-
-Fix command:
-```bash
-npm test  # must exit 0 before deploy
-```
-
-### 4. Web Lint Errors (27 errors)
-
-Files with errors: `functions/src/index.ts`, `functions/src/voiceSystem.ts`, `functions/src/workflowOps.ts`, `app/layout.tsx`, `src/components/*`, `scripts/import_synthetic_data.js`
-
-Common errors: `no-case-declarations`, `quotes`, `@typescript-eslint/no-require-imports`, unused variables.
-
-Fix command:
-```bash
-npm run lint:fix  # auto-fixes 8 errors
-npm run lint      # address remaining 19 manually
-```
+or run `.github/workflows/native-distribution-proof.yml` with `native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS` after publishing the native GitHub secrets in `docs/GITHUB_ACTIONS_SECRETS.md`.
 
 ---
 
-## Gold Certification Blockers
+## Gold Certification State
 
-These must be resolved for Gold status. They are listed in priority order (evidence chain first).
+These states are current as of May 9, 2026. Historical March/April audit files should not override this section; verify current state with the commands named below.
 
-### GOLD-1: Functions Build Must Be Clean
+### GOLD-1: Web/Cloud Run Release Packet
 
-The `applyRubricToEvidence` callable is the most critical write in the system — it creates `capabilityGrowthEvents` and upserts `capabilityMastery`. It cannot deploy with TypeScript errors in the same file.
+Status: **GO for included scope**.
 
-**Owner:** Fix the 7 errors in `functions/src/index.ts` (see Immediate Blockers section).
+Evidence: `docs/PLATFORM_GOLD_READINESS_FINAL_SIGNOFF_MAY_2026.md` records evidence-chain browser proof, site ops proof, source contracts, release safety, Cloud Run no-traffic rehearsals, role browser sweep, partner evidence-facing proof, proof-review routes, index readiness, current theme proof, and traffic-pinning proof.
 
-### GOLD-2: Evidence Chain Test Suite — All Green
+### GOLD-2: Evidence Chain Tests and Source Contracts
 
-The evidence chain schema contracts (`evidence-chain.test.ts`) define the platform contract. Failures here mean the deployed code does not match what the tests assert.
+Status: **PASS for current source-contract gate**.
 
-Missing or misaligned types to check in `src/types/schema.ts`:
-- `Capability.progressionDescriptors`
-- `ProgressionDescriptors` (four levels: Beginning/Developing/Proficient/Advanced)
-- `RubricTemplate` and `RubricTemplateCriterion`
-- `EvidenceRecord.sessionOccurrenceId`
+Current focused gate:
 
-### GOLD-3: Route Breadth — 52 Routes, 4 Full-Flow Verified
+```bash
+npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts --runInBand
+```
 
-Current full-flow certified routes (all 9 gates proven):
+### GOLD-3: Role and Route Proof
 
-| Route | Certified | File |
-|-------|-----------|------|
-| `/hq/feature-flags` | 2026-03-21 | `test/federated_learning_prototype_workflow_test.dart` |
-| `/educator/attendance` | 2026-03-31 | `test/attendance_placeholder_actions_test.dart` |
-| `/site/sessions` | 2026-03-31 | `test/site_sessions_page_test.dart` |
-| `/site/provisioning` | 2026-03-31 | `test/provisioning_page_test.dart` |
+Status: **GO for included web/Cloud Run scope**.
 
-**Gold requires:** All 52 routes certified or explicitly deferred with written rationale.
+The final signoff records learner, educator, guardian, site, HQ, and partner browser sweeps on the rehearsal tag, with partner evidence-facing deliverable persistence and readback. Native app-store release operations remain separate from route proof.
 
-The 9 gates every route must prove:
-- **A** State truth (empty, stale, failure states visible and honest)
-- **B** Real mutation (primary write persists)
-- **C** Authoritative reload (UI reflects persisted state after save)
-- **D** Recovery (user can retry from failure in-surface)
-- **E** Scope/permission (role and site boundaries enforced and visible)
-- **F** Accessibility (controls/warnings reachable by assistive tech)
-- **G** Telemetry (critical actions emit auditable trace)
-- **H** Educational truth (no capability/mastery claim without evidence provenance)
-- **I** AI transparency (no AI output presented as verified learner proof)
+### GOLD-4: Capability, Rubric, Proof, Growth, Portfolio, Passport Chain
 
-Reference: `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md`, `docs/FULL_FLOW_GATE_WORKSHEET_2026-03-21.md`
+Status: **GO for included web/Cloud Run evidence packet**.
 
-### GOLD-4: HQ Capability Framework Editor (Missing)
+The packet records capability evidence chain proof, rubric/growth source contracts, proof-of-learning verification route proof, portfolio/report/passport output coverage, guardian interpretation coverage, and evidence provenance guardrails. Do not convert assignment completion, attendance, XP, or averages into mastery claims.
 
-Admin-HQ cannot define capabilities, rubrics, or progression descriptors from any UI. The `capabilities` collection must be seeded manually or via script. Without this, the evidence chain cannot be bootstrapped by a real school.
+### GOLD-5: AI Transparency and Internal-Only Policy
 
-**What is needed:**
-- `hq/curriculum` page must be upgraded from generic WorkflowRoutePage to a purpose-built capability editor
-- Fields: `name`, `pillar`, `progressionDescriptors` (4 levels), `rubricTemplates`
-- Write to `capabilities` Firestore collection (typed in `src/types/schema.ts`)
-- Flutter: `lib/modules/hq_admin/capability_framework_page.dart` exists — verify it is wired to real Firestore writes
+Status: **PASS for included scope**.
 
-**Reference:** `src/components/evidence/EducatorEvidenceCapture.tsx` reads from `capabilities` — this is the downstream consumer. If HQ can't write, the educator can't read real capabilities.
+Current gate:
 
-### GOLD-5: Rubric Template Builder (Missing)
+```bash
+npm run ai:internal-only:all
+```
 
-Educators apply rubrics but HQ cannot define rubric templates via UI. The `applyRubricToEvidence` callable creates `rubricApplications` with criterion scores — the criteria must come from a real `RubricTemplate`.
+MiloOS support/provenance and explain-back proofs are recorded in the final signoff. AI support remains support, not verified learner proof.
 
-**What is needed:**
-- Rubric template CRUD UI (HQ only)
-- `RubricTemplate` and `RubricTemplateCriterion` types in `src/types/schema.ts` (tests failing on these)
-- Write to Firestore, readable by `RubricReviewPanel.tsx`
+### GOLD-6: Flutter Native Buildability
 
-### GOLD-6: Passport/Credential Wallet (Missing)
+Status: **PASS as local build proof, not distribution proof**.
 
-Learners have no dedicated Passport surface. `learner_credentials_page.dart` is display-only. The Passport is the portable output of the evidence chain — without it, the platform cannot communicate capability to external parties.
+Recorded local proofs:
+- macOS release app: `build/macos/Build/Products/Release/scholesa_app.app` at `137.0MB`.
+- iOS no-codesign release app: `build/ios/iphoneos/Runner.app` at `76.3MB`.
+- Android release AAB/APK: `56.6MB` AAB and `78.2MB` APK.
 
-**What is needed:**
-- Passport surface with: verified capability claims, evidence provenance per claim, mastery level labels, share/export path
-- `ideationPassport.claims` already exists on `parent_portfolio_page.dart` (read path exists)
-- Need: claim issuance trigger (from verified `capabilityMastery` records)
+### GOLD-7: Native Distribution Readiness Tooling
 
-### GOLD-7: Flutter Offline Evidence Queue (Gap)
+Status: **PASS as fail-closed tooling**.
 
-The offline queue (`lib/offline/offline_queue.dart`) has 10 OpTypes but evidence operations are **not reliably offline-safe**. The `CapabilityGrowthEngine` makes direct Firestore calls without offline queue integration.
-
-**Current OpTypes (10):** attendanceRecord, presenceCheckin, presenceCheckout, incidentSubmit, messageSend, attemptSaveDraft, observationCapture, rubricApplication, capabilityGrowthEvent, checkpointVerification
-
-**Gap:** `CapabilityGrowthEngine.processRubricApplication()` must route through the offline queue, not direct Firestore, when offline.
-
-**Reference:** `apps/empire_flutter/app/lib/services/capability_growth_engine.dart`
+Available paths:
+- Local preflight: `./scripts/native_distribution_readiness.sh`.
+- Local live proof: `./scripts/native_distribution_proof.sh execute-live`.
+- CI aggregate proof: `.github/workflows/native-distribution-proof.yml`.
+- Secret helpers: `./scripts/set_apple_github_secrets.sh`, `./scripts/set_android_github_secrets.sh`.
+- Local signing setup helpers: `./scripts/setup_apple_signing.sh`, `./scripts/setup_android_signing.sh`.
 
 ### GOLD-8: Native Distribution Proof
 
@@ -211,27 +156,28 @@ No verified TestFlight (iOS), Google Play internal (Android), or Developer ID no
 
 ## Deployment Stages
 
-### Stage 1 — Fix All Blockers (Pre-Deploy Gate)
+### Stage 1 — Verify Current Gates (Pre-Deploy Gate)
 
 ```bash
-# 1. Complete in-progress git rebase
-git rebase --continue
+# 1. Confirm there is no unexpected release-blocking git state
+git status --short --untracked-files=all
 
-# 2. Fix functions/src/index.ts TypeScript errors
-npm --prefix functions run build   # must be clean
+# 2. Verify web source contracts and build hygiene
+npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.ts --runInBand
+npm run typecheck
+npm run lint
 
-# 3. Fix web Jest failures
-npm test                           # must be clean
+# 3. Verify native distribution readiness boundary
+./scripts/native_distribution_proof.sh verify
 
-# 4. Fix lint
-npm run lint:fix && npm run lint   # reduce to 0 errors
+# 4. Optional full local release gate before a web/Cloud Run release packet
+./scripts/deploy.sh release-gate
 
-# 5. Run full local gate
-npm run flow:platform:gates
-
-# 6. Flutter tests from correct directory
-cd apps/empire_flutter/app && flutter test   # 814 pass required
+# 5. Flutter tests from correct directory when refreshing native build proof
+cd apps/empire_flutter/app && flutter test
 ```
+
+`./scripts/native_distribution_proof.sh verify` is expected to fail until external Apple/Google signing and store assets are installed. That failure is not a web/Cloud Run blocker; it is the native-channel Gold boundary.
 
 ### Stage 2 — Firebase Functions Deploy
 
@@ -322,17 +268,17 @@ Track progress here. Update as each item is resolved.
 
 | Item | Status | Target Date | Owner |
 |------|--------|-------------|-------|
-| GOLD-0a: Git rebase complete | OPEN | — | — |
-| GOLD-0b: Functions TS clean | OPEN | — | — |
-| GOLD-0c: Web Jest clean | OPEN | — | — |
-| GOLD-0d: Web lint clean | OPEN | — | — |
-| GOLD-1: Functions deploy live | OPEN | — | — |
-| GOLD-2: Evidence chain test suite green | OPEN | — | — |
-| GOLD-3: All 52 routes full-flow certified | OPEN (4/52 done) | — | — |
-| GOLD-4: HQ capability framework editor | OPEN | — | — |
-| GOLD-5: Rubric template builder | OPEN | — | — |
-| GOLD-6: Passport/credential wallet | OPEN | — | — |
-| GOLD-7: Offline evidence queue coverage | OPEN | — | — |
+| GOLD-0a: Git rebase complete | CLOSED for current packet; no rebase blocker observed in May 9 working state | 2026-05-09 | Release owner |
+| GOLD-0b: Web TypeScript clean | CLOSED; `npm run typecheck` passes | 2026-05-09 | Release owner |
+| GOLD-0c: Web Jest/source contracts clean | CLOSED for current source-contract gate; final packet records full Jest pass and focused gate passes | 2026-05-09 | Release owner |
+| GOLD-0d: Web lint clean | CLOSED; `npm run lint` passes | 2026-05-09 | Release owner |
+| GOLD-1: Included web/Cloud Run release packet | CLOSED / GO for included scope | 2026-05-09 | Release owner |
+| GOLD-2: Evidence chain test suite green | CLOSED for included packet and current source-contract gate | 2026-05-09 | Release owner |
+| GOLD-3: Role/route proof for included web scope | CLOSED for six-role web cutover and partner evidence-facing proof | 2026-05-09 | Release owner |
+| GOLD-4: Capability/rubric/proof/growth/portfolio chain | CLOSED for included evidence packet | 2026-05-09 | Release owner |
+| GOLD-5: AI transparency and internal-only policy | CLOSED for included packet | 2026-05-09 | Release owner |
+| GOLD-6: Flutter native local build proof | CLOSED as build proof, not distribution proof | 2026-05-09 | Release owner |
+| GOLD-7: Native distribution readiness tooling | CLOSED as fail-closed local and CI tooling | 2026-05-09 | Release owner |
 | GOLD-8: Native distribution proof (iOS TestFlight) | OPEN — blocked by external App Store Connect, Apple Distribution, and provisioning assets | — | — |
 | GOLD-8: Native distribution proof (Android Play internal) | OPEN — blocked by external Google Play and release signing assets | — | — |
 | GOLD-8: Native distribution proof (macOS Developer ID notarization) | OPEN — blocked by external App Store Connect and Developer ID assets | — | — |
@@ -355,7 +301,7 @@ Track progress here. Update as each item is resolved.
 | `src/components/evidence/EducatorEvidenceCapture.tsx` | Purpose-built educator evidence UI |
 | `src/components/evidence/RubricReviewPanel.tsx` | Rubric scoring panel — calls `applyRubricToEvidence` |
 | `src/lib/capabilities/useCapabilities.ts` | Hook: reads from `capabilities` collection |
-| `functions/src/index.ts` | All Firebase callables (230KB+) — currently has TS errors |
+| `functions/src/index.ts` | Firebase callables, including evidence-chain and proof/growth operations |
 | `functions/src/bosRuntime.ts` | BOS/MIA state machine |
 | `firestore.rules` | RBAC Firestore security rules |
 | `scripts/deploy.sh` | Full-stack deploy entry point |
@@ -363,6 +309,9 @@ Track progress here. Update as each item is resolved.
 | `Dockerfile.flutter` | Flutter web container |
 | `Dockerfile.compliance` | Compliance operator container |
 | `.github/workflows/ci.yml` | Full CI suite — must pass before merge |
+| `.github/workflows/native-distribution-proof.yml` | Guarded aggregate native distribution proof workflow |
+| `scripts/native_distribution_proof.sh` | Guarded local native live proof runner |
+| `scripts/native_distribution_readiness.sh` | Aggregate fail-closed native release prerequisite check |
 | `docs/FULL_HONESTY_AUDIT_2026-03-19.md` | Route-by-route honesty classification |
 | `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md` | 9-gate certification definition |
 | `docs/FULL_FLOW_GATE_WORKSHEET_2026-03-21.md` | Per-route gate worksheet |

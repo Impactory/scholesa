@@ -1290,8 +1290,18 @@ describe('Renderers delegate to real evidence components', () => {
     expect(githubActionsSecretsSource).toContain('ANDROID_KEYSTORE_BASE64');
     expect(githubActionsSecretsSource).toContain('native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS');
     expect(goldReadyDeploymentGuideSource).toContain('.github/workflows/native-distribution-proof.yml');
+    expect(goldReadyDeploymentGuideSource).toContain('Last verified: 2026-05-09');
+    expect(goldReadyDeploymentGuideSource).toContain('Verdict: Web/Cloud Run Gold GO. Native-channel distribution not Gold yet.');
+    expect(goldReadyDeploymentGuideSource).toContain('May 9 refresh passed full Jest at 40 suites / 597 tests');
+    expect(goldReadyDeploymentGuideSource).toContain('May 9 `npm --prefix functions run build` passes');
     expect(goldReadyDeploymentGuideSource).toContain('GOLD-8: Native distribution proof (macOS Developer ID notarization)');
     expect(goldReadyDeploymentGuideSource).toContain('Do not declare native-channel Gold without verified TestFlight, Google Play internal, and macOS Developer ID notarization proof');
+    expect(goldReadyDeploymentGuideSource).toContain('GOLD-7: Native distribution readiness tooling | CLOSED as fail-closed local and CI tooling');
+    expect(goldReadyDeploymentGuideSource).not.toContain('Verdict: Beta ready. Not gold ready.');
+    expect(goldReadyDeploymentGuideSource).not.toContain('REBASE IN PROGRESS');
+    expect(goldReadyDeploymentGuideSource).not.toContain('currently has TS errors');
+    expect(goldReadyDeploymentGuideSource).not.toContain('814 pass required');
+    expect(finalSignoffSource).toContain('May 9 refresh full Jest: 40 suites / 597 tests; Functions build passed');
     expect(rootGitignoreSource).toContain('*.p12');
     expect(rootGitignoreSource).toContain('*.mobileprovision');
     expect(rootGitignoreSource).toContain('*.provisionprofile');
