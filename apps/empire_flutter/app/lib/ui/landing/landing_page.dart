@@ -9,18 +9,18 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Features': '功能',
   'Curriculum': '课程体系',
   'For Schools': '面向学校',
-    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
-      '任务式学习、MiloOS、作品集、分析与离线支持。',
+  'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.':
+      '证据采集、MiloOS 辅导、作品集、分析与离线课堂支持。',
   'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
       '发现者、建构者、探索者、创新者，以及六大能力主线。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
       '为学习者、教育者、家长、站点团队和 HQ 提供按角色划分的仪表板。',
   'Sign In': '登录',
-  'Education 2.0 Platform': '教育 2.0 平台',
-  "Unlock Every\nLearner's Potential": '释放每位\n学习者的潜能',
-  'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.':
-      'Scholesa 通过任务式学习、证据型作品集和分阶段 AI 治理赋能 K-12 学校。',
-  'Watch Demo': '观看演示',
+  'Capability learning, made visible': '让能力学习清晰可见',
+  'The Proof Engine for\nReal Capability Growth': '真实能力成长的\n证据引擎',
+  'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
+      'Scholesa 将课堂时刻转化为可信证据：观察、作品、解释回顾、量规判断、成长记录，以及家长能够理解的作品集。',
+  'See the Proof Flow': '查看证据流程',
   'Scholesa Demo': 'Scholesa 演示',
   'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
       '演示包含：\n• 角色仪表板\n• CTA 操作流程\n• 任务与出勤生命周期',
@@ -30,10 +30,10 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Achievements': '成就',
   'Missions': '任务',
   'Community': '社区',
-  'Four Stages, Six Strands': '四个阶段，六大能力主线',
-  'Building Future-Ready Learners': '培养面向未来的学习者',
-  'A K-12 curriculum architecture that grows from discovery to innovation.':
-      '一个从发现到创新递进发展的 K-12 课程架构。',
+  'Capability Pathways': '能力路径',
+  'Proof That Growth Is Real': '让成长真实可证',
+  'A K-12 learning architecture that carries evidence from discovery to innovation.':
+      '一个让证据贯穿从发现到创新全过程的 K-12 学习架构。',
   'Discoverers': '发现者',
   'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
       '1-3 年级 • 以故事驱动的发明工作室，由教师主导 AI 示范。',
@@ -63,25 +63,25 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Ready to Transform Learning?': '准备好改变学习方式了吗？',
   'Join hundreds of learning studios already using Scholesa.':
       '加入已经在使用 Scholesa 的数百家学习工作室。',
-  '© 2026 Scholesa. Education 2.0 Platform.': '© 2026 Scholesa。教育 2.0 平台。',
+  '© 2026 Scholesa. Capability Evidence Platform.': '© 2026 Scholesa。能力证据平台。',
 };
 
 const Map<String, String> _landingZhTw = <String, String>{
   'Features': '功能',
   'Curriculum': '課程體系',
   'For Schools': '面向學校',
-    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
-      '任務式學習、MiloOS、作品集、分析與離線支援。',
+  'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.':
+      '證據擷取、MiloOS 輔導、作品集、分析與離線課堂支援。',
   'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
       '發現者、建構者、探索者、創新者，以及六大能力主線。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
       '為學習者、教育者、家長、站點團隊和 HQ 提供按角色劃分的儀表板。',
   'Sign In': '登入',
-  'Education 2.0 Platform': '教育 2.0 平台',
-  "Unlock Every\nLearner's Potential": '釋放每位\n學習者的潛能',
-  'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.':
-      'Scholesa 透過任務式學習、證據型作品集和分階段 AI 治理賦能 K-12 學校。',
-  'Watch Demo': '觀看示範',
+  'Capability learning, made visible': '讓能力學習清晰可見',
+  'The Proof Engine for\nReal Capability Growth': '真實能力成長的\n證據引擎',
+  'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
+      'Scholesa 將課堂時刻轉化為可信證據：觀察、作品、解釋回顧、量規判斷、成長紀錄，以及家長能理解的作品集。',
+  'See the Proof Flow': '查看證據流程',
   'Scholesa Demo': 'Scholesa 示範',
   'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
       '示範包含：\n• 角色儀表板\n• CTA 操作流程\n• 任務與出勤生命週期',
@@ -91,10 +91,10 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Achievements': '成就',
   'Missions': '任務',
   'Community': '社群',
-  'Four Stages, Six Strands': '四個階段，六大能力主線',
-  'Building Future-Ready Learners': '培養面向未來的學習者',
-  'A K-12 curriculum architecture that grows from discovery to innovation.':
-      '一個從發現到創新遞進發展的 K-12 課程架構。',
+  'Capability Pathways': '能力路徑',
+  'Proof That Growth Is Real': '讓成長真實可證',
+  'A K-12 learning architecture that carries evidence from discovery to innovation.':
+      '一個讓證據貫穿從發現到創新全過程的 K-12 學習架構。',
   'Discoverers': '發現者',
   'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
       '1-3 年級 • 以故事驅動的發明工作室，由教師主導 AI 示範。',
@@ -124,7 +124,7 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Ready to Transform Learning?': '準備好改變學習方式了嗎？',
   'Join hundreds of learning studios already using Scholesa.':
       '加入已經在使用 Scholesa 的數百家學習工作室。',
-  '© 2026 Scholesa. Education 2.0 Platform.': '© 2026 Scholesa。教育 2.0 平台。',
+  '© 2026 Scholesa. Capability Evidence Platform.': '© 2026 Scholesa。能力證據平台。',
 };
 
 String _tLanding(BuildContext context, String input) {
@@ -319,7 +319,7 @@ class _LandingPageState extends State<LandingPage>
               onTap: () => _showSectionPreview(
                 title: _tLanding(context, 'Features'),
                 detail: _tLanding(context,
-                    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.'),
+                    'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -416,7 +416,7 @@ class _LandingPageState extends State<LandingPage>
               SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  _tLanding(context, 'Education 2.0 Platform'),
+                  _tLanding(context, 'Capability learning, made visible'),
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ScholesaColors.primary,
@@ -431,7 +431,7 @@ class _LandingPageState extends State<LandingPage>
         const SizedBox(height: 24),
         // Headline
         Text(
-          _tLanding(context, 'Unlock Every\nLearner\'s Potential'),
+          _tLanding(context, 'The Proof Engine for\nReal Capability Growth'),
           style: TextStyle(
             fontSize: 56,
             fontWeight: FontWeight.bold,
@@ -443,7 +443,7 @@ class _LandingPageState extends State<LandingPage>
         const SizedBox(height: 24),
         Text(
           _tLanding(context,
-              'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.'),
+              'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.'),
           style: TextStyle(
             fontSize: 18,
             color: Colors.white.withValues(alpha: 0.7),
@@ -488,7 +488,7 @@ class _LandingPageState extends State<LandingPage>
                 _showDemoDialog(context);
               },
               icon: const Icon(Icons.play_circle_outline_rounded),
-              label: Text(_tLanding(context, 'Watch Demo')),
+              label: Text(_tLanding(context, 'See the Proof Flow')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 padding:
@@ -678,7 +678,7 @@ class _LandingPageState extends State<LandingPage>
         children: <Widget>[
           // Section header
           Text(
-            _tLanding(context, 'Four Stages, Six Strands'),
+            _tLanding(context, 'Capability Pathways'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -688,7 +688,7 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            _tLanding(context, 'Building Future-Ready Learners'),
+            _tLanding(context, 'Proof That Growth Is Real'),
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
@@ -699,7 +699,7 @@ class _LandingPageState extends State<LandingPage>
           const SizedBox(height: 16),
           Text(
             _tLanding(context,
-                'A K-12 curriculum architecture that grows from discovery to innovation.'),
+                'A K-12 learning architecture that carries evidence from discovery to innovation.'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.6),
@@ -717,7 +717,7 @@ class _LandingPageState extends State<LandingPage>
                   icon: Icons.auto_awesome_rounded,
                   title: _tLanding(context, 'Discoverers'),
                   description: _tLanding(context,
-                    'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.'),
+                      'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.'),
                   color: ScholesaColors.futureSkills,
                   emoji: '✨',
                 ),
@@ -728,7 +728,7 @@ class _LandingPageState extends State<LandingPage>
                   icon: Icons.handyman_rounded,
                   title: _tLanding(context, 'Builders'),
                   description: _tLanding(context,
-                    'Grades 4-6 • Design-and-build labs with guided assistive AI use.'),
+                      'Grades 4-6 • Design-and-build labs with guided assistive AI use.'),
                   color: ScholesaColors.leadership,
                   emoji: '🛠️',
                 ),
@@ -739,7 +739,7 @@ class _LandingPageState extends State<LandingPage>
                   icon: Icons.travel_explore_rounded,
                   title: _tLanding(context, 'Explorers'),
                   description: _tLanding(context,
-                    'Grades 7-9 • Investigation labs focused on critique, bias checks, and verification.'),
+                      'Grades 7-9 • Investigation labs focused on critique, bias checks, and verification.'),
                   color: ScholesaColors.impact,
                   emoji: '🧭',
                 ),
@@ -750,7 +750,7 @@ class _LandingPageState extends State<LandingPage>
                   icon: Icons.rocket_launch_rounded,
                   title: _tLanding(context, 'Innovators'),
                   description: _tLanding(context,
-                    'Grades 10-12 • Pathway-based capstone studios with full audit trails.'),
+                      'Grades 10-12 • Pathway-based capstone studios with full audit trails.'),
                   color: ScholesaColors.primary,
                   emoji: '🚀',
                 ),
@@ -851,19 +851,17 @@ class _LandingPageState extends State<LandingPage>
             runSpacing: 24,
             alignment: WrapAlignment.center,
             children: <Widget>[
-              _buildFeatureItem(
-                  Icons.assignment_turned_in_rounded,
+              _buildFeatureItem(Icons.assignment_turned_in_rounded,
                   _tLanding(context, 'Mission-Based Learning')),
-                _buildFeatureItem(
-                  Icons.psychology_rounded, _tLanding(context, 'AI Habit Coaching')),
-              _buildFeatureItem(
-                  Icons.folder_special_rounded,
+              _buildFeatureItem(Icons.psychology_rounded,
+                  _tLanding(context, 'AI Habit Coaching')),
+              _buildFeatureItem(Icons.folder_special_rounded,
                   _tLanding(context, 'Portfolio Showcase')),
-                _buildFeatureItem(
-                  Icons.insights_rounded, _tLanding(context, 'Progress Analytics')),
-                _buildFeatureItem(
+              _buildFeatureItem(Icons.insights_rounded,
+                  _tLanding(context, 'Progress Analytics')),
+              _buildFeatureItem(
                   Icons.groups_rounded, _tLanding(context, 'Parent Portal')),
-                _buildFeatureItem(
+              _buildFeatureItem(
                   Icons.cloud_off_rounded, _tLanding(context, 'Offline-First')),
             ],
           ),
@@ -932,14 +930,14 @@ class _LandingPageState extends State<LandingPage>
             runSpacing: 16,
             alignment: WrapAlignment.center,
             children: <Widget>[
-              _buildRoleChip(
-                  _tLanding(context, 'Learners'), ScholesaColors.learner, Icons.school_rounded),
-              _buildRoleChip(
-                  _tLanding(context, 'Educators'), ScholesaColors.educator, Icons.person_rounded),
-                _buildRoleChip(_tLanding(context, 'Parents'), ScholesaColors.parent,
-                  Icons.family_restroom_rounded),
-              _buildRoleChip(
-                  _tLanding(context, 'Site Admins'), ScholesaColors.site, Icons.business_rounded),
+              _buildRoleChip(_tLanding(context, 'Learners'),
+                  ScholesaColors.learner, Icons.school_rounded),
+              _buildRoleChip(_tLanding(context, 'Educators'),
+                  ScholesaColors.educator, Icons.person_rounded),
+              _buildRoleChip(_tLanding(context, 'Parents'),
+                  ScholesaColors.parent, Icons.family_restroom_rounded),
+              _buildRoleChip(_tLanding(context, 'Site Admins'),
+                  ScholesaColors.site, Icons.business_rounded),
               _buildRoleChip(
                   'HQ', ScholesaColors.hq, Icons.admin_panel_settings_rounded),
             ],
@@ -1050,7 +1048,8 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            _tLanding(context, '© 2026 Scholesa. Education 2.0 Platform.'),
+            _tLanding(
+                context, '© 2026 Scholesa. Capability Evidence Platform.'),
             style: TextStyle(
               fontSize: 14,
               color: Colors.white.withValues(alpha: 0.5),

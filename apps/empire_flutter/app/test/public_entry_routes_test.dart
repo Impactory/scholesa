@@ -74,7 +74,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Education 2.0 Platform'), findsOneWidget);
+    expect(find.text('Capability learning, made visible'), findsOneWidget);
     expect(find.text('Scholesa'), findsOneWidget);
     expect(find.text('Sign In'), findsWidgets);
 
