@@ -15,6 +15,30 @@ class _FakeFirebaseAuth implements FirebaseAuth {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _ThrowingFirestoreService extends FirestoreService {
+  _ThrowingFirestoreService()
+      : super(
+          firestore: FakeFirebaseFirestore(),
+          auth: _FakeFirebaseAuth(),
+        );
+
+  @override
+  Future<List<Map<String, dynamic>>> queryCollection(
+    String collection, {
+    List<List<dynamic>>? where,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    throw FirebaseException(
+      plugin: 'cloud_firestore',
+      code: 'failed-precondition',
+      message:
+          'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+    );
+  }
+}
+
 AppState _buildParentState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -66,6 +90,26 @@ Future<void> _pumpPage(
 }
 
 void main() {
+  testWidgets(
+      'parent growth timeline load failures show friendly retry guidance',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      firestoreService: _ThrowingFirestoreService(),
+    );
+
+    expect(find.text('Growth Timeline'), findsOneWidget);
+    expect(
+      find.text(
+        'We could not load this growth timeline right now. Refresh, or check again after the app reconnects.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
+    expect(find.text('No growth events recorded yet.'), findsNothing);
+  });
+
   testWidgets(
       'parent growth timeline shows only linked learner growth provenance',
       (WidgetTester tester) async {

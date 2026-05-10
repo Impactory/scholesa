@@ -811,6 +811,36 @@ void main() {
       expect(learner.pillarProgress['impact'], closeTo(0.25, 0.001));
     });
 
+    test(
+        'parent service load failures keep raw backend details out of error state',
+        () async {
+      final ParentService service = ParentService(
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        parentId: 'parent-1',
+        bundleLoader: () async {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'failed-precondition',
+            message:
+                'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+          );
+        },
+        billingLoader: () async => null,
+      );
+
+      await service.loadParentData();
+
+      expect(
+        service.error,
+        'We could not load family progress right now. Refresh, or check again after the app reconnects.',
+      );
+      expect(service.error, isNot(contains('console.firebase.google.com')));
+      expect(service.error, isNot(contains('failed-precondition')));
+    });
+
     testWidgets('summary page only renders linked learner activity',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

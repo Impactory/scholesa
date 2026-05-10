@@ -7,6 +7,8 @@ import '../../domain/curriculum/curriculum_display.g.dart';
 import 'parent_models.dart';
 
 const String _fallbackLearnerName = 'Learner unavailable';
+const String _parentDataLoadErrorMessage =
+    'We could not load family progress right now. Refresh, or check again after the app reconnects.';
 
 bool _isMissingFirebaseAppError(Object error) {
   final String message = error.toString();
@@ -85,7 +87,7 @@ class ParentService extends ChangeNotifier {
           'Loaded ${_learnerSummaries.length} learner summaries for parent');
     } catch (e) {
       debugPrint('Error loading parent data: $e');
-      _error = 'Failed to load data: $e';
+      _error = _parentDataLoadErrorMessage;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -1068,7 +1070,10 @@ class ParentService extends ChangeNotifier {
     final int reviewedCount = rows.where((Map<String, dynamic> row) {
       final String rubricStatus = _asTrimmedString(row['rubricStatus']);
       final String growthStatus = _asTrimmedString(row['growthStatus']);
-      return rubricStatus == 'linked' || rubricStatus == 'applied' || growthStatus == 'updated' || growthStatus == 'recorded';
+      return rubricStatus == 'linked' ||
+          rubricStatus == 'applied' ||
+          growthStatus == 'updated' ||
+          growthStatus == 'recorded';
     }).length;
     final int portfolioLinkedCount = rows.where((Map<String, dynamic> row) {
       return _asTrimmedString(row['linkedPortfolioItemId']).isNotEmpty ||

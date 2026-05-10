@@ -17,6 +17,9 @@ class GrowthTimelinePage extends StatefulWidget {
 }
 
 class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
+  static const String _growthTimelineLoadErrorMessage =
+      'We could not load this growth timeline right now. Refresh, or check again after the app reconnects.';
+
   List<Map<String, dynamic>> _growthEvents = <Map<String, dynamic>>[];
   Map<String, String> _capabilityNames = <String, String>{};
   bool _isLoading = true;
@@ -81,8 +84,9 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
             await _firestoreService.getGrowthEventsByLearner(learnerId);
 
         // Attach learner name for display
-        final String learnerName =
-            link['learnerName'] as String? ?? link['learnerId'] as String? ?? 'Learner';
+        final String learnerName = link['learnerName'] as String? ??
+            link['learnerId'] as String? ??
+            'Learner';
         for (final Map<String, dynamic> event in events) {
           event['_learnerName'] = learnerName;
           final String capId = event['capabilityId'] as String? ?? '';
@@ -117,8 +121,9 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load parent growth timeline: $e');
       setState(() {
-        _error = 'Failed to load growth timeline: $e';
+        _error = _growthTimelineLoadErrorMessage;
         _isLoading = false;
       });
     }
@@ -138,7 +143,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_t(_error!), style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -175,12 +181,11 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                         children: <Widget>[
                           _buildSummaryCard(),
                           const SizedBox(height: 16),
-                          Text(_t('Timeline'), style: theme.textTheme.titleMedium),
+                          Text(_t('Timeline'),
+                              style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
-                          ..._growthEvents
-                              .asMap()
-                              .entries
-                              .map((MapEntry<int, Map<String, dynamic>> entry) =>
+                          ..._growthEvents.asMap().entries.map(
+                              (MapEntry<int, Map<String, dynamic>> entry) =>
                                   _buildTimelineEvent(entry.value, entry.key)),
                         ],
                       ),
@@ -202,7 +207,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
     if (_growthEvents.isNotEmpty) {
       final Map<String, dynamic> latest = _growthEvents.first;
       final String capName =
-          _capabilityNames[latest['capabilityId'] as String? ?? ''] ?? 'Unknown';
+          _capabilityNames[latest['capabilityId'] as String? ?? ''] ??
+              'Unknown';
       final String toLevel = latest['toLevel'] as String? ?? '';
       latestMilestone = '$capName reached $toLevel';
     }
@@ -235,7 +241,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
               const SizedBox(height: 12),
               Row(
                 children: <Widget>[
-                  Icon(Icons.star, size: 18, color: theme.colorScheme.onPrimaryContainer),
+                  Icon(Icons.star,
+                      size: 18, color: theme.colorScheme.onPrimaryContainer),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -309,7 +316,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                     Row(
                       children: <Widget>[
                         Expanded(
-                          child: Text(capName, style: theme.textTheme.titleSmall),
+                          child:
+                              Text(capName, style: theme.textTheme.titleSmall),
                         ),
                         if (createdAt != null)
                           Text(
@@ -322,7 +330,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                     // Level transition
                     Row(
                       children: <Widget>[
-                        if (fromLevel != null && fromLevel.isNotEmpty) ...<Widget>[
+                        if (fromLevel != null &&
+                            fromLevel.isNotEmpty) ...<Widget>[
                           _LevelChip(level: fromLevel, muted: true),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 4),
@@ -334,9 +343,11 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                     ),
                     const SizedBox(height: 4),
                     if (learnerName.isNotEmpty)
-                      Text('${_t('Learner:')} $learnerName', style: theme.textTheme.bodySmall),
+                      Text('${_t('Learner:')} $learnerName',
+                          style: theme.textTheme.bodySmall),
                     if (educatorId.isNotEmpty)
-                      Text('${_t('Assessed by:')} $educatorId', style: theme.textTheme.bodySmall),
+                      Text('${_t('Assessed by:')} $educatorId',
+                          style: theme.textTheme.bodySmall),
                     if (evidenceIds.isNotEmpty)
                       Text(
                         '${evidenceIds.length} ${evidenceIds.length == 1 ? _t('evidence item linked') : _t('evidence items linked')}',
@@ -368,7 +379,11 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
         // Fall back to a hash-based color from capability ID
         final String capId = event['capabilityId'] as String? ?? '';
         final int hash = capId.hashCode;
-        final List<Color> fallbacks = <Color>[Colors.blue, Colors.purple, Colors.green];
+        final List<Color> fallbacks = <Color>[
+          Colors.blue,
+          Colors.purple,
+          Colors.green
+        ];
         return fallbacks[hash.abs() % fallbacks.length];
     }
   }
@@ -376,8 +391,18 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
   String _formatDate(Timestamp ts) {
     final DateTime dt = ts.toDate();
     final List<String> months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
