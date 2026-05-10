@@ -114,6 +114,22 @@
       ]
     },
     {
+      "collectionGroup": "habits",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "learnerId", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "habitLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "learnerId", "order": "ASCENDING" },
+        { "fieldPath": "completedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "showcaseSubmissions",
       "queryScope": "COLLECTION",
       "fields": [

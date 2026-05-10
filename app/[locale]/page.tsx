@@ -106,22 +106,20 @@ export default function LandingPage() {
             <div className="max-w-4xl">
               <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Capability learning, made visible
+                {t('landing.heroEyebrow')}
               </div>
               <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl sm:leading-tight lg:text-5xl dark:text-white">
-                The proof engine for real capability growth.
+                {t('landing.heroTitle')}
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 dark:text-slate-300">
-                Scholesa turns classroom moments into inspectable proof: observations, learner
-                artifacts, explain-backs, rubric judgments, growth history, portfolios, reports,
-                and partner deliverables all tied to the evidence that earned the claim.
+                {t('landing.heroBody')}
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
                 <Link
                   href={`/${locale}/login`}
                   className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
                 >
-                  Enter the evidence engine
+                  {t('landing.primaryCta')}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <button
@@ -131,13 +129,13 @@ export default function LandingPage() {
                   aria-haspopup="dialog"
                 >
                   <PlayCircle className="h-4 w-4" aria-hidden="true" />
-                  See the Proof Flow
+                  {t('landing.proofFlowCta')}
                 </button>
                 <Link
                   href={`/${locale}/register`}
                   className="min-touch-target inline-flex items-center justify-center rounded-md border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
                 >
-                  {t('landing.register')}
+                  {t('landing.registerArrow')}
                 </Link>
               </div>
             </div>
@@ -145,11 +143,11 @@ export default function LandingPage() {
             <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label="Evidence command center">
               <div className="flex items-center justify-between gap-3 border-b border-cyan-100 pb-3 dark:border-slate-700">
                 <div>
-                  <p className="text-sm font-bold text-slate-950 dark:text-white">Evidence command center</p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Capture, verify, interpret, and communicate growth.</p>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">{t('landing.commandCenterTitle')}</p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{t('landing.commandCenterSubtitle')}</p>
                 </div>
                 <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                  Trusted
+                  {t('landing.trustedBadge')}
                 </span>
               </div>
               <div className="mt-4 grid gap-3">
@@ -166,8 +164,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 p-3 text-sm leading-6 text-cyan-950 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-100">
-                Every view is designed to answer the same question: what can this learner do, and
-                what evidence makes that claim trustworthy?
+                {t('landing.commandCenterQuestion')}
               </div>
             </div>
 

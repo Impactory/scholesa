@@ -22,6 +22,7 @@ import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
+import { loadWorkflowRecords } from '../workflowData';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -285,6 +286,22 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
     }
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const result = await loadWorkflowRecords(ctx);
+        setSessions(result.records.map((record) => ({
+          occurrenceId: record.id,
+          sessionId: record.id,
+          title: record.title,
+          description: record.subtitle,
+          status: record.status,
+          startDate: record.updatedAt,
+          siteId: record.siteId || educatorSiteId,
+          rosterSource: 'none' as const,
+          learners: [],
+        })));
+        return;
+      }
+
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();

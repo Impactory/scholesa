@@ -191,7 +191,7 @@ test('educator workflow redirects to educator default and records attendance', a
 
   await page.goto('/en/dashboard');
   await expect(page).toHaveURL(/\/en\/educator\/today$/);
-  await expect(page.getByText('Educator Dashboard')).toBeVisible();
+  await expect(page.getByTestId('educator-today')).toBeVisible();
 
   await page.goto('/en/educator/attendance');
   await openWorkflowCreateForm(page);
@@ -222,7 +222,7 @@ test('educator is denied partner routes and returns to educator default', async 
 
   await page.goto('/en/partner/listings');
   await expect(page).toHaveURL(/\/en\/educator\/today$/);
-  await expect(page.getByText('Educator Dashboard')).toBeVisible();
+  await expect(page.getByTestId('educator-today')).toBeVisible();
 });
 
 test('parent workflow redirects to parent default and only shows linked portfolio artifacts', async ({ page }) => {
@@ -230,9 +230,9 @@ test('parent workflow redirects to parent default and only shows linked portfoli
 
   await page.goto('/en/dashboard');
   await expect(page).toHaveURL(/\/en\/parent\/summary$/);
-  await expect(page.getByText('Learner Alpha')).toBeVisible();
+  await expect(page.getByTestId('learner-header-learner-alpha')).toContainText('Learner Alpha');
   // Custom renderer shows band label (Developing/Strong/Emerging), not raw numeric level
-  await expect(page.getByText(/Developing|Strong|Emerging/)).toBeVisible();
+  await expect(page.getByTestId('learner-header-learner-alpha')).toContainText(/Developing|Strong|Emerging/);
 
   await page.goto('/en/parent/portfolio');
   await expect(page.getByText('Learner Build Log')).toBeVisible();
@@ -244,7 +244,7 @@ test('parent is denied site routes and returns to parent default', async ({ page
 
   await page.goto('/en/site/dashboard');
   await expect(page).toHaveURL(/\/en\/parent\/summary$/);
-  await expect(page.getByText('Learner Alpha')).toBeVisible();
+  await expect(page.getByTestId('learner-header-learner-alpha')).toContainText('Learner Alpha');
 });
 
 test('site workflow redirects to site default and provisions guardian links', async ({ page }) => {
@@ -405,7 +405,9 @@ test('hq routes deny unauthenticated access', async ({ page }) => {
 
 test('zh-CN landing and login render localized copy', async ({ page }) => {
   await page.goto('/zh-CN');
-  await expect(page.getByText('Scholesa – 未来技能学院')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '让真实能力成长拥有可验证证据。' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '进入证据引擎' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '查看证明流程' })).toBeVisible();
   await expect(page.getByRole('link', { name: '登录' })).toBeVisible();
   await expect(page.getByRole('link', { name: '注册 →' })).toBeVisible();
 

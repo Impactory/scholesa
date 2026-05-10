@@ -19,7 +19,10 @@ class LearnerMiloOSPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('MiloOS Support'),
-        actions: const <Widget>[GlobalSessionMenu()],
+        actions: const <Widget>[
+          SessionMenuButton(),
+          SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: ListView(
