@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show TargetPlatform;
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +26,7 @@ class MockGoogleSignIn extends Mock implements GoogleSignIn {}
 class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
 
 class MockGoogleSignInAuthentication extends Mock
-  implements GoogleSignInAuthentication {}
+    implements GoogleSignInAuthentication {}
 
 class MockLogoutAuditService extends Mock implements LogoutAuditService {}
 
@@ -143,7 +145,7 @@ void main() {
         expect(appState.isAuthenticated, isTrue);
         expect(appState.role, UserRole.educator);
         expect(appState.userId, 'uid-123');
-          expect(recentLoginStore.rememberedAccount?.email, 'test@example.com');
+        expect(recentLoginStore.rememberedAccount?.email, 'test@example.com');
         verify(() => mockAuth.signInWithEmailAndPassword(
               email: 'test@example.com',
               password: 'password123',
@@ -156,7 +158,8 @@ void main() {
               email: any(named: 'email'),
               password: any(named: 'password'),
             )).thenAnswer((_) async => mockCredential);
-        when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
+        when(() => mockFirestore.getUserProfile())
+            .thenAnswer((_) async => null);
 
         await expectLater(
           authService.signInWithEmailAndPassword(
@@ -208,7 +211,8 @@ void main() {
     });
 
     group('signInWithGoogle', () {
-      test('surfaces a clear Apple configuration error when client ID is missing',
+      test(
+          'surfaces a clear Apple configuration error when client ID is missing',
           () async {
         await expectLater(
           authService.signInWithGoogle(),
@@ -227,7 +231,8 @@ void main() {
             ));
       });
 
-      test('initializes Google Sign-In with explicit Apple and server client IDs',
+      test(
+          'initializes Google Sign-In with explicit Apple and server client IDs',
           () async {
         authService = AuthService(
           auth: mockAuth,
@@ -236,8 +241,7 @@ void main() {
           googleSignIn: mockGoogleSignIn,
           googleSignInPlatformOverride: TargetPlatform.iOS,
           googleClientId: 'apple-client-id.apps.googleusercontent.com',
-          googleServerClientId:
-              'server-client-id.apps.googleusercontent.com',
+          googleServerClientId: 'server-client-id.apps.googleusercontent.com',
           recentLoginStore: recentLoginStore,
         );
 
@@ -339,7 +343,7 @@ void main() {
         expect(recentLoginStore.clearedActiveSession, isTrue);
       });
 
-      test('records a durable logout audit before signing out', () async {
+      test('starts a durable logout audit when signing out', () async {
         appState.updateFromMeResponse(<String, dynamic>{
           'userId': 'uid-123',
           'email': 'test@example.com',
@@ -365,6 +369,56 @@ void main() {
             )).called(1);
         verify(() => mockAuth.signOut()).called(1);
         expect(recentLoginStore.clearedActiveSession, isTrue);
+      });
+
+      test('does not block sign-out when logout side effects hang', () async {
+        appState.updateFromMeResponse(<String, dynamic>{
+          'userId': 'uid-123',
+          'email': 'test@example.com',
+          'displayName': 'Test User',
+          'role': 'educator',
+          'activeSiteId': 'site1',
+          'siteIds': <String>['site1'],
+          'entitlements': <dynamic>[],
+        });
+
+        final Completer<void> telemetryCompleter = Completer<void>();
+        final Completer<void> auditCompleter = Completer<void>();
+        when(() => mockLogoutAuditService.recordLogout(
+              source: any(named: 'source'),
+              role: any(named: 'role'),
+              siteId: any(named: 'siteId'),
+              impersonatingRole: any(named: 'impersonatingRole'),
+            )).thenAnswer((_) => auditCompleter.future);
+        when(() => mockAuth.signOut()).thenAnswer((_) async {});
+
+        authService = AuthService(
+          auth: mockAuth,
+          firestoreService: mockFirestore,
+          appState: appState,
+          googleSignIn: mockGoogleSignIn,
+          googleSignInPlatformOverride: TargetPlatform.iOS,
+          logoutAuditService: mockLogoutAuditService,
+          recentLoginStore: recentLoginStore,
+          logoutSideEffectTimeout: const Duration(milliseconds: 1),
+        );
+
+        await TelemetryService.runWithDispatcher(
+          (_) => telemetryCompleter.future,
+          () => authService.signOut(source: 'settings'),
+        );
+
+        verify(() => mockAuth.signOut()).called(1);
+        verify(() => mockLogoutAuditService.recordLogout(
+              source: 'settings',
+              role: 'educator',
+              siteId: 'site1',
+              impersonatingRole: null,
+            )).called(1);
+        expect(appState.isAuthenticated, isFalse);
+        expect(recentLoginStore.clearedActiveSession, isTrue);
+
+        await Future<void>.delayed(const Duration(milliseconds: 5));
       });
     });
 
@@ -436,7 +490,8 @@ void main() {
       when(() => mockAuth.currentUser).thenReturn(mockUser);
       when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
 
-      await expectLater(authService.refreshSession(), throwsA(isA<StateError>()));
+      await expectLater(
+          authService.refreshSession(), throwsA(isA<StateError>()));
 
       expect(appState.isAuthenticated, isFalse);
       expect(appState.role, isNull);

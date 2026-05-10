@@ -15,7 +15,6 @@ import 'auth/app_state.dart';
 import 'auth/auth_service.dart';
 import 'auth/recent_login_store.dart';
 import 'ui/error/startup_issue_banner.dart';
-import 'ui/auth/global_session_menu.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
@@ -610,13 +609,6 @@ class _ScholesaAppState extends State<ScholesaApp> {
                                 });
                               },
                             ),
-                          if (showStartupIssueBanner)
-                            const SizedBox(height: 12),
-                          GlobalSessionMenu(
-                            navigatorKey: _rootNavigatorKey,
-                            includeSafeArea: false,
-                            padding: EdgeInsets.zero,
-                          ),
                         ],
                       ),
                     ),

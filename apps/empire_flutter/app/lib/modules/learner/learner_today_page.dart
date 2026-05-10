@@ -471,45 +471,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   Widget _buildEvidenceLoopCard() {
     return Consumer<MissionService>(
       builder: (BuildContext context, MissionService service, _) {
-        final Mission? mission = service.activeMissions.isNotEmpty
-            ? service.activeMissions.first
-            : null;
-        final String building = mission?.title ??
-            ((_learnerProfile?.goals.isNotEmpty ?? false)
-                ? _learnerProfile!.goals.first
-                : _t('Choose a mission to start your next build sprint.'));
-        final String capability = mission != null && mission.skills.isNotEmpty
-            ? mission.skills.first.name
-            : mission?.pillar.label ??
-                ((_learnerProfile?.strengths.isNotEmpty ?? false)
-                    ? _learnerProfile!.strengths.first
-                    : _t(
-                        'Your next capability focus appears when a mission is active.'));
-        final String evidenceShown = (mission?.educatorFeedback
-                    ?.trim()
-                    .isNotEmpty ??
-                false)
-            ? mission!.educatorFeedback!.trim()
-            : (mission != null &&
-                    (mission.status == MissionStatus.submitted ||
-                        mission.status == MissionStatus.completed))
-                ? _t('Your mission work is ready for educator review.')
-                : _t(
-                    'Show your thinking through a checkpoint, share-out, or reflection.');
-        final String nextVerify =
-            (mission?.reflectionPrompt?.trim().isNotEmpty ?? false)
-                ? mission!.reflectionPrompt!.trim()
-                : _t('Be ready to explain your next step in your own words.');
-        final String portfolioArtifact = ((_learnerProfile?.portfolioHighlight
-                    ?.trim()
-                    .isNotEmpty ??
-                false))
-            ? _learnerProfile!.portfolioHighlight!.trim()
-            : mission != null
-                ? _t(
-                    'Save the strongest draft, screenshot, photo, or demo from this mission.')
-                : _t(
-                    'Your best artifact will appear here after you build something worth keeping.');
+        final _EvidenceLoopCopy loopCopy = _resolveEvidenceLoopCopy(service);
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -521,31 +483,31 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 _EvidenceLoopRow(
                   icon: Icons.handyman_rounded,
                   label: _t('What I am building'),
-                  value: building,
+                  value: loopCopy.building,
                 ),
                 const SizedBox(height: 12),
                 _EvidenceLoopRow(
                   icon: Icons.fact_check_rounded,
                   label: _t('What evidence I have shown'),
-                  value: evidenceShown,
+                  value: loopCopy.evidenceShown,
                 ),
                 const SizedBox(height: 12),
                 _EvidenceLoopRow(
                   icon: Icons.track_changes_rounded,
                   label: _t('What capability I am growing'),
-                  value: capability,
+                  value: loopCopy.capability,
                 ),
                 const SizedBox(height: 12),
                 _EvidenceLoopRow(
                   icon: Icons.record_voice_over_rounded,
                   label: _t('What I need to explain or verify next'),
-                  value: nextVerify,
+                  value: loopCopy.nextVerify,
                 ),
                 const SizedBox(height: 12),
                 _EvidenceLoopRow(
                   icon: Icons.collections_bookmark_rounded,
                   label: _t('What artifact belongs in my portfolio'),
-                  value: portfolioArtifact,
+                  value: loopCopy.portfolioArtifact,
                 ),
               ],
             ),
@@ -553,6 +515,84 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         );
       },
     );
+  }
+
+  _EvidenceLoopCopy _resolveEvidenceLoopCopy(MissionService service) {
+    final String emptyBuilding =
+        _t('Choose a mission to start your next build sprint.');
+    final String emptyCapability =
+        _t('Your next capability focus appears when a mission is active.');
+    final String emptyEvidence = _t(
+        'Show your thinking through a checkpoint, share-out, or reflection.');
+    final String emptyNextVerify =
+        _t('Be ready to explain your next step in your own words.');
+    final String emptyPortfolio = _t(
+      'Your best artifact will appear here after you build something worth keeping.',
+    );
+
+    try {
+      final List<Mission> activeMissions = service.activeMissions;
+      final Mission? mission =
+          activeMissions.isNotEmpty ? activeMissions.first : null;
+      final String? profileGoal = _firstMeaningful(_learnerProfile?.goals);
+      final String? profileStrength =
+          _firstMeaningful(_learnerProfile?.strengths);
+      final String? profileHighlight =
+          _meaningful(_learnerProfile?.portfolioHighlight);
+      final String? missionSkill = mission == null || mission.skills.isEmpty
+          ? null
+          : _meaningful(mission.skills.first.name);
+      final String? missionPillar = mission?.pillar.label;
+      final String? educatorFeedback = _meaningful(mission?.educatorFeedback);
+      final String? reflectionPrompt = _meaningful(mission?.reflectionPrompt);
+
+      return _EvidenceLoopCopy(
+        building: _meaningful(mission?.title) ?? profileGoal ?? emptyBuilding,
+        evidenceShown: educatorFeedback ??
+            (mission != null &&
+                    (mission.status == MissionStatus.submitted ||
+                        mission.status == MissionStatus.completed)
+                ? _t('Your mission work is ready for educator review.')
+                : emptyEvidence),
+        capability: missionSkill ??
+            _meaningful(missionPillar) ??
+            profileStrength ??
+            emptyCapability,
+        nextVerify: reflectionPrompt ?? emptyNextVerify,
+        portfolioArtifact: profileHighlight ??
+            (mission != null
+                ? _t(
+                    'Save the strongest draft, screenshot, photo, or demo from this mission.',
+                  )
+                : emptyPortfolio),
+      );
+    } catch (_) {
+      return _EvidenceLoopCopy(
+        building: emptyBuilding,
+        evidenceShown: emptyEvidence,
+        capability: emptyCapability,
+        nextVerify: emptyNextVerify,
+        portfolioArtifact: emptyPortfolio,
+      );
+    }
+  }
+
+  String? _firstMeaningful(List<String>? values) {
+    if (values == null) {
+      return null;
+    }
+    for (final String value in values) {
+      final String? meaningfulValue = _meaningful(value);
+      if (meaningfulValue != null) {
+        return meaningfulValue;
+      }
+    }
+    return null;
+  }
+
+  String? _meaningful(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   Widget _buildQuickActions() {
@@ -2001,6 +2041,22 @@ class _SummaryChipData {
 
   final String label;
   final Color color;
+}
+
+class _EvidenceLoopCopy {
+  const _EvidenceLoopCopy({
+    required this.building,
+    required this.evidenceShown,
+    required this.capability,
+    required this.nextVerify,
+    required this.portfolioArtifact,
+  });
+
+  final String building;
+  final String evidenceShown;
+  final String capability;
+  final String nextVerify;
+  final String portfolioArtifact;
 }
 
 class _SummaryChip extends StatelessWidget {

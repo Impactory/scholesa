@@ -212,7 +212,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.text('My Evidence Loop'), findsOneWidget);
+    expect(find.text('Choose a mission to start your next build sprint.'),
+        findsOneWidget);
     expect(find.text('Unable to load habits'), findsOneWidget);
     expect(find.text('Failed to load habits from test'), findsOneWidget);
     expect(find.text('No habits scheduled yet'), findsNothing);
@@ -276,7 +280,10 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.text('My Evidence Loop'), findsOneWidget);
+    expect(find.text('Prototype a water filter'), findsWidgets);
     expect(
       find.text(
           'Showing last loaded habits. Failed to refresh habits from test'),
@@ -357,6 +364,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('My Evidence Loop'), findsOneWidget);
     expect(find.text('What I am building'), findsOneWidget);
@@ -374,6 +382,5 @@ void main() {
     expect(find.text('Start'), findsOneWidget);
     await _scrollUntilTextVisible(tester, 'Active Missions');
     expect(find.text('45%'), findsOneWidget);
-    expect(tester.takeException(), isNull);
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -26,6 +28,7 @@ class AuthService {
     TargetPlatform? googleSignInPlatformOverride,
     LogoutAuditService? logoutAuditService,
     RecentLoginStore? recentLoginStore,
+    Duration logoutSideEffectTimeout = const Duration(seconds: 2),
   })  : _auth = auth,
         _firestoreService = firestoreService,
         _appState = appState,
@@ -34,7 +37,8 @@ class AuthService {
         _googleServerClientId = googleServerClientId,
         _googleSignInPlatformOverride = googleSignInPlatformOverride,
         _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance,
-        _recentLoginStore = recentLoginStore ?? RecentLoginStore();
+        _recentLoginStore = recentLoginStore ?? RecentLoginStore(),
+        _logoutSideEffectTimeout = logoutSideEffectTimeout;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
@@ -44,6 +48,7 @@ class AuthService {
   final TargetPlatform? _googleSignInPlatformOverride;
   final LogoutAuditService _logoutAuditService;
   final RecentLoginStore _recentLoginStore;
+  final Duration _logoutSideEffectTimeout;
   Future<void>? _googleInitialization;
 
   Future<void> _ensureGoogleInitialized() {
@@ -134,6 +139,33 @@ class AuthService {
     } catch (_) {
       // Ignore if not signed in with Google
     }
+    unawaited(_logLogoutTelemetry(
+      source: source,
+      roleName: roleName,
+      activeSiteId: activeSiteId,
+      impersonatingRole: impersonatingRole,
+    ));
+    unawaited(_recordLogoutAudit(
+      source: source,
+      roleName: roleName,
+      activeSiteId: activeSiteId,
+      impersonatingRole: impersonatingRole,
+    ));
+    await _auth.signOut();
+    try {
+      await _recentLoginStore.clearActiveSession();
+    } catch (_) {
+      // Ignore recent-account persistence errors
+    }
+    _appState.clear();
+  }
+
+  Future<void> _logLogoutTelemetry({
+    required String source,
+    required String? roleName,
+    required String? activeSiteId,
+    required String? impersonatingRole,
+  }) async {
     try {
       await TelemetryService.instance.logEvent(
         event: 'auth.logout',
@@ -144,27 +176,30 @@ class AuthService {
           if (impersonatingRole != null)
             'impersonating_role': impersonatingRole,
         },
-      );
+      ).timeout(_logoutSideEffectTimeout);
     } catch (_) {
-      // Best-effort telemetry
+      // Best-effort telemetry must not block the user from signing out.
     }
+  }
+
+  Future<void> _recordLogoutAudit({
+    required String source,
+    required String? roleName,
+    required String? activeSiteId,
+    required String? impersonatingRole,
+  }) async {
     try {
-      await _logoutAuditService.recordLogout(
-        source: source,
-        role: roleName,
-        siteId: activeSiteId,
-        impersonatingRole: impersonatingRole,
-      );
+      await _logoutAuditService
+          .recordLogout(
+            source: source,
+            role: roleName,
+            siteId: activeSiteId,
+            impersonatingRole: impersonatingRole,
+          )
+          .timeout(_logoutSideEffectTimeout);
     } catch (_) {
-      // Best-effort durable audit logging
+      // Best-effort durable audit logging must not block sign-out.
     }
-    await _auth.signOut();
-    try {
-      await _recentLoginStore.clearActiveSession();
-    } catch (_) {
-      // Ignore recent-account persistence errors
-    }
-    _appState.clear();
   }
 
   /// Sign in with Google
