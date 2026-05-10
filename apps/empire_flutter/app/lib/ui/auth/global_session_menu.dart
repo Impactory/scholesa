@@ -224,9 +224,6 @@ class GlobalSessionMenu extends StatelessWidget {
 
     final double width = MediaQuery.sizeOf(context).width;
     final bool showMenuLabel = width >= 720;
-    final bool showSignOutLabel = width >= 720;
-    final bool showExplicitSignOut = width >= 960;
-
     final Widget menu = Align(
       alignment: Alignment.topRight,
       child: Padding(
@@ -234,13 +231,6 @@ class GlobalSessionMenu extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (showExplicitSignOut) ...<Widget>[
-              SessionSignOutButton(
-                navigatorKey: navigatorKey,
-                showLabel: showSignOutLabel,
-              ),
-              const SizedBox(width: 8),
-            ],
             Material(
               elevation: 6,
               color:

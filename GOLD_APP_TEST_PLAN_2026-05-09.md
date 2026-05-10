@@ -5,8 +5,14 @@ This is an internal verification plan. Scholesa is not gold-ready until every re
 ## Current Verified In This Pass
 
 - Flutter analyzer: `flutter analyze --no-fatal-infos` passed.
-- Full Flutter suite: `flutter test --reporter compact` passed with `+1090`.
+- Full Flutter suite: `flutter test --reporter compact` passed with `+1092`.
 - Focused blocker suite passed: auth sign-out, global session menu, app shell chrome, learner today evidence loop, and global AI assistant overlay.
+- Non-deploying release gate passed after fixing the root logout contract test and restoring the functions evidence-chain emulator env flag in `./scripts/deploy.sh release-gate`.
+- Screenshot gap fixed: the shared global session chrome no longer renders a separate wide-layout Sign Out pill over page controls; sign-out remains available inside the account menu.
+- Flutter web release build passed: `flutter build web --release`.
+- Local native compiles passed after the session chrome fix: macOS release with repo no-sign settings, iOS release with `--no-codesign`, and Android release AAB/APK.
+- Cloud Run publish is blocked pending local Google reauthentication; `gcloud` resolved `studio-3328096157-e3f79` and then prompted for the account password before `empire-web` deploy/probe could continue.
+- Native-channel distribution remains blocked by missing signing, provisioning, App Store Connect, Google Play, and notarization prerequisites reported by `./scripts/native_distribution_readiness.sh`.
 - Live proof-flow video deployment was previously verified on `scholesa.com` with byte-for-byte MP4 match.
 
 ## Release-Blocking Test Tracks

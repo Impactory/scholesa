@@ -20,7 +20,8 @@ describe('flutter web logout availability', () => {
     expect(mainSource).not.toContain('GlobalSessionMenu(');
     expect(mainSource).toContain('GlobalAiAssistantOverlay(');
     expect(sessionMenuSource).toContain('class SessionSignOutButton extends StatelessWidget');
-    expect(sessionMenuSource).toContain('final bool showExplicitSignOut = width >= 960;');
+    expect(sessionMenuSource).not.toContain('showExplicitSignOut');
+    expect(sessionMenuSource).not.toContain('SessionSignOutButton(\n                navigatorKey: navigatorKey');
     expect(sessionMenuSource).toContain('await _confirmGlobalSessionSignOut(effectiveContext);');
     expect(sessionMenuSource).toContain('this.includeSafeArea = true');
     expect(sessionMenuSource).toContain('this.padding = const EdgeInsets.only(top: 16, right: 12)');
@@ -39,7 +40,8 @@ describe('flutter web logout availability', () => {
 
     expect(sessionMenuSource).toContain('class SessionMenuHeaderAction extends StatelessWidget');
     expect(sessionMenuSource).toContain('class SessionSignOutButton extends StatelessWidget');
-  expect(sessionMenuSource).toContain('final bool showExplicitSignOut = width >= 960;');
+    expect(sessionMenuSource).toContain('class SessionMenuButton extends StatelessWidget');
+    expect(sessionMenuSource).not.toContain('showExplicitSignOut');
     expect(sessionMenuSource).toContain("_tGlobalSessionMenu(context, 'Sign Out')");
 
     const customHeaderPages = [

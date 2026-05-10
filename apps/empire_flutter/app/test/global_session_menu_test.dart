@@ -163,7 +163,7 @@ void main() {
     });
 
     testWidgets(
-        'renders a direct sign out control on wide authenticated layouts',
+        'wide authenticated layouts keep sign out inside the account menu',
         (WidgetTester tester) async {
       final _MockAuthService authService = _MockAuthService();
       when(() => authService.signOut(source: any(named: 'source')))
@@ -184,9 +184,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+      expect(find.bySemanticsLabel('Sign Out'), findsNothing);
 
-      await tester.tap(find.bySemanticsLabel('Sign Out'));
+      await tester.tap(find.byKey(_globalSessionMenuButtonKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Sign Out'), findsOneWidget);
+
+      await tester.tap(find.text('Sign Out'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Sign Out'));
       await tester.pumpAndSettle();
@@ -347,8 +352,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('登出'), findsOneWidget);
       expect(find.bySemanticsLabel('帳戶選單'), findsOneWidget);
+      expect(find.bySemanticsLabel('登出'), findsNothing);
       expect(find.text('Scholesa 以復原模式啟動'), findsOneWidget);
     });
   });

@@ -299,7 +299,7 @@ functions_unit_tests() {
 release_gate_emulator_tests() {
   log "Running Firestore rules and evidence-chain emulator tests..."
   (cd "$REPO_ROOT" && npx --yes firebase-tools emulators:exec --only firestore \
-    "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx jest --runInBand --config jest.rules.config.js && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm --prefix functions run test -- --runInBand src/evidenceChainEmulator.test.ts") \
+    "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx jest --runInBand --config jest.rules.config.js && RUN_EMULATOR_TESTS=1 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm --prefix functions run test -- --runInBand src/evidenceChainEmulator.test.ts") \
     || fail "Firestore emulator release tests failed"
   log "Firestore emulator release tests passed ✓"
 }
