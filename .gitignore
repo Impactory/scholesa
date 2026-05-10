@@ -7,6 +7,7 @@
 
 # testing
 /coverage
+apps/empire_flutter/app/test/failures/
 
 # next.js
 *debug*.log

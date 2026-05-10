@@ -455,6 +455,10 @@ class _MissionsPageState extends State<MissionsPage>
           );
         }
 
+        if (service.error != null && service.missions.isEmpty) {
+          return _buildLoadErrorState(service.error!);
+        }
+
         final List<Mission> missions = service.missions.where((Mission m) {
           if (statusFilter == MissionStatus.inProgress) {
             return m.status == MissionStatus.inProgress ||
@@ -480,6 +484,43 @@ class _MissionsPageState extends State<MissionsPage>
           },
         );
       },
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 40,
+                color: Theme.of(context).colorScheme.onErrorContainer,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tMissions(context, message),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context.read<MissionService>().loadMissions(),
+              icon: const Icon(Icons.refresh),
+              label: Text(_tMissions(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

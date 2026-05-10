@@ -19,6 +19,11 @@ class RubricApplicationPage extends StatefulWidget {
 }
 
 class _RubricApplicationPageState extends State<RubricApplicationPage> {
+  static const String _rubricLoadErrorMessage =
+      'Rubric review needs a quick refresh. Try again, or reopen Apply Rubric Judgments from Today.';
+  static const String _rubricApplyErrorMessage =
+      'We could not apply this rubric yet. Check your connection and try again.';
+
   List<Map<String, dynamic>> _pendingAttempts = <Map<String, dynamic>>[];
   bool _isLoading = true;
   String? _error;
@@ -114,12 +119,16 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
         descending: true,
       );
       setState(() {
-        _pendingAttempts = <Map<String, dynamic>>[...submitted, ...pendingReview];
+        _pendingAttempts = <Map<String, dynamic>>[
+          ...submitted,
+          ...pendingReview
+        ];
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load rubric attempts: $e');
       setState(() {
-        _error = 'Failed to load attempts: $e';
+        _error = _t(_rubricLoadErrorMessage);
         _isLoading = false;
       });
     }
@@ -130,8 +139,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     final String educatorId = appState.userId ?? '';
     final String learnerId = attempt['learnerId'] as String? ?? '';
     final String attemptId = attempt['id'] as String? ?? '';
-    final String capabilityId =
-        attempt['capabilityId'] as String? ?? attemptId;
+    final String capabilityId = attempt['capabilityId'] as String? ?? attemptId;
     final String? siteId = _activeSiteId();
     final GradeBand resolvedGradeBand = gradeBandForRole(
       appState.role ?? UserRole.educator,
@@ -178,7 +186,8 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_t('Rubric applied and growth event recorded.'))),
+        SnackBar(
+            content: Text(_t('Rubric applied and growth event recorded.'))),
       );
 
       _feedbackController.clear();
@@ -186,9 +195,10 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
       _expandedAttemptId = null;
       await _loadPendingAttempts();
     } catch (e) {
+      debugPrint('Failed to apply rubric judgment: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error applying rubric:')} $e')),
+        SnackBar(content: Text(_t(_rubricApplyErrorMessage))),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -209,7 +219,8 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_error!, style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -249,11 +260,14 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
 
   Widget _buildAttemptCard(Map<String, dynamic> attempt) {
     final String attemptId = attempt['id'] as String? ?? '';
-    final String learnerName =
-        attempt['learnerName'] as String? ?? attempt['learnerId'] as String? ?? 'Unknown';
-    final String missionTitle =
-        attempt['missionTitle'] as String? ?? attempt['missionId'] as String? ?? 'Unknown Mission';
-    final String content = attempt['content'] as String? ?? attempt['response'] as String? ?? '';
+    final String learnerName = attempt['learnerName'] as String? ??
+        attempt['learnerId'] as String? ??
+        'Unknown';
+    final String missionTitle = attempt['missionTitle'] as String? ??
+        attempt['missionId'] as String? ??
+        'Unknown Mission';
+    final String content =
+        attempt['content'] as String? ?? attempt['response'] as String? ?? '';
     final Timestamp? createdAt = attempt['createdAt'] as Timestamp?;
     final bool isExpanded = _expandedAttemptId == attemptId;
 
@@ -269,7 +283,8 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
                 const Icon(Icons.person_outline, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(learnerName, style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(learnerName,
+                      style: Theme.of(context).textTheme.titleMedium),
                 ),
                 if (createdAt != null)
                   Text(

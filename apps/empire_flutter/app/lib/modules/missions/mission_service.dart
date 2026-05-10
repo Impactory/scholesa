@@ -8,6 +8,10 @@ import '../../services/telemetry_service.dart';
 import 'mission_models.dart';
 
 const String _fallbackLearnerName = 'Learner unavailable';
+const String _missionLoadErrorMessage =
+    'We could not load missions right now. Check your connection and try again.';
+const String _missionReviewSubmitErrorMessage =
+    'We could not submit this review yet. Check your connection and try again.';
 
 @immutable
 class MissionProofCheckpoint {
@@ -229,7 +233,7 @@ class MissionService extends ChangeNotifier {
       debugPrint('Loaded ${_missions.length} missions for learner');
     } catch (e) {
       debugPrint('Error loading missions: $e');
-      _error = 'Failed to load missions: $e';
+      _error = _missionLoadErrorMessage;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -2550,7 +2554,7 @@ class MissionService extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('Error submitting review: $e');
-      _error = 'Failed to submit review: $e';
+      _error = _missionReviewSubmitErrorMessage;
       notifyListeners();
       return false;
     }

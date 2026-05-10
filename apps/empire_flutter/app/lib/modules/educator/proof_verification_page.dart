@@ -18,6 +18,13 @@ class ProofVerificationPage extends StatefulWidget {
 }
 
 class _ProofVerificationPageState extends State<ProofVerificationPage> {
+  static const String _proofLoadErrorMessage =
+      'Proof review needs a quick refresh. Try again, or return to Today and reopen Proof of Learning.';
+  static const String _proofVerifyErrorMessage =
+      'We could not verify this proof yet. Check your connection and try again.';
+  static const String _proofRevisionErrorMessage =
+      'We could not request a revision yet. Check your connection and try again.';
+
   List<Map<String, dynamic>> _pendingBundles = <Map<String, dynamic>>[];
   bool _isLoading = true;
   String? _error;
@@ -102,8 +109,9 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load proof bundles: $e');
       setState(() {
-        _error = 'Failed to load proof bundles: $e';
+        _error = _t(_proofLoadErrorMessage);
         _isLoading = false;
       });
     }
@@ -180,9 +188,10 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
       );
       await _loadPendingBundles();
     } catch (e) {
+      debugPrint('Failed to verify proof bundle: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error verifying proof:')} $e')),
+        SnackBar(content: Text(_t(_proofVerifyErrorMessage))),
       );
     }
   }
@@ -204,9 +213,10 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
       );
       await _loadPendingBundles();
     } catch (e) {
+      debugPrint('Failed to request proof revision: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error requesting revision:')} $e')),
+        SnackBar(content: Text(_t(_proofRevisionErrorMessage))),
       );
     }
   }

@@ -21,10 +21,14 @@ Recent validated items:
 - MiloOS voice tuning pass completed: web speech now uses a slightly slower, lower-pitch voice profile and prefers natural/neural browser voices before generic fallbacks.
 - Cloud Run `empire-web` deploy through `./scripts/deploy.sh flutter-web` succeeded for the logout/voice hardening pass. Cloud Build `a0c6a065-058d-46c8-9904-5f6780e3095c` built image tag `20260510-123327`; revision `empire-web-00088-ln2` is latest ready and serves 100 percent traffic.
 - Final non-deploying release gate passed after the logout/voice hardening pass; the Flutter gate inside it passed with `+1093: All tests passed!`.
+- Flutter web deploy after the theme/load/login/CTA pass succeeded. Revision `empire-web-00089-wfs` serves 100 percent traffic, and live HTTP probes passed for `https://scholesa.com` and `/videos/proof-flow.mp4`.
+- Repo hygiene follow-up removed generated Flutter golden failure artifacts and `.firebase/logs/vsce-debug.log` from the working tree, ignored future generated outputs, and added a `deploy.sh` guard for dirty generated artifact paths.
+- Educator proof verification and rubric application now hide raw backend/index errors from user-facing surfaces and show friendly recovery guidance; focused analyzer and widget regressions passed for those touched flows.
+- Admin-HQ capability framework and rubric template setup now hide raw backend/index errors from user-facing load/save/delete surfaces and show friendly recovery guidance; focused analyzer and HQ authoring widget regressions passed for those touched flows.
 
 Current release blockers and risks:
 
-- The latest logout and MiloOS voice code has cleared focused local gates and live HTTP probes; role-based live canary remains required before broader public-site gold claims.
+- The latest live Flutter web revision has cleared local gates and HTTP probes; role-based live canary remains required before broader public-site gold claims.
 - Native distribution remains blocked until TestFlight, Google Play internal testing, and macOS signing/notarization proof exist.
 - Cloud Run project identity must stay explicit: live Flutter site currently matches `studio-3328096157-e3f79` / `empire-web`; project number `430675339898` maps to `scholesa-prod`, which does not host the serving `empire-web` service.
 - Firestore and Storage hardening are still required before gold: missing `siteId` fallback and broad authenticated learner-media reads are not acceptable gold posture.

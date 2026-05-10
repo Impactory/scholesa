@@ -253,6 +253,48 @@ Future<void> _seedReviewedMissionProgressContext(
 }
 
 void main() {
+  testWidgets('missions load failures show friendly retry guidance',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+      missionsLoader: () async {
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'failed-precondition',
+          message:
+              'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+        );
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'We could not load missions right now. Check your connection and try again.',
+      ),
+      findsWidgets,
+    );
+    expect(find.text('Retry'), findsWidgets);
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
+    expect(find.text('No missions available'), findsNothing);
+  });
+
   testWidgets('missions page shows empty available-state copy',
       (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(

@@ -18,6 +18,13 @@ class CapabilityFrameworkPage extends StatefulWidget {
 }
 
 class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
+  static const String _capabilityLoadErrorMessage =
+      'Capability frameworks need a quick refresh. Try again, or reopen this setup page from HQ.';
+  static const String _capabilitySaveErrorMessage =
+      'We could not save this capability yet. Check your connection and try again.';
+  static const String _capabilityDeleteErrorMessage =
+      'We could not delete this capability yet. Check your connection and try again.';
+
   List<Map<String, dynamic>> _capabilities = <Map<String, dynamic>>[];
   bool _isLoading = true;
   String? _error;
@@ -89,8 +96,9 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load capability frameworks: $e');
       setState(() {
-        _error = 'Failed to load capabilities: $e';
+        _error = _t(_capabilityLoadErrorMessage);
         _isLoading = false;
       });
     }
@@ -199,9 +207,10 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
       });
       await _loadCapabilities();
     } catch (e) {
+      debugPrint('Failed to save capability framework: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error saving capability:')} $e')),
+        SnackBar(content: Text(_t(_capabilitySaveErrorMessage))),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -235,9 +244,10 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
       );
       await _loadCapabilities();
     } catch (e) {
+      debugPrint('Failed to delete capability framework: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error deleting capability:')} $e')),
+        SnackBar(content: Text(_t(_capabilityDeleteErrorMessage))),
       );
     }
   }

@@ -43,6 +43,23 @@ log()  { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn() { echo -e "${YELLOW}[deploy]${NC} $*"; }
 fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
 
+ensure_generated_artifacts_clean() {
+  if [[ "${ALLOW_GENERATED_ARTIFACT_CHANGES:-0}" == "1" || "${ALLOW_GENERATED_ARTIFACT_CHANGES:-0}" == "true" ]]; then
+    warn "Skipping generated-artifact hygiene because ALLOW_GENERATED_ARTIFACT_CHANGES is set."
+    return 0
+  fi
+
+  local generated_status
+  generated_status="$(git -C "$REPO_ROOT" status --short -- \
+    .firebase/logs \
+    apps/empire_flutter/app/test/failures)"
+
+  if [[ -n "$generated_status" ]]; then
+    echo "$generated_status" >&2
+    fail "Generated deploy/test artifacts are dirty. Remove them or commit an intentional baseline before deploying."
+  fi
+}
+
 append_no_traffic_arg() {
   local array_name="$1"
   if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
@@ -204,6 +221,8 @@ ensure_firebase_auth() {
 
 # ── Pre-flight checks ──────────────────────────────────────────
 preflight() {
+  ensure_generated_artifacts_clean
+
   command -v firebase >/dev/null 2>&1 || fail "firebase CLI not found. Install: npm i -g firebase-tools"
   command -v node >/dev/null 2>&1 || fail "node not found on PATH"
 

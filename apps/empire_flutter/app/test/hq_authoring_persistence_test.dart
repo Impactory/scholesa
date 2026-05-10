@@ -16,6 +16,30 @@ class _FakeFirebaseAuth implements FirebaseAuth {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _ThrowingFirestoreService extends FirestoreService {
+  _ThrowingFirestoreService()
+      : super(
+          firestore: FakeFirebaseFirestore(),
+          auth: _FakeFirebaseAuth(),
+        );
+
+  @override
+  Future<List<Map<String, dynamic>>> queryCollection(
+    String collection, {
+    List<List<dynamic>>? where,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    throw FirebaseException(
+      plugin: 'cloud_firestore',
+      code: 'failed-precondition',
+      message:
+          'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+    );
+  }
+}
+
 AppState _buildHqState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -68,6 +92,44 @@ Future<void> _pumpPage(
 }
 
 void main() {
+  testWidgets('HQ capability load failures show friendly setup guidance',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      child: const CapabilityFrameworkPage(),
+      firestoreService: _ThrowingFirestoreService(),
+    );
+
+    expect(find.text('Capability Frameworks'), findsOneWidget);
+    expect(
+      find.text(
+        'Capability frameworks need a quick refresh. Try again, or reopen this setup page from HQ.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
+  });
+
+  testWidgets('HQ rubric load failures show friendly setup guidance',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      child: const RubricBuilderPage(),
+      firestoreService: _ThrowingFirestoreService(),
+    );
+
+    expect(find.text('Rubric Builder'), findsOneWidget);
+    expect(
+      find.text(
+        'Rubric templates need a quick refresh. Try again, or reopen Rubric Builder from HQ.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
+  });
+
   testWidgets('mobile HQ creates site-scoped capability framework records',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

@@ -17,6 +17,13 @@ class RubricBuilderPage extends StatefulWidget {
 }
 
 class _RubricBuilderPageState extends State<RubricBuilderPage> {
+  static const String _rubricLoadErrorMessage =
+      'Rubric templates need a quick refresh. Try again, or reopen Rubric Builder from HQ.';
+  static const String _rubricSaveErrorMessage =
+      'We could not save this rubric yet. Check your connection and try again.';
+  static const String _rubricDeleteErrorMessage =
+      'We could not archive this rubric yet. Check your connection and try again.';
+
   List<Map<String, dynamic>> _rubrics = <Map<String, dynamic>>[];
   bool _isLoading = true;
   String? _error;
@@ -83,8 +90,9 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load rubric templates: $e');
       setState(() {
-        _error = 'Failed to load rubrics: $e';
+        _error = _t(_rubricLoadErrorMessage);
         _isLoading = false;
       });
     }
@@ -221,9 +229,10 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
       });
       await _loadRubrics();
     } catch (e) {
+      debugPrint('Failed to save rubric template: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error saving rubric:')} $e')),
+        SnackBar(content: Text(_t(_rubricSaveErrorMessage))),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -261,9 +270,10 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
       );
       await _loadRubrics();
     } catch (e) {
+      debugPrint('Failed to archive rubric template: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error deleting rubric:')} $e')),
+        SnackBar(content: Text(_t(_rubricDeleteErrorMessage))),
       );
     }
   }

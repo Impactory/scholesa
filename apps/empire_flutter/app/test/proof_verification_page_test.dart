@@ -12,6 +12,30 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
+class _ThrowingFirestoreService extends FirestoreService {
+  _ThrowingFirestoreService()
+      : super(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        );
+
+  @override
+  Future<List<Map<String, dynamic>>> queryCollection(
+    String collection, {
+    List<List<dynamic>>? where,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    throw FirebaseException(
+      plugin: 'cloud_firestore',
+      code: 'failed-precondition',
+      message:
+          'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+    );
+  }
+}
+
 AppState _buildEducatorState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -79,6 +103,27 @@ Future<void> _seedProofBundles(FakeFirebaseFirestore firestore) async {
 }
 
 void main() {
+  testWidgets('proof load failures show friendly setup guidance',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildEducatorState(),
+        firestoreService: _ThrowingFirestoreService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Proof of Learning'), findsOneWidget);
+    expect(
+      find.text(
+        'Proof review needs a quick refresh. Try again, or return to Today and reopen Proof of Learning.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
+  });
+
   testWidgets(
       'proof verification shows same-site bundles and persists revision request on mobile width',
       (WidgetTester tester) async {
