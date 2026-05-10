@@ -106,6 +106,7 @@ void main() {
       const AICoachInteractionModel m = AICoachInteractionModel(
         id: 'ai1',
         learnerId: 'l1',
+        siteId: 's1',
         mode: 'verify',
         question: 'Is this correct?',
         response: 'Yes, because...',
@@ -127,6 +128,7 @@ void main() {
       const AICoachInteractionModel m = AICoachInteractionModel(
         id: 'ai1',
         learnerId: 'l1',
+        siteId: 's1',
         mode: 'hint',
         question: 'q',
         response: 'r',

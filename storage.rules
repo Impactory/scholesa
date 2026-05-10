@@ -2,6 +2,56 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated()
+        && request.auth.token.role == role;
+    }
+
+    function isHQ() {
+      return hasRole('hq');
+    }
+
+    function isSameSiteStaff() {
+      return hasRole('educator') || hasRole('siteLead') || hasRole('site');
+    }
+
+    function actorSiteIds() {
+      return request.auth.token.keys().hasAny(['siteIds'])
+        ? request.auth.token.siteIds
+        : [];
+    }
+
+    function isLinkedGuardian(learnerId) {
+      return request.auth.token.keys().hasAny(['linkedLearnerIds'])
+        && request.auth.token.linkedLearnerIds.hasAny([learnerId]);
+    }
+
+    function requestSharesActorSite() {
+      return request.resource.metadata.keys().hasAny(['siteId'])
+        && actorSiteIds().size() > 0
+        && actorSiteIds().hasAny([request.resource.metadata.siteId]);
+    }
+
+    function resourceSharesActorSite() {
+      return resource.metadata.keys().hasAny(['siteId'])
+        && actorSiteIds().size() > 0
+        && actorSiteIds().hasAny([resource.metadata.siteId]);
+    }
+
+    function canReadLearnerMedia(learnerId) {
+      return isAuthenticated()
+        && (
+          request.auth.uid == learnerId
+          || isLinkedGuardian(learnerId)
+          || isHQ()
+          || (isSameSiteStaff() && resourceSharesActorSite())
+        );
+    }
+
     // Partner deliverables: partner/HQ can upload (max 25MB), auth required for read
     match /partnerDeliverables/{contractId}/{fileName} {
       allow read: if request.auth != null && (request.auth.token.role in ['partner', 'hq', 'site']);
@@ -21,9 +71,10 @@ service firebase.storage {
 
     // Portfolio media uploads (max 50MB, images/video/audio/pdf)
     match /portfolioMedia/{learnerId}/{fileName} {
-      allow read: if request.auth != null;
+      allow read: if canReadLearnerMedia(learnerId);
       allow write: if request.auth != null
                    && request.auth.uid == learnerId
+                   && requestSharesActorSite()
                    && request.resource.size < 50 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*|video/.*|audio/.*|application/pdf');
     }

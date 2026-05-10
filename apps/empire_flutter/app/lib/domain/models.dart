@@ -7050,6 +7050,7 @@ class AICoachInteractionModel {
   const AICoachInteractionModel({
     required this.id,
     required this.learnerId,
+    required this.siteId,
     this.sessionId,
     required this.mode,
     required this.question,
@@ -7064,6 +7065,7 @@ class AICoachInteractionModel {
 
   final String id;
   final String learnerId;
+  final String siteId;
   final String? sessionId;
 
   /// One of: hint, verify, debug, explain
@@ -7083,6 +7085,7 @@ class AICoachInteractionModel {
     return AICoachInteractionModel(
       id: doc.id,
       learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
       sessionId: data['sessionId'] as String?,
       mode: data['mode'] as String? ?? 'hint',
       question: data['question'] as String? ?? '',
@@ -7099,6 +7102,7 @@ class AICoachInteractionModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'learnerId': learnerId,
+      'siteId': siteId,
         'sessionId': sessionId,
         'mode': mode,
         'question': question,

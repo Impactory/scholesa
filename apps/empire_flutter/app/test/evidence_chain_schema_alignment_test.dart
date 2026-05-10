@@ -56,6 +56,7 @@ void main() {
       const AICoachInteractionModel m = AICoachInteractionModel(
         id: 'ai1',
         learnerId: 'l1',
+        siteId: 's1',
         mode: 'hint',
         question: 'q',
         response: 'r',

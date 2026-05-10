@@ -88,6 +88,12 @@ Then run the full gate:
 | 2026-05-10 | `flutter analyze --no-pub --no-fatal-infos lib/runtime/ai_coach_widget.dart lib/runtime/voice_runtime_service.dart test/voice_runtime_service_test.dart test/ai_coach_widget_regression_test.dart` | Passed | No analyzer issues in touched MiloOS typed/spoken modality files. |
 | 2026-05-10 | `flutter test test/voice_runtime_service_test.dart test/ai_coach_widget_regression_test.dart --reporter compact` | Passed | 27 focused Flutter tests passed; typed client requests serialize `inputModality: typed`, manual typed sends are tracked as typed at the client boundary, and voice-only/spoken flows keep spoken-first behavior. |
 | 2026-05-10 | `npm --prefix /Users/impactory/Documents/GitHub/scholesa/functions run test -- --runInBand src/voiceSystem.test.ts` | Passed | 19 backend voice-system tests passed; typed learner input stays useful without mastery claims while voice/unknown input keeps strict confidence guardrails. |
+| 2026-05-10 | `npm run test:integration:rules` | Passed | Firestore plus Storage rules emulator passed 133/133 after the first security hardening slice. Coverage now includes fail-closed missing `siteId` helper behavior, core portfolio/Passport/proof provenance site scope, and `portfolioMedia` owner/linked-guardian-claim/same-site-staff-metadata/HQ access with other-site, missing-metadata, disallowed-type, and unauthenticated denials. |
+| 2026-05-10 | `npm run test:integration:rules` | Passed | Firestore plus Storage rules emulator passed 135/135 after the server-owned mastery/growth boundary slice. Direct educator/client writes to capability and process-domain mastery/growth collections are denied while site-scoped read provenance remains available to learners, linked guardians, educators, and HQ. |
+| 2026-05-10 | `npm --prefix functions run test -- --runInBand src/evidenceChainCallables.test.ts` | Passed | 23 callable contract tests passed, including rubric-owned capability/process growth writes and proof verification remaining authenticity-only without writing `capabilityMastery` or `capabilityGrowthEvents`. |
+| 2026-05-10 | `npm run test:integration:rules` | Passed | Firestore plus Storage rules emulator passed 139/139 after the AI audit boundary slice. AI interaction logs and native AI coach interactions now require site-scoped access, deny wrong-site/missing-site records, require learner or same-site educator ownership on create, and restrict web AI log updates to `outcome`/`updatedAt`. |
+| 2026-05-10 | `flutter test test/evidence_chain_models_test.dart test/evidence_chain_schema_alignment_test.dart --reporter compact` | Passed | 28 focused Flutter model/schema tests passed after adding `siteId` to native AI coach interaction records. |
+| 2026-05-10 | `flutter analyze --no-pub --no-fatal-infos lib/services/firestore_service.dart lib/domain/models.dart test/evidence_chain_models_test.dart test/evidence_chain_schema_alignment_test.dart` | Passed | No analyzer issues in touched native AI audit model/service files. |
 
 ## Failure Handling
 
@@ -95,8 +101,9 @@ Then run the full gate:
 | --- | --- |
 | Wrong-role or wrong-site read/write allowed | Fix rules or callable auth before UI work. Add denial test. |
 | Missing `siteId` on site-scoped write | Fix write path or canonical seed shape, then rerun rules and evidence-chain emulator. |
-| Proof writes growth directly | Move growth update behind rubric/checkpoint review. Add emulator assertion. |
-| AI support writes mastery or hides disclosure | Block release. Preserve AI support as support only and record disclosure/proof. |
+| Learner media allows broad authenticated read | Require owner, linked guardian claim, same-site metadata, HQ, or server-mediated consent path; rerun Firestore plus Storage rules emulator. |
+| Proof writes growth directly | Keep growth update behind rubric/checkpoint review. Rules now deny direct client mastery/growth writes; continue callable proof for proof-verification, report, and AI boundaries. |
+| AI support writes mastery or hides disclosure | Block release. Preserve AI support as support only and record disclosure/proof. AI audit records are now site-scoped; continue artifact-level AI disclosure linkage proof. |
 | Parent sees educator-only support notes | Block release. Replace raw data access with parent-safe projection. |
 | Flutter or web overlap/regression | Fix component root, add source/widget/browser test, rerun full channel gate. |
 | Golden drift from intentional copy/UI change | Update goldens only after focused test proves the behavior is intended. |

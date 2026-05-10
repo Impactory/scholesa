@@ -4,6 +4,8 @@ Status: Not gold-ready.
 
 This is a stability and security execution plan, not a gold certification. Scholesa should only be called gold-ready after every primary workflow is verified end to end with real or canonical synthetic evidence, correct role gates, emulator-backed security tests, native-channel proof, and live deployment proof.
 
+Active bottom-up gap-closure process: `docs/BLANKET_GOLD_BOTTOM_UP_GAP_CLOSURE_PLAN_MAY_10_2026.md`. Use that plan to move from current validated slices into the next implementation pass; it keeps MiloOS typed/spoken modeling, security hardening, refactor discipline, native proof, live canary, and documentation gates in one ordered queue.
+
 ## Current Baseline
 
 Recent validated items:
@@ -32,13 +34,16 @@ Recent validated items:
 - Shared Flutter empty, loading, error, fatal-error, and startup-recovery states now use Scholesa theme/color-scheme tokens instead of ad hoc Material greys/reds/oranges; focused analyzer and shared UI theme regressions passed for the touched primitives.
 - Site and HQ stale-data banners, status indicators, identity-resolution actions, and integration-health recovery states now use Scholesa semantic color-scheme tokens for warning/success/error states while preserving provider brand colors; focused analyzer and Site/HQ widget regressions passed for the touched role surfaces.
 - MiloOS Flutter typed prompts now send explicit `inputModality: typed` while spoken/web-speech/upload prompts remain `voice`, so backend typed-input intelligence is not accidentally bypassed by the stricter spoken/unknown confidence guard; focused Flutter analyzer/tests and backend voice-system regressions passed for the touched contract.
+- First Firestore/Storage security hardening slice completed: shared Firestore site-scope helpers now fail closed on missing `siteId`, core portfolio/Passport/proof provenance collections require site scope, `portfolioMedia/{learnerId}/{fileName}` no longer allows reads by any authenticated user, and the rules gate now runs Firestore plus Storage emulator tests. `npm run test:integration:rules` passed 133/133.
+- Server-owned mastery/growth boundary slice completed: direct client writes to `capabilityMastery`, `capabilityGrowthEvents`, `processDomainMastery`, and `processDomainGrowthEvents` are denied by Firestore rules while Functions remain the owner of rubric/checkpoint growth writes. `npm run test:integration:rules` passed 135/135, and `npm --prefix functions run test -- --runInBand src/evidenceChainCallables.test.ts` passed 23/23.
+- AI audit site-scope boundary slice completed: `aiInteractionLogs` and `aiCoachInteractions` now require site-scoped reads/writes, learner or same-site educator ownership on create, and outcome-only updates for web AI interaction logs; native `AICoachInteractionModel` and `FirestoreService.logAICoachInteraction` now carry `siteId`. `npm run test:integration:rules` passed 139/139, focused Flutter model tests passed, and focused Flutter analyzer passed.
 
 Current release blockers and risks:
 
 - The latest live Flutter web revision has cleared local gates and HTTP probes; role-based live canary remains required before broader public-site gold claims.
 - Native distribution remains blocked until TestFlight, Google Play internal testing, and macOS signing/notarization proof exist.
 - Cloud Run project identity must stay explicit: live Flutter site currently matches `studio-3328096157-e3f79` / `empire-web`; project number `430675339898` maps to `scholesa-prod`, which does not host the serving `empire-web` service.
-- Firestore and Storage hardening are still required before gold: missing `siteId` fallback and broad authenticated learner-media reads are not acceptable gold posture.
+- Firestore and Storage hardening is still gold-blocking beyond the first three rules slices: broader collection-by-collection site-scope review, auth-claim parity, proof verification and report callable boundaries, secret/compliance gates, and live role canary remain required.
 - Passport/report output remains partial until every claim can be traced to evidence, proof, rubric, growth event, portfolio item, and consent boundary.
 - Parent/guardian, partner, and admin interpretation layers must not ship claims without provenance.
 
@@ -51,6 +56,21 @@ Current release blockers and risks:
 5. No native gold without external distribution proof.
 6. No AI gold without internal-only provider gates, learner disclosure, explain-back, and auditable trace.
 7. No report gold without family-safe, permission-safe claim provenance.
+
+## Active Bottom-Up Gap Queue
+
+Use the May 10 bottom-up plan before starting the next fix pass. The current queue is:
+
+1. Reconcile and preserve the current MiloOS typed/spoken request-modality proof.
+2. Continue Firestore/Storage hardening beyond the first passing emulator slice: collection-by-collection site scope, auth-claim parity, and consent/report media paths. First learner-media/site-scope slice is complete.
+3. Prove callable/service boundaries for server-owned growth, mastery, proof verification, AI audit, and report export. Mastery/growth client-write denial and AI audit site-scoping are complete; proof verification and report export/share boundaries remain.
+4. Run MiloOS typed/spoken modeling through Flutter, backend, browser/mobile, telemetry, and explain-back proof.
+5. Close the full HQ-to-Passport evidence chain with the same canonical evidence IDs across web, Flutter, Functions, and rules.
+6. Finish all-role UI/theme, empty/error/stale, mobile, accessibility, and telemetry consistency.
+7. Produce native-channel distribution proof for iOS, Android, and macOS.
+8. Deploy only through `./scripts/deploy.sh`, run six-role live canary, and record rollback or traffic-pinning proof.
+
+Stop after planning until the release owner explicitly starts the next implementation pass.
 
 ## Phase 0 - Stabilize The Current Release Gate
 
@@ -112,8 +132,8 @@ Goal: make least privilege enforceable in rules, routes, native gates, and calla
 
 Actions:
 
-- Firestore: replace permissive missing-`siteId` fallback with explicit collection classes.
-- Storage: restrict learner media reads to owner, linked guardian, same-site educator/site/HQ, or server-mediated share consent.
+- Firestore: continue replacing permissive missing-`siteId` behavior with explicit collection classes; the shared helper now fails closed and core portfolio/Passport/proof provenance collections are covered by emulator tests.
+- Storage: continue learner-media hardening beyond the first `portfolioMedia` slice; owner, linked guardian claim, same-site staff metadata, HQ, missing metadata, other-site, and unauthenticated cases now have Storage emulator coverage.
 - Auth: verify Firebase custom claims, Firestore rules, web route metadata, and Flutter role gates agree.
 - Parent: serve parent-safe projections only; never expose raw educator notes or support flags.
 - Partner: keep outputs permission-safe and evidence-backed; do not expose learner data without consent and provenance.

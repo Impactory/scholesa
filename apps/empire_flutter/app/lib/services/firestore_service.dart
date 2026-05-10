@@ -602,6 +602,7 @@ class FirestoreService {
   /// Log a MiloOS interaction
   Future<String> logAICoachInteraction({
     required String learnerId,
+    required String siteId,
     String? sessionId,
     required String mode,
     required String question,
@@ -614,6 +615,7 @@ class FirestoreService {
         .collection('aiCoachInteractions')
         .add(<String, dynamic>{
       'learnerId': learnerId,
+      'siteId': siteId,
       'sessionId': sessionId,
       'mode': mode,
       'question': question,

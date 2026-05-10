@@ -12,9 +12,11 @@ Every workflow row below must be tested against these bug classes.
 | --- | --- | --- |
 | RENDER | Route render and resilience | Page crashes, error boundary appears, stale section remains broken, or public/protected route resolves incorrectly. |
 | AUTHZ | Role and site authorization | Wrong role or wrong site can read/write data, or allowed role is blocked. |
+| CONSENT | Consent and data-sharing boundary | Parent, partner, media, report, or Passport share exposes data without explicit consent/provenance or fails to honor revocation. |
 | PERSIST | Real persistence | UI action does not create/update the canonical Firestore/Storage/Callable record. |
 | PROVENANCE | Evidence provenance | Record lacks learner, site, session occurrence, capability, proof, rubric, growth, portfolio, or audit linkage. |
 | SAFETY | Capability-first safety | Completion, attendance, XP, averages, AI support, or engagement is presented as mastery. |
+| AI-MODALITY | MiloOS typed/spoken modeling | Typed prompts, spoken transcripts, Web Speech, uploads, telemetry, backend policy, explain-back, or proof records lose source/modality provenance. |
 | EMPTY | Loading, empty, stale, and error state | Workflow hides failures, shows fake data, or cannot recover from network/auth/backend errors. |
 | THEME | Role UI and theme consistency | Shared or role-local states use ad hoc colors/copy/layouts, break dark theme, or make recovery/status language feel inconsistent across roles. |
 | MOBILE | Mobile and native classroom usability | Controls overlap, taps are too slow, offline queue breaks, or media/mic permissions fail. |
@@ -44,7 +46,7 @@ Every workflow row below must be tested against these bug classes.
 | Proof assembly | `/learner/proof-assembly` | PERSIST, PROVENANCE, SAFETY, MOBILE | Explain-back, oral check, mini-rebuild, and evidence bundle status persist. |
 | Reflections | `/learner/reflections` | PERSIST, PROVENANCE, EMPTY | Reflection links to learner, site, capability or mission context, and portfolio/report eligibility. |
 | Habits | `/learner/habits` | SAFETY, EMPTY, TELEMETRY | Habit completion remains separate from capability mastery. |
-| MiloOS support | `/learner/miloos` | AUTHZ, PROVENANCE, SAFETY, MOBILE, A11Y-I18N, TELEMETRY | AI help is disclosed, explain-back is captured, spoken experience is humanlike, and global FAB does not overlap the page. |
+| MiloOS support | `/learner/miloos` | AUTHZ, PROVENANCE, SAFETY, AI-MODALITY, MOBILE, A11Y-I18N, TELEMETRY | AI help is disclosed, explain-back is captured, typed/spoken source is preserved, spoken experience is humanlike, and global FAB does not overlap the page. |
 
 ### Educator Workflows
 
@@ -130,10 +132,11 @@ Before gold, every P0/P1 bug must have all of these fields in the tracker or rel
 | --- | --- | --- | --- |
 | Live role canary must verify the newly deployed logout and MiloOS voice revision beyond HTTP probes. | Flutter web/native | RENDER, MOBILE, A11Y-I18N | `empire-web-00088-ln2` serves 100 percent traffic and HTTP probes pass; browser/mobile role smoke is still required before broader live claim. |
 | Native distribution proof missing. | iOS, Android, macOS | MOBILE, AUTHZ, PERSIST | TestFlight, Google Play internal, macOS notarization proof. |
-| Firestore site-scope hardening still partial. | All roles | AUTHZ | Add emulator denial tests for missing/wrong `siteId` on site-scoped collections. |
-| Storage learner media read too broad. | Learner, parent, educator | AUTHZ, CONSENT | Add Storage emulator tests and tighten owner/guardian/same-site access. |
+| Firestore site-scope hardening still partial beyond core provenance, server-owned mastery/growth, and AI audit logs. | All roles | AUTHZ | Continue collection-by-collection missing/wrong `siteId` denial tests and auth-claim parity checks. |
+| Consent/report media paths still need a broader sweep after learner-media hardening. | Learner, parent, educator, partner | AUTHZ, CONSENT | Keep Storage emulator owner/guardian/same-site coverage and add report/share/media consent-path proof. |
+| MiloOS typed/spoken modeling must remain request-modality correct across role and native canaries. | Learner, educator, parent, site | AI-MODALITY, SAFETY, TELEMETRY | Keep typed prompts on the typed intelligence path, spoken/Web Speech/upload transcripts on the strict spoken guardrail path, and prove source/modality in telemetry and explain-back records. |
 | Passport/report remains route-specific and partially unified. | Learner, parent, partner | PROVENANCE, SAFETY | Claim-by-claim export from actual evidence with missing-evidence fallback. |
-| AI disclosure not uniformly attached across every artifact path. | Learner, educator, parent | PROVENANCE, SAFETY, TELEMETRY | Artifact creation paths must persist prompt, suggestion, learner change, explain-back, and proof linkage where AI materially helped. |
+| AI disclosure not uniformly attached across every artifact path. | Learner, educator, parent | PROVENANCE, SAFETY, TELEMETRY | AI audit logs are site-scoped; artifact creation paths still must persist prompt, suggestion, learner change, explain-back, and proof linkage where AI materially helped. |
 | Cloud Run target identity can be confused by project number mismatch. | Ops | RENDER, TELEMETRY | Explicit project/service checks before deploy and live probe after deploy. |
 
 ## Coverage Exit Rule

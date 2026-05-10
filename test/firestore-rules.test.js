@@ -165,8 +165,22 @@ beforeEach(async () => {
       status: 'draft',
     });
 
+    await setDoc(doc(db, 'portfolioItems', 'portfolio-nosite'), {
+      learnerId: learnerUser.uid,
+      title: 'Legacy unscoped artifact',
+      status: 'draft',
+    });
+
     await setDoc(doc(db, 'capabilityMastery', 'mastery-1'), {
       siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      latestLevel: 3,
+      currentLevel: 3,
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'capabilityMastery', 'mastery-nosite'), {
       learnerId: learnerUser.uid,
       capabilityId: 'capability-1',
       latestLevel: 3,
@@ -182,6 +196,30 @@ beforeEach(async () => {
       occurredAt: Date.now(),
     });
 
+    await setDoc(doc(db, 'capabilityGrowthEvents', 'growth-nosite'), {
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      level: 3,
+      occurredAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'processDomainMastery', 'process-mastery-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      processDomainId: 'process-domain-1',
+      latestLevel: 3,
+      currentLevel: 3,
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'processDomainGrowthEvents', 'process-growth-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      processDomainId: 'process-domain-1',
+      level: 3,
+      occurredAt: Date.now(),
+    });
+
     await setDoc(doc(db, 'proofOfLearningBundles', 'proof-1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -189,6 +227,44 @@ beforeEach(async () => {
       verificationStatus: 'verified',
       createdAt: Date.now(),
       updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'proofOfLearningBundles', 'proof-nosite'), {
+      learnerId: learnerUser.uid,
+      portfolioItemId: 'portfolio-1',
+      verificationStatus: 'verified',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'aiInteractionLogs', 'ai-log-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      traceId: 'trace-1',
+      taskType: 'hint',
+      dataUsagePolicy: 'analytics_only_no_training',
+      redactedQuestion: 'How do I improve this?',
+      response: 'Try explaining the evidence.',
+      createdAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'aiInteractionLogs', 'ai-log-nosite'), {
+      learnerId: learnerUser.uid,
+      traceId: 'trace-nosite',
+      taskType: 'hint',
+      dataUsagePolicy: 'analytics_only_no_training',
+      redactedQuestion: 'No site?',
+      response: 'This should be hidden.',
+      createdAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'aiCoachInteractions', 'ai-coach-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      mode: 'hint',
+      question: 'What should I explain?',
+      response: 'Explain your revision.',
+      createdAt: Date.now(),
     });
 
     await setDoc(doc(db, 'credentials', 'credential-1'), {
@@ -515,6 +591,11 @@ describe('Sites Collection', () => {
     await assertSucceeds(getDoc(doc(db, 'sites', 'site1')));
   });
 
+  test('authenticated user cannot read unrelated site by id', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'sites', 'site1')));
+  });
+
   test('unauthenticated cannot read sites', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
     await assertFails(getDoc(doc(db, 'sites', 'site1')));
@@ -563,6 +644,15 @@ describe('Attendance Collection', () => {
     const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
     await assertFails(setDoc(doc(learnerDb, 'attendanceRecords', 'att-3'), {
       siteId: 'site1',
+      occurrenceId: 'occ-1',
+      userId: learnerUser.uid,
+      status: 'present',
+    }));
+  });
+
+  test('educator cannot write attendance without siteId', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(setDoc(doc(educatorDb, 'attendanceRecords', 'att-nosite'), {
       occurrenceId: 'occ-1',
       userId: learnerUser.uid,
       status: 'present',
@@ -1310,6 +1400,23 @@ describe('Portfolio Access', () => {
     const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'portfolioItems', 'portfolio-1')));
   });
+
+  test('other-site educator and missing-site records cannot read learner portfolio item', async () => {
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(otherSiteDb, 'portfolioItems', 'portfolio-1')));
+
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(getDoc(doc(educatorDb, 'portfolioItems', 'portfolio-nosite')));
+  });
+
+  test('learner cannot create portfolio item without siteId', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'portfolioItems', 'portfolio-created-nosite'), {
+      learnerId: learnerUser.uid,
+      title: 'Unscoped learner artifact',
+      status: 'draft',
+    }));
+  });
 });
 
 describe('Passport evidence chain access', () => {
@@ -1333,6 +1440,12 @@ describe('Passport evidence chain access', () => {
     await assertSucceeds(getDoc(doc(db, 'capabilityGrowthEvents', 'growth-1')));
   });
 
+  test('linked parent can read learner process-domain provenance', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'processDomainMastery', 'process-mastery-1')));
+    await assertSucceeds(getDoc(doc(db, 'processDomainGrowthEvents', 'process-growth-1')));
+  });
+
   test('unlinked parent cannot read learner growth provenance', async () => {
     const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'capabilityGrowthEvents', 'growth-1')));
@@ -1346,6 +1459,148 @@ describe('Passport evidence chain access', () => {
   test('unlinked parent cannot read learner proof bundle provenance', async () => {
     const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'proofOfLearningBundles', 'proof-1')));
+  });
+
+  test('other-site educator cannot read learner Passport provenance', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'capabilityMastery', 'mastery-1')));
+    await assertFails(getDoc(doc(db, 'capabilityGrowthEvents', 'growth-1')));
+    await assertFails(getDoc(doc(db, 'processDomainMastery', 'process-mastery-1')));
+    await assertFails(getDoc(doc(db, 'processDomainGrowthEvents', 'process-growth-1')));
+    await assertFails(getDoc(doc(db, 'proofOfLearningBundles', 'proof-1')));
+  });
+
+  test('educator cannot directly write server-owned growth or mastery state', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'capabilityMastery', 'mastery-direct'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      latestLevel: 4,
+      currentLevel: 4,
+    }));
+    await assertFails(updateDoc(doc(db, 'capabilityMastery', 'mastery-1'), {
+      latestLevel: 4,
+    }));
+    await assertFails(setDoc(doc(db, 'capabilityGrowthEvents', 'growth-direct'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      level: 4,
+    }));
+    await assertFails(setDoc(doc(db, 'processDomainMastery', 'process-mastery-direct'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      processDomainId: 'process-domain-1',
+      latestLevel: 4,
+      currentLevel: 4,
+    }));
+    await assertFails(setDoc(doc(db, 'processDomainGrowthEvents', 'process-growth-direct'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      processDomainId: 'process-domain-1',
+      level: 4,
+    }));
+  });
+
+  test('missing-site Passport provenance is denied even to same-site actors', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(getDoc(doc(educatorDb, 'capabilityMastery', 'mastery-nosite')));
+    await assertFails(getDoc(doc(educatorDb, 'capabilityGrowthEvents', 'growth-nosite')));
+    await assertFails(getDoc(doc(educatorDb, 'proofOfLearningBundles', 'proof-nosite')));
+
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertFails(getDoc(doc(learnerDb, 'capabilityMastery', 'mastery-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'capabilityGrowthEvents', 'growth-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-nosite')));
+  });
+});
+
+describe('AI audit access', () => {
+  test('learner and same-site educator can read site-scoped AI audit records', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'aiInteractionLogs', 'ai-log-1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'aiCoachInteractions', 'ai-coach-1')));
+  });
+
+  test('wrong-site and missing-site AI audit records are denied', async () => {
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+
+    await assertFails(getDoc(doc(otherSiteDb, 'aiInteractionLogs', 'ai-log-1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'aiCoachInteractions', 'ai-coach-1')));
+    await assertFails(getDoc(doc(learnerDb, 'aiInteractionLogs', 'ai-log-nosite')));
+  });
+
+  test('AI audit creates require site scope and learner or same-site educator ownership', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'aiInteractionLogs', 'ai-log-owned'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      traceId: 'trace-owned',
+      taskType: 'hint',
+      dataUsagePolicy: 'analytics_only_no_training',
+      redactedQuestion: 'How should I explain this?',
+      response: 'Use your evidence.',
+      createdAt: Date.now(),
+    }));
+    await assertSucceeds(setDoc(doc(educatorDb, 'aiCoachInteractions', 'ai-coach-educator'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      mode: 'verify',
+      question: 'Can the learner explain it?',
+      response: 'Ask for an explain-back.',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'aiInteractionLogs', 'ai-log-nosite-create'), {
+      learnerId: learnerUser.uid,
+      traceId: 'trace-nosite-create',
+      taskType: 'hint',
+      dataUsagePolicy: 'analytics_only_no_training',
+      redactedQuestion: 'Missing site',
+      response: 'Denied.',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'aiCoachInteractions', 'ai-coach-other-learner'), {
+      siteId: 'site1',
+      learnerId: 'learner-2',
+      mode: 'hint',
+      question: 'Other learner?',
+      response: 'Denied.',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(otherSiteDb, 'aiInteractionLogs', 'ai-log-other-site'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      traceId: 'trace-other-site',
+      taskType: 'hint',
+      dataUsagePolicy: 'analytics_only_no_training',
+      redactedQuestion: 'Wrong site educator?',
+      response: 'Denied.',
+      createdAt: Date.now(),
+    }));
+  });
+
+  test('AI interaction updates are limited to outcomes', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'aiInteractionLogs', 'ai-log-1'), {
+      outcome: { wasHelpful: true },
+      updatedAt: Date.now(),
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'aiInteractionLogs', 'ai-log-1'), {
+      response: 'Changed the audit trail.',
+      updatedAt: Date.now(),
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'aiCoachInteractions', 'ai-coach-1'), {
+      response: 'Changed native audit response.',
+    }));
   });
 });
 

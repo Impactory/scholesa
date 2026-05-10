@@ -1,17 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // --- Helper Functions ---
-    
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Safe version that returns empty map if user has no profile
     function getUserDataSafe() {
       return isAuthenticated()
@@ -19,16 +19,16 @@ service cloud.firestore {
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
         : {};
     }
-    
+
     function hasRoleSafe(role) {
       let userData = getUserDataSafe();
       return isAuthenticated() && userData.keys().hasAny(['role']) && userData.role == role;
     }
-    
+
     function isEducator() {
       return hasRoleSafe('educator') || hasRoleSafe('siteLead') || hasRoleSafe('site') || hasRoleSafe('hq');
     }
-    
+
     function isHQ() {
       return hasRoleSafe('hq');
     }
@@ -64,16 +64,16 @@ service cloud.firestore {
     }
 
     function isSiteScopedRead(data) {
-      return hasSiteField(data) ? (isHQ() || userHasSite(data.siteId)) : true;
+      return hasSiteField(data) && (isHQ() || userHasSite(data.siteId));
     }
 
     function isSiteScopedWrite(data) {
-      return hasSiteField(data) ? (isHQ() || userHasSite(data.siteId)) : true;
+      return hasSiteField(data) && (isHQ() || userHasSite(data.siteId));
     }
 
     // --- Collection Rules ---
 
-    // Users: 
+    // Users:
     // - Users can read/write their own profile.
     // - Educators/HQ can read profiles (to view learners).
     match /users/{userId} {
@@ -101,14 +101,40 @@ service cloud.firestore {
     // Content (Sites, Rooms, Programs, Courses, Missions):
     // - Read: All authenticated users.
     // - Write: HQ or Site Leads (depending on scope, defaulting to HQ/Educator for simplicity).
-    match /sites/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow create, update: if isHQ() && isSiteScopedWrite(request.resource.data); allow delete: if false; }
+    match /sites/{id} { allow read: if isAuthenticated() && (isHQ() || userHasSite(id)); allow create, update: if isHQ(); allow delete: if false; }
     match /rooms/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow write: if isEducator() && isSiteScopedWrite(request.resource.data); }
     match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /capabilities/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /stages/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
-    match /aiInteractionLogs/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if isEducator(); allow delete: if false; }
-    match /aiCoachInteractions/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if false; allow delete: if false; }
+    match /aiInteractionLogs/{id} {
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isHQ()
+      );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (request.resource.data.learnerId == request.auth.uid || isEducator());
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['outcome', 'updatedAt']);
+      allow delete: if false;
+    }
+    match /aiCoachInteractions/{id} {
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isHQ()
+      );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (request.resource.data.learnerId == request.auth.uid || isEducator());
+      allow update: if false;
+      allow delete: if false;
+    }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /checkpoints/{id} {
       allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
@@ -193,7 +219,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
       allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
     }
-    
+
     match /reflections/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
@@ -204,17 +230,19 @@ service cloud.firestore {
     match /accountabilityCycles/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
     match /accountabilityKPIs/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
     match /portfolioItems/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create: if isAuthenticated() && (
+      allow create: if isAuthenticated() && isSiteScopedWrite(request.resource.data) && (
         request.resource.data.learnerId == request.auth.uid
         || isEducator()
       );
-      allow update: if isOwner(resource.data.learnerId) || isEducator();
-      allow delete: if isOwner(resource.data.learnerId) || isEducator();
+      allow update: if isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && (isOwner(resource.data.learnerId) || isEducator());
+      allow delete: if isSiteScopedRead(resource.data) && (isOwner(resource.data.learnerId) || isEducator());
     }
 
     match /reportShareRequests/{id} {
@@ -238,31 +266,31 @@ service cloud.firestore {
     }
 
     // --- Stripe & Billing Collections (Server-only writes) ---
-    
+
     // Stripe Customers: Users can read their own, no client writes
     match /stripeCustomers/{userId} {
       allow read: if isOwner(userId) || isHQ();
       allow write: if false; // Server-only via Cloud Functions
     }
-    
+
     // Checkout Intents: Users can read their own, no client writes
     match /checkoutIntents/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.actorId == request.auth.uid || isHQ());
       allow write: if false; // Server-only via Cloud Functions
     }
-    
+
     // Subscriptions: Users can read their own, no client writes
     match /subscriptions/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
       allow write: if false; // Server-only via Cloud Functions
     }
-    
+
     // Entitlements: Users can read their own, no client writes
     match /entitlements/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
       allow write: if false; // Server-only via Cloud Functions
     }
-    
+
     // Orders: Read for owner/HQ, no client writes
     match /orders/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
@@ -288,28 +316,28 @@ service cloud.firestore {
       allow read: if isEducator() || isHQ();
       allow update, delete: if false; // Immutable once created
     }
-    
+
     // Telemetry Aggregates: Read-only for educators/HQ, server writes only
     match /telemetryAggregates/{id} {
       allow read: if isEducator() || isHQ();
       allow write: if false; // Cloud Functions only
     }
-    
+
     // SDT Motivation Collections
-    
+
     // Learner Goals: Users can manage their own, educators can read
     match /learnerGoals/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
       allow create, update, delete: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
     }
-    
+
     // Learner Interest Profiles: Users can manage their own, educators can read
     match /learnerInterestProfiles/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
       allow create, update: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
       allow delete: if false; // Keep historical data
     }
-    
+
     // Skill Mastery: Educators can write, learners can read their own
     match /skillMastery/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
@@ -319,23 +347,23 @@ service cloud.firestore {
 
     // Capability Mastery: Educators can write, learners and linked parents can read.
     match /capabilityMastery/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create, update: if isEducator();
+      allow create, update: if false;
       allow delete: if false;
     }
 
     // Capability Growth Events: append-only provenance for mastery updates.
     match /capabilityGrowthEvents/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create: if isEducator();
+      allow create: if false;
       allow update, delete: if false;
     }
 
@@ -348,33 +376,33 @@ service cloud.firestore {
 
     // Process Domain Mastery: Educators can write via backend, learners and parents can read.
     match /processDomainMastery/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create, update: if isEducator();
+      allow create, update: if false;
       allow delete: if false;
     }
 
     // Process Domain Growth Events: append-only provenance.
     match /processDomainGrowthEvents/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create: if isEducator();
+      allow create: if false;
       allow update, delete: if false;
     }
-    
+
     // Recognition Badges: Educators can award, learners can read their own
     match /recognitionBadges/{id} {
       allow read: if isAuthenticated() && (resource.data.recipientId == request.auth.uid || isEducator());
       allow create: if isEducator();
       allow update, delete: if false; // Immutable once awarded
     }
-    
+
     // Learner Reflections: Users can write their own, educators can read
     match /learnerReflections/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
@@ -390,7 +418,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
       allow delete: if false; // Keep longitudinal calibration history
     }
-    
+
     // Checkpoint History: Educators and learners (own) can create, educators can update
     match /checkpointHistory/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
@@ -401,7 +429,7 @@ service cloud.firestore {
       allow update: if isEducator();
       allow delete: if false; // Keep historical data
     }
-    
+
     // Showcase Submissions: Public read, learners can submit their own
     match /showcaseSubmissions/{id} {
       allow read: if isAuthenticated(); // Public within school
@@ -409,7 +437,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
     }
-    
+
     // Peer Feedback: Users can give feedback, educators can moderate
     match /peerFeedback/{id} {
       allow read: if isAuthenticated()
@@ -423,7 +451,7 @@ service cloud.firestore {
         && hasSiteField(resource.data)
         && (isHQ() || userHasSite(resource.data.siteId)); // Educators can moderate
     }
-    
+
     // Vector Documents: Server-only (AI/embedding management)
     match /vectorDocuments/{id} {
       allow read: if isEducator() || isHQ(); // For debugging/admin
@@ -435,19 +463,19 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || resource.data.userId == request.auth.uid || isHQ());
       allow write: if false; // Server-only via Cloud Functions
     }
-    
+
     // Stripe Webhook Logs: HQ read only, server writes
     match /stripeWebhookLogs/{id} {
       allow read: if isHQ();
       allow write: if false; // Server-only via webhooks
     }
-    
+
     // Stripe Disputes: HQ read only, server writes
     match /stripeDisputes/{id} {
       allow read: if isHQ();
       allow write: if false; // Server-only via webhooks
     }
-    
+
     // --- Missing Collections (Flutter app coverage) ---
 
     // Learner/Parent Profiles & GuardianLinks
@@ -504,7 +532,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /proofOfLearningBundles/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || (
@@ -512,7 +540,9 @@ service cloud.firestore {
           && isParentLinkedToLearner(resource.data.learnerId)
         )
       );
-      allow create, update: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow create, update: if isAuthenticated()
+        && request.resource.data.learnerId == request.auth.uid
+        && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
 
@@ -651,7 +681,7 @@ service cloud.firestore {
     }
     // Observation records: educator-captured in-session observations linked to evidence chain.
     match /observationRecords/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
@@ -662,7 +692,7 @@ service cloud.firestore {
     }
     // Checkpoint verifications: educator-issued proof that a learner met a checkpoint.
     match /checkpointVerifications/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         resource.data.learnerId == request.auth.uid
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
