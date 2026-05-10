@@ -1,6 +1,6 @@
 # Gold Emulated Test Plan - 2026-05-10
 
-Status: Active test execution plan. Results must be updated after each run.
+Status: Local emulator and release-gate execution completed for the 2026-05-10 stability pass. Live Cloud Run canary and native distribution proof remain outside this emulator plan.
 
 This plan defines the emulator-backed and local deterministic tests that must pass before Scholesa can move toward gold. Emulator tests are not a substitute for live canary or native distribution proof, but they are the required safety net for Firestore rules, evidence-chain callables, analytics contracts, and role/site isolation.
 
@@ -71,9 +71,10 @@ Then run the full gate:
 | 2026-05-10 | `flutter test test/ai_coach_widget_regression_test.dart test/global_ai_assistant_overlay_regression_test.dart test/web_speech_test.dart test/ui_golden_test.dart` | Passed | Validates bounded MiloOS hover, humanlike voice wording, web speech bridge, and refreshed AI Help goldens. |
 | 2026-05-10 | `flutter analyze lib/runtime/ai_coach_widget.dart lib/runtime/global_ai_assistant_overlay.dart lib/runtime/web_speech_interop.dart test/ai_coach_widget_regression_test.dart test/global_ai_assistant_overlay_regression_test.dart test/ui_golden_test.dart` | Passed | No analyzer issues in touched MiloOS files. |
 | 2026-05-10 | `npx jest src/__tests__/flutter-web-signout-availability.test.ts --runInBand` | Passed | Confirms Flutter web shell still exposes global assistant and keeps sign-out in bounded route/account chrome. |
-| 2026-05-10 | `npm run test:integration:rules` | Pending current run | Firestore rules emulator. |
-| 2026-05-10 | `npm run test:integration:evidence-chain` | Pending current run | Evidence-chain emulator. |
-| 2026-05-10 | `npm run test:integration:analytics` | Pending current run | Analytics emulator. |
+| 2026-05-10 | `npm run test:integration:rules` | Passed | Firestore rules emulator passed 119/119, including wrong-site, parent-boundary, partner ownership, portfolio/passport provenance, and default-deny cases. |
+| 2026-05-10 | `npm run test:integration:evidence-chain` | Passed | Evidence-chain emulator passed 3/3. Non-blocking warnings remain for unavailable internal AI inference fallback and Jest open-handle cleanup. |
+| 2026-05-10 | `npm run test:integration:analytics` | Failed, then passed | Initial failure was stale nullable telemetry metric expectations in the test. Updated assertions to the fail-closed `number | null` contract; final run passed 17/17. Firestore-only emulator still logs callable `functions/not-found` as non-blocking telemetry degradation. |
+| 2026-05-10 | `./scripts/deploy.sh release-gate` | Passed | Non-deploying release gate passed after emulator fixes. Flutter gate passed with `+1092: All tests passed!`, then diff hygiene passed and the release reproducibility gate completed. |
 
 ## Failure Handling
 
