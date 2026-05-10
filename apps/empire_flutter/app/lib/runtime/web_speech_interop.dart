@@ -232,6 +232,7 @@ class WebSpeechSynthesis {
       final String langPrefix =
           locale.contains('-') ? locale.split('-').first : locale;
       web.SpeechSynthesisVoice? fallbackVoice;
+      bool assignedPreferredVoice = false;
       for (final web.SpeechSynthesisVoice voice in voices) {
         final String voiceName = voice.name.toLowerCase();
         final bool preferredHumanVoice =
@@ -244,14 +245,15 @@ class WebSpeechSynthesis {
                 voiceName.contains('google');
         if (voice.lang.startsWith(langPrefix) && preferredHumanVoice) {
           utterance.voice = voice as _JsSpeechSynthesisVoice;
+          assignedPreferredVoice = true;
           break;
         }
         if (fallbackVoice == null && voice.lang.startsWith(langPrefix)) {
           fallbackVoice = voice;
         }
       }
-      if (fallbackVoice != null) {
-        utterance.voice ??= fallbackVoice as _JsSpeechSynthesisVoice;
+      if (!assignedPreferredVoice && fallbackVoice != null) {
+        utterance.voice = fallbackVoice as _JsSpeechSynthesisVoice;
       }
     } catch (_) {
       // Voice selection is best-effort.

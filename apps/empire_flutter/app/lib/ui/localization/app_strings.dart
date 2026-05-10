@@ -75,13 +75,13 @@ class AppStrings {
       'app.startupService.firebase': 'Firebase',
       'app.startupService.authEmulator': 'Auth emulator',
       'app.startupService.generic': 'Startup service',
-        'assistant.tooltip': 'Get help',
-        'assistant.title': 'Get help',
+                'assistant.tooltip': 'Open MiloOS support',
+                'assistant.title': 'MiloOS support',
       'assistant.close': 'Close',
         'assistant.loading': 'Loading help…',
-        'assistant.hoverHint': 'Click for help',
+                'assistant.hoverHint': 'Open MiloOS support',
       'ai.greeting.initial':
-          'Hi! I can guide you with hints, explanations, and quick debug steps whenever you need support.',
+                    'Hi, I\'m here with you. Tell me what you\'re working on, and I\'ll help you take the next small step.',
       'ai.autoAssist.hesitationPrompt':
           'The learner may be hesitating. Current support state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
       'ai.autoAssist.interventionPrompt':
@@ -104,11 +104,11 @@ class AppStrings {
       'ai.voice.speaking': 'Speaking…',
       'ai.voice.tapInterrupt': 'Tap to interrupt',
       'ai.voiceOnly.promptTap':
-          'Tap the mic and speak. Help will answer out loud.',
-      'ai.voiceOnly.listening': 'Listening… speak now.',
+          'Tap the mic, then talk to MiloOS like you would talk to a coach.',
+      'ai.voiceOnly.listening': 'I\'m listening. Go ahead when you\'re ready.',
       'ai.voiceOnly.answeredOutLoud':
-          'Help answered out loud. Replay the spoken response if you need to hear it again.',
-      'ai.voiceOnly.replay': 'Replay spoken response',
+          'MiloOS answered out loud. You can replay it if you want to hear it again.',
+      'ai.voiceOnly.replay': 'Replay MiloOS',
       'ai.voice.outputUnavailable':
           'Voice output is unavailable. Check device volume and audio permissions.',
       'ai.voice.outputUnavailableWeb':
@@ -176,10 +176,10 @@ class AppStrings {
           'MiloOS may not have fully understood. Try rephrasing if the response does not match.',
       'ai.voice.confidence.low':
           'MiloOS had difficulty understanding. Please try again slowly.',
-      'ai.voice.streaming.connecting': 'Connecting to MiloOS voice...',
-      'ai.voice.streaming.listening': 'Listening...',
-      'ai.voice.streaming.processing': 'Thinking...',
-      'ai.voice.streaming.speaking': 'Speaking...',
+    'ai.voice.streaming.connecting': 'Getting MiloOS ready...',
+    'ai.voice.streaming.listening': 'Listening...',
+    'ai.voice.streaming.processing': 'Thinking it through...',
+    'ai.voice.streaming.speaking': 'MiloOS is speaking...',
       'ai.voice.streaming.error':
           'Voice connection was interrupted. Please try again.',
       'ai.voice.settings.title': 'Voice settings',

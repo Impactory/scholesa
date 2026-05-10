@@ -156,7 +156,7 @@ void main() {
       expect(hasBosAutoPopupCloseEvent, isTrue);
     });
 
-    testWidgets('does not open modal assistant on mouse hover',
+    testWidgets('keeps global assistant bounded on mouse hover',
         (WidgetTester tester) async {
       final AppState appState = AppState();
       appState.updateFromMeResponse(<String, dynamic>{
@@ -209,8 +209,12 @@ void main() {
       await mouse.moveTo(tester.getCenter(fab));
       await tester.pump(const Duration(milliseconds: 150));
 
-      expect(find.text('Click for help'), findsOneWidget);
+      expect(find.text('Open MiloOS support'), findsNothing);
       expect(sheetOpenCount, equals(0));
+
+      final Size fabSize = tester.getSize(fab);
+      expect(fabSize.width, lessThanOrEqualTo(56));
+      expect(fabSize.height, lessThanOrEqualTo(56));
     });
 
     testWidgets('captures learner pointer summary when assistant opens',
