@@ -160,7 +160,12 @@ void main() {
                 },
               ];
             }
-            throw StateError('mission plans unavailable');
+            throw FirebaseException(
+              plugin: 'cloud_firestore',
+              code: 'failed-precondition',
+              message:
+                  'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+            );
           },
         ),
       ),
@@ -177,10 +182,12 @@ void main() {
     expect(find.text('Eco Build Sprint'), findsWidgets);
     expect(
       find.text(
-        'Unable to refresh mission plans right now. Showing the last successful data. Failed to load mission plans: Bad state: mission plans unavailable',
+        'Unable to refresh mission plans right now. Showing the last successful data. Mission plans could not load right now. Refresh, or check again after the app reconnects.',
       ),
       findsOneWidget,
     );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
     expect(find.text('No missions yet'), findsNothing);
   });
 
@@ -204,7 +211,12 @@ void main() {
         educatorService: educatorService,
         home: EducatorMissionPlansPage(
           missionPlansLoader: (BuildContext context) async {
-            throw StateError('mission plans unavailable');
+            throw FirebaseException(
+              plugin: 'cloud_firestore',
+              code: 'failed-precondition',
+              message:
+                  'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+            );
           },
         ),
       ),
@@ -216,10 +228,12 @@ void main() {
     expect(find.text('Unable to load mission plans'), findsOneWidget);
     expect(
       find.text(
-        'Failed to load mission plans: Bad state: mission plans unavailable',
+        'Mission plans could not load right now. Refresh, or check again after the app reconnects.',
       ),
       findsOneWidget,
     );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('No missions yet'), findsNothing);
   });

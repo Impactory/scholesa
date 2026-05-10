@@ -26,6 +26,7 @@ Recent validated items:
 - Educator proof verification and rubric application now hide raw backend/index errors from user-facing surfaces and show friendly recovery guidance; focused analyzer and widget regressions passed for those touched flows.
 - Admin-HQ capability framework and rubric template setup now hide raw backend/index errors from user-facing load/save/delete surfaces and show friendly recovery guidance; focused analyzer and HQ authoring widget regressions passed for those touched flows.
 - Learner mission loading now shows a friendly retry state instead of raw backend/index errors or a misleading empty mission state; focused analyzer and mission page widget regressions passed for the touched flow.
+- Parent growth timeline and shared family progress loading now hide raw backend/index errors from user-facing reporting surfaces and show friendly recovery guidance; focused analyzer and parent reporting regressions passed for the touched flows.
 
 Current release blockers and risks:
 

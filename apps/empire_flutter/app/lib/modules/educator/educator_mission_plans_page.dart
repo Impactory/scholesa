@@ -114,6 +114,8 @@ class EducatorMissionPlansPage extends StatefulWidget {
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   static const String _allPillarsFilter = '__all_pillars__';
+  static const String _missionPlanLoadErrorMessage =
+      'Mission plans could not load right now. Refresh, or check again after the app reconnects.';
   static final List<String> _supportedPillarFilters = <String>[
     _allPillarsFilter,
     ...CurriculumLegacyFamilyCode.values.map(curriculumLegacyFamilyStorageLabel),
@@ -1311,9 +1313,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         _missionPlans = loaded;
       });
     } catch (error) {
+      debugPrint('Failed to load mission plans: $error');
       if (!mounted) return;
       setState(() {
-        _loadError = 'Failed to load mission plans: $error';
+        _loadError = _missionPlanLoadErrorMessage;
       });
     } finally {
       if (mounted) {
