@@ -15,11 +15,12 @@ Recent validated items:
 - Evidence-chain emulator passed 3/3 with non-blocking internal AI fallback and Jest open-handle warnings.
 - Analytics emulator passed 17/17 after aligning telemetry metric assertions to the fail-closed nullable contract.
 - Non-deploying release gate passed after the latest MiloOS hover/voice changes; the Flutter gate inside it passed with `+1092: All tests passed!`.
-- Earlier Cloud Run `empire-web` deploy through `./scripts/deploy.sh flutter-web` succeeded and routed `empire-web-00084-6wg` to 100 percent traffic.
+- Cloud Run `empire-web` deploy through `./scripts/deploy.sh flutter-web` succeeded for the latest MiloOS hover/voice pass. Revision `empire-web-00087-g7d` is the latest ready revision and serves 100 percent traffic; the old `empire-web-00074-rvc` `gold-rehearsal` tag remains at 0 percent.
+- Live probes passed after deploy: `https://scholesa.com` returned 200, `https://scholesa.com/videos/proof-flow.mp4` returned 200 as `video/mp4`, and the direct Cloud Run origin returned 200.
 
 Current release blockers and risks:
 
-- The latest MiloOS hover/voice code has cleared local gates; live Cloud Run canary must still verify the newly deployed revision before claiming the public site is current.
+- The latest MiloOS hover/voice code has cleared local gates and live HTTP probes; role-based live canary remains required before broader public-site gold claims.
 - Native distribution remains blocked until TestFlight, Google Play internal testing, and macOS signing/notarization proof exist.
 - Cloud Run project identity must stay explicit: live Flutter site currently matches `studio-3328096157-e3f79` / `empire-web`; project number `430675339898` maps to `scholesa-prod`, which does not host the serving `empire-web` service.
 - Firestore and Storage hardening are still required before gold: missing `siteId` fallback and broad authenticated learner-media reads are not acceptable gold posture.

@@ -16,7 +16,8 @@ This is an internal verification plan. Scholesa is not gold-ready until every re
 - Non-deploying release gate passed after the emulator fix and latest MiloOS changes; the embedded Flutter gate passed with `+1092: All tests passed!`, then diff hygiene passed.
 - Flutter web release build passed: `flutter build web --release`.
 - Local native compiles passed after the session chrome fix: macOS release with repo no-sign settings, iOS release with `--no-codesign`, and Android release AAB/APK.
-- Cloud Run publish through `./scripts/deploy.sh flutter-web` succeeded earlier in this pass for `studio-3328096157-e3f79` / `empire-web`, routing revision `empire-web-00084-6wg` to 100 percent traffic. The later MiloOS hover/voice changes have now cleared local gates; live revision/canary proof must be recorded after the current deploy completes.
+- Cloud Run publish through `./scripts/deploy.sh flutter-web` succeeded for the latest MiloOS hover/voice pass on `studio-3328096157-e3f79` / `empire-web`. Cloud Build `d7d1dc42-dbdb-40f3-96df-3702ff72fe47` built image tag `20260510-121721`; revision `empire-web-00087-g7d` is latest ready and serves 100 percent traffic.
+- Live post-deploy probes passed: `https://scholesa.com` returned 200, `https://scholesa.com/videos/proof-flow.mp4` returned 200 as `video/mp4`, and direct Cloud Run origin returned 200.
 - Gold stability/security next-step docs added: `GOLD_STABILITY_SECURITY_NEXT_STEPS_2026-05-10.md`, `GOLD_WORKFLOW_BUG_COVERAGE_MATRIX_2026-05-10.md`, and `GOLD_EMULATED_TEST_PLAN_2026-05-10.md`.
 - Native-channel distribution remains blocked by missing signing, provisioning, App Store Connect, Google Play, and notarization prerequisites reported by `./scripts/native_distribution_readiness.sh`.
 - Live proof-flow video deployment was previously verified on `scholesa.com` with byte-for-byte MP4 match.

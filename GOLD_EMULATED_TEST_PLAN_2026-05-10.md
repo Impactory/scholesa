@@ -75,6 +75,8 @@ Then run the full gate:
 | 2026-05-10 | `npm run test:integration:evidence-chain` | Passed | Evidence-chain emulator passed 3/3. Non-blocking warnings remain for unavailable internal AI inference fallback and Jest open-handle cleanup. |
 | 2026-05-10 | `npm run test:integration:analytics` | Failed, then passed | Initial failure was stale nullable telemetry metric expectations in the test. Updated assertions to the fail-closed `number | null` contract; final run passed 17/17. Firestore-only emulator still logs callable `functions/not-found` as non-blocking telemetry degradation. |
 | 2026-05-10 | `./scripts/deploy.sh release-gate` | Passed | Non-deploying release gate passed after emulator fixes. Flutter gate passed with `+1092: All tests passed!`, then diff hygiene passed and the release reproducibility gate completed. |
+| 2026-05-10 | `GCP_PROJECT_ID=studio-3328096157-e3f79 GCP_REGION=us-central1 CLOUD_RUN_FLUTTER_SERVICE=empire-web ./scripts/deploy.sh flutter-web` | Passed | Deploy gate reran Flutter tests (`+1092`), Cloud Build `d7d1dc42-dbdb-40f3-96df-3702ff72fe47` built image tag `20260510-121721`, and Cloud Run revision `empire-web-00087-g7d` now serves 100 percent traffic. |
+| 2026-05-10 | `gcloud run services describe ...` and `curl -sSI` probes | Passed | Traffic table confirms `empire-web-00087-g7d` latest ready at 100 percent. `scholesa.com`, `/videos/proof-flow.mp4`, and direct Cloud Run origin returned 200. |
 
 ## Failure Handling
 

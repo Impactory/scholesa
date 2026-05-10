@@ -127,7 +127,7 @@ Before gold, every P0/P1 bug must have all of these fields in the tracker or rel
 
 | Gap | Role/channel | Bug class | Required next proof |
 | --- | --- | --- | --- |
-| Live canary must verify the newly deployed MiloOS hover/voice revision. | Flutter web/native | RENDER, MOBILE, A11Y-I18N | `./scripts/deploy.sh flutter-web`, Cloud Run revision probe, and browser/mobile smoke before live claim. |
+| Live role canary must verify the newly deployed MiloOS hover/voice revision beyond HTTP probes. | Flutter web/native | RENDER, MOBILE, A11Y-I18N | `empire-web-00087-g7d` serves 100 percent traffic and HTTP probes pass; browser/mobile role smoke is still required before broader live claim. |
 | Native distribution proof missing. | iOS, Android, macOS | MOBILE, AUTHZ, PERSIST | TestFlight, Google Play internal, macOS notarization proof. |
 | Firestore site-scope hardening still partial. | All roles | AUTHZ | Add emulator denial tests for missing/wrong `siteId` on site-scoped collections. |
 | Storage learner media read too broad. | Learner, parent, educator | AUTHZ, CONSENT | Add Storage emulator tests and tighten owner/guardian/same-site access. |
