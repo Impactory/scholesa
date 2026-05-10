@@ -22,6 +22,7 @@ This is an internal verification plan. Scholesa is not gold-ready until every re
 - Live post-deploy probes passed: `https://scholesa.com` returned 200, `https://scholesa.com/videos/proof-flow.mp4` returned 200 as `video/mp4`, and direct Cloud Run origin returned 200.
 - Cloud Run publish through `./scripts/deploy.sh flutter-web` succeeded for the logout/voice hardening pass. Cloud Build `a0c6a065-058d-46c8-9904-5f6780e3095c` built image tag `20260510-123327`; revision `empire-web-00088-ln2` is latest ready and serves 100 percent traffic.
 - Live post-deploy probes passed again for revision `empire-web-00088-ln2`: `https://scholesa.com` returned 200, `https://scholesa.com/videos/proof-flow.mp4` returned 200 as `video/mp4`, and direct Cloud Run origin returned 200.
+- Final non-deploying release gate passed after the logout/voice hardening pass; the embedded Flutter gate passed with `+1093: All tests passed!`, then diff hygiene passed.
 - Gold stability/security next-step docs added: `GOLD_STABILITY_SECURITY_NEXT_STEPS_2026-05-10.md`, `GOLD_WORKFLOW_BUG_COVERAGE_MATRIX_2026-05-10.md`, and `GOLD_EMULATED_TEST_PLAN_2026-05-10.md`.
 - Native-channel distribution remains blocked by missing signing, provisioning, App Store Connect, Google Play, and notarization prerequisites reported by `./scripts/native_distribution_readiness.sh`.
 - Live proof-flow video deployment was previously verified on `scholesa.com` with byte-for-byte MP4 match.

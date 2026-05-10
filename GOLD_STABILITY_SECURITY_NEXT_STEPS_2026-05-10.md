@@ -20,6 +20,7 @@ Recent validated items:
 - Logout hardening pass completed: Firebase sign-out and local session clear no longer wait behind a stuck Google/provider sign-out call.
 - MiloOS voice tuning pass completed: web speech now uses a slightly slower, lower-pitch voice profile and prefers natural/neural browser voices before generic fallbacks.
 - Cloud Run `empire-web` deploy through `./scripts/deploy.sh flutter-web` succeeded for the logout/voice hardening pass. Cloud Build `a0c6a065-058d-46c8-9904-5f6780e3095c` built image tag `20260510-123327`; revision `empire-web-00088-ln2` is latest ready and serves 100 percent traffic.
+- Final non-deploying release gate passed after the logout/voice hardening pass; the Flutter gate inside it passed with `+1093: All tests passed!`.
 
 Current release blockers and risks:
 
