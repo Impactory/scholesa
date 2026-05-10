@@ -181,7 +181,7 @@ export default function LandingPage() {
                       <span className="text-xs font-bold opacity-70">{index + 1}</span>
                     </div>
                     <h2 className="mt-4 text-base font-bold">{step.label}</h2>
-                    <p className="mt-2 text-sm leading-6 opacity-80">{step.detail}</p>
+                    <p className="mt-2 text-sm font-medium leading-6">{step.detail}</p>
                   </div>
                 );
               })}
@@ -216,7 +216,7 @@ export default function LandingPage() {
                         <ArrowRight className="h-4 w-4 opacity-70 transition group-hover:translate-x-0.5" aria-hidden="true" />
                       </div>
                       <h3 className="mt-4 text-lg font-bold">{surface.role}</h3>
-                      <p className="mt-2 text-sm leading-6 opacity-80">{surface.proof}</p>
+                      <p className="mt-2 text-sm font-medium leading-6">{surface.proof}</p>
                     </Link>
                   );
                 })}

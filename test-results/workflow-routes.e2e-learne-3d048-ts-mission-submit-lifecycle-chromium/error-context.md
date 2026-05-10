@@ -1,0 +1,119 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]
+  - generic [ref=e13]:
+    - navigation [ref=e14]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - link "Scholesa dashboard" [ref=e19] [cursor=pointer]:
+            - /url: /en/dashboard
+            - img [ref=e20]
+            - generic [ref=e21]: Scholesa
+          - generic [ref=e22]:
+            - link "today" [ref=e23] [cursor=pointer]:
+              - /url: /en/learner/today
+            - link "missions" [ref=e24] [cursor=pointer]:
+              - /url: /en/learner/missions
+            - link "portfolio" [ref=e25] [cursor=pointer]:
+              - /url: /en/learner/portfolio
+            - link "timeline" [ref=e26] [cursor=pointer]:
+              - /url: /en/learner/timeline
+            - link "checkpoints" [ref=e27] [cursor=pointer]:
+              - /url: /en/learner/checkpoints
+            - link "peer-feedback" [ref=e28] [cursor=pointer]:
+              - /url: /en/learner/peer-feedback
+            - link "proof-assembly" [ref=e29] [cursor=pointer]:
+              - /url: /en/learner/proof-assembly
+            - link "reflections" [ref=e30] [cursor=pointer]:
+              - /url: /en/learner/reflections
+            - link "habits" [ref=e31] [cursor=pointer]:
+              - /url: /en/learner/habits
+            - link "miloos" [ref=e32] [cursor=pointer]:
+              - /url: /en/learner/miloos
+            - link "messages" [ref=e33] [cursor=pointer]:
+              - /url: /en/messages
+            - link "notifications" [ref=e34] [cursor=pointer]:
+              - /url: /en/notifications
+            - link "profile" [ref=e35] [cursor=pointer]:
+              - /url: /en/profile
+            - link "settings" [ref=e36] [cursor=pointer]:
+              - /url: /en/settings
+        - generic [ref=e37]:
+          - group "Theme" [ref=e38]:
+            - 'button "Theme: System" [pressed] [ref=e39] [cursor=pointer]':
+              - img [ref=e40]
+            - 'button "Theme: Light" [ref=e42] [cursor=pointer]':
+              - img [ref=e43]
+            - 'button "Theme: Dark" [ref=e49] [cursor=pointer]':
+              - img [ref=e50]
+          - generic [ref=e52]: Signed in as Learner Alpha
+          - button "Sign out" [ref=e53] [cursor=pointer]
+    - main [ref=e54]:
+      - generic [ref=e55]:
+        - region "Gold evidence cockpit" [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - img [ref=e60]
+              - generic [ref=e63]:
+                - paragraph [ref=e64]: Current Gold operating surface
+                - heading "Evidence chain cockpit" [level=1] [ref=e65]
+                - paragraph [ref=e66]: Capture, verify, interpret, and communicate learner capability evidence with provenance across the active role view.
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - generic [ref=e69]:
+                  - img [ref=e70]
+                  - text: Web GO
+                - paragraph [ref=e73]: Cloud Run evidence packet
+              - generic [ref=e74]:
+                - generic [ref=e75]:
+                  - img [ref=e76]
+                  - text: learner
+                - paragraph [ref=e81]: Role-scoped evidence view
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - img [ref=e84]
+                  - text: Native gated
+                - paragraph [ref=e88]: Store proof still required
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - heading "My Portfolio & Evidence" [level=1] [ref=e91]
+            - paragraph [ref=e92]: Submit artifacts from your work, write reflections, and build your portfolio of capability evidence.
+          - generic [ref=e93]:
+            - button "Submit Artifact" [ref=e94] [cursor=pointer]
+            - button "Write Reflection" [ref=e95] [cursor=pointer]
+            - button "Checkpoint Evidence" [ref=e96] [cursor=pointer]
+          - generic [ref=e97]:
+            - heading "New Artifact" [level=2] [ref=e98]
+            - generic [ref=e99]:
+              - text: Title *
+              - textbox "Title *" [ref=e100]:
+                - /placeholder: e.g., 'My Solar System Model' or 'Community Garden Plan'
+            - generic [ref=e101]:
+              - text: What did you create and what did you learn?
+              - textbox "What did you create and what did you learn?" [ref=e102]:
+                - /placeholder: Describe your work, what you built, and what you learned...
+            - generic [ref=e103]:
+              - text: Link to your work (optional)
+              - textbox "Link to your work (optional)" [ref=e104]:
+                - /placeholder: https://docs.google.com/... or https://github.com/...
+            - group "Which capabilities does this show? *" [ref=e105]:
+              - generic [ref=e106]: Which capabilities does this show? *
+              - paragraph [ref=e107]: No capabilities are defined for this site yet. Ask HQ or your educator to define capabilities before submitting evidence for proof review.
+            - generic [ref=e109]:
+              - checkbox "I used AI tools (MiloOS, ChatGPT, etc.) for part of this work" [ref=e110]
+              - text: I used AI tools (MiloOS, ChatGPT, etc.) for part of this work
+            - button "Add to My Portfolio" [disabled] [ref=e111]
+          - generic [ref=e112]:
+            - heading "My Portfolio" [level=2] [ref=e113]
+            - list [ref=e114]:
+              - listitem [ref=e115]:
+                - generic [ref=e116]:
+                  - generic [ref=e117]:
+                    - text: Learner Build Log
+                    - paragraph [ref=e118]: Documented the prototype iteration.
+                  - generic [ref=e120]: Pending review
+```

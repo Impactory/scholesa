@@ -121,6 +121,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|workbox-[^/]+\\.js|precache\\.[^/]+\\.js|offline.html|scholesa.svg|icons|logo).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|workbox-[^/]+\\.js|precache\\.[^/]+\\.js|offline.html|scholesa.svg|icons|logo|videos).*)',
   ],
 };
