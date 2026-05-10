@@ -1,0 +1,189 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Scholesa home" [ref=e6] [cursor=pointer]:
+          - /url: /en
+          - img [ref=e7]
+          - generic [ref=e8]:
+            - paragraph [ref=e9]: Scholesa
+            - paragraph [ref=e10]: Evidence OS
+        - navigation "Public navigation" [ref=e11]:
+          - group "Theme" [ref=e12]:
+            - 'button "Theme: System" [ref=e13] [cursor=pointer]':
+              - img [ref=e14]
+            - 'button "Theme: Light" [pressed] [ref=e16] [cursor=pointer]':
+              - img [ref=e17]
+            - 'button "Theme: Dark" [ref=e23] [cursor=pointer]':
+              - img [ref=e24]
+          - link "Login" [ref=e26] [cursor=pointer]:
+            - /url: /en/login
+    - main [ref=e27]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - text: Capability learning, made visible
+          - heading "The proof engine for real capability growth." [level=1] [ref=e35]
+          - paragraph [ref=e36]: "Scholesa turns classroom moments into inspectable proof: observations, learner artifacts, explain-backs, rubric judgments, growth history, portfolios, reports, and partner deliverables all tied to the evidence that earned the claim."
+          - generic [ref=e37]:
+            - link "Enter the evidence engine" [ref=e38] [cursor=pointer]:
+              - /url: /en/login
+              - text: Enter the evidence engine
+              - img [ref=e39]
+            - button "See the Proof Flow" [ref=e41] [cursor=pointer]:
+              - img [ref=e42]
+              - text: See the Proof Flow
+            - link "Register" [ref=e45] [cursor=pointer]:
+              - /url: /en/register
+        - generic "Evidence command center" [ref=e46]:
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - paragraph [ref=e49]: Evidence command center
+              - paragraph [ref=e50]: Capture, verify, interpret, and communicate growth.
+            - generic [ref=e51]: Trusted
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - paragraph [ref=e54]: Capture
+              - paragraph [ref=e58]: live observations
+            - generic [ref=e59]:
+              - paragraph [ref=e60]: Verify
+              - paragraph [ref=e64]: proof review
+            - generic [ref=e65]:
+              - paragraph [ref=e66]: Interpret
+              - paragraph [ref=e70]: growth events
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Communicate
+              - paragraph [ref=e76]: portfolio + Passport
+          - generic [ref=e77]: "Every view is designed to answer the same question: what can this learner do, and what evidence makes that claim trustworthy?"
+        - generic "Evidence chain" [ref=e78]:
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - img [ref=e81]
+              - generic [ref=e86]: "1"
+            - heading "HQ framework" [level=2] [ref=e87]
+            - paragraph [ref=e88]: capabilities, rubrics, checkpoints
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - img [ref=e91]
+              - generic [ref=e95]: "2"
+            - heading "Live session" [level=2] [ref=e96]
+            - paragraph [ref=e97]: teacher capture during studio time
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - img [ref=e100]
+              - generic [ref=e103]: "3"
+            - heading "Learner proof" [level=2] [ref=e104]
+            - paragraph [ref=e105]: artifact, reflection, explain-back
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - img [ref=e108]
+              - generic [ref=e111]: "4"
+            - heading "Growth update" [level=2] [ref=e112]
+            - paragraph [ref=e113]: rubric-linked capability history
+          - generic [ref=e114]:
+            - generic [ref=e115]:
+              - img [ref=e116]
+              - generic [ref=e120]: "5"
+            - heading "Portfolio output" [level=2] [ref=e121]
+            - paragraph [ref=e122]: best evidence with provenance
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - paragraph [ref=e127]: Role surfaces
+          - heading "Six roles. One chain of truth." [level=2] [ref=e128]
+          - paragraph [ref=e129]: Learners see what they are creating. Educators capture proof in the moment. Families, schools, HQ, and partners see the evidence behind every claim.
+        - generic [ref=e130]:
+          - link "Learner missions, proof prompts, portfolio evidence" [ref=e131] [cursor=pointer]:
+            - /url: /en/learner/today
+            - generic [ref=e132]:
+              - img [ref=e133]
+              - img [ref=e136]
+            - heading "Learner" [level=3] [ref=e138]
+            - paragraph [ref=e139]: missions, proof prompts, portfolio evidence
+          - link "Educator quick capture, proof review, verification queue" [ref=e140] [cursor=pointer]:
+            - /url: /en/educator/today
+            - generic [ref=e141]:
+              - img [ref=e142]
+              - img [ref=e146]
+            - heading "Educator" [level=3] [ref=e148]
+            - paragraph [ref=e149]: quick capture, proof review, verification queue
+          - link "Guardian capability progress with evidence links" [ref=e150] [cursor=pointer]:
+            - /url: /en/parent/summary
+            - generic [ref=e151]:
+              - img [ref=e152]
+              - img [ref=e157]
+            - heading "Guardian" [level=3] [ref=e159]
+            - paragraph [ref=e160]: capability progress with evidence links
+          - link "School implementation health and evidence coverage" [ref=e161] [cursor=pointer]:
+            - /url: /en/site/evidence-health
+            - generic [ref=e162]:
+              - img [ref=e163]
+              - img [ref=e168]
+            - heading "School" [level=3] [ref=e170]
+            - paragraph [ref=e171]: implementation health and evidence coverage
+          - link "HQ framework governance and rubric structure" [ref=e172] [cursor=pointer]:
+            - /url: /en/hq/capability-frameworks
+            - generic [ref=e173]:
+              - img [ref=e174]
+              - img [ref=e177]
+            - heading "HQ" [level=3] [ref=e179]
+            - paragraph [ref=e180]: framework governance and rubric structure
+          - link "Partner evidence-facing deliverables and contracts" [ref=e181] [cursor=pointer]:
+            - /url: /en/partner/deliverables
+            - generic [ref=e182]:
+              - img [ref=e183]
+              - img [ref=e187]
+            - heading "Partner" [level=3] [ref=e189]
+            - paragraph [ref=e190]: evidence-facing deliverables and contracts
+      - generic [ref=e192]:
+        - generic [ref=e193]:
+          - generic [ref=e194]:
+            - img [ref=e195]
+            - text: Trust you can inspect
+          - list [ref=e198]:
+            - listitem [ref=e199]:
+              - img [ref=e200]
+              - generic [ref=e203]: Every learner claim can point back to evidence, context, and reviewer judgment
+            - listitem [ref=e204]:
+              - img [ref=e205]
+              - generic [ref=e208]: Educators can capture meaningful observations during the live flow of class
+            - listitem [ref=e209]:
+              - img [ref=e210]
+              - generic [ref=e213]: Families see capability progress without reducing growth to marks or averages
+            - listitem [ref=e214]:
+              - img [ref=e215]
+              - generic [ref=e218]: School and HQ teams can trace implementation health through evidence coverage
+        - generic [ref=e219]:
+          - generic [ref=e220]:
+            - img [ref=e221]
+            - text: Built for accountable growth
+          - generic [ref=e226]:
+            - generic [ref=e227]:
+              - paragraph [ref=e228]: Learners
+              - paragraph [ref=e229]: know what they are creating, what they can explain, and what belongs in their portfolio
+            - generic [ref=e230]:
+              - paragraph [ref=e231]: Educators
+              - paragraph [ref=e232]: see the next evidence action without losing the rhythm of studio time
+            - generic [ref=e233]:
+              - paragraph [ref=e234]: Families
+              - paragraph [ref=e235]: understand growth through real work, not vague summaries or unexplained scores
+            - generic [ref=e236]:
+              - paragraph [ref=e237]: Leaders
+              - paragraph [ref=e238]: spot evidence gaps, support teachers, and protect the integrity of every claim
+      - generic [ref=e240]:
+        - generic [ref=e241]:
+          - img [ref=e242]
+          - generic [ref=e245]:
+            - heading "Make growth impossible to miss." [level=2] [ref=e246]
+            - paragraph [ref=e247]: Bring proof, reflection, feedback, and portfolio-worthy work into one clear flow.
+        - link "Sign in" [ref=e248] [cursor=pointer]:
+          - /url: /en/login
+          - text: Sign in
+          - img [ref=e249]
+  - button "Open Next.js Dev Tools" [ref=e256] [cursor=pointer]:
+    - img [ref=e257]
+  - alert [ref=e260]
+```

@@ -1,3 +1,5 @@
+const runEmulatorTests = process.env.RUN_EMULATOR_TESTS === '1';
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -12,6 +14,7 @@ module.exports = {
   testPathIgnorePatterns: [
     '<rootDir>/src/coppaGuards.spec.ts',
     '<rootDir>/src/voiceSystem.voiceSmoke.spec.ts',
+    ...(runEmulatorTests ? [] : ['<rootDir>/src/evidenceChainEmulator.test.ts']),
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transform: {

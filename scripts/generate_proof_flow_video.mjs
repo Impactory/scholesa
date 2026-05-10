@@ -18,6 +18,8 @@
  *   node scripts/generate_proof_flow_video.mjs
  */
 
+/* global document, requestAnimationFrame, window */
+
 import { chromium } from 'playwright';
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, rmSync, readdirSync, statSync } from 'node:fs';
@@ -56,17 +58,24 @@ const NEXT_ENV = {
  * Cross-role evidence-chain tour. Each step navigates to a real route and
  * dwells long enough for a viewer to read the surface. `auth` steps switch
  * identities through the in-app E2E hook before navigating.
+ *
+ * Routing constraint: window.__scholesaE2E is only attached on pages that
+ * import @/src/firebase/client-init (login + every protected route). The bare
+ * landing /en does not pull Firebase, so any signInAs() must run while we are
+ * still on a Firebase-touching page. The tour therefore opens on /en/login,
+ * stays on protected routes for every role switch, and visits /en only as the
+ * closing outro (where no signInAs is needed — just a final dwell).
  */
 const TOUR = [
-  { label: 'Landing',                kind: 'public', path: '/en',                            dwell: 3500, scroll: true  },
-  { label: 'Educator · Today',       kind: 'auth',   uid: 'educator-alpha',    path: '/en/educator/today',         dwell: 3500 },
-  { label: 'Educator · Proof review',kind: 'goto',                              path: '/en/educator/proof-review',  dwell: 3500 },
-  { label: 'Learner · Today',        kind: 'auth',   uid: 'learner-alpha',     path: '/en/learner/today',          dwell: 3500 },
-  { label: 'Learner · Portfolio',    kind: 'goto',                              path: '/en/learner/portfolio',      dwell: 3500 },
-  { label: 'Guardian · Summary',     kind: 'auth',   uid: 'parent-alpha',      path: '/en/parent/summary',         dwell: 3500 },
-  { label: 'Site · Evidence health', kind: 'auth',   uid: 'site-alpha-admin',  path: '/en/site/evidence-health',   dwell: 3500 },
+  { label: 'Sign-in',                kind: 'public', path: '/en/login',                       dwell: 2500 },
+  { label: 'Educator · Today',       kind: 'auth',   uid: 'educator-alpha',    path: '/en/educator/today',           dwell: 3500 },
+  { label: 'Educator · Proof review',kind: 'goto',                              path: '/en/educator/proof-review',    dwell: 3500 },
+  { label: 'Learner · Today',        kind: 'auth',   uid: 'learner-alpha',     path: '/en/learner/today',            dwell: 3500 },
+  { label: 'Learner · Portfolio',    kind: 'goto',                              path: '/en/learner/portfolio',        dwell: 3500 },
+  { label: 'Guardian · Summary',     kind: 'auth',   uid: 'parent-alpha',      path: '/en/parent/summary',           dwell: 3500 },
+  { label: 'Site · Evidence health', kind: 'auth',   uid: 'site-alpha-admin',  path: '/en/site/evidence-health',     dwell: 3500 },
   { label: 'HQ · Capability frameworks', kind: 'auth', uid: 'hq-alpha',        path: '/en/hq/capability-frameworks', dwell: 3500 },
-  { label: 'Outro · Landing',        kind: 'public', path: '/en',                            dwell: 2500 },
+  { label: 'Outro · Landing',        kind: 'public', path: '/en',                              dwell: 2500, scroll: true },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -133,13 +142,15 @@ async function recordTour() {
   });
   const page = await context.newPage();
 
-  // Bootstrap so __scholesaE2E is attached before we start signing in.
-  await page.goto(`${BASE_URL}/en`, { waitUntil: 'load' });
+  // Bootstrap: hit /en/login first because it imports @/src/firebase/client-init
+  // which is what attaches window.__scholesaE2E. The bare landing page does not
+  // pull Firebase, so __scholesaE2E never appears if we only visit /en.
+  await page.goto(`${BASE_URL}/en/login`, { waitUntil: 'load' });
   await page.waitForFunction(
     () => Boolean(/** @type {any} */ (window).__scholesaE2E),
-    { timeout: 30_000 },
+    { timeout: 60_000 },
   );
-  await sleep(600);
+  await sleep(400);
 
   for (const step of TOUR) {
     console.log(`  · ${step.label}  →  ${step.path}`);
@@ -184,11 +195,17 @@ function ffmpeg(args, label) {
   if (r.status !== 0) throw new Error(`ffmpeg failed (${label}) with status ${r.status}`);
 }
 
+// Trim ~2 seconds off the opening — the recording begins while Next.js is
+// compiling /en/login for the first time, so the very first frames are blank.
+// Skipping past the compile makes the demo open straight on the rendered UI.
+const OPENING_TRIM_SECONDS = '2.0';
+
 function transcode(webm) {
   mkdirSync(OUT_DIR, { recursive: true });
   ffmpeg(
     [
       '-y',
+      '-ss', OPENING_TRIM_SECONDS,
       '-i', webm,
       '-c:v', 'libx264',
       '-preset', 'slow',
@@ -205,8 +222,8 @@ function transcode(webm) {
   ffmpeg(
     [
       '-y',
-      '-ss', '1.5',
-      '-i', webm,
+      '-ss', '0.5',
+      '-i', OUT_MP4,
       '-frames:v', '1',
       '-q:v', '3',
       OUT_POSTER,
