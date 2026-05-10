@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/inline_locale_text.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
+const String _proofFlowVideoPath = '/videos/proof-flow.mp4';
+
 const Map<String, String> _landingZhCn = <String, String>{
   'Features': '功能',
   'Curriculum': '课程体系',
   'For Schools': '面向学校',
-  'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.':
-      '证据采集、MiloOS 辅导、作品集、分析与离线课堂支持。',
+  'Evidence capture, AI-use transparency, portfolios, growth signals, and offline classroom support.':
+      '证据采集、AI 使用透明化、作品集、成长信号与离线课堂支持。',
   'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
       '发现者、建构者、探索者、创新者，以及六大能力主线。',
-  'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
-      '为学习者、教育者、家长、站点团队和 HQ 提供按角色划分的仪表板。',
+  'Evidence views for learners, educators, families, school teams, and HQ.':
+      '为学习者、教育者、家庭、学校团队和 HQ 提供证据视图。',
   'Sign In': '登录',
   'Capability learning, made visible': '让能力学习清晰可见',
   'The Proof Engine for\nReal Capability Growth': '真实能力成长的\n证据引擎',
   'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
       'Scholesa 将课堂时刻转化为可信证据：观察、作品、解释回顾、量规判断、成长记录，以及家长能够理解的作品集。',
   'See the Proof Flow': '查看证据流程',
-  'Scholesa Demo': 'Scholesa 演示',
-  'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
-      '演示包含：\n• 角色仪表板\n• CTA 操作流程\n• 任务与出勤生命周期',
-  'Close': '关闭',
-  'Try Live': '立即体验',
-  'MiloOS': 'MiloOS',
-  'Achievements': '成就',
-  'Missions': '任务',
-  'Community': '社区',
+  'Proof flow video is unavailable right now.': '证据流程视频暂时无法打开。',
+  'Observe': '观察',
+  'Verify': '验证',
+  'Map Growth': '映射成长',
+  'Portfolio Proof': '作品集证据',
   'Capability Pathways': '能力路径',
   'Proof That Growth Is Real': '让成长真实可证',
   'A K-12 learning architecture that carries evidence from discovery to innovation.':
@@ -48,21 +47,22 @@ const Map<String, String> _landingZhCn = <String, String>{
       '10-12 年级 • 以方向路径驱动的毕业项目工作室，具备完整审计轨迹。',
   'PLATFORM FEATURES': '平台功能',
   'Everything You Need': '所需尽在其中',
-  'Mission-Based Learning': '任务式学习',
-  'AI Habit Coaching': 'AI 习惯教练',
-  'Portfolio Showcase': '作品集展示',
-  'Progress Analytics': '进度分析',
-  'Parent Portal': '家长门户',
-  'Offline-First': '离线优先',
-  'FOR EVERYONE': '适用于所有人',
-  'Designed for Your Role': '为你的角色而设计',
+  'Live Evidence Capture': '实时证据采集',
+  'AI Use Transparency': 'AI 使用透明化',
+  'Portfolio-Ready Proof': '可进入作品集的证据',
+  'Growth Signals': '成长信号',
+  'Family Clarity': '家庭清晰可读',
+  'Classroom-Ready Offline': '课堂可用的离线支持',
+  'PROOF FOR EVERY LEARNER': '每位学习者都有证据',
+  'Built for Every Evidence Role': '为每个证据角色而建',
   'Learners': '学习者',
   'Educators': '教育者',
-  'Parents': '家长',
-  'Site Admins': '站点管理员',
-  'Ready to Transform Learning?': '准备好改变学习方式了吗？',
-  'Join hundreds of learning studios already using Scholesa.':
-      '加入已经在使用 Scholesa 的数百家学习工作室。',
+  'Families': '家庭',
+  'School Teams': '学校团队',
+  'HQ Leaders': 'HQ 领导者',
+  'Make Growth Impossible to Miss': '让成长不再被忽略',
+  'Bring every observation, artifact, reflection, and rubric judgment into one trusted evidence story.':
+      '将每一次观察、作品、反思和量规判断汇聚成一个可信的证据故事。',
   '© 2026 Scholesa. Capability Evidence Platform.': '© 2026 Scholesa。能力证据平台。',
 };
 
@@ -70,27 +70,23 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Features': '功能',
   'Curriculum': '課程體系',
   'For Schools': '面向學校',
-  'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.':
-      '證據擷取、MiloOS 輔導、作品集、分析與離線課堂支援。',
+  'Evidence capture, AI-use transparency, portfolios, growth signals, and offline classroom support.':
+      '證據擷取、AI 使用透明化、作品集、成長訊號與離線課堂支援。',
   'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
       '發現者、建構者、探索者、創新者，以及六大能力主線。',
-  'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
-      '為學習者、教育者、家長、站點團隊和 HQ 提供按角色劃分的儀表板。',
+  'Evidence views for learners, educators, families, school teams, and HQ.':
+      '為學習者、教育者、家庭、學校團隊和 HQ 提供證據視圖。',
   'Sign In': '登入',
   'Capability learning, made visible': '讓能力學習清晰可見',
   'The Proof Engine for\nReal Capability Growth': '真實能力成長的\n證據引擎',
   'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
       'Scholesa 將課堂時刻轉化為可信證據：觀察、作品、解釋回顧、量規判斷、成長紀錄，以及家長能理解的作品集。',
   'See the Proof Flow': '查看證據流程',
-  'Scholesa Demo': 'Scholesa 示範',
-  'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
-      '示範包含：\n• 角色儀表板\n• CTA 操作流程\n• 任務與出勤生命週期',
-  'Close': '關閉',
-  'Try Live': '立即體驗',
-  'MiloOS': 'MiloOS',
-  'Achievements': '成就',
-  'Missions': '任務',
-  'Community': '社群',
+  'Proof flow video is unavailable right now.': '證據流程影片暫時無法開啟。',
+  'Observe': '觀察',
+  'Verify': '驗證',
+  'Map Growth': '映射成長',
+  'Portfolio Proof': '作品集證據',
   'Capability Pathways': '能力路徑',
   'Proof That Growth Is Real': '讓成長真實可證',
   'A K-12 learning architecture that carries evidence from discovery to innovation.':
@@ -109,21 +105,22 @@ const Map<String, String> _landingZhTw = <String, String>{
       '10-12 年級 • 以方向路徑驅動的畢業專題工作室，具備完整審計軌跡。',
   'PLATFORM FEATURES': '平台功能',
   'Everything You Need': '所需盡在其中',
-  'Mission-Based Learning': '任務式學習',
-  'AI Habit Coaching': 'AI 習慣教練',
-  'Portfolio Showcase': '作品集展示',
-  'Progress Analytics': '進度分析',
-  'Parent Portal': '家長入口',
-  'Offline-First': '離線優先',
-  'FOR EVERYONE': '適用於所有人',
-  'Designed for Your Role': '為你的角色而設計',
+  'Live Evidence Capture': '即時證據擷取',
+  'AI Use Transparency': 'AI 使用透明化',
+  'Portfolio-Ready Proof': '可進入作品集的證據',
+  'Growth Signals': '成長訊號',
+  'Family Clarity': '家庭清晰可讀',
+  'Classroom-Ready Offline': '課堂可用的離線支援',
+  'PROOF FOR EVERY LEARNER': '每位學習者都有證據',
+  'Built for Every Evidence Role': '為每個證據角色而建',
   'Learners': '學習者',
   'Educators': '教育者',
-  'Parents': '家長',
-  'Site Admins': '站點管理員',
-  'Ready to Transform Learning?': '準備好改變學習方式了嗎？',
-  'Join hundreds of learning studios already using Scholesa.':
-      '加入已經在使用 Scholesa 的數百家學習工作室。',
+  'Families': '家庭',
+  'School Teams': '學校團隊',
+  'HQ Leaders': 'HQ 領導者',
+  'Make Growth Impossible to Miss': '讓成長不再被忽略',
+  'Bring every observation, artifact, reflection, and rubric judgment into one trusted evidence story.':
+      '將每一次觀察、作品、反思和量規判斷匯聚成一個可信的證據故事。',
   '© 2026 Scholesa. Capability Evidence Platform.': '© 2026 Scholesa。能力證據平台。',
 };
 
@@ -202,6 +199,41 @@ class _LandingPageState extends State<LandingPage>
         'cta': 'landing_sign_in',
         'source': source,
       },
+    );
+  }
+
+  Future<void> _openProofFlowVideo(BuildContext context) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String unavailableMessage =
+        _tLanding(context, 'Proof flow video is unavailable right now.');
+
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'cta': 'landing_proof_flow_video',
+        'video_path': _proofFlowVideoPath,
+      },
+    );
+
+    final Uri videoUri = Uri.base.resolve(_proofFlowVideoPath);
+    try {
+      final bool launched = await launchUrl(
+        videoUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched || !mounted) {
+        return;
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(unavailableMessage),
+      ),
     );
   }
 
@@ -319,7 +351,7 @@ class _LandingPageState extends State<LandingPage>
               onTap: () => _showSectionPreview(
                 title: _tLanding(context, 'Features'),
                 detail: _tLanding(context,
-                    'Evidence capture, MiloOS coaching, portfolios, analytics, and offline classroom support.'),
+                    'Evidence capture, AI-use transparency, portfolios, growth signals, and offline classroom support.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -337,7 +369,7 @@ class _LandingPageState extends State<LandingPage>
               onTap: () => _showSectionPreview(
                 title: _tLanding(context, 'For Schools'),
                 detail: _tLanding(context,
-                    'Role-based dashboards for learners, educators, parents, site teams, and HQ.'),
+                    'Evidence views for learners, educators, families, school teams, and HQ.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -478,15 +510,7 @@ class _LandingPageState extends State<LandingPage>
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'landing_watch_demo',
-                  },
-                );
-                _showDemoDialog(context);
-              },
+              onPressed: () => _openProofFlowVideo(context),
               icon: const Icon(Icons.play_circle_outline_rounded),
               label: Text(_tLanding(context, 'See the Proof Flow')),
               style: OutlinedButton.styleFrom(
@@ -506,39 +530,6 @@ class _LandingPageState extends State<LandingPage>
           ],
         ),
       ],
-    );
-  }
-
-  void _showDemoDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tLanding(context, 'Scholesa Demo')),
-        content: Text(_tLanding(context,
-            'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle')),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'landing_demo_close',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tLanding(context, 'Close')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _trackSignInCTA('landing_try_live');
-              context.go('/login');
-            },
-            child: Text(_tLanding(context, 'Try Live')),
-          ),
-        ],
-      ),
     );
   }
 
@@ -592,7 +583,7 @@ class _LandingPageState extends State<LandingPage>
             left: 40,
             child: _buildFloatingCard(
               icon: Icons.psychology_rounded,
-              label: _tLanding(context, 'MiloOS'),
+              label: _tLanding(context, 'Observe'),
               color: ScholesaColors.futureSkills,
             ),
           ),
@@ -601,7 +592,7 @@ class _LandingPageState extends State<LandingPage>
             right: 40,
             child: _buildFloatingCard(
               icon: Icons.emoji_events_rounded,
-              label: _tLanding(context, 'Achievements'),
+              label: _tLanding(context, 'Verify'),
               color: ScholesaColors.leadership,
             ),
           ),
@@ -610,7 +601,7 @@ class _LandingPageState extends State<LandingPage>
             left: 60,
             child: _buildFloatingCard(
               icon: Icons.rocket_launch_rounded,
-              label: _tLanding(context, 'Missions'),
+              label: _tLanding(context, 'Map Growth'),
               color: ScholesaColors.impact,
             ),
           ),
@@ -619,7 +610,7 @@ class _LandingPageState extends State<LandingPage>
             right: 60,
             child: _buildFloatingCard(
               icon: Icons.groups_rounded,
-              label: _tLanding(context, 'Community'),
+              label: _tLanding(context, 'Portfolio Proof'),
               color: ScholesaColors.parent,
             ),
           ),
@@ -852,17 +843,17 @@ class _LandingPageState extends State<LandingPage>
             alignment: WrapAlignment.center,
             children: <Widget>[
               _buildFeatureItem(Icons.assignment_turned_in_rounded,
-                  _tLanding(context, 'Mission-Based Learning')),
+                  _tLanding(context, 'Live Evidence Capture')),
               _buildFeatureItem(Icons.psychology_rounded,
-                  _tLanding(context, 'AI Habit Coaching')),
+                  _tLanding(context, 'AI Use Transparency')),
               _buildFeatureItem(Icons.folder_special_rounded,
-                  _tLanding(context, 'Portfolio Showcase')),
-              _buildFeatureItem(Icons.insights_rounded,
-                  _tLanding(context, 'Progress Analytics')),
+                  _tLanding(context, 'Portfolio-Ready Proof')),
               _buildFeatureItem(
-                  Icons.groups_rounded, _tLanding(context, 'Parent Portal')),
+                  Icons.insights_rounded, _tLanding(context, 'Growth Signals')),
               _buildFeatureItem(
-                  Icons.cloud_off_rounded, _tLanding(context, 'Offline-First')),
+                  Icons.groups_rounded, _tLanding(context, 'Family Clarity')),
+              _buildFeatureItem(Icons.cloud_off_rounded,
+                  _tLanding(context, 'Classroom-Ready Offline')),
             ],
           ),
         ],
@@ -906,7 +897,7 @@ class _LandingPageState extends State<LandingPage>
       child: Column(
         children: <Widget>[
           Text(
-            _tLanding(context, 'FOR EVERYONE'),
+            _tLanding(context, 'PROOF FOR EVERY LEARNER'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -916,7 +907,7 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            _tLanding(context, 'Designed for Your Role'),
+            _tLanding(context, 'Built for Every Evidence Role'),
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
@@ -934,12 +925,12 @@ class _LandingPageState extends State<LandingPage>
                   ScholesaColors.learner, Icons.school_rounded),
               _buildRoleChip(_tLanding(context, 'Educators'),
                   ScholesaColors.educator, Icons.person_rounded),
-              _buildRoleChip(_tLanding(context, 'Parents'),
+              _buildRoleChip(_tLanding(context, 'Families'),
                   ScholesaColors.parent, Icons.family_restroom_rounded),
-              _buildRoleChip(_tLanding(context, 'Site Admins'),
+              _buildRoleChip(_tLanding(context, 'School Teams'),
                   ScholesaColors.site, Icons.business_rounded),
-              _buildRoleChip(
-                  'HQ', ScholesaColors.hq, Icons.admin_panel_settings_rounded),
+              _buildRoleChip(_tLanding(context, 'HQ Leaders'),
+                  ScholesaColors.hq, Icons.admin_panel_settings_rounded),
             ],
           ),
         ],
@@ -983,7 +974,7 @@ class _LandingPageState extends State<LandingPage>
       child: Column(
         children: <Widget>[
           Text(
-            _tLanding(context, 'Ready to Transform Learning?'),
+            _tLanding(context, 'Make Growth Impossible to Miss'),
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -994,7 +985,7 @@ class _LandingPageState extends State<LandingPage>
           const SizedBox(height: 16),
           Text(
             _tLanding(context,
-                'Join hundreds of learning studios already using Scholesa.'),
+                'Bring every observation, artifact, reflection, and rubric judgment into one trusted evidence story.'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.9),

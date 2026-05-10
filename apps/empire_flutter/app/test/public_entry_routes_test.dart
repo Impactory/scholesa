@@ -9,6 +9,42 @@ import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
 import 'package:scholesa_app/ui/landing/landing_page.dart';
+import 'package:url_launcher_platform_interface/link.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
+
+class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
+  final List<String> launchedUrls = <String>[];
+
+  @override
+  LinkDelegate? get linkDelegate => null;
+
+  @override
+  Future<bool> canLaunch(String url) async => true;
+
+  @override
+  Future<void> closeWebView() async {}
+
+  @override
+  Future<bool> launch(
+    String url, {
+    required bool useSafariVC,
+    required bool useWebView,
+    required bool enableJavaScript,
+    required bool enableDomStorage,
+    required bool universalLinksOnly,
+    required Map<String, String> headers,
+    String? webOnlyWindowName,
+  }) async {
+    launchedUrls.add(url);
+    return true;
+  }
+
+  @override
+  Future<bool> supportsCloseForMode(PreferredLaunchMode mode) async => false;
+
+  @override
+  Future<bool> supportsMode(PreferredLaunchMode mode) async => true;
+}
 
 class _FakeAuthService extends Fake implements AuthService {}
 
@@ -45,6 +81,16 @@ Widget _buildLoginHarness() {
 }
 
 void main() {
+  late UrlLauncherPlatform originalUrlLauncher;
+
+  setUp(() {
+    originalUrlLauncher = UrlLauncherPlatform.instance;
+  });
+
+  tearDown(() {
+    UrlLauncherPlatform.instance = originalUrlLauncher;
+  });
+
   testWidgets('landing page shows core public messaging and navigates to login',
       (WidgetTester tester) async {
     final GoRouter router = GoRouter(
@@ -82,6 +128,44 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Login Screen'), findsOneWidget);
+  });
+
+  testWidgets('proof flow CTA opens the public video asset',
+      (WidgetTester tester) async {
+    final _FakeUrlLauncherPlatform urlLauncher = _FakeUrlLauncherPlatform();
+    UrlLauncherPlatform.instance = urlLauncher;
+
+    final GoRouter router = GoRouter(
+      initialLocation: '/welcome',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/welcome',
+          builder: (BuildContext context, GoRouterState state) =>
+              const LandingPage(),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder proofFlowCta = find.text('See the Proof Flow');
+    await tester.ensureVisible(proofFlowCta);
+    await tester.pumpAndSettle();
+
+    await tester.tap(proofFlowCta);
+    await tester.pump();
+
+    expect(urlLauncher.launchedUrls, hasLength(1));
+    expect(urlLauncher.launchedUrls.single, endsWith('/videos/proof-flow.mp4'));
   });
 
   testWidgets('login page validates required email and password fields',

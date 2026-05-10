@@ -48,6 +48,10 @@ mkdir -p "$STAGING_DIR/apps/empire_flutter"
 cp "$REPO_ROOT/Dockerfile.flutter" "$STAGING_DIR/Dockerfile.flutter"
 cp "$REPO_ROOT/cloudbuild.flutter.yaml" "$STAGING_DIR/cloudbuild.flutter.yaml"
 cp "$REPO_ROOT/scholesa.svg" "$STAGING_DIR/scholesa.svg"
+if [[ -d "$REPO_ROOT/public/videos" ]]; then
+  mkdir -p "$STAGING_DIR/public/videos"
+  rsync -a "$REPO_ROOT/public/videos/" "$STAGING_DIR/public/videos/"
+fi
 
 echo "Staging minimal Cloud Build context"
 rsync -a \

@@ -6,6 +6,9 @@ WORKDIR /workspace
 # Copy the canonical brand SVG from the repo root (needed by sync_platform_icons.sh)
 COPY scholesa.svg /workspace/scholesa.svg
 
+# Copy public proof-flow videos into the Flutter web artifact served by nginx.
+COPY public/videos /workspace/public/videos
+
 # Copy the Flutter app source
 COPY apps/empire_flutter/app /workspace/apps/empire_flutter/app
 
@@ -19,6 +22,7 @@ RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize
 
 RUN flutter pub get
 RUN flutter build web --wasm --release --no-tree-shake-icons
+RUN mkdir -p build/web/videos && cp -R /workspace/public/videos/. build/web/videos/
 RUN cache_bust="$(date +%Y%m%d%H%M%S)" && \
     sed -i "s/main.dart.js/main.dart.js?v=${cache_bust}/g; s/main.dart.mjs/main.dart.mjs?v=${cache_bust}/g; s/main.dart.wasm/main.dart.wasm?v=${cache_bust}/g" build/web/index.html
 

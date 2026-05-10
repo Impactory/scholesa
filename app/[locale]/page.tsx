@@ -10,6 +10,7 @@ import {
   GraduationCap,
   LineChart,
   Network,
+  PlayCircle,
   School,
   ShieldCheck,
   Sparkles,
@@ -17,6 +18,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
+import { ProofFlowModal } from '@/src/components/landing/ProofFlowModal';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
 
@@ -60,6 +63,7 @@ const trustOutcomes = [
 
 export default function LandingPage() {
   const { locale, t } = useI18n();
+  const [proofFlowOpen, setProofFlowOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-app-canvas text-app-foreground">
@@ -120,6 +124,15 @@ export default function LandingPage() {
                   Enter the evidence engine
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => setProofFlowOpen(true)}
+                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md border border-cyan-300 bg-white px-5 py-3 text-sm font-semibold text-cyan-800 shadow-sm hover:bg-cyan-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-cyan-700 dark:bg-slate-900 dark:text-cyan-200 dark:hover:bg-slate-800"
+                  aria-haspopup="dialog"
+                >
+                  <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                  See the Proof Flow
+                </button>
                 <Link
                   href={`/${locale}/register`}
                   className="min-touch-target inline-flex items-center justify-center rounded-md border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
@@ -266,6 +279,8 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      <ProofFlowModal open={proofFlowOpen} onClose={() => setProofFlowOpen(false)} />
     </div>
   );
 }
