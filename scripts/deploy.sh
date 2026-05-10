@@ -428,7 +428,13 @@ deploy_primary_web() {
   region="${GCP_REGION:-us-central1}"
   service="${CLOUD_RUN_SERVICE:-scholesa-web}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
-  image="gcr.io/${project_id}/scholesa:${image_tag}"
+  if [[ -n "${CLOUD_RUN_IMAGE:-}" ]]; then
+    image="$CLOUD_RUN_IMAGE"
+  elif [[ -n "${CLOUD_RUN_IMAGE_REPOSITORY:-}" ]]; then
+    image="${CLOUD_RUN_IMAGE_REPOSITORY}:${image_tag}"
+  else
+    image="gcr.io/${project_id}/scholesa:${image_tag}"
+  fi
 
   ensure_no_traffic_service_exists "$project_id" "$region" "$service"
 
@@ -467,7 +473,7 @@ deploy_primary_web() {
   )
 
   local substitutions
-  substitutions="_TAG=${image_tag}"
+  substitutions="_TAG=${image_tag},_IMAGE=${image}"
   for key in "${env_keys[@]}"; do
     local value
     value="$(resolve_primary_web_env_value "$key")"

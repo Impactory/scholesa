@@ -3,7 +3,9 @@ steps:
     args:
       - build
       - -t
-      - gcr.io/$PROJECT_ID/scholesa:${_TAG}
+      - ${_IMAGE}
+      - --label
+      - org.opencontainers.image.version=${_TAG}
       - --build-arg
       - NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}
       - --build-arg
@@ -20,9 +22,10 @@ steps:
       - NEXT_PUBLIC_ENABLE_SW=${_NEXT_PUBLIC_ENABLE_SW}
       - .
 images:
-  - gcr.io/$PROJECT_ID/scholesa:${_TAG}
+  - ${_IMAGE}
 substitutions:
   _TAG: latest
+  _IMAGE: gcr.io/$PROJECT_ID/scholesa:latest
   _NEXT_PUBLIC_FIREBASE_API_KEY: ''
   _NEXT_PUBLIC_FIREBASE_PROJECT_ID: ''
   _NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ''
