@@ -141,7 +141,7 @@ void main() {
       expect(spoken, isNotEmpty);
       expect(
         spoken.first.toLowerCase(),
-        contains('guide you with hints'),
+        contains('next small step'),
       );
     });
 
@@ -215,7 +215,7 @@ void main() {
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
       expect(
-        find.textContaining('Help will answer out loud.'),
+        find.textContaining('talk to MiloOS like you would talk to a coach'),
         findsOneWidget,
       );
     });
@@ -262,12 +262,12 @@ void main() {
       expect(spoken, isNotEmpty);
       expect(find.textContaining('Try one tiny next step now.'), findsNothing);
       expect(
-        find.textContaining('Help answered out loud.'),
+        find.textContaining('MiloOS answered out loud.'),
         findsOneWidget,
       );
-      expect(find.text('Replay spoken response'), findsOneWidget);
+      expect(find.text('Replay MiloOS'), findsOneWidget);
 
-      await tester.tap(find.text('Replay spoken response'));
+      await tester.tap(find.text('Replay MiloOS'));
       await tester.pump();
 
       expect(
@@ -280,7 +280,7 @@ void main() {
     });
 
     testWidgets(
-      'shows zero-confidence AI Help banner when runtime state is unavailable',
+        'shows zero-confidence AI Help banner when runtime state is unavailable',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -308,7 +308,7 @@ void main() {
     });
 
     testWidgets(
-      'shows guarded AI Help banner when learner confidence is below threshold',
+        'shows guarded AI Help banner when learner confidence is below threshold',
         (WidgetTester tester) async {
       final _FakeRuntime fakeRuntime = _FakeRuntime()
         ..setReadyState(confidence: 0.81);

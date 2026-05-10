@@ -654,8 +654,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _interactionSignalTimer?.cancel();
     _webSpeechRecognition?.abort();
     _webSpeechRecognition = null;
-    unawaited(_speechToText.stop());
-    unawaited(_flutterTts.stop());
+    unawaited(_speechToText.stop().catchError((_) {}));
+    unawaited(_flutterTts.stop().catchError((_) {}));
     if (kIsWeb) {
       WebSpeechSynthesis.cancel();
     }

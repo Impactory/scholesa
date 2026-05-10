@@ -9,9 +9,13 @@ This is an internal verification plan. Scholesa is not gold-ready until every re
 - Focused blocker suite passed: auth sign-out, global session menu, app shell chrome, learner today evidence loop, and global AI assistant overlay.
 - Non-deploying release gate passed after fixing the root logout contract test and restoring the functions evidence-chain emulator env flag in `./scripts/deploy.sh release-gate`.
 - Screenshot gap fixed: the shared global session chrome no longer renders a separate wide-layout Sign Out pill over page controls; sign-out remains available inside the account menu.
+- MiloOS floating support gap fixed at the root overlay: the global assistant entry is now a bounded icon-only FAB, no hover tooltip/bubble/pulse expands over page controls, and the global FAB is hidden on the dedicated learner MiloOS page.
+- MiloOS spoken-copy gap fixed: startup and voice-only status copy now speaks as a supportive coach, and browser/Flutter TTS defaults are tuned toward slower, warmer speech.
+- Focused MiloOS validation passed after the hover/voice fix: `flutter test test/ai_coach_widget_regression_test.dart test/global_ai_assistant_overlay_regression_test.dart test/web_speech_test.dart test/ui_golden_test.dart` and focused Flutter analyzer both passed.
 - Flutter web release build passed: `flutter build web --release`.
 - Local native compiles passed after the session chrome fix: macOS release with repo no-sign settings, iOS release with `--no-codesign`, and Android release AAB/APK.
-- Cloud Run publish is blocked pending local Google reauthentication; `gcloud` resolved `studio-3328096157-e3f79` and then prompted for the account password before `empire-web` deploy/probe could continue.
+- Cloud Run publish through `./scripts/deploy.sh flutter-web` succeeded earlier in this pass for `studio-3328096157-e3f79` / `empire-web`, routing revision `empire-web-00084-6wg` to 100 percent traffic. The later MiloOS hover/voice changes still require a fresh full Flutter gate and redeploy before the live site can be claimed current.
+- Gold stability/security next-step docs added: `GOLD_STABILITY_SECURITY_NEXT_STEPS_2026-05-10.md`, `GOLD_WORKFLOW_BUG_COVERAGE_MATRIX_2026-05-10.md`, and `GOLD_EMULATED_TEST_PLAN_2026-05-10.md`.
 - Native-channel distribution remains blocked by missing signing, provisioning, App Store Connect, Google Play, and notarization prerequisites reported by `./scripts/native_distribution_readiness.sh`.
 - Live proof-flow video deployment was previously verified on `scholesa.com` with byte-for-byte MP4 match.
 
