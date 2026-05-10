@@ -40,7 +40,7 @@ void main() {
     });
 
     test(
-      'removes legacy assistant identity wording from runtime prompt and errors',
+        'removes legacy assistant identity wording from runtime prompt and errors',
         () {
       expect(coachWidgetSource,
           contains('You are MiloOS in a live spoken conversation.'));
@@ -75,23 +75,23 @@ void main() {
           isNot(contains('You are Scholesa AI Coach in a live conversation.')));
       expect(coachWidgetSource,
           isNot(contains('MiloOS closed-loop coaching runtime')));
-        expect(coachWidgetSource, isNot(contains("'miloosLoop': true")));
-        expect(coachWidgetSource, isNot(contains("'miloos_loop'")));
+      expect(coachWidgetSource, isNot(contains("'miloosLoop': true")));
+      expect(coachWidgetSource, isNot(contains("'miloos_loop'")));
 
       expect(
           overlaySource, contains("AppStrings.of(context, 'assistant.title')"));
       expect(overlaySource,
           contains("AppStrings.of(context, 'assistant.tooltip')"));
       expect(overlaySource,
-          contains("AppStrings.of(context, 'assistant.hoverHint')"));
-        expect(overlaySource, contains("event: 'assistant.open.failed'"));
-        expect(overlaySource, contains("'cta': 'global_ai_assistant_open'"));
-        expect(overlaySource, contains("'source': 'global_ai_assistant_open'"));
-        expect(overlaySource, contains("'cta': 'global_ai_assistant_close'"));
+          isNot(contains("AppStrings.of(context, 'assistant.hoverHint')")));
+      expect(overlaySource, contains("event: 'assistant.open.failed'"));
+      expect(overlaySource, contains("'cta': 'global_ai_assistant_open'"));
+      expect(overlaySource, contains("'source': 'global_ai_assistant_open'"));
+      expect(overlaySource, contains("'cta': 'global_ai_assistant_close'"));
       expect(overlaySource, isNot(contains('AI Coach')));
       expect(overlaySource, isNot(contains('MiloOS')));
       expect(overlaySource, isNot(contains('Voice API')));
-        expect(coachWidgetSource,
+      expect(coachWidgetSource,
           isNot(contains('AI request failed, returning safe escalation:')));
     });
   });

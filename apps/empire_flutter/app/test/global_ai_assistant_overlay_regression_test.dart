@@ -19,7 +19,8 @@ class _FakeLearningRuntimeProvider extends LearningRuntimeProvider {
   }) : super(firestore: FakeFirebaseFirestore());
 
   OrchestrationState? _fakeState;
-  final List<Map<String, dynamic>> trackedEventPayloads = <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> trackedEventPayloads =
+      <Map<String, dynamic>>[];
 
   @override
   OrchestrationState? get state => _fakeState;
@@ -58,7 +59,8 @@ class _FakeLearningRuntimeProvider extends LearningRuntimeProvider {
 
 void main() {
   group('GlobalAiAssistantOverlay BOS auto-popup', () {
-    testWidgets('logs bos_auto_popup trigger metadata when hesitation auto-opens',
+    testWidgets(
+        'logs bos_auto_popup trigger metadata when hesitation auto-opens',
         (WidgetTester tester) async {
       final AppState appState = AppState();
       appState.updateFromMeResponse(<String, dynamic>{
@@ -83,7 +85,8 @@ void main() {
           <Map<String, dynamic>>[];
       int sheetOpenCount = 0;
 
-      await TelemetryService.runWithDispatcher((Map<String, dynamic> payload) async {
+      await TelemetryService.runWithDispatcher(
+          (Map<String, dynamic> payload) async {
         telemetryPayloads.add(payload);
       }, () async {
         await tester.pumpWidget(
@@ -129,13 +132,15 @@ void main() {
 
       expect(sheetOpenCount, equals(1));
 
-      final Iterable<Map<String, dynamic>> ctaClickedEvents = telemetryPayloads
-          .where((Map<String, dynamic> payload) => payload['event'] == 'cta.clicked');
+      final Iterable<Map<String, dynamic>> ctaClickedEvents =
+          telemetryPayloads.where((Map<String, dynamic> payload) =>
+              payload['event'] == 'cta.clicked');
 
       final bool hasBosAutoPopupOpenEvent = ctaClickedEvents.any(
         (Map<String, dynamic> payload) {
           final Map<String, dynamic> metadata =
-              (payload['metadata'] as Map<String, dynamic>? ?? <String, dynamic>{});
+              (payload['metadata'] as Map<String, dynamic>? ??
+                  <String, dynamic>{});
           return metadata['cta'] == 'global_ai_assistant_open' &&
               metadata['surface'] == 'floating_assistant' &&
               metadata['trigger'] == 'bos_auto_popup';
@@ -145,7 +150,8 @@ void main() {
       final bool hasBosAutoPopupCloseEvent = ctaClickedEvents.any(
         (Map<String, dynamic> payload) {
           final Map<String, dynamic> metadata =
-              (payload['metadata'] as Map<String, dynamic>? ?? <String, dynamic>{});
+              (payload['metadata'] as Map<String, dynamic>? ??
+                  <String, dynamic>{});
           return metadata['cta'] == 'global_ai_assistant_close' &&
               metadata['surface'] == 'floating_assistant' &&
               metadata['trigger'] == 'bos_auto_popup';
@@ -230,7 +236,8 @@ void main() {
         'entitlements': <dynamic>[],
       });
 
-      final _FakeLearningRuntimeProvider fakeRuntime = _FakeLearningRuntimeProvider(
+      final _FakeLearningRuntimeProvider fakeRuntime =
+          _FakeLearningRuntimeProvider(
         siteId: 'site_test',
         learnerId: 'learner_test',
         gradeBand: GradeBand.g4_6,
@@ -282,8 +289,10 @@ void main() {
       expect(sheetOpenCount, equals(1));
       expect(fakeRuntime.trackedEventPayloads, isNotEmpty);
 
-      final Map<String, dynamic> payload = fakeRuntime.trackedEventPayloads.lastWhere(
-        (Map<String, dynamic> entry) => entry['eventType'] == 'interaction_signal_observed',
+      final Map<String, dynamic> payload =
+          fakeRuntime.trackedEventPayloads.lastWhere(
+        (Map<String, dynamic> entry) =>
+            entry['eventType'] == 'interaction_signal_observed',
       )['payload'] as Map<String, dynamic>;
 
       expect(payload['signalFamily'], equals('pointer'));

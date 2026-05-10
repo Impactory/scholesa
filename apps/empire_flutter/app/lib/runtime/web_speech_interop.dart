@@ -81,8 +81,7 @@ extension type _JsSpeechSynthesisVoice._(JSObject _) implements JSObject {
 /// Try to get a SpeechRecognition constructor from globalContext.
 _JsSpeechRecognition? _createSpeechRecognition() {
   try {
-    final JSAny? ctor =
-        globalContext.getProperty('SpeechRecognition'.toJS);
+    final JSAny? ctor = globalContext.getProperty('SpeechRecognition'.toJS);
     if (ctor != null && ctor.isA<JSFunction>()) {
       return (ctor as JSFunction).callAsConstructor<_JsSpeechRecognition>();
     }
@@ -99,8 +98,7 @@ _JsSpeechRecognition? _createSpeechRecognition() {
 
 bool _hasSpeechRecognition() {
   try {
-    final JSAny? ctor =
-        globalContext.getProperty('SpeechRecognition'.toJS);
+    final JSAny? ctor = globalContext.getProperty('SpeechRecognition'.toJS);
     if (ctor != null && ctor.isA<JSFunction>()) return true;
   } catch (_) {}
   try {
@@ -145,8 +143,7 @@ class WebSpeechRecognition {
       ..maxAlternatives = 1;
 
     recognition.onresult = ((JSObject event) {
-      final _JsSpeechRecognitionEvent e =
-          event as _JsSpeechRecognitionEvent;
+      final _JsSpeechRecognitionEvent e = event as _JsSpeechRecognitionEvent;
       final StringBuffer transcript = StringBuffer();
       bool isFinal = false;
       for (int i = 0; i < e.results.length; i++) {
@@ -198,8 +195,7 @@ class WebSpeechRecognition {
 class WebSpeechSynthesis {
   static bool get isSupported {
     try {
-      final JSAny? synth =
-          globalContext.getProperty('speechSynthesis'.toJS);
+      final JSAny? synth = globalContext.getProperty('speechSynthesis'.toJS);
       return synth != null && synth.isA<JSObject>();
     } catch (_) {
       return false;
@@ -235,14 +231,13 @@ class WebSpeechSynthesis {
       bool assignedPreferredVoice = false;
       for (final web.SpeechSynthesisVoice voice in voices) {
         final String voiceName = voice.name.toLowerCase();
-        final bool preferredHumanVoice =
-            voiceName.contains('natural') ||
-                voiceName.contains('enhanced') ||
-                voiceName.contains('premium') ||
-                voiceName.contains('samantha') ||
-                voiceName.contains('alex') ||
-                voiceName.contains('daniel') ||
-                voiceName.contains('google');
+        final bool preferredHumanVoice = voiceName.contains('natural') ||
+            voiceName.contains('enhanced') ||
+            voiceName.contains('premium') ||
+            voiceName.contains('samantha') ||
+            voiceName.contains('alex') ||
+            voiceName.contains('daniel') ||
+            voiceName.contains('google');
         if (voice.lang.startsWith(langPrefix) && preferredHumanVoice) {
           utterance.voice = voice as _JsSpeechSynthesisVoice;
           assignedPreferredVoice = true;

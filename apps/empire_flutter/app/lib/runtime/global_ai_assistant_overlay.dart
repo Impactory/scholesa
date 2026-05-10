@@ -101,48 +101,55 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.only(right: 16, bottom: 16),
-              child: SizedBox.square(
-                dimension: 52,
-                child: FloatingActionButton(
-                  heroTag: 'global_ai_assistant_fab',
-                  tooltip: AppStrings.of(context, 'assistant.tooltip'),
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  elevation: 0,
-                  hoverElevation: 0,
-                  focusElevation: 0,
-                  highlightElevation: 0,
-                  shape: const CircleBorder(),
-                  onPressed: () => _openAssistantSheet(
-                    context,
-                    role: role,
-                    siteId: siteId,
-                    learnerId: learnerId,
-                    trigger: _isPointerPlatform() ? 'click' : 'tap',
-                  ),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: <Color>[
-                          ScholesaColors.futureSkills,
-                          ScholesaColors.leadership,
-                          ScholesaColors.impact,
+              child: Semantics(
+                button: true,
+                label: AppStrings.of(context, 'assistant.tooltip'),
+                child: SizedBox.square(
+                  dimension: 52,
+                  child: FloatingActionButton(
+                    heroTag: 'global_ai_assistant_fab',
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    elevation: 0,
+                    hoverElevation: 0,
+                    focusElevation: 0,
+                    highlightElevation: 0,
+                    shape: const CircleBorder(),
+                    onPressed: () => _openAssistantSheet(
+                      context,
+                      role: role,
+                      siteId: siteId,
+                      learnerId: learnerId,
+                      trigger: _isPointerPlatform() ? 'click' : 'tap',
+                    ),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            ScholesaColors.futureSkills,
+                            ScholesaColors.leadership,
+                            ScholesaColors.impact,
+                          ],
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: ScholesaColors.leadership
+                                .withValues(alpha: 0.22),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: ScholesaColors.leadership.withValues(alpha: 0.22),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      child: const Icon(
+                        Icons.smart_toy_rounded,
+                        color: Colors.white,
+                      ),
                     ),
-                    child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
                   ),
                 ),
               ),
@@ -164,9 +171,8 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
       return;
     }
 
-    final BuildContext? sheetContext =
-        widget.navigatorKey?.currentContext ??
-            Navigator.maybeOf(context, rootNavigator: true)?.context;
+    final BuildContext? sheetContext = widget.navigatorKey?.currentContext ??
+        Navigator.maybeOf(context, rootNavigator: true)?.context;
     if (sheetContext == null) {
       unawaited(TelemetryService.instance.logEvent(
         event: 'assistant.open.failed',
@@ -298,20 +304,19 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
 
     final GradeBand monitorGradeBand = gradeBandForRole(UserRole.learner);
 
-    final RuntimeProviderFactory runtimeFactory =
-        widget.runtimeFactory ??
-            ({
-              required String siteId,
-              required String learnerId,
-              required GradeBand gradeBand,
-              String? sessionOccurrenceId,
-            }) =>
-                LearningRuntimeProvider(
-                  siteId: siteId,
-                  learnerId: learnerId,
-                  gradeBand: gradeBand,
-                  sessionOccurrenceId: sessionOccurrenceId,
-                );
+    final RuntimeProviderFactory runtimeFactory = widget.runtimeFactory ??
+        ({
+          required String siteId,
+          required String learnerId,
+          required GradeBand gradeBand,
+          String? sessionOccurrenceId,
+        }) =>
+            LearningRuntimeProvider(
+              siteId: siteId,
+              learnerId: learnerId,
+              gradeBand: gradeBand,
+              sessionOccurrenceId: sessionOccurrenceId,
+            );
     final LearningRuntimeProvider runtime = runtimeFactory(
       siteId: siteId,
       learnerId: learnerId,
@@ -339,7 +344,10 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
 
   Future<void> _handleBosRuntimeUpdate() async {
     final LearningRuntimeProvider? runtime = _bosRuntime;
-    if (!mounted || runtime == null || _assistantSheetOpen || _bosPopupInFlight) {
+    if (!mounted ||
+        runtime == null ||
+        _assistantSheetOpen ||
+        _bosPopupInFlight) {
       return;
     }
 
@@ -448,7 +456,8 @@ class _GlobalAiAssistantSheet extends StatefulWidget {
   final FirebaseFirestore? firestore;
 
   @override
-  State<_GlobalAiAssistantSheet> createState() => _GlobalAiAssistantSheetState();
+  State<_GlobalAiAssistantSheet> createState() =>
+      _GlobalAiAssistantSheetState();
 }
 
 class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {

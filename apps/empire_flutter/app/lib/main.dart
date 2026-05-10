@@ -616,7 +616,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
                   AnimatedBuilder(
                     animation: _router!.routeInformationProvider,
                     builder: (BuildContext context, Widget? child) {
-                      final Uri uri = _router!.routeInformationProvider.value.uri;
+                      final Uri uri =
+                          _router!.routeInformationProvider.value.uri;
                       if (uri.path == '/learner/miloos') {
                         return const SizedBox.shrink();
                       }

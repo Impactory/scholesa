@@ -315,8 +315,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         _listenAfterSpeech = false;
       });
 
-      final bool uploadReady =
-          await audioRecorder.hasPermission();
+      final bool uploadReady = await audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -686,7 +685,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       path = 'ai-coach-${DateTime.now().millisecondsSinceEpoch}.webm';
     } else {
       final dir = await getTemporaryDirectory();
-      path = '${dir.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
+      path =
+          '${dir.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
     }
     await _ensureAudioRecorder().start(
       RecordConfig(
@@ -724,15 +724,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         // On web, stop() returns a blob URL. Fetch it to get raw bytes.
         final http.Response blobResponse = await http.get(Uri.parse(path));
         final Uint8List audioBytes = blobResponse.bodyBytes;
-        transcribed =
-            await VoiceRuntimeService.instance.transcribeAudioBase64(
+        transcribed = await VoiceRuntimeService.instance.transcribeAudioBase64(
           audioBytes: audioBytes,
           mimeType: 'audio/webm;codecs=opus',
           locale: locale,
         );
       } else {
-        transcribed =
-            await VoiceRuntimeService.instance.transcribeAudioFile(
+        transcribed = await VoiceRuntimeService.instance.transcribeAudioFile(
           audioFilePath: path,
           locale: locale,
         );
@@ -766,8 +764,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'chars': transcribed.transcript.length,
           if (transcribed.confidence != null)
             'confidence': transcribed.confidence,
-          if (transcribed.latencyMs != null)
-            'latencyMs': transcribed.latencyMs,
+          if (transcribed.latencyMs != null) 'latencyMs': transcribed.latencyMs,
         },
       );
 
@@ -894,8 +891,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         speechReady = false;
       }
 
-      final bool uploadReady =
-          await _ensureAudioRecorder().hasPermission();
+      final bool uploadReady = await _ensureAudioRecorder().hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -961,8 +957,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
               payload: <String, dynamic>{
                 'source': 'speech_to_text',
                 'chars': result.recognizedWords.length,
-                if (result.confidence > 0)
-                  'confidence': result.confidence,
+                if (result.confidence > 0) 'confidence': result.confidence,
               },
             );
             if (widget.voiceOnlyConversation) {
@@ -1244,24 +1239,26 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       'personaInstructions':
           'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
       // BOS orchestration state from live Firestore listener.
-      if (widget.runtime.state != null) 'orchestrationState': <String, dynamic>{
-        'xHat': <String, double>{
-          'cognition': widget.runtime.state!.xHat.cognition,
-          'engagement': widget.runtime.state!.xHat.engagement,
-          'integrity': widget.runtime.state!.xHat.integrity,
+      if (widget.runtime.state != null)
+        'orchestrationState': <String, dynamic>{
+          'xHat': <String, double>{
+            'cognition': widget.runtime.state!.xHat.cognition,
+            'engagement': widget.runtime.state!.xHat.engagement,
+            'integrity': widget.runtime.state!.xHat.integrity,
+          },
+          if (widget.runtime.confidence != null)
+            'confidence': widget.runtime.confidence,
+          'stateStatus': widget.runtime.stateStatus.name,
         },
-        if (widget.runtime.confidence != null)
-          'confidence': widget.runtime.confidence,
-        'stateStatus': widget.runtime.stateStatus.name,
-      },
       // Active MVL episode context.
-      if (widget.runtime.hasMvlGate) 'activeMvl': <String, dynamic>{
-        'active': true,
-        if (widget.runtime.activeMvl?.triggerReason != null)
-          'triggerReason': widget.runtime.activeMvl!.triggerReason,
-        if (widget.runtime.activeMvl?.evidenceEventIds != null)
-          'evidenceCount': widget.runtime.activeMvl!.evidenceEventIds.length,
-      },
+      if (widget.runtime.hasMvlGate)
+        'activeMvl': <String, dynamic>{
+          'active': true,
+          if (widget.runtime.activeMvl?.triggerReason != null)
+            'triggerReason': widget.runtime.activeMvl!.triggerReason,
+          if (widget.runtime.activeMvl?.evidenceEventIds != null)
+            'evidenceCount': widget.runtime.activeMvl!.evidenceEventIds.length,
+        },
     };
   }
 
@@ -1725,8 +1722,7 @@ Response style:
       }
 
       // Submit chat interaction as MVL evidence when gate is active.
-      if (widget.runtime.hasMvlGate &&
-          widget.actorRole == UserRole.learner) {
+      if (widget.runtime.hasMvlGate && widget.actorRole == UserRole.learner) {
         final MvlEpisode? episode = widget.runtime.activeMvl;
         final String? eventId =
             response.aiHelpOpenedEventId ?? response.traceId;
@@ -1895,7 +1891,8 @@ Response style:
               },
             );
             if (mode == AiCoachMode.debug) {
-              widget.runtime.trackEvent('debug_attempted', payload: <String, dynamic>{
+              widget.runtime
+                  .trackEvent('debug_attempted', payload: <String, dynamic>{
                 'missionId': widget.missionId ?? '',
               });
             }
