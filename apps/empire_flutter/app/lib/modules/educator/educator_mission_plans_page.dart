@@ -17,7 +17,8 @@ String _tEducatorMissionPlans(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
-typedef EducatorMissionPlansLoader = Future<List<Map<String, dynamic>>> Function(
+typedef EducatorMissionPlansLoader = Future<List<Map<String, dynamic>>>
+    Function(
   BuildContext context,
 );
 
@@ -118,7 +119,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       'Mission plans could not load right now. Refresh, or check again after the app reconnects.';
   static final List<String> _supportedPillarFilters = <String>[
     _allPillarsFilter,
-    ...CurriculumLegacyFamilyCode.values.map(curriculumLegacyFamilyStorageLabel),
+    ...CurriculumLegacyFamilyCode.values
+        .map(curriculumLegacyFamilyStorageLabel),
   ];
 
   List<_MissionPlan> _missionPlans = <_MissionPlan>[];
@@ -225,22 +227,25 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 padding: const EdgeInsets.all(16),
                 child: _buildLoadErrorState(_loadError!),
               )
-        : _filteredMissionPlans.isEmpty
-            ? Center(
-                child: Text(
-                  _tEducatorMissionPlans(context, 'No missions yet'),
-                  style: const TextStyle(color: ScholesaColors.textSecondary),
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _filteredMissionPlans.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return _buildMissionPlanCard(_filteredMissionPlans[index]);
-                },
-              );
+            : _filteredMissionPlans.isEmpty
+                ? Center(
+                    child: Text(
+                      _tEducatorMissionPlans(context, 'No missions yet'),
+                      style:
+                          const TextStyle(color: ScholesaColors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _filteredMissionPlans.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return _buildMissionPlanCard(
+                          _filteredMissionPlans[index]);
+                    },
+                  );
 
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_tEducatorMissionPlans(context, 'Mission Plans')),
@@ -272,8 +277,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           return Column(
             children: <Widget>[
               AiContextCoachSection(
-                title: _tEducatorMissionPlans(
-                    context, 'Mission Planning MiloOS'),
+                title:
+                    _tEducatorMissionPlans(context, 'Mission Planning MiloOS'),
                 subtitle: _tEducatorMissionPlans(
                   context,
                   'See support ideas while designing missions for each learner',
@@ -625,181 +630,181 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-            Text(
-              plan.title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _tEducatorMissionPlans(context, plan.pillar),
-              style: TextStyle(
-                fontSize: 14,
-                color: _getPillarColor(plan.pillar),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (plan.description.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 16),
               Text(
-                plan.description,
+                plan.title,
                 style: const TextStyle(
-                  fontSize: 14,
-                  color: ScholesaColors.textSecondary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                _buildMetaChip(
-                  Icons.stacked_bar_chart_rounded,
-                  _difficultyLabel(plan.difficulty),
+              const SizedBox(height: 8),
+              Text(
+                _tEducatorMissionPlans(context, plan.pillar),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _getPillarColor(plan.pillar),
+                  fontWeight: FontWeight.w500,
                 ),
-                _buildMetaChip(
-                  Icons.checklist_rtl_rounded,
-                  '${plan.lessonSteps.length} ${_tEducatorMissionPlans(context, 'Steps')}',
-                ),
-                _buildMetaChip(
-                  Icons.verified_outlined,
-                  '${plan.evidenceDefaults.length} ${_tEducatorMissionPlans(context, 'Evidence defaults')}',
+              ),
+              if (plan.description.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                Text(
+                  plan.description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: ScholesaColors.textSecondary,
+                  ),
                 ),
               ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _tEducatorMissionPlans(context, 'Evidence defaults'),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _buildMetaChip(
+                    Icons.stacked_bar_chart_rounded,
+                    _difficultyLabel(plan.difficulty),
+                  ),
+                  _buildMetaChip(
+                    Icons.checklist_rtl_rounded,
+                    '${plan.lessonSteps.length} ${_tEducatorMissionPlans(context, 'Steps')}',
+                  ),
+                  _buildMetaChip(
+                    Icons.verified_outlined,
+                    '${plan.evidenceDefaults.length} ${_tEducatorMissionPlans(context, 'Evidence defaults')}',
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: plan.evidenceDefaults.isEmpty
-                  ? <Widget>[
-                      Text(
+              const SizedBox(height: 20),
+              Text(
+                _tEducatorMissionPlans(context, 'Evidence defaults'),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: plan.evidenceDefaults.isEmpty
+                    ? <Widget>[
+                        Text(
+                          _tEducatorMissionPlans(
+                            context,
+                            'No evidence defaults selected',
+                          ),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                          ),
+                        ),
+                      ]
+                    : plan.evidenceDefaults
+                        .map((String defaultKey) => _buildMetaChip(
+                              Icons.task_alt_rounded,
+                              _evidenceDefaultLabel(defaultKey),
+                            ))
+                        .toList(),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _tEducatorMissionPlans(context, 'Lesson flow'),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Column(
+                children: plan.lessonSteps.asMap().entries.map(
+                  (MapEntry<int, String> entry) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 14,
+                        backgroundColor:
+                            ScholesaColors.educator.withValues(alpha: 0.15),
+                        foregroundColor: ScholesaColors.educator,
+                        child: Text('${entry.key + 1}'),
+                      ),
+                      title: Text(entry.value),
+                    );
+                  },
+                ).toList(),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'educator_mission_plans_edit_plan',
+                            'plan_id': plan.id,
+                          },
+                        );
+                        Navigator.pop(context);
+                        _showCreateMissionDialog(plan: plan);
+                      },
+                      child: Text(_tEducatorMissionPlans(context, 'Edit')),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmArchiveMission(plan);
+                      },
+                      icon: const Icon(Icons.archive_outlined),
+                      label: Text(
                         _tEducatorMissionPlans(
                           context,
-                          'No evidence defaults selected',
-                        ),
-                        style: const TextStyle(
-                          color: ScholesaColors.textSecondary,
+                          plan.status == PlanStatus.archived
+                              ? 'Archived'
+                              : 'Archive',
                         ),
                       ),
-                    ]
-                  : plan.evidenceDefaults
-                      .map((String defaultKey) => _buildMetaChip(
-                            Icons.task_alt_rounded,
-                            _evidenceDefaultLabel(defaultKey),
-                          ))
-                      .toList(),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _tEducatorMissionPlans(context, 'Lesson flow'),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Column(
-              children: plan.lessonSteps.asMap().entries.map(
-                (MapEntry<int, String> entry) {
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      radius: 14,
-                      backgroundColor:
-                          ScholesaColors.educator.withValues(alpha: 0.15),
-                      foregroundColor: ScholesaColors.educator,
-                      child: Text('${entry.key + 1}'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: plan.status == PlanStatus.archived
+                            ? Colors.grey.shade300
+                            : Colors.orange,
+                        foregroundColor: plan.status == PlanStatus.archived
+                            ? Colors.black54
+                            : Colors.white,
+                      ),
                     ),
-                    title: Text(entry.value),
-                  );
-                },
-              ).toList(),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'cta': 'educator_mission_plans_edit_plan',
-                          'plan_id': plan.id,
-                        },
-                      );
-                      Navigator.pop(context);
-                      _showCreateMissionDialog(plan: plan);
-                    },
-                    child: Text(_tEducatorMissionPlans(context, 'Edit')),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _confirmArchiveMission(plan);
-                    },
-                    icon: const Icon(Icons.archive_outlined),
-                    label: Text(
-                      _tEducatorMissionPlans(
-                        context,
-                        plan.status == PlanStatus.archived
-                            ? 'Archived'
-                            : 'Archive',
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: plan.status == PlanStatus.archived
-                          ? Colors.grey.shade300
-                          : Colors.orange,
-                      foregroundColor: plan.status == PlanStatus.archived
-                          ? Colors.black54
-                          : Colors.white,
-                    ),
+                ],
+              ),
+              if (plan.status == PlanStatus.archived) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  _tEducatorMissionPlans(
+                    context,
+                    'Archived mission plans stay visible for reference but can no longer be assigned.',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
                   ),
                 ),
               ],
-            ),
-            if (plan.status == PlanStatus.archived) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                _tEducatorMissionPlans(
-                  context,
-                  'Archived mission plans stay visible for reference but can no longer be assigned.',
+              if (plan.status != PlanStatus.archived) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  _tEducatorMissionPlans(
+                    context,
+                    'Archive completed or outdated mission plans to remove them from active planning.',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
                 ),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: ScholesaColors.textSecondary,
-                ),
-              ),
-            ],
-            if (plan.status != PlanStatus.archived) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                _tEducatorMissionPlans(
-                  context,
-                  'Archive completed or outdated mission plans to remove them from active planning.',
-                ),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: ScholesaColors.textSecondary,
-                ),
-              ),
-            ],
+              ],
             ],
           ),
         ),
@@ -876,19 +881,19 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         curriculumLegacyFamilyStorageLabelFromAny(plan?.pillar);
     String selectedDifficulty = plan?.difficulty ?? 'beginner';
     final Set<String> evidenceDefaults = <String>{
-      ...(plan?.evidenceDefaults ?? const <String>[
-        'explain_it_back',
-        'reflection_note',
-      ]),
+      ...(plan?.evidenceDefaults ??
+          const <String>[
+            'explain_it_back',
+            'reflection_note',
+          ]),
     };
-    final List<String> initialSteps =
-        plan?.lessonSteps.isNotEmpty == true
-            ? plan!.lessonSteps
-            : const <String>[
-                'Launch challenge',
-                'Guided practice',
-                'Evidence capture',
-              ];
+    final List<String> initialSteps = plan?.lessonSteps.isNotEmpty == true
+        ? plan!.lessonSteps
+        : const <String>[
+            'Launch challenge',
+            'Guided practice',
+            'Evidence capture',
+          ];
     final List<_LessonStepDraft> lessonSteps = initialSteps
         .asMap()
         .entries
@@ -944,7 +949,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   ),
                   items: CurriculumLegacyFamilyCode.values
                       .map((CurriculumLegacyFamilyCode code) {
-                    final String value = curriculumLegacyFamilyStorageLabel(code);
+                    final String value =
+                        curriculumLegacyFamilyStorageLabel(code);
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(
@@ -1214,14 +1220,14 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 final String successText = _tEducatorMissionPlans(
                   context,
                   isEditing
-                    ? 'Mission updated'
-                    : 'Mission created and added to list',
+                      ? 'Mission updated'
+                      : 'Mission created and added to list',
                 );
                 final String failedText = _tEducatorMissionPlans(
                   context,
                   isEditing
-                    ? 'Failed to update mission'
-                    : 'Failed to create mission',
+                      ? 'Failed to update mission'
+                      : 'Failed to create mission',
                 );
                 final String stepRequiredText = _tEducatorMissionPlans(
                     context, 'Add at least one lesson step');
@@ -1258,7 +1264,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
                 final bool saved = isEditing
                     ? await _updateMission(
-                    missionId: plan.id,
+                        missionId: plan.id,
                         currentStatus: plan.status,
                         title: title,
                         description: descriptionController.text.trim(),
@@ -1304,10 +1310,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       _loadError = null;
     });
     try {
-      final List<_MissionPlan> loaded =
-          widget.missionPlansLoader != null
-              ? await _loadMissionPlansFromOverride(widget.missionPlansLoader!)
-              : await _loadMissionPlansFromFirestore();
+      final List<_MissionPlan> loaded = widget.missionPlansLoader != null
+          ? await _loadMissionPlansFromOverride(widget.missionPlansLoader!)
+          : await _loadMissionPlansFromFirestore();
 
       setState(() {
         _missionPlans = loaded;
@@ -1536,52 +1541,47 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   ) async {
     final List<Map<String, dynamic>> items = await loader(context);
     final String? currentUserId = _resolveActorId();
-    return items
-        .map(_missionPlanFromMap)
-        .where((_MissionPlan plan) {
-          if (currentUserId == null || currentUserId.isEmpty) return true;
-          final Map<String, dynamic>? source = items
-              .where((Map<String, dynamic> item) =>
-                  (item['id'] as String? ?? '').trim() == plan.id)
-              .firstOrNull;
-          if (source == null) return true;
-          final String? ownerId =
-              (source['educatorId'] as String?) ?? (source['createdBy'] as String?);
-          if (ownerId == null || ownerId.trim().isEmpty) return true;
-          return ownerId.trim() == currentUserId;
-        })
-        .toList();
+    return items.map(_missionPlanFromMap).where((_MissionPlan plan) {
+      if (currentUserId == null || currentUserId.isEmpty) return true;
+      final Map<String, dynamic>? source = items
+          .where((Map<String, dynamic> item) =>
+              (item['id'] as String? ?? '').trim() == plan.id)
+          .firstOrNull;
+      if (source == null) return true;
+      final String? ownerId =
+          (source['educatorId'] as String?) ?? (source['createdBy'] as String?);
+      if (ownerId == null || ownerId.trim().isEmpty) return true;
+      return ownerId.trim() == currentUserId;
+    }).toList();
   }
 
   Future<List<_MissionPlan>> _loadMissionPlansFromFirestore() async {
     final FirebaseFirestore firestore = _resolveFirestore();
-    Query<Map<String, dynamic>> query = firestore.collection('missions').limit(100);
+    Query<Map<String, dynamic>> query =
+        firestore.collection('missions').limit(100);
     try {
       query = query.orderBy('createdAt', descending: true);
     } catch (_) {}
 
     final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
     final String? currentUserId = _resolveActorId();
-    return snapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-          final Map<String, dynamic> data = doc.data();
-          return _missionPlanFromMap(<String, dynamic>{
-            'id': doc.id,
-            ...data,
-          });
-        })
-        .where((_MissionPlan plan) {
-          if (currentUserId == null || currentUserId.isEmpty) return true;
-          final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
-              snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
-          final Map<String, dynamic>? data = sourceDoc?.data();
-          if (data == null) return true;
-          final String? ownerId =
-              (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
-          if (ownerId == null || ownerId.trim().isEmpty) return true;
-          return ownerId.trim() == currentUserId;
-        })
-        .toList();
+    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      return _missionPlanFromMap(<String, dynamic>{
+        'id': doc.id,
+        ...data,
+      });
+    }).where((_MissionPlan plan) {
+      if (currentUserId == null || currentUserId.isEmpty) return true;
+      final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
+          snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
+      final Map<String, dynamic>? data = sourceDoc?.data();
+      if (data == null) return true;
+      final String? ownerId =
+          (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
+      if (ownerId == null || ownerId.trim().isEmpty) return true;
+      return ownerId.trim() == currentUserId;
+    }).toList();
   }
 
   _MissionPlan _missionPlanFromMap(Map<String, dynamic> data) {
@@ -1596,8 +1596,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       description: (data['description'] as String? ?? '').trim(),
       pillar: pillar,
       duration: (data['duration'] as String? ?? '4 weeks'),
-      targetGrade:
-          (data['targetGrade'] as String? ?? data['gradeBand'] as String? ?? '6-8'),
+      targetGrade: (data['targetGrade'] as String? ??
+          data['gradeBand'] as String? ??
+          '6-8'),
       difficulty: (data['difficulty'] as String? ?? 'beginner').trim(),
       status: _parsePlanStatus(data['status'] as String?),
       assignedSessions: _asInt(data['assignedSessions']) ??

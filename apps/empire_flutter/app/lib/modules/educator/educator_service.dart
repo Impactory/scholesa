@@ -7,6 +7,12 @@ import '../../services/telemetry_service.dart';
 import 'educator_models.dart';
 
 const String _fallbackLearnerName = 'Learner unavailable';
+const String _educatorScheduleLoadErrorMessage =
+    "Today's educator schedule could not load right now. Refresh, or check again after the app reconnects.";
+const String _educatorSessionsLoadErrorMessage =
+    'Session list could not load right now. Refresh, or check again after the app reconnects.';
+const String _educatorLearnersLoadErrorMessage =
+    'Learner roster could not load right now. Refresh, or check again after the app reconnects.';
 
 class TodayScheduleSnapshot {
   const TodayScheduleSnapshot({
@@ -87,7 +93,7 @@ class EducatorService extends ChangeNotifier {
           'Loaded ${_todayClasses.length} classes for educator $educatorId');
     } catch (e) {
       debugPrint('Error loading educator schedule: $e');
-      _error = 'Failed to load schedule: $e';
+      _error = _educatorScheduleLoadErrorMessage;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -704,7 +710,7 @@ class EducatorService extends ChangeNotifier {
       debugPrint('Loaded ${_sessions.length} sessions for educator');
     } catch (e) {
       debugPrint('Error loading sessions: $e');
-      _error = 'Failed to load sessions: $e';
+      _error = _educatorSessionsLoadErrorMessage;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -816,8 +822,7 @@ class EducatorService extends ChangeNotifier {
       return <String, Map<String, dynamic>>{};
     }
 
-    final List<DocumentSnapshot<Map<String, dynamic>>> docs =
-        await Future.wait(
+    final List<DocumentSnapshot<Map<String, dynamic>>> docs = await Future.wait(
       missionIds.map(
         (String missionId) =>
             _firestore.collection('missions').doc(missionId).get(),
@@ -1087,7 +1092,7 @@ class EducatorService extends ChangeNotifier {
       debugPrint('Loaded ${_learners.length} learners for educator');
     } catch (e) {
       debugPrint('Error loading learners: $e');
-      _error = 'Failed to load learners: $e';
+      _error = _educatorLearnersLoadErrorMessage;
     } finally {
       _isLoading = false;
       notifyListeners();

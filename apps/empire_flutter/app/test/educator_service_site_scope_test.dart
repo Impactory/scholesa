@@ -60,7 +60,8 @@ void main() {
       expect(service.todayClasses.first.title, 'Site A class');
     });
 
-    test('loadTodaySchedule keeps stale classes visible after refresh failure', () async {
+    test('loadTodaySchedule keeps stale classes visible after refresh failure',
+        () async {
       int loadCount = 0;
       final EducatorService service = EducatorService(
         firestoreService: FirestoreService(
@@ -95,7 +96,12 @@ void main() {
               ),
             );
           }
-          throw Exception('network down');
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'failed-precondition',
+            message:
+                'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+          );
         },
       );
 
@@ -106,7 +112,12 @@ void main() {
       expect(service.todayClasses.single.title, 'Site A class');
       expect(service.dayStats, isNotNull);
       expect(service.dayStats?.totalClasses, 1);
-      expect(service.error, contains('Failed to load schedule'));
+      expect(
+        service.error,
+        "Today's educator schedule could not load right now. Refresh, or check again after the app reconnects.",
+      );
+      expect(service.error, isNot(contains('console.firebase.google.com')));
+      expect(service.error, isNot(contains('failed-precondition')));
     });
 
     test('loadSessions keeps stale sessions visible after refresh failure',
@@ -138,7 +149,12 @@ void main() {
               ],
             );
           }
-          throw Exception('network down');
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'failed-precondition',
+            message:
+                'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+          );
         },
       );
 
@@ -147,7 +163,12 @@ void main() {
 
       expect(service.sessions, hasLength(1));
       expect(service.sessions.single.title, 'Launch Lab');
-      expect(service.error, contains('Failed to load sessions'));
+      expect(
+        service.error,
+        'Session list could not load right now. Refresh, or check again after the app reconnects.',
+      );
+      expect(service.error, isNot(contains('console.firebase.google.com')));
+      expect(service.error, isNot(contains('failed-precondition')));
     });
 
     test('loadLearners only includes learners in active site', () async {
@@ -269,7 +290,8 @@ void main() {
       expect(service.learners.single.impactProgress, 0);
     });
 
-    test('loadLearners keeps stale learners visible after refresh failure', () async {
+    test('loadLearners keeps stale learners visible after refresh failure',
+        () async {
       int loadCount = 0;
       final EducatorService service = EducatorService(
         firestoreService: FirestoreService(
@@ -299,7 +321,12 @@ void main() {
               ],
             );
           }
-          throw Exception('network down');
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'failed-precondition',
+            message:
+                'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+          );
         },
       );
 
@@ -308,7 +335,12 @@ void main() {
 
       expect(service.learners, hasLength(1));
       expect(service.learners.single.name, 'Learner A');
-      expect(service.error, contains('Failed to load learners'));
+      expect(
+        service.error,
+        'Learner roster could not load right now. Refresh, or check again after the app reconnects.',
+      );
+      expect(service.error, isNot(contains('console.firebase.google.com')));
+      expect(service.error, isNot(contains('failed-precondition')));
     });
 
     test('createSession persists join code and teacher role variants',
@@ -398,7 +430,8 @@ void main() {
 
       final RosterImportOutcome? outcome = await service.importRosterCsv(
         sessionId: 'session-1',
-        csvContent: 'name,email\nKnown Learner,known@example.com\nNew Learner,new@example.com',
+        csvContent:
+            'name,email\nKnown Learner,known@example.com\nNew Learner,new@example.com',
       );
 
       expect(outcome, isNotNull);

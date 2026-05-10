@@ -122,7 +122,8 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('educator mission plans page keeps stale plans visible after refresh failure',
+  testWidgets(
+      'educator mission plans page keeps stale plans visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -459,7 +460,8 @@ void main() {
     expect(mission.data()?['status'], 'archived');
   });
 
-  testWidgets('educator mission plans page restores the saved pillar filter on reopen',
+  testWidgets(
+      'educator mission plans page restores the saved pillar filter on reopen',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final SharedPreferences prefs = await SharedPreferences.getInstance();

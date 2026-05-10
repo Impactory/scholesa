@@ -857,7 +857,12 @@ void main() {
       educatorId: 'educator-1',
       siteId: 'site-1',
       learnersLoader: () async {
-        throw StateError('load failed from test');
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'failed-precondition',
+          message:
+              'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+        );
       },
     );
 
@@ -879,9 +884,12 @@ void main() {
     );
     expect(
       find.textContaining(
-          'Failed to load learners: Bad state: load failed from test'),
+        'Learner roster could not load right now. Refresh, or check again after the app reconnects.',
+      ),
       findsOneWidget,
     );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
     expect(find.text('No learners enrolled'), findsNothing);
   });
 
@@ -919,7 +927,12 @@ void main() {
             ],
           );
         }
-        throw StateError('refresh failed from test');
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'failed-precondition',
+          message:
+              'The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes',
+        );
       },
     );
 
@@ -941,15 +954,17 @@ void main() {
     await _scrollUntilVisible(
       tester,
       find.text(
-        'Unable to refresh learners right now. Showing the last successful data. Failed to load learners: Bad state: refresh failed from test',
+        'Unable to refresh learners right now. Showing the last successful data. Learner roster could not load right now. Refresh, or check again after the app reconnects.',
       ),
     );
     expect(
       find.text(
-        'Unable to refresh learners right now. Showing the last successful data. Failed to load learners: Bad state: refresh failed from test',
+        'Unable to refresh learners right now. Showing the last successful data. Learner roster could not load right now. Refresh, or check again after the app reconnects.',
       ),
       findsOneWidget,
     );
+    expect(find.textContaining('console.firebase.google.com'), findsNothing);
+    expect(find.textContaining('failed-precondition'), findsNothing);
     expect(find.text('Learner One'), findsOneWidget);
     expect(find.text('No learners enrolled'), findsNothing);
   });
