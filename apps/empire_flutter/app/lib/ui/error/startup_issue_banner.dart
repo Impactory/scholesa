@@ -46,11 +46,11 @@ class StartupIssueBanner extends StatelessWidget {
               color: colorScheme.errorContainer.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colorScheme.error),
-              boxShadow: const <BoxShadow>[
+              boxShadow: <BoxShadow>[
                 BoxShadow(
                   blurRadius: 18,
-                  offset: Offset(0, 8),
-                  color: Color(0x26000000),
+                  offset: const Offset(0, 8),
+                  color: theme.shadowColor.withValues(alpha: 0.16),
                 ),
               ],
             ),

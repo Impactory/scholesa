@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/inline_locale_text.dart';
+import '../theme/scholesa_theme.dart';
 
 const Map<String, String> _fatalErrorZhCn = <String, String>{
   'Something went wrong': '出现了一些问题',
@@ -33,6 +34,7 @@ class FatalErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -44,7 +46,7 @@ class FatalErrorScreen extends StatelessWidget {
                 Icon(
                   Icons.error_outline,
                   size: 80,
-                  color: Colors.red[400],
+                  color: scheme.error,
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -58,7 +60,7 @@ class FatalErrorScreen extends StatelessWidget {
                 Text(
                   error,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
+                        color: context.schTextSecondary,
                       ),
                   textAlign: TextAlign.center,
                 ),

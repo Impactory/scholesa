@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/scholesa_theme.dart';
 
 /// Loading indicator widget
 class LoadingWidget extends StatelessWidget {
@@ -17,7 +18,7 @@ class LoadingWidget extends StatelessWidget {
             Text(
               message!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: context.schTextSecondary,
                   ),
             ),
           ],

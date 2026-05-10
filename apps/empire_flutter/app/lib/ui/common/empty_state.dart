@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/scholesa_theme.dart';
 
 /// Empty state widget for lists and screens
 class EmptyState extends StatelessWidget {
@@ -16,6 +17,7 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -25,13 +27,13 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: Colors.grey[400],
+              color: scheme.primary.withValues(alpha: 0.72),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.grey[700],
+                    color: context.schTextPrimary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -40,7 +42,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 message!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[500],
+                      color: context.schTextSecondary,
                     ),
                 textAlign: TextAlign.center,
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/inline_locale_text.dart';
+import '../theme/scholesa_theme.dart';
 
 const Map<String, String> _errorStateZhCn = <String, String>{
   'Error': '错误',
@@ -33,6 +34,7 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -42,20 +44,20 @@ class ErrorState extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 64,
-              color: Colors.orange[400],
+              color: scheme.tertiary,
             ),
             const SizedBox(height: 16),
             Text(
               _tErrorState(context, 'Error'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.grey[700],
+                    color: context.schTextPrimary,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: context.schTextSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
