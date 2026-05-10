@@ -82,6 +82,9 @@ Then run the full gate:
 | 2026-05-10 | `GCP_PROJECT_ID=studio-3328096157-e3f79 GCP_REGION=us-central1 CLOUD_RUN_FLUTTER_SERVICE=empire-web ./scripts/deploy.sh flutter-web` | Passed | Deploy output capture was truncated by the terminal wrapper, but Cloud Build `a0c6a065-058d-46c8-9904-5f6780e3095c` succeeded for image tag `20260510-123327`; Cloud Run revision `empire-web-00088-ln2` serves 100 percent traffic. |
 | 2026-05-10 | `gcloud run services describe ...` and `curl -sSI` probes | Passed | Traffic table confirms `empire-web-00088-ln2` latest ready at 100 percent. `scholesa.com`, `/videos/proof-flow.mp4`, and direct Cloud Run origin returned 200. |
 | 2026-05-10 | `./scripts/deploy.sh release-gate` | Passed | Final non-deploying release gate passed after logout and voice hardening. Flutter gate passed with `+1093: All tests passed!`, then diff hygiene passed and the release reproducibility gate completed. |
+| 2026-05-10 | `flutter test test/shared_state_theme_test.dart --reporter compact` | Passed | Validates shared Flutter empty/loading/error/fatal/recovery state use of Scholesa light/dark theme tokens. |
+| 2026-05-10 | `flutter test test/site_dashboard_page_test.dart test/site_identity_page_test.dart test/hq_analytics_page_test.dart test/hq_integrations_health_page_test.dart --reporter compact` | Passed | Validates touched Site/HQ role surfaces after stale-data/status/action feedback moved to semantic theme tokens. |
+| 2026-05-10 | `flutter analyze --no-pub --no-fatal-infos lib/modules/site/site_dashboard_page.dart lib/modules/site/site_identity_page.dart lib/modules/hq_admin/hq_analytics_page.dart lib/modules/hq_admin/hq_integrations_health_page.dart` | Passed | No analyzer issues in touched Site/HQ theming files. |
 
 ## Failure Handling
 
@@ -94,6 +97,7 @@ Then run the full gate:
 | Parent sees educator-only support notes | Block release. Replace raw data access with parent-safe projection. |
 | Flutter or web overlap/regression | Fix component root, add source/widget/browser test, rerun full channel gate. |
 | Golden drift from intentional copy/UI change | Update goldens only after focused test proves the behavior is intended. |
+| Role UI or recovery state uses ad hoc semantic colors | Move warning/success/error/neutral state to Scholesa `ColorScheme` or `ScholesaColors`; keep only explicit provider/partner brand-color exceptions. |
 
 ## Gold Emulator Exit Criteria
 

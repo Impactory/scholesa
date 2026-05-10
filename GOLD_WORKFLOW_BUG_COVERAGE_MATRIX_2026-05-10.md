@@ -16,6 +16,7 @@ Every workflow row below must be tested against these bug classes.
 | PROVENANCE | Evidence provenance | Record lacks learner, site, session occurrence, capability, proof, rubric, growth, portfolio, or audit linkage. |
 | SAFETY | Capability-first safety | Completion, attendance, XP, averages, AI support, or engagement is presented as mastery. |
 | EMPTY | Loading, empty, stale, and error state | Workflow hides failures, shows fake data, or cannot recover from network/auth/backend errors. |
+| THEME | Role UI and theme consistency | Shared or role-local states use ad hoc colors/copy/layouts, break dark theme, or make recovery/status language feel inconsistent across roles. |
 | MOBILE | Mobile and native classroom usability | Controls overlap, taps are too slow, offline queue breaks, or media/mic permissions fail. |
 | A11Y-I18N | Accessibility and localization | Keyboard, screen reader, contrast, locale copy, or text fitting breaks. |
 | TELEMETRY | Audit and observability | Critical action has no audit event, redaction, trace ID, site ID, or failure signal. |
@@ -26,8 +27,8 @@ Every workflow row below must be tested against these bug classes.
 
 | Surface | Routes | Required bug coverage | Required proof |
 | --- | --- | --- | --- |
-| Public entry | `/welcome`, `/login`, public Cloud Run origin, `scholesa.com` | RENDER, AUTHZ, EMPTY, MOBILE, A11Y-I18N | Public route smoke, no protected data, login providers, cache headers, proof-flow video. |
-| Session/account | `/profile`, `/settings` | RENDER, AUTHZ, PERSIST, EMPTY, MOBILE, TELEMETRY | Sign-out clears Firebase Auth, app state, recent-login state, and protected navigation. |
+| Public entry | `/welcome`, `/login`, public Cloud Run origin, `scholesa.com` | RENDER, AUTHZ, EMPTY, THEME, MOBILE, A11Y-I18N | Public route smoke, no protected data, login providers, cache headers, proof-flow video, theme-safe empty/error/loading states. |
+| Session/account | `/profile`, `/settings` | RENDER, AUTHZ, PERSIST, EMPTY, THEME, MOBILE, TELEMETRY | Sign-out clears Firebase Auth, app state, recent-login state, and protected navigation. |
 | Messaging/notifications | `/messages`, `/notifications` | AUTHZ, PERSIST, PROVENANCE, EMPTY, TELEMETRY | Same-site participant checks, rate-limit feedback, notification request persistence, no cross-site leaks. |
 
 ### Learner Workflows
@@ -76,8 +77,8 @@ Every workflow row below must be tested against these bug classes.
 | Workflow | Routes | Required bug coverage | Required proof |
 | --- | --- | --- | --- |
 | Check-in/out | `/site/checkin` | AUTHZ, PERSIST, EMPTY, MOBILE, TELEMETRY | Arrival/departure, pickup authorization, and stale failure states are correct. |
-| Provisioning | `/site/provisioning`, `/site/identity` | AUTHZ, PERSIST, TELEMETRY | Users, families, claims, and site membership are reconciled and audited. |
-| Site dashboard and ops | `/site/dashboard`, `/site/ops` | RENDER, PROVENANCE, EMPTY, TELEMETRY | Dashboard shows implementation health and evidence readiness, not just totals. |
+| Provisioning | `/site/provisioning`, `/site/identity` | AUTHZ, PERSIST, THEME, TELEMETRY | Users, families, claims, and site membership are reconciled and audited; identity resolution success/warning/error feedback uses semantic theme tokens. |
+| Site dashboard and ops | `/site/dashboard`, `/site/ops` | RENDER, PROVENANCE, EMPTY, THEME, TELEMETRY | Dashboard shows implementation health and evidence readiness, not just totals; stale-data and status states use semantic theme tokens. |
 | Sessions | `/site/sessions` | AUTHZ, PERSIST, EMPTY | Session creation produces occurrences and educator/site scoping. |
 | Incidents | `/site/incidents` | AUTHZ, PERSIST, TELEMETRY | Incident lifecycle is audited and permission-safe. |
 | Integrations | `/site/clever`, `/site/integrations-health` | AUTHZ, PERSIST, EMPTY, TELEMETRY | Sync state and failures are explicit; no silent roster corruption. |
@@ -100,10 +101,10 @@ Every workflow row below must be tested against these bug classes.
 | --- | --- | --- | --- |
 | User and role admin | `/hq/user-admin`, `/hq/role-switcher` | AUTHZ, PERSIST, TELEMETRY | Role simulation and claims edits are HQ-only and audited. |
 | Sites | `/hq/sites` | AUTHZ, PERSIST, EMPTY | Site creation and edits do not break site scoping. |
-| Analytics | `/hq/analytics` | PROVENANCE, SAFETY, TELEMETRY | Analytics distinguish evidence health from mastery claims. |
+| Analytics | `/hq/analytics` | PROVENANCE, SAFETY, THEME, TELEMETRY | Analytics distinguish evidence health from mastery claims; stale-data/status UI uses Scholesa semantic tokens. |
 | Billing and approvals | `/hq/billing`, `/hq/approvals` | AUTHZ, PERSIST, TELEMETRY | HQ-only financial and approval workflows are audited. |
 | Audit and safety | `/hq/audit`, `/hq/safety` | AUTHZ, EMPTY, TELEMETRY | Audit views are read-only and scoped; safety queues fail closed. |
-| Integrations health | `/hq/integrations-health` | AUTHZ, EMPTY, TELEMETRY | Integration health is global only for HQ and does not expose secrets. |
+| Integrations health | `/hq/integrations-health` | AUTHZ, EMPTY, THEME, TELEMETRY | Integration health is global only for HQ, does not expose secrets, and uses semantic status/recovery tokens. |
 | Curriculum and capabilities | `/hq/curriculum`, `/hq/capabilities`, `/hq/capability-frameworks` | PERSIST, PROVENANCE, SAFETY | Capabilities, descriptors, checkpoints, units, and rubrics are structurally connected. |
 | Rubric builder | `/hq/rubric-builder` | PERSIST, PROVENANCE, SAFETY | Rubric templates map to capabilities or remain explicitly pending. |
 | Feature flags | `/hq/feature-flags` | AUTHZ, PERSIST, TELEMETRY | Flags are audited, environment-scoped, and never bypass evidence/security gates. |

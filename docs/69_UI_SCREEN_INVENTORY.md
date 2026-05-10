@@ -7,6 +7,8 @@ Generated: 2026-01-09
 - Keep the existing Scholesa visual language and component patterns.
 - Do not redesign themes, typography systems, spacing scales, icon families, or card layouts.
 - New screens must look like they belong to the current app (same Card/ListTile patterns, paddings, empty states).
+- Empty, loading, error, fatal-error, recovery, stale-data, success, warning, and destructive states must use Scholesa `ColorScheme` / `ScholesaColors` semantic tokens in light and dark themes.
+- Literal color values are allowed only for intentional provider or partner brand marks, not for role status, recovery, evidence, or action feedback.
 
 
 ## Purpose
@@ -92,6 +94,7 @@ Aligns to:
 - role gate
 - data load + empty + error + retry
 - consistent design language
+- Scholesa theme-token use for semantic states across light/dark themes
 - emits key telemetry events (bounded, no PII)
 
 <!-- TELEMETRY_WIRING:START -->

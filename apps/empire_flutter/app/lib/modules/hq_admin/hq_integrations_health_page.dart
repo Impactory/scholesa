@@ -261,6 +261,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Widget _buildSiteStatusIcon(_SiteIntegration site) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final bool hasError =
         site.integrations.any((_Integration i) => i.status == _Status.error);
     final bool hasWarning =
@@ -269,13 +270,13 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     Color color;
     IconData icon;
     if (hasError) {
-      color = Colors.red;
+      color = scheme.error;
       icon = Icons.error_rounded;
     } else if (hasWarning) {
-      color = Colors.orange;
+      color = scheme.tertiary;
       icon = Icons.warning_rounded;
     } else {
-      color = Colors.green;
+      color = scheme.secondary;
       icon = Icons.check_circle_rounded;
     }
 
@@ -289,14 +290,15 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Widget _buildIntegrationTile(BuildContext context, _Integration integration) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     Color statusColor;
     switch (integration.status) {
       case _Status.healthy:
-        statusColor = Colors.green;
+        statusColor = scheme.secondary;
       case _Status.warning:
-        statusColor = Colors.orange;
+        statusColor = scheme.tertiary;
       case _Status.error:
-        statusColor = Colors.red;
+        statusColor = scheme.error;
     }
 
     return ListTile(
@@ -330,6 +332,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Widget _buildLoadErrorCard(BuildContext context, String message) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -339,11 +342,12 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
             Icon(
               Icons.error_outline_rounded,
               size: 56,
-              color: Colors.red.withValues(alpha: 0.8),
+              color: scheme.error.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 16),
             Text(
-              _tHqIntegrations(context, 'Integrations health is temporarily unavailable'),
+              _tHqIntegrations(
+                  context, 'Integrations health is temporarily unavailable'),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 18,
@@ -370,22 +374,23 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Widget _buildStaleDataBanner(BuildContext context, String message) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
+        color: scheme.tertiaryContainer.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.36)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          Icon(Icons.warning_amber_rounded, color: scheme.tertiary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               '${_tHqIntegrations(context, 'Unable to refresh integrations health right now. Showing the last successful data.')} $message',
-              style: const TextStyle(color: ScholesaColors.textPrimary),
+              style: TextStyle(color: context.schTextPrimary),
             ),
           ),
         ],
@@ -439,7 +444,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tHqIntegrations(context, 'Unable to retry this integration right now.'),
+            _tHqIntegrations(
+                context, 'Unable to retry this integration right now.'),
           ),
           backgroundColor: ScholesaColors.error,
         ),
@@ -553,7 +559,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
           .map((entry) => _SiteIntegration(
                 siteId: entry.key,
                 siteName: siteNames[entry.key] ??
-                _tHqIntegrations(context, 'Site unavailable'),
+                    _tHqIntegrations(context, 'Site unavailable'),
                 integrations: entry.value.values.toList()
                   ..sort((_Integration a, _Integration b) =>
                       a.name.compareTo(b.name)),

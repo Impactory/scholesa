@@ -67,8 +67,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           ),
         ],
       ),
-      body: _isLoading
-          && _pendingMatches.isEmpty
+      body: _isLoading && _pendingMatches.isEmpty
           ? Center(
               child: Text(
                 _tSiteIdentity(context, 'Loading...'),
@@ -77,27 +76,30 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             )
           : _loadError != null && _pendingMatches.isEmpty
               ? _buildLoadErrorState(
-                  _tSiteIdentity(context, 'Identity matches are temporarily unavailable'),
+                  _tSiteIdentity(
+                      context, 'Identity matches are temporarily unavailable'),
                   _loadError!,
                 )
-          : _pendingMatches.isEmpty
-              ? _buildEmptyState()
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: <Widget>[
-                    if (_loadError != null)
-                      _buildStaleDataBanner(
-                        _tSiteIdentity(context, 'Unable to refresh identity matches right now. Showing the last successful data.') +
-                            (_loadErrorDetail == null ||
-                                    _loadErrorDetail!.trim().isEmpty
-                                ? ''
-                                : ' ${_loadErrorDetail!.trim()}'),
-                      ),
-                    _buildHeader(),
-                    const SizedBox(height: 16),
-                    ..._pendingMatches.map((match) => _buildMatchCard(match)),
-                  ],
-                ),
+              : _pendingMatches.isEmpty
+                  ? _buildEmptyState()
+                  : ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: <Widget>[
+                        if (_loadError != null)
+                          _buildStaleDataBanner(
+                            _tSiteIdentity(context,
+                                    'Unable to refresh identity matches right now. Showing the last successful data.') +
+                                (_loadErrorDetail == null ||
+                                        _loadErrorDetail!.trim().isEmpty
+                                    ? ''
+                                    : ' ${_loadErrorDetail!.trim()}'),
+                          ),
+                        _buildHeader(),
+                        const SizedBox(height: 16),
+                        ..._pendingMatches
+                            .map((match) => _buildMatchCard(match)),
+                      ],
+                    ),
     );
   }
 
@@ -130,6 +132,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   Widget _buildEmptyState() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -137,13 +140,13 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
+              color: scheme.secondaryContainer.withValues(alpha: 0.72),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle_rounded,
               size: 64,
-              color: Colors.green,
+              color: scheme.secondary,
             ),
           ),
           const SizedBox(height: 24),
@@ -169,6 +172,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   Widget _buildLoadErrorState(String title, String message) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -178,7 +182,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             Icon(
               Icons.error_outline_rounded,
               size: 64,
-              color: Colors.red.withValues(alpha: 0.7),
+              color: scheme.error.withValues(alpha: 0.76),
             ),
             const SizedBox(height: 16),
             Text(
@@ -209,6 +213,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   Widget _buildStaleDataBanner(String message) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Semantics(
       container: true,
       liveRegion: true,
@@ -218,19 +223,19 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: scheme.tertiaryContainer.withValues(alpha: 0.56),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+            border: Border.all(color: scheme.tertiary.withValues(alpha: 0.36)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              Icon(Icons.warning_amber_rounded, color: scheme.tertiary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   message,
-                  style: const TextStyle(color: ScholesaColors.textPrimary),
+                  style: TextStyle(color: context.schTextPrimary),
                 ),
               ),
             ],
@@ -314,7 +319,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                   child: OutlinedButton(
                     onPressed: () => _handleIgnore(match),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.grey,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     child: Text(_tSiteIdentity(context, 'Ignore')),
                   ),
@@ -324,8 +330,9 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                   child: ElevatedButton(
                     onPressed: () => _handleApprove(match),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                     ),
                     child: Text(_tSiteIdentity(context, 'Approve Match')),
                   ),
@@ -456,10 +463,11 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   Color _getConfidenceColor(double? confidence) {
-    if (confidence == null) return Colors.grey;
-    if (confidence >= 0.9) return Colors.green;
-    if (confidence >= 0.7) return Colors.orange;
-    return Colors.red;
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    if (confidence == null) return scheme.onSurfaceVariant;
+    if (confidence >= 0.9) return scheme.secondary;
+    if (confidence >= 0.7) return scheme.tertiary;
+    return scheme.error;
   }
 
   Future<void> _handleApprove(_IdentityMatch match) async {
@@ -487,7 +495,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
               context,
               'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
             )),
-            backgroundColor: Colors.orange,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
         return;
@@ -499,7 +507,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
               context,
               'The identity queue did not update after save. Retry to verify the current state.',
             )),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -508,7 +516,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         SnackBar(
           content: Text(
               '${_tSiteIdentity(context, 'Matched')} ${match.localName} ${_tSiteIdentity(context, 'with')} ${match.externalName}'),
-          backgroundColor: Colors.green,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } catch (_) {
@@ -516,7 +524,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_tSiteIdentity(context, 'Match update failed')),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -547,7 +555,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
               context,
               'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
             )),
-            backgroundColor: Colors.orange,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
         return;
@@ -559,7 +567,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
               context,
               'The identity queue did not update after save. Retry to verify the current state.',
             )),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -567,7 +575,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_tSiteIdentity(context, 'Match ignored')),
-          backgroundColor: Colors.grey,
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
         ),
       );
     } catch (_) {
@@ -575,7 +583,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_tSiteIdentity(context, 'Match update failed')),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -628,11 +636,11 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         final String localName =
             (data['scholesaUserName'] as String?)?.trim().isNotEmpty == true
                 ? (data['scholesaUserName'] as String).trim()
-            : _tSiteIdentity(context, 'Local account unavailable');
+                : _tSiteIdentity(context, 'Local account unavailable');
         final String externalName =
             (data['providerUserId'] as String?)?.trim().isNotEmpty == true
                 ? (data['providerUserId'] as String).trim()
-            : _tSiteIdentity(context, 'External account unavailable');
+                : _tSiteIdentity(context, 'External account unavailable');
         final num? rawConfidence = data['confidence'] as num?;
         final double? confidence = rawConfidence == null
             ? null

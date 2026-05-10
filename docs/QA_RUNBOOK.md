@@ -116,7 +116,11 @@ Quick link: one-page staging PITR drill checklist in STAGING_PITR_DRILL_CHECKLIS
    `npm run qa:telemetry-smoke`
 
 ### FL-THEME-01 Visual Sweep
-1) Check landing/login/register/role selector/dashboards use dark gradient + glass aesthetic with Manrope typography.
+1) Check landing/login/register/role selector/dashboards preserve the existing Scholesa design language without a reskin.
+2) Check shared empty, loading, error, fatal-error, and startup-recovery states use Scholesa theme tokens in light and dark mode.
+3) Check role-local stale-data banners, status indicators, success/error snackbars, and destructive/confirmation actions use semantic `ColorScheme` / `ScholesaColors` tokens.
+4) Treat provider or partner brand marks as explicit exceptions; do not use brand exceptions for evidence/recovery/status semantics.
+5) Run focused Flutter theme regressions when shared primitives or role-local state colors change.
 
 ## Managed Firestore Operations (staging/prod)
 

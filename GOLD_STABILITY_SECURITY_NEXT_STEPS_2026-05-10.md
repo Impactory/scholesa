@@ -30,6 +30,7 @@ Recent validated items:
 - Educator mission planning now hides raw backend/index errors from initial load and stale-refresh banners while preserving the last successful plan list; focused analyzer and mission-plan widget regressions passed for the touched flow.
 - Shared educator schedule, session list, and learner roster loading now hide raw backend/index errors while preserving stale live-class data where available; focused analyzer and educator service/learner roster regressions passed for the touched flows.
 - Shared Flutter empty, loading, error, fatal-error, and startup-recovery states now use Scholesa theme/color-scheme tokens instead of ad hoc Material greys/reds/oranges; focused analyzer and shared UI theme regressions passed for the touched primitives.
+- Site and HQ stale-data banners, status indicators, identity-resolution actions, and integration-health recovery states now use Scholesa semantic color-scheme tokens for warning/success/error states while preserving provider brand colors; focused analyzer and Site/HQ widget regressions passed for the touched role surfaces.
 
 Current release blockers and risks:
 
@@ -90,6 +91,7 @@ Actions:
 - Add a route bug coverage row for every learner, educator, parent, site, partner, HQ, and common route.
 - Verify loading, empty, success, error, mobile, and unauthorized states.
 - Verify shared empty, loading, error, fatal-error, and recovery states render through Scholesa theme tokens in both light and dark themes across role surfaces.
+- Verify role-local stale-data banners, status indicators, and action feedback use Scholesa semantic color-scheme tokens, with explicit exceptions only for recognizable provider/partner brand colors.
 - Verify no resilience error card appears during the role golden paths.
 - Verify every write uses `siteId` or an explicit global/server-owned exception.
 

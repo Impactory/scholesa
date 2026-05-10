@@ -1,8 +1,8 @@
 # Platform Blanket Gold Achievement Plan - May 2026
 
-Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**.
+Current verdict: **historical May 8 scoped web/Cloud Run GO only; not a current blanket platform/native Gold certification**.
 
-This is the operator-facing plan and historical checklist for the current scoped Blanket Gold signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. The May 8 release-owner decision accepted traffic-pinning proof as the final release control, so the included web/Cloud Run scope is now GO while native-channel scope remains deferred.
+This is the operator-facing plan and historical checklist for the May 8 scoped web/Cloud Run signoff. It is intentionally procedural: every step names the command, evidence to capture, and the stop condition. The May 8 release-owner decision accepted traffic-pinning proof as the final release control for that included scope only. The active May 10 blanket-gold posture is governed by `GOLD_STABILITY_SECURITY_NEXT_STEPS_2026-05-10.md`: native-channel distribution proof, live role canary, security hardening, Passport/report provenance, and full role UI/theme consistency remain required before any broader blanket Gold claim.
 
 ## Scope And Boundaries
 
@@ -12,8 +12,8 @@ This is the operator-facing plan and historical checklist for the current scoped
 | Deferred scope | Native-channel app-store release operations: iOS, macOS, Android store distribution, signing, notarization, and app-store promotion. |
 | Partner scope | Included for partner web evidence-facing workflows after the May 8 partner route sweep, partner integration/deliverable index proof, browser-created contract, browser-created evidence URL deliverable, and Firestore readback. |
 | Native build proof | macOS local release build now passes through `./scripts/deploy.sh flutter-macos`; iOS local release build now passes through `./scripts/deploy.sh flutter-ios` with codesigning disabled; Android local release build now passes through `./scripts/deploy.sh flutter-android` after installing the Android SDK/toolchain; iOS, Android, and macOS distribution automation is present and fail-closed; distribution remains deferred until Developer ID signing, notarization, App Store Connect, Google Play credentials, and release signing assets are installed and proven. |
-| Current hard blockers | None for the included web/Cloud Run scope. Role-cutover indexes, live synthetic dashboard readiness, six-role web browser cutover, current no-traffic web rehearsal, proof-review/verification route proof, theme runtime proof, partner web evidence-facing proof, traffic-pinning proof, release-owner traffic-pinning acceptance, post-pinning smoke, macOS/iOS/Android local release build proof, and final source-contract validation are recorded in the final signoff. |
-| Gold claim rule | Blanket Gold can only be claimed for the included scope above; deferred native-channel app-store scope must remain outside the claim. |
+| Current hard blockers | None were recorded for the historical May 8 included web/Cloud Run scope. For the active May 10 blanket-gold effort, live role canary, native-channel distribution proof, security hardening, Passport/report provenance, and role UI/theme consistency remain blockers. |
+| Gold claim rule | Treat this document as historical scoped evidence only. Do not use it to claim current blanket platform Gold or native-channel Gold. |
 
 ## May 7 Continuation Delta - Broad Gold Deployment
 

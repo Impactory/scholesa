@@ -260,23 +260,24 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Widget _buildStaleDataBanner(String message) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
+        color: scheme.tertiaryContainer.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.36)),
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          Icon(Icons.warning_amber_rounded, color: scheme.tertiary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: ScholesaColors.textPrimary),
+              style: TextStyle(color: context.schTextPrimary),
             ),
           ),
         ],
