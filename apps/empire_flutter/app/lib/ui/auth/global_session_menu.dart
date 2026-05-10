@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -86,7 +85,8 @@ class SessionMenuButton extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Icon(Icons.account_circle_outlined, color: resolvedForeground),
+                  Icon(Icons.account_circle_outlined,
+                      color: resolvedForeground),
                   if (showLabel) ...<Widget>[
                     const SizedBox(width: 8),
                     Text(
@@ -224,8 +224,8 @@ class GlobalSessionMenu extends StatelessWidget {
 
     final double width = MediaQuery.sizeOf(context).width;
     final bool showMenuLabel = width >= 720;
-    final bool showSignOutLabel = kIsWeb || width >= 720;
-    final bool showExplicitSignOut = kIsWeb || width >= 960;
+    final bool showSignOutLabel = width >= 720;
+    final bool showExplicitSignOut = width >= 960;
 
     final Widget menu = Align(
       alignment: Alignment.topRight,
@@ -243,10 +243,8 @@ class GlobalSessionMenu extends StatelessWidget {
             ],
             Material(
               elevation: 6,
-              color: Theme.of(context)
-                  .colorScheme
-                  .surface
-                  .withValues(alpha: 0.96),
+              color:
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(999),
               shadowColor: Colors.black.withValues(alpha: 0.14),
               child: SessionMenuButton(

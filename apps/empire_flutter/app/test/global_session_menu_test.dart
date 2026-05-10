@@ -36,7 +36,8 @@ Widget _buildHarness({
   required AppState appState,
   required AuthService authService,
   String initialLocation = '/protected',
-  Widget protectedChild = const Scaffold(body: Center(child: Text('Protected'))),
+  Widget protectedChild =
+      const Scaffold(body: Center(child: Text('Protected'))),
 }) {
   final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'global_session_menu_test');
@@ -161,7 +162,8 @@ void main() {
       expect(find.text('Login Screen'), findsOneWidget);
     });
 
-    testWidgets('renders a direct sign out control on wide authenticated layouts',
+    testWidgets(
+        'renders a direct sign out control on wide authenticated layouts',
         (WidgetTester tester) async {
       final _MockAuthService authService = _MockAuthService();
       when(() => authService.signOut(source: any(named: 'source')))
@@ -192,6 +194,35 @@ void main() {
       verify(() => authService.signOut(source: 'global_session_menu'))
           .called(1);
       expect(find.text('Login Screen'), findsOneWidget);
+    });
+
+    testWidgets('compact web layouts keep sign out inside the account menu',
+        (WidgetTester tester) async {
+      final _MockAuthService authService = _MockAuthService();
+      when(() => authService.signOut(source: any(named: 'source')))
+          .thenAnswer((_) async {});
+
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        _buildHarness(
+          appState: _buildAppState(UserRole.learner),
+          authService: authService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+      expect(find.bySemanticsLabel('Sign Out'), findsNothing);
+
+      await tester.tap(find.byKey(_globalSessionMenuButtonKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Sign Out'), findsOneWidget);
     });
 
     testWidgets('icon-only direct sign out still exposes explicit semantics',
