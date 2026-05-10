@@ -23,6 +23,8 @@ describe('MiloOS typed input intelligence', () => {
   it('detects typed, keyboard, and voice input sources', () => {
     expect(resolveVoiceInputModality({ inputModality: 'typed' })).toBe('typed');
     expect(resolveVoiceInputModality({ context: { source: 'keyboard-entry' } })).toBe('typed');
+    expect(resolveVoiceInputModality({ inputModality: 'typed', voice: { enabled: true, output: true } })).toBe('typed');
+    expect(resolveVoiceInputModality({ context: { source: 'web_speech_api_auto' } })).toBe('voice');
     expect(resolveVoiceInputModality({ context: { modality: 'microphone' } })).toBe('voice');
     expect(resolveVoiceInputModality({})).toBe('unknown');
   });

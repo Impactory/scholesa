@@ -72,6 +72,30 @@ void main() {
         expect(map['message'], 'Help me understand');
         expect(map['locale'], 'en-US');
         expect(map['gradeBand'], 'K-5');
+        expect(map['inputModality'], 'voice');
+        expect(map['voice']['enabled'], true);
+        expect(map['voice']['output'], true);
+      });
+
+      test('serializes typed learner modality alongside voice output settings',
+          () {
+        const request = VoiceCopilotRequest(
+          message: 'How can I improve my portfolio evidence?',
+          locale: 'en-US',
+          gradeBand: GradeBand.g7_9,
+          inputModality: 'typed',
+          context: <String, dynamic>{
+            'source': 'manual',
+            'inputModality': 'typed',
+          },
+          voiceEnabled: true,
+          voiceOutput: true,
+        );
+
+        final Map<String, dynamic> map = request.toMap();
+        expect(map['inputModality'], 'typed');
+        expect(map['context']['source'], 'manual');
+        expect(map['context']['inputModality'], 'typed');
         expect(map['voice']['enabled'], true);
         expect(map['voice']['output'], true);
       });

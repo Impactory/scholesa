@@ -14,6 +14,7 @@ class VoiceCopilotRequest {
     required this.locale,
     required this.gradeBand,
     this.screenId = 'ai_coach_widget',
+    this.inputModality = 'voice',
     this.context = const <String, dynamic>{},
     this.voiceEnabled = true,
     this.voiceOutput = true,
@@ -23,6 +24,7 @@ class VoiceCopilotRequest {
   final String locale;
   final GradeBand gradeBand;
   final String screenId;
+  final String inputModality;
   final Map<String, dynamic> context;
   final bool voiceEnabled;
   final bool voiceOutput;
@@ -32,6 +34,7 @@ class VoiceCopilotRequest {
         'locale': locale,
         'screenId': screenId,
         'gradeBand': _gradeBandForVoice(gradeBand),
+        'inputModality': inputModality,
         'context': context,
         'voice': <String, dynamic>{
           'enabled': voiceEnabled,
@@ -111,7 +114,8 @@ class VoiceRuntimeService {
     // Derive mode from BOS policy hint if available, else from metadata.
     final String effectiveMode = (bos['mode'] as String?) ??
         (metadata['understanding'] is Map
-            ? ((metadata['understanding'] as Map)['responseMode'] as String? ?? 'hint')
+            ? ((metadata['understanding'] as Map)['responseMode'] as String? ??
+                'hint')
             : 'hint');
 
     return AiCoachResponse.fromMap(<String, dynamic>{
@@ -121,12 +125,13 @@ class VoiceRuntimeService {
       'metadata': metadata,
       'tts': tts,
       // Forward BOS policy data for MVL gating and risk assessment.
-      if (bos.isNotEmpty) 'mvl': <String, dynamic>{
-        'gateActive': bos['triggerMvl'] == true,
-        'reason': (bos['reasonCodes'] as List<dynamic>?)?.isNotEmpty == true
-            ? (bos['reasonCodes'] as List<dynamic>).first.toString()
-            : null,
-      },
+      if (bos.isNotEmpty)
+        'mvl': <String, dynamic>{
+          'gateActive': bos['triggerMvl'] == true,
+          'reason': (bos['reasonCodes'] as List<dynamic>?)?.isNotEmpty == true
+              ? (bos['reasonCodes'] as List<dynamic>).first.toString()
+              : null,
+        },
       'requiresExplainBack': bos['requiresExplainBack'] == true,
       'meta': <String, dynamic>{
         'version': 'voice-api-v1',

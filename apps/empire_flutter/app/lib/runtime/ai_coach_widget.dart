@@ -608,7 +608,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
       final AiCoachResponse response = widget.onAutoResponseRequest != null
           ? await widget.onAutoResponseRequest!(autoPrompt, _selectedMode)
-          : await _fetchAndProcessResponse(autoPrompt);
+          : await _fetchAndProcessResponse(
+              autoPrompt,
+              inputSource: 'bos_auto_hesitation',
+            );
       if (!mounted) return;
 
       _lastResponse = response;
@@ -1663,7 +1666,10 @@ Response style:
     );
 
     try {
-      final AiCoachResponse response = await _fetchAndProcessResponse(input);
+      final AiCoachResponse response = await _fetchAndProcessResponse(
+        input,
+        inputSource: source,
+      );
       if (!mounted) return;
 
       _lastResponse = response;
@@ -1776,7 +1782,20 @@ Response style:
     }
   }
 
-  Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
+  String _inputModalityForSource(String source) {
+    if (source == 'manual') return 'typed';
+    if (source.contains('speech') ||
+        source.contains('voice') ||
+        source.contains('upload')) {
+      return 'voice';
+    }
+    return 'unknown';
+  }
+
+  Future<AiCoachResponse> _fetchAndProcessResponse(
+    String prompt, {
+    required String inputSource,
+  }) async {
     if (widget.onResponseRequest != null) {
       return widget.onResponseRequest!(
         _buildConversationalPrompt(_privacySafeText(prompt, maxLength: 320)),
@@ -1785,13 +1804,19 @@ Response style:
     }
 
     final String sanitizedPrompt = _privacySafeText(prompt, maxLength: 320);
+    final String inputModality = _inputModalityForSource(inputSource);
     final AiCoachResponse response =
         await VoiceRuntimeService.instance.requestCopilot(
       VoiceCopilotRequest(
         message: _buildConversationalPrompt(sanitizedPrompt),
         locale: Localizations.localeOf(context).toLanguageTag(),
         gradeBand: widget.runtime.gradeBand,
-        context: _buildPrivacySafeCopilotContext(sanitizedPrompt),
+        inputModality: inputModality,
+        context: <String, dynamic>{
+          ..._buildPrivacySafeCopilotContext(sanitizedPrompt),
+          'source': inputSource,
+          'inputModality': inputModality,
+        },
         voiceEnabled: true,
         voiceOutput: _voiceOutputEnabled,
       ),
@@ -1804,6 +1829,8 @@ Response style:
         'traceId': response.traceId,
         'safetyOutcome': response.safetyOutcome,
         'policyVersion': response.policyVersion,
+        'inputModality': inputModality,
+        'inputSource': inputSource,
       },
     );
 
@@ -1817,6 +1844,8 @@ Response style:
         'policyVersion': response.policyVersion,
         'safetyOutcome': response.safetyOutcome,
         'mvlGateActive': response.mvlGateActive,
+        'inputModality': inputModality,
+        'inputSource': inputSource,
       },
     );
 

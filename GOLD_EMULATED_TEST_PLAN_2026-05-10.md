@@ -85,6 +85,9 @@ Then run the full gate:
 | 2026-05-10 | `flutter test test/shared_state_theme_test.dart --reporter compact` | Passed | Validates shared Flutter empty/loading/error/fatal/recovery state use of Scholesa light/dark theme tokens. |
 | 2026-05-10 | `flutter test test/site_dashboard_page_test.dart test/site_identity_page_test.dart test/hq_analytics_page_test.dart test/hq_integrations_health_page_test.dart --reporter compact` | Passed | Validates touched Site/HQ role surfaces after stale-data/status/action feedback moved to semantic theme tokens. |
 | 2026-05-10 | `flutter analyze --no-pub --no-fatal-infos lib/modules/site/site_dashboard_page.dart lib/modules/site/site_identity_page.dart lib/modules/hq_admin/hq_analytics_page.dart lib/modules/hq_admin/hq_integrations_health_page.dart` | Passed | No analyzer issues in touched Site/HQ theming files. |
+| 2026-05-10 | `flutter analyze --no-pub --no-fatal-infos lib/runtime/ai_coach_widget.dart lib/runtime/voice_runtime_service.dart test/voice_runtime_service_test.dart test/ai_coach_widget_regression_test.dart` | Passed | No analyzer issues in touched MiloOS typed/spoken modality files. |
+| 2026-05-10 | `flutter test test/voice_runtime_service_test.dart test/ai_coach_widget_regression_test.dart --reporter compact` | Passed | 26 focused Flutter tests passed; typed client requests serialize `inputModality: typed` while voice-only and spoken flows keep spoken-first behavior. |
+| 2026-05-10 | `npm --prefix /Users/impactory/Documents/GitHub/scholesa/functions run test -- --runInBand src/voiceSystem.test.ts` | Passed | 19 backend voice-system tests passed; typed learner input stays useful without mastery claims while voice/unknown input keeps strict confidence guardrails. |
 
 ## Failure Handling
 
@@ -98,6 +101,7 @@ Then run the full gate:
 | Flutter or web overlap/regression | Fix component root, add source/widget/browser test, rerun full channel gate. |
 | Golden drift from intentional copy/UI change | Update goldens only after focused test proves the behavior is intended. |
 | Role UI or recovery state uses ad hoc semantic colors | Move warning/success/error/neutral state to Scholesa `ColorScheme` or `ScholesaColors`; keep only explicit provider/partner brand-color exceptions. |
+| MiloOS typed prompt is treated as unknown or voice | Add explicit `inputModality: typed` at the client request boundary and keep spoken/web-speech/upload sources as `voice`; rerun Flutter voice tests plus backend `voiceSystem.test.ts`. |
 
 ## Gold Emulator Exit Criteria
 

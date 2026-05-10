@@ -160,7 +160,7 @@ Required phases:
 8. Run post-promotion smoke and trust checks.
 9. Convert the final signoff from NO-GO to GO only after every evidence item exists.
 
-Current status: phases 0-2 have reusable proof in the current packet, including the May 7 local release-gate log `/tmp/scholesa-release-gate-20260508-001144.log`, all-mode synthetic-data dry-run `synthetic-import-2026-05-08T00-04-56-329Z`, AI internal-only gate, MiloOS typed-input/source/browser proof, fail-closed Firebase placeholder proof, rendered logo sweep, proof verification index coverage, proof/verification index READY check, and icon-only theme source/browser tests. Phases 3-7 still require live operator authority and deliberate production/rehearsal environment action, including a new current-worktree no-traffic web rehearsal for the proof queue and theme switch changes.
+Current status: phases 0-2 have reusable proof in the current packet, including the May 7 local release-gate log `/tmp/scholesa-release-gate-20260508-001144.log`, all-mode synthetic-data dry-run `synthetic-import-2026-05-08T00-04-56-329Z`, AI internal-only gate, MiloOS typed-input/source/browser proof, the May 10 Flutter typed/spoken request-modality continuation, fail-closed Firebase placeholder proof, rendered logo sweep, proof verification index coverage, proof/verification index READY check, and icon-only theme source/browser tests. Phases 3-7 still require live operator authority and deliberate production/rehearsal environment action, including a new current-worktree no-traffic web rehearsal for the proof queue and theme switch changes.
 
 ## Stop Conditions
 
