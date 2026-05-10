@@ -951,7 +951,10 @@ void main() {
 
       expect(service.todayOccurrences, hasLength(1));
       expect(service.todayOccurrences.single.title, 'Robotics Lab');
-      expect(service.error, contains('Failed to load occurrences'));
+      expect(
+        service.error,
+        'We could not load attendance sessions right now. Refresh, or ask your site admin to confirm today\'s sessions are scheduled.',
+      );
     });
 
     test(

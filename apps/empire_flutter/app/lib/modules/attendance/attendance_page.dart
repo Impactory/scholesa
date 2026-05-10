@@ -114,8 +114,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
     if (service.error != null && service.todayOccurrences.isEmpty) {
       return ErrorState(
-        message:
-            _tAttendance(context, 'We could not load attendance sessions right now. Retry to check the current state.'),
+        message: _tAttendance(context, service.error!),
         onRetry: () async {
           TelemetryService.instance.logEvent(
             event: 'cta.clicked',
@@ -194,9 +193,9 @@ class _OccurrenceSelector extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: _AttendanceStatusBanner(
                 message: _tAttendance(
-                        context,
-                        'Unable to refresh attendance sessions right now. Showing the last successful data. ') +
-                    error!,
+                  context,
+                  'Unable to refresh attendance sessions right now. Showing the last successful data.',
+                ),
               ),
             );
           }
@@ -657,7 +656,8 @@ class _StudentAttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String learnerName = _displayLearnerName(context, learner.displayName);
+    final String learnerName =
+        _displayLearnerName(context, learner.displayName);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -672,9 +672,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                       ? NetworkImage(learner.photoUrl!)
                       : null,
                   child: learner.photoUrl == null
-                      ? Text(learnerName.isNotEmpty
-                        ? learnerName[0]
-                          : '?')
+                      ? Text(learnerName.isNotEmpty ? learnerName[0] : '?')
                       : null,
                 ),
                 const SizedBox(width: 12),

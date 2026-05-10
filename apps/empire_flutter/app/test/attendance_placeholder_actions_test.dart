@@ -445,7 +445,8 @@ void main() {
         startTime: DateTime(2026, 3, 17, 9),
       ),
       occurrences: const <SessionOccurrence>[],
-      loadError: 'Failed to load occurrences from test',
+      loadError:
+          'We could not load attendance sessions right now. Refresh, or ask your site admin to confirm today\'s sessions are scheduled.',
     );
     final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
     when(() => syncCoordinator.isOnline).thenReturn(true);
@@ -485,7 +486,7 @@ void main() {
 
     expect(
       find.text(
-          'We could not load attendance sessions right now. Retry to check the current state.'),
+          'We could not load attendance sessions right now. Refresh, or ask your site admin to confirm today\'s sessions are scheduled.'),
       findsOneWidget,
     );
     expect(find.text('No classes today'), findsNothing);
@@ -542,10 +543,12 @@ void main() {
 
     expect(
       find.text(
-        'Unable to refresh attendance sessions right now. Showing the last successful data. Failed to load occurrences from test',
+        'Unable to refresh attendance sessions right now. Showing the last successful data.',
       ),
       findsOneWidget,
     );
+    expect(find.textContaining('Failed to load occurrences from test'),
+        findsNothing);
     expect(find.text('Robotics Lab'), findsOneWidget);
     expect(find.text('No classes today'), findsNothing);
   });
@@ -2045,10 +2048,8 @@ void main() {
         reason:
             'attendance page must not label output as AI-generated (Gate I)');
     expect(find.textContaining('AI assisted'), findsNothing,
-        reason:
-            'attendance page must not imply AI assistance (Gate I)');
+        reason: 'attendance page must not imply AI assistance (Gate I)');
     expect(find.textContaining('verified by AI'), findsNothing,
-        reason:
-            'attendance page must not present AI-verified claims (Gate I)');
+        reason: 'attendance page must not present AI-verified claims (Gate I)');
   });
 }

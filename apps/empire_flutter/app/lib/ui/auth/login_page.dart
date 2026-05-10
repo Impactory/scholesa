@@ -519,16 +519,16 @@ class _LoginPageState extends State<LoginPage>
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
-    const Color headingColor = ScholesaColors.textPrimary;
-    const Color secondaryTextColor = ScholesaColors.textSecondary;
-    const Color fieldFillColor = Colors.white;
-    const Color fieldTextColor = ScholesaColors.textPrimary;
-    const Color fieldHintColor = ScholesaColors.textMuted;
-    const Color fieldBorderColor = ScholesaColors.border;
-    const Color linkColor = ScholesaColors.primaryDark;
+    final Color headingColor = colorScheme.onSurface;
+    final Color secondaryTextColor = colorScheme.onSurfaceVariant;
+    final Color fieldFillColor = colorScheme.surfaceContainerHighest;
+    final Color fieldTextColor = colorScheme.onSurface;
+    final Color fieldHintColor = colorScheme.onSurfaceVariant;
+    final Color fieldBorderColor = colorScheme.outlineVariant;
+    final Color linkColor = colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: ScholesaColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: <Widget>[
           // Left side - decorative gradient panel (only on wide screens)
@@ -593,14 +593,14 @@ class _LoginPageState extends State<LoginPage>
                             _tLogin(context, 'Portfolio showcase')),
                         const Spacer(),
                         // Bottom pillars
-                        Row(
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
                           children: <Widget>[
                             _buildPillarChip(_tLogin(context, 'Discoverers'),
                                 ScholesaColors.futureSkills),
-                            const SizedBox(width: 8),
                             _buildPillarChip(_tLogin(context, 'Builders'),
                                 ScholesaColors.leadership),
-                            const SizedBox(width: 8),
                             _buildPillarChip(_tLogin(context, 'Innovators'),
                                 ScholesaColors.impact),
                           ],
@@ -666,26 +666,24 @@ class _LoginPageState extends State<LoginPage>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color:
-                                    ScholesaColors.error.withValues(alpha: 0.1),
+                                color: colorScheme.errorContainer,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: ScholesaColors.error
-                                      .withValues(alpha: 0.3),
+                                  color: colorScheme.error,
                                 ),
                               ),
                               child: Row(
                                 children: <Widget>[
-                                  const Icon(
+                                  Icon(
                                     Icons.error_outline_rounded,
-                                    color: ScholesaColors.error,
+                                    color: colorScheme.onErrorContainer,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: const TextStyle(
-                                        color: ScholesaColors.error,
+                                      style: TextStyle(
+                                        color: colorScheme.onErrorContainer,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -706,7 +704,7 @@ class _LoginPageState extends State<LoginPage>
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: fieldTextColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -715,25 +713,24 @@ class _LoginPageState extends State<LoginPage>
                                         AppStrings.of(context, 'auth.email'),
                                     hintText: AppStrings.of(
                                         context, 'auth.emailHint'),
-                                    labelStyle: const TextStyle(
-                                        color: secondaryTextColor),
+                                    labelStyle:
+                                        TextStyle(color: secondaryTextColor),
                                     floatingLabelStyle:
-                                        const TextStyle(color: headingColor),
-                                    hintStyle:
-                                        const TextStyle(color: fieldHintColor),
-                                    prefixIcon: const Icon(Icons.email_outlined,
+                                        TextStyle(color: headingColor),
+                                    hintStyle: TextStyle(color: fieldHintColor),
+                                    prefixIcon: Icon(Icons.email_outlined,
                                         color: secondaryTextColor),
                                     filled: true,
                                     fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                          color: fieldBorderColor),
+                                      borderSide:
+                                          BorderSide(color: fieldBorderColor),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                          color: fieldBorderColor),
+                                      borderSide:
+                                          BorderSide(color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -763,7 +760,7 @@ class _LoginPageState extends State<LoginPage>
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
                                   onFieldSubmitted: (_) => _handleLogin(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: fieldTextColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -772,25 +769,24 @@ class _LoginPageState extends State<LoginPage>
                                         AppStrings.of(context, 'auth.password'),
                                     hintText: AppStrings.of(
                                         context, 'auth.passwordHint'),
-                                    labelStyle: const TextStyle(
-                                        color: secondaryTextColor),
+                                    labelStyle:
+                                        TextStyle(color: secondaryTextColor),
                                     floatingLabelStyle:
-                                        const TextStyle(color: headingColor),
-                                    hintStyle:
-                                        const TextStyle(color: fieldHintColor),
-                                    prefixIcon: const Icon(Icons.lock_outlined,
+                                        TextStyle(color: headingColor),
+                                    hintStyle: TextStyle(color: fieldHintColor),
+                                    prefixIcon: Icon(Icons.lock_outlined,
                                         color: secondaryTextColor),
                                     filled: true,
                                     fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                          color: fieldBorderColor),
+                                      borderSide:
+                                          BorderSide(color: fieldBorderColor),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                          color: fieldBorderColor),
+                                      borderSide:
+                                          BorderSide(color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -919,8 +915,11 @@ class _LoginPageState extends State<LoginPage>
                           // Divider
                           Row(
                             children: <Widget>[
-                              const Expanded(
-                                  child: Divider(color: ScholesaColors.border)),
+                              Expanded(
+                                child: Divider(
+                                  color: colorScheme.outlineVariant,
+                                ),
+                              ),
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
@@ -932,85 +931,68 @@ class _LoginPageState extends State<LoginPage>
                                   ),
                                 ),
                               ),
-                              const Expanded(
-                                  child: Divider(color: ScholesaColors.border)),
+                              Expanded(
+                                child: Divider(
+                                  color: colorScheme.outlineVariant,
+                                ),
+                              ),
                             ],
                           ),
 
                           const SizedBox(height: 24),
 
                           // Social sign in buttons
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : () {
-                                          TelemetryService.instance.logEvent(
-                                            event: 'cta.clicked',
-                                            metadata: const <String, dynamic>{
-                                              'module': 'login',
-                                              'cta_id': 'submit_google_login',
-                                              'surface': 'social_login',
-                                            },
-                                          );
-                                          _handleGoogleSignIn();
-                                        },
+                          LayoutBuilder(
+                            builder: (BuildContext context,
+                                BoxConstraints constraints) {
+                              final bool stackButtons =
+                                  constraints.maxWidth < 380;
+                              final List<Widget> buttons = <Widget>[
+                                _buildSocialLoginButton(
+                                  context: context,
+                                  label: AppStrings.of(context, 'auth.google'),
                                   icon: const Icon(
                                     Icons.g_mobiledata,
                                     color: Colors.red,
                                     size: 24,
                                   ),
-                                  label: Text(
-                                      AppStrings.of(context, 'auth.google')),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    side: BorderSide(
-                                        color: colorScheme.outlineVariant),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                  ctaId: 'submit_google_login',
+                                  onPressed: _handleGoogleSignIn,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : () {
-                                          TelemetryService.instance.logEvent(
-                                            event: 'cta.clicked',
-                                            metadata: const <String, dynamic>{
-                                              'module': 'login',
-                                              'cta_id':
-                                                  'submit_microsoft_login',
-                                              'surface': 'social_login',
-                                            },
-                                          );
-                                          _handleMicrosoftSignIn();
-                                        },
+                                _buildSocialLoginButton(
+                                  context: context,
+                                  label:
+                                      AppStrings.of(context, 'auth.microsoft'),
                                   icon: const Icon(
                                     Icons.window,
                                     size: 20,
                                     color: Color(0xFF00A4EF),
                                   ),
-                                  label: Text(
-                                      AppStrings.of(context, 'auth.microsoft')),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    side: BorderSide(
-                                        color: colorScheme.outlineVariant),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                  ctaId: 'submit_microsoft_login',
+                                  onPressed: _handleMicrosoftSignIn,
                                 ),
-                              ),
-                            ],
+                              ];
+
+                              if (stackButtons) {
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: <Widget>[
+                                    buttons.first,
+                                    const SizedBox(height: 12),
+                                    buttons.last,
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                children: <Widget>[
+                                  Expanded(child: buttons.first),
+                                  const SizedBox(width: 16),
+                                  Expanded(child: buttons.last),
+                                ],
+                              );
+                            },
                           ),
 
                           const SizedBox(height: 32),
@@ -1072,6 +1054,40 @@ class _LoginPageState extends State<LoginPage>
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialLoginButton({
+    required BuildContext context,
+    required String label,
+    required Widget icon,
+    required String ctaId,
+    required VoidCallback onPressed,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return OutlinedButton.icon(
+      onPressed: _isLoading
+          ? null
+          : () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'login',
+                  'cta_id': ctaId,
+                  'surface': 'social_login',
+                },
+              );
+              onPressed();
+            },
+      icon: icon,
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        side: BorderSide(color: colorScheme.outlineVariant),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

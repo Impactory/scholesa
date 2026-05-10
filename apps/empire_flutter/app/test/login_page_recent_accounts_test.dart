@@ -7,6 +7,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
+import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _FakeAuthService extends Fake implements AuthService {}
 
@@ -28,6 +29,81 @@ class _FakeRecentLoginStore extends RecentLoginStore {
 }
 
 void main() {
+  testWidgets('login page applies the active dark theme on first paint',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<AuthService>.value(value: _FakeAuthService()),
+          ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+          ChangeNotifierProvider<RecentLoginStore>.value(
+            value: _FakeRecentLoginStore(<RecentLoginAccount>[]),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          darkTheme: ScholesaTheme.dark,
+          themeMode: ThemeMode.dark,
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: LoginPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Scaffold scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(
+        scaffold.backgroundColor, ScholesaTheme.dark.scaffoldBackgroundColor);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('login CTAs stack without overflow on narrow screens',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 740));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<AuthService>.value(value: _FakeAuthService()),
+          ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+          ChangeNotifierProvider<RecentLoginStore>.value(
+            value: _FakeRecentLoginStore(<RecentLoginAccount>[]),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: LoginPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Google'), findsOneWidget);
+    expect(find.text('Microsoft'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('login page shows remembered accounts and prefills email',
       (WidgetTester tester) async {
     final _FakeRecentLoginStore recentLoginStore = _FakeRecentLoginStore(

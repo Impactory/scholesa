@@ -40,6 +40,7 @@ import 'modules/messages/messages.dart';
 import 'modules/partner/partner_service.dart';
 import 'modules/parent/parent.dart';
 import 'modules/educator/educator.dart';
+import 'modules/attendance/attendance_service.dart';
 // Firebase options
 import 'firebase_options.dart';
 
@@ -397,6 +398,33 @@ class _ScholesaAppState extends State<ScholesaApp> {
             firestore: _firestoreService.firestore,
             auth: FirebaseAuth.instance,
           ),
+        ),
+        ChangeNotifierProxyProvider<AppState, AttendanceService>(
+          create: (_) => AttendanceService(
+            apiClient: ApiClient(),
+            syncCoordinator: _syncCoordinator,
+            firestore: _firestoreService.firestore,
+            educatorId: '',
+            siteId: '',
+          ),
+          update:
+              (_, AppState appState, AttendanceService? previousAttendance) {
+            final String educatorId = _normalizeContextValue(appState.userId);
+            final String siteId = _normalizeContextValue(appState.activeSiteId);
+            if (previousAttendance != null &&
+                previousAttendance.educatorId == educatorId &&
+                (previousAttendance.siteId?.trim() ?? '') == siteId) {
+              return previousAttendance;
+            }
+
+            return AttendanceService(
+              apiClient: ApiClient(),
+              syncCoordinator: _syncCoordinator,
+              firestore: _firestoreService.firestore,
+              educatorId: educatorId,
+              siteId: siteId,
+            );
+          },
         ),
         ChangeNotifierProxyProvider<AppState, PartnerService>(
           create: (_) => PartnerService(

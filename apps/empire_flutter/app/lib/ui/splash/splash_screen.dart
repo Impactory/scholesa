@@ -73,16 +73,17 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
-              Color(0xFF0F172A),
+              scheme.surfaceContainerLowest,
+              scheme.surface,
+              scheme.surfaceContainerLow,
             ],
           ),
         ),
@@ -127,12 +128,12 @@ class _SplashScreenState extends State<SplashScreen>
                         ],
                       ).createShader(bounds);
                     },
-                    child: const Text(
+                    child: Text(
                       'Scholesa',
                       style: TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: scheme.onSurface,
                         letterSpacing: 2,
                       ),
                     ),
@@ -145,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen>
                     'K-12 Skills-First Platform',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: scheme.onSurfaceVariant,
                       letterSpacing: 1,
                     ),
                   ),
@@ -162,7 +163,7 @@ class _SplashScreenState extends State<SplashScreen>
                     widget.message,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

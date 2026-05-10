@@ -12,6 +12,10 @@ enum AttendanceBatchSaveResult {
 }
 
 const String _fallbackLearnerName = 'Learner unavailable';
+const String _attendanceOccurrencesLoadMessage =
+    'We could not load attendance sessions right now. Refresh, or ask your site admin to confirm today\'s sessions are scheduled.';
+const String _attendanceRosterLoadMessage =
+    'We could not load this class roster right now. Refresh, or reopen attendance from Today after the app reconnects.';
 
 class AttendanceOccurrencesSnapshot {
   const AttendanceOccurrencesSnapshot({
@@ -41,7 +45,8 @@ class AttendanceService extends ChangeNotifier {
   final Future<AttendanceOccurrencesSnapshot> Function()? _occurrencesLoader;
   final String? educatorId;
   final String? siteId;
-  FirebaseFirestore get firestoreInstance => _firestore ?? FirebaseFirestore.instance;
+  FirebaseFirestore get firestoreInstance =>
+      _firestore ?? FirebaseFirestore.instance;
 
   List<SessionOccurrence> _todayOccurrences = <SessionOccurrence>[];
   SessionOccurrence? _currentOccurrence;
@@ -68,8 +73,8 @@ class AttendanceService extends ChangeNotifier {
 
       debugPrint('Loaded ${_todayOccurrences.length} occurrences for today');
     } catch (e) {
-      _error = 'Failed to load occurrences: $e';
-      debugPrint(_error);
+      _error = _attendanceOccurrencesLoadMessage;
+      debugPrint('Failed to load attendance occurrences: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -128,10 +133,11 @@ class AttendanceService extends ChangeNotifier {
 
     try {
       // Get occurrence details
-        final DocumentSnapshot<Map<String, dynamic>> occDoc = await firestoreInstance
-          .collection('sessionOccurrences')
-          .doc(occurrenceId)
-          .get();
+      final DocumentSnapshot<Map<String, dynamic>> occDoc =
+          await firestoreInstance
+              .collection('sessionOccurrences')
+              .doc(occurrenceId)
+              .get();
 
       if (!occDoc.exists) {
         _error = 'Occurrence not found';
@@ -145,7 +151,7 @@ class AttendanceService extends ChangeNotifier {
 
       // Get enrollments for this session
       final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
-            await firestoreInstance
+          await firestoreInstance
               .collection('enrollments')
               .where('sessionId', isEqualTo: sessionId)
               .where('status', isEqualTo: 'active')
@@ -153,7 +159,7 @@ class AttendanceService extends ChangeNotifier {
 
       // Get existing attendance records for this occurrence
       final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot =
-            await firestoreInstance
+          await firestoreInstance
               .collection('attendanceRecords')
               .where('occurrenceId', isEqualTo: occurrenceId)
               .get();
@@ -224,8 +230,8 @@ class AttendanceService extends ChangeNotifier {
 
       debugPrint('Loaded roster with ${roster.length} learners');
     } catch (e) {
-      _error = 'Failed to load roster: $e';
-      debugPrint(_error);
+      _error = _attendanceRosterLoadMessage;
+      debugPrint('Failed to load attendance roster: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -236,7 +242,9 @@ class AttendanceService extends ChangeNotifier {
   Future<void> recordAttendance(AttendanceRecord record) async {
     try {
       if (_syncCoordinator.isOnline) {
-        await firestoreInstance.collection('attendanceRecords').add(<String, dynamic>{
+        await firestoreInstance
+            .collection('attendanceRecords')
+            .add(<String, dynamic>{
           'occurrenceId': record.occurrenceId,
           'learnerId': record.learnerId,
           'status': record.status.name,

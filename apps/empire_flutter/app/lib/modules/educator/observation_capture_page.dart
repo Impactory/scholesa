@@ -20,6 +20,11 @@ class ObservationCapturePage extends StatefulWidget {
 }
 
 class _ObservationCapturePageState extends State<ObservationCapturePage> {
+  static const String _loadErrorMessage =
+      'Observation tools need a quick setup refresh. Try again, or return to Today and reopen Quick Observation.';
+  static const String _submitErrorMessage =
+      'We could not save this observation yet. Check your connection and try again.';
+
   List<Map<String, dynamic>> _learners = <Map<String, dynamic>>[];
   List<Map<String, dynamic>> _recentObservations = <Map<String, dynamic>>[];
   bool _isLoading = true;
@@ -136,8 +141,9 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Failed to load observation capture data: $e');
       setState(() {
-        _error = 'Failed to load data: $e';
+        _error = _loadErrorMessage;
         _isLoading = false;
       });
     }
@@ -218,9 +224,10 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
       _captureStartTime = null;
       await _loadData();
     } catch (e) {
+      debugPrint('Failed to record observation: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_t('Error recording observation:')} $e')),
+        SnackBar(content: Text(_t(_submitErrorMessage))),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
