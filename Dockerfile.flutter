@@ -19,6 +19,8 @@ RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize
 
 RUN flutter pub get
 RUN flutter build web --wasm --release --no-tree-shake-icons
+RUN cache_bust="$(date +%Y%m%d%H%M%S)" && \
+    sed -i "s/main.dart.js/main.dart.js?v=${cache_bust}/g; s/main.dart.mjs/main.dart.mjs?v=${cache_bust}/g; s/main.dart.wasm/main.dart.wasm?v=${cache_bust}/g" build/web/index.html
 
 FROM nginx:1.25-alpine
 
@@ -42,6 +44,10 @@ server {\n\
     gzip_types text/html text/css application/javascript application/json image/svg+xml;\n\
     gzip_min_length 256;\n\
     location = /index.html {\n\
+        add_header Cache-Control "no-cache, no-store, must-revalidate";\n\
+        try_files $uri =404;\n\
+    }\n\
+    location ~* ^/(main\\.dart\\.(js|mjs|wasm)|flutter_bootstrap\\.js|flutter\\.js|version\\.json)$ {\n\
         add_header Cache-Control "no-cache, no-store, must-revalidate";\n\
         try_files $uri =404;\n\
     }\n\
