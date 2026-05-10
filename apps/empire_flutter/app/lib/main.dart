@@ -613,8 +613,17 @@ class _ScholesaAppState extends State<ScholesaApp> {
                       ),
                     ),
                   ),
-                  GlobalAiAssistantOverlay(
-                    navigatorKey: _rootNavigatorKey,
+                  AnimatedBuilder(
+                    animation: _router!.routeInformationProvider,
+                    builder: (BuildContext context, Widget? child) {
+                      final Uri uri = _router!.routeInformationProvider.value.uri;
+                      if (uri.path == '/learner/miloos') {
+                        return const SizedBox.shrink();
+                      }
+                      return GlobalAiAssistantOverlay(
+                        navigatorKey: _rootNavigatorKey,
+                      );
+                    },
                   ),
                 ],
               );

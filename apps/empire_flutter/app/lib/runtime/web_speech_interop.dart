@@ -211,8 +211,8 @@ class WebSpeechSynthesis {
   static Future<void> speak(
     String text, {
     String locale = 'en-US',
-    double rate = 0.9,
-    double pitch = 1.0,
+    double rate = 0.86,
+    double pitch = 1.04,
     double volume = 1.0,
   }) {
     final Completer<void> completer = Completer<void>();
@@ -231,11 +231,27 @@ class WebSpeechSynthesis {
           web.window.speechSynthesis.getVoices().toDart;
       final String langPrefix =
           locale.contains('-') ? locale.split('-').first : locale;
+      web.SpeechSynthesisVoice? fallbackVoice;
       for (final web.SpeechSynthesisVoice voice in voices) {
-        if (voice.lang.startsWith(langPrefix)) {
+        final String voiceName = voice.name.toLowerCase();
+        final bool preferredHumanVoice =
+            voiceName.contains('natural') ||
+                voiceName.contains('enhanced') ||
+                voiceName.contains('premium') ||
+                voiceName.contains('samantha') ||
+                voiceName.contains('alex') ||
+                voiceName.contains('daniel') ||
+                voiceName.contains('google');
+        if (voice.lang.startsWith(langPrefix) && preferredHumanVoice) {
           utterance.voice = voice as _JsSpeechSynthesisVoice;
           break;
         }
+        if (fallbackVoice == null && voice.lang.startsWith(langPrefix)) {
+          fallbackVoice = voice;
+        }
+      }
+      if (fallbackVoice != null) {
+        utterance.voice ??= fallbackVoice as _JsSpeechSynthesisVoice;
       }
     } catch (_) {
       // Voice selection is best-effort.

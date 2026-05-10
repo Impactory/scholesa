@@ -238,9 +238,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           }
         },
       );
-      await _flutterTts.setSpeechRate(0.45);
+      await _flutterTts.setSpeechRate(kIsWeb ? 0.86 : 0.42);
       await _flutterTts.setVolume(1.0);
-      await _flutterTts.setPitch(1.0);
+      await _flutterTts.setPitch(1.04);
       await _flutterTts.awaitSpeakCompletion(true);
 
       final bool isApplePlatform = !kIsWeb &&
@@ -1107,7 +1107,12 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (!played && kIsWeb && WebSpeechSynthesis.isSupported) {
       try {
         if (mounted) setState(() => _isSpeaking = true);
-        await WebSpeechSynthesis.speak(text, locale: capturedLocale);
+        await WebSpeechSynthesis.speak(
+          text,
+          locale: capturedLocale,
+          rate: 0.86,
+          pitch: 1.04,
+        );
         played = true;
         if (mounted) setState(() => _isSpeaking = false);
         await TelemetryService.instance.logEvent(
