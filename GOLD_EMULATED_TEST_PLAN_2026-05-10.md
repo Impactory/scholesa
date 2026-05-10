@@ -77,6 +77,10 @@ Then run the full gate:
 | 2026-05-10 | `./scripts/deploy.sh release-gate` | Passed | Non-deploying release gate passed after emulator fixes. Flutter gate passed with `+1092: All tests passed!`, then diff hygiene passed and the release reproducibility gate completed. |
 | 2026-05-10 | `GCP_PROJECT_ID=studio-3328096157-e3f79 GCP_REGION=us-central1 CLOUD_RUN_FLUTTER_SERVICE=empire-web ./scripts/deploy.sh flutter-web` | Passed | Deploy gate reran Flutter tests (`+1092`), Cloud Build `d7d1dc42-dbdb-40f3-96df-3702ff72fe47` built image tag `20260510-121721`, and Cloud Run revision `empire-web-00087-g7d` now serves 100 percent traffic. |
 | 2026-05-10 | `gcloud run services describe ...` and `curl -sSI` probes | Passed | Traffic table confirms `empire-web-00087-g7d` latest ready at 100 percent. `scholesa.com`, `/videos/proof-flow.mp4`, and direct Cloud Run origin returned 200. |
+| 2026-05-10 | `flutter test test/auth_service_test.dart test/ai_coach_widget_regression_test.dart test/global_ai_assistant_overlay_regression_test.dart test/web_speech_test.dart` | Passed | Validates provider-hang logout regression, bounded MiloOS overlay, voice wording, and web speech bridge after the voice tuning pass. |
+| 2026-05-10 | `flutter analyze lib/auth/auth_service.dart lib/runtime/ai_coach_widget.dart lib/runtime/web_speech_interop.dart test/auth_service_test.dart` | Passed | No analyzer issues in touched logout and MiloOS voice files. |
+| 2026-05-10 | `GCP_PROJECT_ID=studio-3328096157-e3f79 GCP_REGION=us-central1 CLOUD_RUN_FLUTTER_SERVICE=empire-web ./scripts/deploy.sh flutter-web` | Passed | Deploy output capture was truncated by the terminal wrapper, but Cloud Build `a0c6a065-058d-46c8-9904-5f6780e3095c` succeeded for image tag `20260510-123327`; Cloud Run revision `empire-web-00088-ln2` serves 100 percent traffic. |
+| 2026-05-10 | `gcloud run services describe ...` and `curl -sSI` probes | Passed | Traffic table confirms `empire-web-00088-ln2` latest ready at 100 percent. `scholesa.com`, `/videos/proof-flow.mp4`, and direct Cloud Run origin returned 200. |
 
 ## Failure Handling
 

@@ -420,6 +420,42 @@ void main() {
 
         await Future<void>.delayed(const Duration(milliseconds: 5));
       });
+
+      test('does not block Firebase sign-out when Google sign-out hangs',
+          () async {
+        appState.updateFromMeResponse(<String, dynamic>{
+          'userId': 'uid-123',
+          'email': 'test@example.com',
+          'displayName': 'Test User',
+          'role': 'educator',
+          'activeSiteId': 'site1',
+          'siteIds': <String>['site1'],
+          'entitlements': <dynamic>[],
+        });
+
+        final Completer<void> googleSignOutCompleter = Completer<void>();
+        when(() => mockGoogleSignIn.signOut())
+            .thenAnswer((_) => googleSignOutCompleter.future);
+        when(() => mockAuth.signOut()).thenAnswer((_) async {});
+
+        authService = AuthService(
+          auth: mockAuth,
+          firestoreService: mockFirestore,
+          appState: appState,
+          googleSignIn: mockGoogleSignIn,
+          googleSignInPlatformOverride: TargetPlatform.iOS,
+          logoutAuditService: mockLogoutAuditService,
+          recentLoginStore: recentLoginStore,
+          logoutSideEffectTimeout: const Duration(milliseconds: 1),
+        );
+
+        await authService.signOut(source: 'global_session_menu');
+
+        verify(() => mockGoogleSignIn.signOut()).called(1);
+        verify(() => mockAuth.signOut()).called(1);
+        expect(appState.isAuthenticated, isFalse);
+        expect(recentLoginStore.clearedActiveSession, isTrue);
+      });
     });
 
     // ── currentUser ──────────────────────────────────────

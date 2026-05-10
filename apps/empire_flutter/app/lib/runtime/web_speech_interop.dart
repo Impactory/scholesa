@@ -207,8 +207,8 @@ class WebSpeechSynthesis {
   static Future<void> speak(
     String text, {
     String locale = 'en-US',
-    double rate = 0.86,
-    double pitch = 1.04,
+    double rate = 0.82,
+    double pitch = 1.02,
     double volume = 1.0,
   }) {
     final Completer<void> completer = Completer<void>();
@@ -232,11 +232,16 @@ class WebSpeechSynthesis {
       for (final web.SpeechSynthesisVoice voice in voices) {
         final String voiceName = voice.name.toLowerCase();
         final bool preferredHumanVoice = voiceName.contains('natural') ||
+            voiceName.contains('neural') ||
             voiceName.contains('enhanced') ||
             voiceName.contains('premium') ||
             voiceName.contains('samantha') ||
             voiceName.contains('alex') ||
             voiceName.contains('daniel') ||
+            voiceName.contains('aria') ||
+            voiceName.contains('jenny') ||
+            voiceName.contains('ava') ||
+            voiceName.contains('sonia') ||
             voiceName.contains('google');
         if (voice.lang.startsWith(langPrefix) && preferredHumanVoice) {
           utterance.voice = voice as _JsSpeechSynthesisVoice;

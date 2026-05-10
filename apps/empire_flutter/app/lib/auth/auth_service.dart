@@ -133,12 +133,7 @@ class AuthService {
     final String? roleName = _appState.role?.name;
     final String? activeSiteId = _normalizedOrNull(_appState.activeSiteId);
     final String? impersonatingRole = _appState.impersonatingRole?.name;
-    // Sign out from Google if signed in with Google
-    try {
-      await _googleSignIn.signOut();
-    } catch (_) {
-      // Ignore if not signed in with Google
-    }
+    unawaited(_signOutFromGoogleBestEffort());
     unawaited(_logLogoutTelemetry(
       source: source,
       roleName: roleName,
@@ -158,6 +153,14 @@ class AuthService {
       // Ignore recent-account persistence errors
     }
     _appState.clear();
+  }
+
+  Future<void> _signOutFromGoogleBestEffort() async {
+    try {
+      await _googleSignIn.signOut().timeout(_logoutSideEffectTimeout);
+    } catch (_) {
+      // Provider cleanup must never block Firebase sign-out or local state clear.
+    }
   }
 
   Future<void> _logLogoutTelemetry({
