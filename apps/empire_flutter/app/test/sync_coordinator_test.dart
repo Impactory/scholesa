@@ -543,6 +543,7 @@ void main() {
           idempotencyKey: 'queued-proof-1',
           payload: <String, dynamic>{
             'learnerId': 'learner-1',
+            'siteId': 'site-1',
             'portfolioItemId': 'portfolio-1',
             'capabilityId': 'capability-evidence-reasoning',
             'hasExplainItBack': true,
@@ -560,6 +561,7 @@ void main() {
           .doc('queued-proof-1')
           .get();
       expect(proofDoc.exists, isTrue);
+      expect(proofDoc.data()?['siteId'], 'site-1');
       expect(proofDoc.data()?['portfolioItemId'], 'portfolio-1');
       expect(proofDoc.data()?['capabilityId'], 'capability-evidence-reasoning');
       expect(proofDoc.data()?['hasExplainItBack'], true);

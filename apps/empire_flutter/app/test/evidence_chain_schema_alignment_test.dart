@@ -149,10 +149,12 @@ void main() {
     test('ProofOfLearningBundleModel has 3 verification methods', () {
       const ProofOfLearningBundleModel m = ProofOfLearningBundleModel(
         id: 'pol1',
+        siteId: 'site1',
         learnerId: 'l1',
         portfolioItemId: 'pi1',
       );
       // Must have all 3 verification methods
+      expect(m.siteId, 'site1');
       expect(m.hasExplainItBack, isFalse);
       expect(m.hasOralCheck, isFalse);
       expect(m.hasMiniRebuild, isFalse);

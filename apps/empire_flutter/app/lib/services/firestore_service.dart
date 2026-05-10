@@ -665,6 +665,7 @@ class FirestoreService {
   /// Create a proof-of-learning bundle
   Future<String> createProofOfLearningBundle({
     required String learnerId,
+    required String siteId,
     required String portfolioItemId,
     String? capabilityId,
   }) async {
@@ -672,6 +673,7 @@ class FirestoreService {
         .collection('proofOfLearningBundles')
         .add(<String, dynamic>{
       'learnerId': learnerId,
+      'siteId': siteId,
       'portfolioItemId': portfolioItemId,
       'capabilityId': capabilityId,
       'hasExplainItBack': false,
@@ -717,8 +719,8 @@ class FirestoreService {
     final bool oc = hasOralCheck ?? false;
     final bool mr = hasMiniRebuild ?? false;
     if (eib && oc && mr) {
-      // Learner can only reach pending_review; educator must verify via
-      // verifyProofOfLearning() to set 'verified'.
+      // Learner can only reach pending_review; educator verification is
+      // server-owned through verifyProofOfLearning().
       updates['verificationStatus'] = 'pending_review';
     } else if (eib || oc || mr) {
       updates['verificationStatus'] = 'partial';
@@ -730,19 +732,22 @@ class FirestoreService {
         .update(updates);
   }
 
-  /// Educator verifies a proof-of-learning bundle
+  /// Educator verifies proof of learning through the server-owned callable.
   Future<void> verifyProofOfLearning({
-    required String bundleId,
-    required String educatorId,
+    required String portfolioItemId,
     required String verificationStatus,
+    Map<String, dynamic> proofChecks = const <String, dynamic>{},
+    Map<String, dynamic> excerpts = const <String, dynamic>{},
   }) async {
-    await _firestore
-        .collection('proofOfLearningBundles')
-        .doc(bundleId)
-        .update(<String, dynamic>{
-      'educatorVerifierId': educatorId,
+    final HttpsCallable callable = _functions.httpsCallable(
+      'verifyProofOfLearning',
+    );
+    await callable.call(<String, dynamic>{
+      'portfolioItemId': portfolioItemId,
       'verificationStatus': verificationStatus,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'proofOfLearningStatus': verificationStatus,
+      'proofChecks': proofChecks,
+      'excerpts': excerpts,
     });
   }
 

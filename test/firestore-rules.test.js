@@ -1514,6 +1514,61 @@ describe('Passport evidence chain access', () => {
     await assertFails(getDoc(doc(learnerDb, 'capabilityGrowthEvents', 'growth-nosite')));
     await assertFails(getDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-nosite')));
   });
+
+  test('learner can assemble proof but cannot verify it or spoof educator verification', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-learner-assembly'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      portfolioItemId: 'portfolio-1',
+      hasExplainItBack: true,
+      hasOralCheck: false,
+      hasMiniRebuild: false,
+      verificationStatus: 'partial',
+      version: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-learner-assembly'), {
+      hasOralCheck: true,
+      hasMiniRebuild: true,
+      oralCheckExcerpt: 'I explained the decision aloud.',
+      miniRebuildExcerpt: 'I can rebuild it from scratch.',
+      verificationStatus: 'pending_review',
+      updatedAt: Date.now(),
+    }));
+
+    await assertFails(setDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-learner-verified'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      portfolioItemId: 'portfolio-1',
+      hasExplainItBack: true,
+      hasOralCheck: true,
+      hasMiniRebuild: true,
+      verificationStatus: 'verified',
+      version: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+
+    await assertFails(updateDoc(doc(learnerDb, 'proofOfLearningBundles', 'proof-learner-assembly'), {
+      verificationStatus: 'verified',
+      educatorVerifierId: educatorUser.uid,
+      updatedAt: Date.now(),
+    }));
+  });
+
+  test('educator cannot verify proof bundles directly through client rules', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+
+    await assertFails(updateDoc(doc(educatorDb, 'proofOfLearningBundles', 'proof-1'), {
+      verificationStatus: 'verified',
+      educatorVerifierId: educatorUser.uid,
+      updatedAt: Date.now(),
+    }));
+  });
 });
 
 describe('AI audit access', () => {
@@ -1600,6 +1655,85 @@ describe('AI audit access', () => {
     }));
     await assertFails(updateDoc(doc(educatorDb, 'aiCoachInteractions', 'ai-coach-1'), {
       response: 'Changed native audit response.',
+    }));
+  });
+});
+
+describe('Report audit access', () => {
+  test('site admin can create scoped operational audit logs', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+
+    await assertSucceeds(setDoc(doc(db, 'auditLogs', 'site-ops-audit'), {
+      siteId: 'site1',
+      actorId: siteAdminUser.uid,
+      userId: siteAdminUser.uid,
+      action: 'site_ops.event_resolved',
+      entityType: 'siteOpsEvent',
+      entityId: 'event-1',
+      createdAt: Date.now(),
+    }));
+  });
+
+  test('clients cannot spoof report delivery audit rows', async () => {
+    const siteDb = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertFails(setDoc(doc(siteDb, 'auditLogs', 'report-delivery-spoof'), {
+      siteId: 'site1',
+      actorId: siteAdminUser.uid,
+      userId: siteAdminUser.uid,
+      action: 'report.delivery_recorded',
+      entityType: 'learnerReport',
+      entityId: learnerUser.uid,
+      targetType: 'learner',
+      targetId: learnerUser.uid,
+      details: {
+        learnerId: learnerUser.uid,
+        reportAction: 'export_pdf',
+        reportDelivery: 'downloaded',
+      },
+      createdAt: Date.now(),
+    }));
+
+    await assertFails(setDoc(doc(hqDb, 'auditLogs', 'report-blocked-spoof'), {
+      siteId: 'site1',
+      actorId: hqUser.uid,
+      userId: hqUser.uid,
+      action: 'report.delivery_blocked',
+      entityType: 'learnerReport',
+      entityId: learnerUser.uid,
+      targetType: 'learner',
+      targetId: learnerUser.uid,
+      details: {
+        learnerId: learnerUser.uid,
+        reportAction: 'share',
+        reportDelivery: 'contract-failed',
+      },
+      createdAt: Date.now(),
+    }));
+  });
+
+  test('site audit client writes require site scope', async () => {
+    const siteDb = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertFails(setDoc(doc(siteDb, 'auditLogs', 'site-ops-nosite'), {
+      actorId: siteAdminUser.uid,
+      userId: siteAdminUser.uid,
+      action: 'site_ops.event_resolved',
+      entityType: 'siteOpsEvent',
+      entityId: 'event-1',
+      createdAt: Date.now(),
+    }));
+
+    await assertFails(setDoc(doc(otherSiteDb, 'auditLogs', 'site-ops-wrong-site'), {
+      siteId: 'site1',
+      actorId: otherSiteUser.uid,
+      userId: otherSiteUser.uid,
+      action: 'site_ops.event_resolved',
+      entityType: 'siteOpsEvent',
+      entityId: 'event-1',
+      createdAt: Date.now(),
     }));
   });
 });

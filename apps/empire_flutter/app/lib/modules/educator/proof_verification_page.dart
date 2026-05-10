@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
-import '../../services/growth_engine_service.dart';
 
 /// Educator reviews and verifies learner proof-of-learning bundles.
 /// Shows unverified proof bundles with their ExplainItBack / OralCheck / MiniRebuild
@@ -119,68 +117,28 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
   Future<void> _verifyBundle(Map<String, dynamic> bundle) async {
     final AppState appState = context.read<AppState>();
-    final GrowthEngineService growthEngine =
-        context.read<GrowthEngineService>();
     final String educatorId = appState.userId ?? '';
     final String portfolioItemId = bundle['portfolioItemId'] as String? ?? '';
-    final String bundleId = bundle['id'] as String? ?? '';
 
-    // Prefer calling the Cloud Function which atomically updates:
-    // portfolioItem, capabilityMastery, capabilityGrowthEvents, and back-links
-    if (educatorId.isEmpty || (portfolioItemId.isEmpty && bundleId.isEmpty)) {
+    if (educatorId.isEmpty || portfolioItemId.isEmpty) {
       return;
     }
 
     try {
-      if (portfolioItemId.isNotEmpty) {
-        // Use the Cloud Function for full evidence chain integration
-        final HttpsCallable callable =
-            FirebaseFunctions.instance.httpsCallable('verifyProofOfLearning');
-        await callable.call<dynamic>(<String, dynamic>{
-          'portfolioItemId': portfolioItemId,
-          'verificationStatus': 'verified',
-          'proofOfLearningStatus': 'verified',
-          'proofChecks': <String, dynamic>{
-            'hasExplainItBack': bundle['hasExplainItBack'] as bool? ?? false,
-            'hasOralCheck': bundle['hasOralCheck'] as bool? ?? false,
-            'hasMiniRebuild': bundle['hasMiniRebuild'] as bool? ?? false,
-          },
-          'excerpts': <String, dynamic>{
-            'explainItBack': bundle['explainItBackExcerpt'] as String? ?? '',
-            'oralCheck': bundle['oralCheckExcerpt'] as String? ?? '',
-            'miniRebuild': bundle['miniRebuildExcerpt'] as String? ?? '',
-          },
-        });
-
-        // Also update the proof bundle status for consistency
-        if (bundleId.isNotEmpty) {
-          await _firestoreService.verifyProofOfLearning(
-            bundleId: bundleId,
-            educatorId: educatorId,
-            verificationStatus: 'verified',
-          );
-        }
-      } else {
-        // Fallback: direct Firestore write if no portfolioItemId (legacy bundles)
-        await _firestoreService.verifyProofOfLearning(
-          bundleId: bundleId,
-          educatorId: educatorId,
-          verificationStatus: 'verified',
-        );
-
-        // Trigger growth engine for linked capability
-        final String learnerId = bundle['learnerId'] as String? ?? '';
-        final String? capabilityId = bundle['capabilityId'] as String?;
-        if (learnerId.isNotEmpty) {
-          await growthEngine.onProofVerified(
-            bundleId: bundleId,
-            learnerId: learnerId,
-            portfolioItemId:
-                portfolioItemId.isNotEmpty ? portfolioItemId : null,
-            capabilityId: capabilityId,
-          );
-        }
-      }
+      await _firestoreService.verifyProofOfLearning(
+        portfolioItemId: portfolioItemId,
+        verificationStatus: 'verified',
+        proofChecks: <String, dynamic>{
+          'hasExplainItBack': bundle['hasExplainItBack'] as bool? ?? false,
+          'hasOralCheck': bundle['hasOralCheck'] as bool? ?? false,
+          'hasMiniRebuild': bundle['hasMiniRebuild'] as bool? ?? false,
+        },
+        excerpts: <String, dynamic>{
+          'explainItBack': bundle['explainItBackExcerpt'] as String? ?? '',
+          'oralCheck': bundle['oralCheckExcerpt'] as String? ?? '',
+          'miniRebuild': bundle['miniRebuildExcerpt'] as String? ?? '',
+        },
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -123,6 +123,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
         service.firestore
             .collection('proofOfLearningBundles')
             .where('learnerId', isEqualTo: learnerId)
+          .where('siteId', isEqualTo: siteId)
             .get(),
       ]);
 
@@ -187,8 +188,9 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
     final AppState appState = context.read<AppState>();
     final FirestoreService? service = _maybeFirestoreService();
     final String learnerId = _learnerId(appState);
+    final String siteId = _siteId(appState);
 
-    if (service == null || learnerId.isEmpty) {
+    if (service == null || learnerId.isEmpty || siteId.isEmpty) {
       _showSnackBar(_t('Unable to save proof bundle.'), isError: true);
       return;
     }
@@ -217,6 +219,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
         // Create new bundle, then update with content.
         final String bundleId = await service.createProofOfLearningBundle(
           learnerId: learnerId,
+          siteId: siteId,
           portfolioItemId: item.id,
           capabilityId:
               item.capabilityIds.isNotEmpty ? item.capabilityIds.first : null,

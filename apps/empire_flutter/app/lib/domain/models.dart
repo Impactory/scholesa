@@ -7410,6 +7410,7 @@ class WeeklyGoalModel {
 class ProofOfLearningBundleModel {
   const ProofOfLearningBundleModel({
     required this.id,
+    required this.siteId,
     required this.learnerId,
     required this.portfolioItemId,
     this.capabilityId,
@@ -7427,6 +7428,7 @@ class ProofOfLearningBundleModel {
   });
 
   final String id;
+  final String siteId;
   final String learnerId;
   final String portfolioItemId;
   final String? capabilityId;
@@ -7449,6 +7451,7 @@ class ProofOfLearningBundleModel {
     final data = doc.data() ?? <String, dynamic>{};
     return ProofOfLearningBundleModel(
       id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
       learnerId: data['learnerId'] as String? ?? '',
       portfolioItemId: data['portfolioItemId'] as String? ?? '',
       capabilityId: data['capabilityId'] as String?,
@@ -7468,6 +7471,7 @@ class ProofOfLearningBundleModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'learnerId': learnerId,
+        'siteId': siteId,
         'portfolioItemId': portfolioItemId,
         'capabilityId': capabilityId,
         'hasExplainItBack': hasExplainItBack,

@@ -71,6 +71,19 @@ service cloud.firestore {
       return hasSiteField(data) && (isHQ() || userHasSite(data.siteId));
     }
 
+    function isClientOwnedProofAssembly(data) {
+      return request.auth != null
+        && data.learnerId == request.auth.uid
+        && isSiteScopedWrite(data)
+        && ['missing', 'partial', 'pending_review'].hasAny([data.verificationStatus])
+        && !data.keys().hasAny(['educatorVerifierId', 'verifiedAt']);
+    }
+
+    function isReservedReportDeliveryAudit(data) {
+      return ['report.delivery_recorded', 'report.delivery_blocked'].hasAny([data.action])
+        || data.entityType == 'learnerReport';
+    }
+
     // --- Collection Rules ---
 
     // Users:
@@ -300,7 +313,12 @@ service cloud.firestore {
     // Audit Logs: HQ read, site admin/HQ can create for compliance trail
     match /auditLogs/{id} {
       allow read: if isHQ();
-      allow create: if isAuthenticated() && (isHQ() || hasRoleSafe('siteLead') || hasRoleSafe('site'));
+      allow create: if isAuthenticated()
+        && !isReservedReportDeliveryAudit(request.resource.data)
+        && (
+          isHQ()
+          || ((hasRoleSafe('siteLead') || hasRoleSafe('site')) && isSiteScopedWrite(request.resource.data))
+        );
       allow update, delete: if false; // Immutable — append-only
     }
 
@@ -541,8 +559,7 @@ service cloud.firestore {
         )
       );
       allow create, update: if isAuthenticated()
-        && request.resource.data.learnerId == request.auth.uid
-        && isSiteScopedWrite(request.resource.data);
+        && isClientOwnedProofAssembly(request.resource.data);
       allow delete: if false;
     }
 

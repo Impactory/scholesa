@@ -30,6 +30,7 @@ void main() {
         type: OpType.proofBundleCreate,
         payload: <String, dynamic>{
           'learnerId': 'learner1',
+          'siteId': 'site1',
           'portfolioItemId': 'pi1',
           'capabilityId': 'cap1',
           'hasExplainItBack': true,
@@ -42,6 +43,7 @@ void main() {
 
       final QueuedOp restored = QueuedOp.fromJson(op.toJson());
       expect(restored.type, OpType.proofBundleCreate);
+      expect(restored.payload['siteId'], 'site1');
       expect(restored.payload['hasExplainItBack'], true);
       expect(restored.payload['hasOralCheck'], true);
       expect(restored.payload['hasMiniRebuild'], false);

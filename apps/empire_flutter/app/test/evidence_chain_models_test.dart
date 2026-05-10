@@ -277,6 +277,7 @@ void main() {
     test('toMap contains all 3 verification methods', () {
       const ProofOfLearningBundleModel m = ProofOfLearningBundleModel(
         id: 'pol1',
+        siteId: 'site1',
         learnerId: 'l1',
         portfolioItemId: 'pi1',
         capabilityId: 'cap1',
@@ -291,6 +292,7 @@ void main() {
 
       final Map<String, dynamic> map = m.toMap();
       expect(map['hasExplainItBack'], true);
+      expect(map['siteId'], 'site1');
       expect(map['hasOralCheck'], true);
       expect(map['hasMiniRebuild'], false);
       expect(map['verificationStatus'], 'partial');
@@ -301,6 +303,7 @@ void main() {
     test('defaults to missing verification', () {
       const ProofOfLearningBundleModel m = ProofOfLearningBundleModel(
         id: 'pol1',
+        siteId: 'site1',
         learnerId: 'l1',
         portfolioItemId: 'pi1',
       );
@@ -314,6 +317,7 @@ void main() {
     test('verified requires all three methods conceptually', () {
       const ProofOfLearningBundleModel m = ProofOfLearningBundleModel(
         id: 'pol1',
+        siteId: 'site1',
         learnerId: 'l1',
         portfolioItemId: 'pi1',
         hasExplainItBack: true,

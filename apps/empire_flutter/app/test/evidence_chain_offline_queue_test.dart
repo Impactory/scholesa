@@ -107,6 +107,7 @@ void main() {
         type: OpType.proofBundleCreate,
         payload: <String, dynamic>{
           'learnerId': 'learner1',
+          'siteId': 'site1',
           'portfolioItemId': 'pi1',
           'hasExplainItBack': true,
           'hasOralCheck': false,
@@ -115,6 +116,7 @@ void main() {
       );
 
       expect(op.type, OpType.proofBundleCreate);
+      expect(op.payload['siteId'], 'site1');
       expect(op.payload['hasExplainItBack'], true);
     });
 

@@ -35,6 +35,33 @@ void main() {
       expect(service.verifyProofOfLearning, isA<Function>());
     });
 
+    test('proof verification stays server-owned', () {
+      final String source = File(
+        'lib/services/firestore_service.dart',
+      ).readAsStringSync();
+
+      final int verifyStart = source.indexOf(
+        'Future<void> verifyProofOfLearning',
+      );
+      final int rubricStart = source.indexOf('/// Educator applies a rubric');
+      expect(verifyStart, isNot(-1));
+      expect(rubricStart, isNot(-1));
+
+      final String verifySection = source.substring(verifyStart, rubricStart);
+      expect(verifySection, contains('httpsCallable'));
+      expect(verifySection, contains("'verifyProofOfLearning'"));
+      expect(
+        verifySection,
+        isNot(contains("collection('proofOfLearningBundles')")),
+        reason: 'educators must not verify proof bundles through client writes',
+      );
+      expect(
+        verifySection,
+        isNot(contains("collection('portfolioItems')")),
+        reason: 'proof verification must not mutate portfolio state directly',
+      );
+    });
+
     test('service has evidence interpretation methods', () {
       expect(service.applyRubric, isA<Function>());
       expect(service.updateCapabilityMastery, isA<Function>());

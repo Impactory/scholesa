@@ -56,6 +56,7 @@ Future<void> _seedPortfolioItems(FakeFirebaseFirestore firestore) async {
       .set(
     <String, dynamic>{
       'learnerId': 'learner-1',
+      'siteId': 'site-2',
       'portfolioItemId': 'portfolio-other-site',
       'capabilityId': 'capability-other-site',
       'hasExplainItBack': true,
@@ -141,6 +142,7 @@ void main() {
     expect(bundles.docs, hasLength(1));
 
     final Map<String, dynamic> proof = bundles.docs.single.data();
+    expect(proof['siteId'], 'site-1');
     expect(proof['capabilityId'], 'capability-evidence-reasoning');
     expect(proof['hasExplainItBack'], true);
     expect(proof['hasOralCheck'], true);
