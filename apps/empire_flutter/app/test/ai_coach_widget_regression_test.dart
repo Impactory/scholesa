@@ -372,6 +372,52 @@ void main() {
       expect(payload['textLengthBucket'], isNotEmpty);
     });
 
+    testWidgets('manual typed sends keep typed modality at request boundary',
+        (WidgetTester tester) async {
+      final _FakeRuntime fakeRuntime = _FakeRuntime();
+
+      addTearDown(fakeRuntime.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: fakeRuntime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+              onSpeakOverride: (_) async {},
+              onResponseRequest: (String prompt, AiCoachMode mode) async {
+                return AiCoachResponse.fromMap(<String, dynamic>{
+                  'message':
+                      'Capture one proof point, then explain the change.',
+                  'mode': mode.name,
+                  'meta': <String, dynamic>{'version': 'test'},
+                });
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.byType(TextField),
+        'How can I improve my portfolio evidence?',
+      );
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      final Map<String, dynamic> openedPayload =
+          fakeRuntime.eventPayloads.lastWhere(
+        (Map<String, dynamic> entry) => entry['eventType'] == 'ai_help_opened',
+      )['payload'] as Map<String, dynamic>;
+
+      expect(openedPayload['source'], 'manual');
+      expect(openedPayload['inputModality'], 'typed');
+    });
+
     testWidgets(
         'prompt marks missing runtime state as unavailable, not unknown',
         (WidgetTester tester) async {

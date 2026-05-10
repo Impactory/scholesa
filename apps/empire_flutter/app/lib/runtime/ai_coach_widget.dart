@@ -109,6 +109,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _awaitingExplainBack = false;
   String? _explainBackInteractionId;
   DateTime _lastLearnerActivityAt = DateTime.now();
+  String _currentInputSource = 'manual';
   DateTime? _lastAutoAssistAt;
   Timer? _interactionSignalTimer;
   DateTime? _typingBurstStartedAt;
@@ -350,6 +351,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   void _handleInputChanged(String value) {
     _markLearnerActivity();
+    if (!_suppressInteractionTracking) {
+      _currentInputSource = 'manual';
+    }
     if (_suppressInteractionTracking || !_shouldCaptureInteractionSignals) {
       _lastInputSnapshot = value;
       return;
@@ -435,13 +439,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     return '12s_plus';
   }
 
-  void _replaceInputText(String value) {
+  void _replaceInputText(String value, {String source = 'manual'}) {
     _suppressInteractionTracking = true;
     _inputController.text = value;
     _inputController.selection = TextSelection.fromPosition(
       TextPosition(offset: _inputController.text.length),
     );
     _lastInputSnapshot = value;
+    _currentInputSource = source;
     _suppressInteractionTracking = false;
     _markLearnerActivity();
   }
@@ -450,6 +455,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _suppressInteractionTracking = true;
     _inputController.clear();
     _lastInputSnapshot = '';
+    _currentInputSource = 'manual';
     _suppressInteractionTracking = false;
   }
 
@@ -741,7 +747,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
       if (!mounted) return;
       setState(() {
-        _replaceInputText(transcribed.transcript);
+        _replaceInputText(
+          transcribed.transcript,
+          source: kIsWeb ? 'voice_api_upload_web' : 'voice_api_upload',
+        );
       });
 
       await TelemetryService.instance.logEvent(
@@ -802,7 +811,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     recognition.onResult = (String transcript, bool isFinal) {
       if (!mounted) return;
       setState(() {
-        _replaceInputText(transcript);
+        _replaceInputText(transcript, source: 'web_speech_api');
       });
 
       if (isFinal) {
@@ -940,7 +949,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         onResult: (result) {
           if (!mounted) return;
           setState(() {
-            _replaceInputText(result.recognizedWords);
+            _replaceInputText(
+              result.recognizedWords,
+              source: 'speech_to_text',
+            );
           });
 
           if (result.finalResult) {
@@ -1535,7 +1547,7 @@ Response style:
 
     await _sendMessageWithInput(
       _inputController.text,
-      source: 'manual',
+      source: _currentInputSource,
     );
   }
 
@@ -1637,6 +1649,7 @@ Response style:
       _flushInteractionSignal(reason: 'submitted');
     }
     _updateLearningGoals(input);
+    final String inputModality = _inputModalityForSource(source);
 
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -1645,6 +1658,7 @@ Response style:
         'cta_id': 'send_message',
         'surface': 'input_bar',
         'source': source,
+        'inputModality': inputModality,
         'mode': _selectedMode.name,
         'has_input': input.isNotEmpty,
       },
@@ -1662,7 +1676,11 @@ Response style:
       'ai_help_opened',
       missionId: widget.missionId,
       checkpointId: widget.checkpointId,
-      payload: <String, dynamic>{'mode': _selectedMode.name},
+      payload: <String, dynamic>{
+        'mode': _selectedMode.name,
+        'source': source,
+        'inputModality': inputModality,
+      },
     );
 
     try {
