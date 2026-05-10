@@ -28,6 +28,7 @@ Recent validated items:
 - Learner mission loading now shows a friendly retry state instead of raw backend/index errors or a misleading empty mission state; focused analyzer and mission page widget regressions passed for the touched flow.
 - Parent growth timeline and shared family progress loading now hide raw backend/index errors from user-facing reporting surfaces and show friendly recovery guidance; focused analyzer and parent reporting regressions passed for the touched flows.
 - Educator mission planning now hides raw backend/index errors from initial load and stale-refresh banners while preserving the last successful plan list; focused analyzer and mission-plan widget regressions passed for the touched flow.
+- Shared educator schedule, session list, and learner roster loading now hide raw backend/index errors while preserving stale live-class data where available; focused analyzer and educator service/learner roster regressions passed for the touched flows.
 
 Current release blockers and risks:
 
