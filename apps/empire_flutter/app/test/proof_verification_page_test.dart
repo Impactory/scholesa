@@ -36,6 +36,40 @@ class _ThrowingFirestoreService extends FirestoreService {
   }
 }
 
+class _RevisionRecordingFirestoreService extends FirestoreService {
+  _RevisionRecordingFirestoreService({required this.fakeFirestore})
+      : super(
+          firestore: fakeFirestore,
+          auth: _MockFirebaseAuth(),
+        );
+
+  final FakeFirebaseFirestore fakeFirestore;
+  String? lastRevisionPortfolioItemId;
+  String? lastRevisionReason;
+
+  @override
+  Future<void> requestProofRevision({
+    required String portfolioItemId,
+    required String reason,
+    Map<String, dynamic> proofChecks = const <String, dynamic>{},
+    Map<String, dynamic> excerpts = const <String, dynamic>{},
+  }) async {
+    lastRevisionPortfolioItemId = portfolioItemId;
+    lastRevisionReason = reason;
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await fakeFirestore
+        .collection('proofOfLearningBundles')
+        .where('portfolioItemId', isEqualTo: portfolioItemId)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return;
+    await snapshot.docs.first.reference.update(<String, dynamic>{
+      'verificationStatus': 'partial',
+      'verificationPrompt': reason,
+      'updatedAt': Timestamp.fromDate(DateTime(2026, 5, 10, 12)),
+    });
+  }
+}
+
 AppState _buildEducatorState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -125,14 +159,12 @@ void main() {
   });
 
   testWidgets(
-      'proof verification shows same-site bundles and persists revision request on mobile width',
+      'proof verification shows same-site bundles and requests revision through service on mobile width',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedProofBundles(firestore);
-    final FirestoreService firestoreService = FirestoreService(
-      firestore: firestore,
-      auth: _MockFirebaseAuth(),
-    );
+    final _RevisionRecordingFirestoreService firestoreService =
+        _RevisionRecordingFirestoreService(fakeFirestore: firestore);
 
     await tester.binding.setSurfaceSize(const Size(390, 844));
     await tester.pumpWidget(
@@ -165,9 +197,19 @@ void main() {
             .doc('proof-site-2')
             .get();
 
-    expect(sameSiteProof.data()?['verificationStatus'], 'revision_requested');
+    expect(firestoreService.lastRevisionPortfolioItemId, 'portfolio-1');
+    expect(
+      firestoreService.lastRevisionReason,
+      'Educator requested proof revision.',
+    );
+    expect(sameSiteProof.data()?['verificationStatus'], 'partial');
+    expect(
+      sameSiteProof.data()?['verificationPrompt'],
+      'Educator requested proof revision.',
+    );
     expect(otherSiteProof.data()?['verificationStatus'], 'pending_review');
-    expect(find.text('All proof bundles have been verified.'), findsOneWidget);
+    expect(find.text('Same Site Learner'), findsOneWidget);
+    expect(find.text('All proof bundles have been verified.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

@@ -50,6 +50,8 @@ void main() {
       final String verifySection = source.substring(verifyStart, rubricStart);
       expect(verifySection, contains('httpsCallable'));
       expect(verifySection, contains("'verifyProofOfLearning'"));
+      expect(verifySection, contains('proofOfLearningStatus'));
+      expect(verifySection, contains('resubmissionReason'));
       expect(
         verifySection,
         isNot(contains("collection('proofOfLearningBundles')")),
@@ -59,6 +61,28 @@ void main() {
         verifySection,
         isNot(contains("collection('portfolioItems')")),
         reason: 'proof verification must not mutate portfolio state directly',
+      );
+    });
+
+    test('proof revision requests use the server-owned proof callable', () {
+      final String source = File(
+        'lib/services/firestore_service.dart',
+      ).readAsStringSync();
+
+      final int revisionStart = source.indexOf('Future<void> requestProofRevision');
+      final int rubricStart = source.indexOf('/// Educator applies a rubric');
+      expect(revisionStart, isNot(-1));
+      expect(rubricStart, isNot(-1));
+
+      final String revisionSection = source.substring(revisionStart, rubricStart);
+      expect(revisionSection, contains('verifyProofOfLearning'));
+      expect(revisionSection, contains("verificationStatus: 'pending'"));
+      expect(revisionSection, contains("proofOfLearningStatus: 'partial'"));
+      expect(revisionSection, contains('resubmissionReason: reason'));
+      expect(
+        revisionSection,
+        isNot(contains("collection('proofOfLearningBundles')")),
+        reason: 'revision requests must not bypass server-owned proof policy',
       );
     });
 

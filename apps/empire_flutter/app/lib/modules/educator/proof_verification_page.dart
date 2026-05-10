@@ -128,10 +128,11 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
       await _firestoreService.verifyProofOfLearning(
         portfolioItemId: portfolioItemId,
         verificationStatus: 'verified',
+        proofOfLearningStatus: 'verified',
         proofChecks: <String, dynamic>{
-          'hasExplainItBack': bundle['hasExplainItBack'] as bool? ?? false,
-          'hasOralCheck': bundle['hasOralCheck'] as bool? ?? false,
-          'hasMiniRebuild': bundle['hasMiniRebuild'] as bool? ?? false,
+          'explainItBack': bundle['hasExplainItBack'] as bool? ?? false,
+          'oralCheck': bundle['hasOralCheck'] as bool? ?? false,
+          'miniRebuild': bundle['hasMiniRebuild'] as bool? ?? false,
         },
         excerpts: <String, dynamic>{
           'explainItBack': bundle['explainItBackExcerpt'] as String? ?? '',
@@ -155,14 +156,23 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
   }
 
   Future<void> _requestRevision(Map<String, dynamic> bundle) async {
-    final String bundleId = bundle['id'] as String? ?? '';
-    if (bundleId.isEmpty) return;
+    final String portfolioItemId = bundle['portfolioItemId'] as String? ?? '';
+    if (portfolioItemId.isEmpty) return;
 
     try {
-      await _firestoreService.updateDocument(
-        'proofOfLearningBundles',
-        bundleId,
-        <String, dynamic>{'verificationStatus': 'revision_requested'},
+      await _firestoreService.requestProofRevision(
+        portfolioItemId: portfolioItemId,
+        reason: 'Educator requested proof revision.',
+        proofChecks: <String, dynamic>{
+          'explainItBack': bundle['hasExplainItBack'] as bool? ?? false,
+          'oralCheck': bundle['hasOralCheck'] as bool? ?? false,
+          'miniRebuild': bundle['hasMiniRebuild'] as bool? ?? false,
+        },
+        excerpts: <String, dynamic>{
+          'explainItBack': bundle['explainItBackExcerpt'] as String? ?? '',
+          'oralCheck': bundle['oralCheckExcerpt'] as String? ?? '',
+          'miniRebuild': bundle['miniRebuildExcerpt'] as String? ?? '',
+        },
       );
 
       if (!mounted) return;

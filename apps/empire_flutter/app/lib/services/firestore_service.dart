@@ -736,8 +736,11 @@ class FirestoreService {
   Future<void> verifyProofOfLearning({
     required String portfolioItemId,
     required String verificationStatus,
+    required String proofOfLearningStatus,
     Map<String, dynamic> proofChecks = const <String, dynamic>{},
     Map<String, dynamic> excerpts = const <String, dynamic>{},
+    String? educatorNotes,
+    String? resubmissionReason,
   }) async {
     final HttpsCallable callable = _functions.httpsCallable(
       'verifyProofOfLearning',
@@ -745,10 +748,31 @@ class FirestoreService {
     await callable.call(<String, dynamic>{
       'portfolioItemId': portfolioItemId,
       'verificationStatus': verificationStatus,
-      'proofOfLearningStatus': verificationStatus,
+      'proofOfLearningStatus': proofOfLearningStatus,
       'proofChecks': proofChecks,
       'excerpts': excerpts,
+      if (educatorNotes != null && educatorNotes.trim().isNotEmpty)
+        'educatorNotes': educatorNotes.trim(),
+      if (resubmissionReason != null && resubmissionReason.trim().isNotEmpty)
+        'resubmissionReason': resubmissionReason.trim(),
     });
+  }
+
+  Future<void> requestProofRevision({
+    required String portfolioItemId,
+    required String reason,
+    Map<String, dynamic> proofChecks = const <String, dynamic>{},
+    Map<String, dynamic> excerpts = const <String, dynamic>{},
+  }) async {
+    await verifyProofOfLearning(
+      portfolioItemId: portfolioItemId,
+      verificationStatus: 'pending',
+      proofOfLearningStatus: 'partial',
+      proofChecks: proofChecks,
+      excerpts: excerpts,
+      educatorNotes: reason,
+      resubmissionReason: reason,
+    );
   }
 
   /// Educator applies a rubric judgment

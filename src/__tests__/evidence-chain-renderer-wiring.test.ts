@@ -940,9 +940,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterProofVerificationPageSource).toContain("<dynamic>['siteId', siteId]");
     expect(flutterProofVerificationPageSource).toContain("'proofOfLearningBundles'");
     expect(flutterProofVerificationPageSource).toContain('Wrap(');
-    expect(flutterProofVerificationTestSource).toContain('proof verification shows same-site bundles and persists revision request on mobile width');
+    expect(flutterProofVerificationTestSource).toContain('proof verification shows same-site bundles and requests revision through service on mobile width');
     expect(flutterProofVerificationTestSource).toContain("find.text('Other Site Learner'), findsNothing");
-    expect(flutterProofVerificationTestSource).toContain("sameSiteProof.data()?['verificationStatus'], 'revision_requested'");
+    expect(flutterProofVerificationTestSource).toContain("firestoreService.lastRevisionPortfolioItemId, 'portfolio-1'");
+    expect(flutterProofVerificationTestSource).toContain("sameSiteProof.data()?['verificationStatus'], 'partial'");
     expect(flutterProofVerificationTestSource).toContain("otherSiteProof.data()?['verificationStatus'], 'pending_review'");
     expect(flutterProofVerificationTestSource).toContain('expect(tester.takeException(), isNull)');
     expect(flutterReflectionPageSource).toContain("where('siteId', isEqualTo: siteId)");
@@ -1324,8 +1325,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(finalSignoffSource).toContain('authenticated educator browser proof for `/en/educator/proof-review` plus `/en/educator/verification` rendered `Proof-of-Learning Verification`');
     expect(finalSignoffSource).toContain('partner evidence-facing web workflows');
     expect(finalSignoffSource).toContain('must not be used to claim native-channel app-store Gold');
-    expect(blanketGoldAchievementPlanSource).toContain('Current verdict: **GO for blanket platform Gold for the included web/Cloud Run scope**');
-    expect(blanketGoldAchievementPlanSource).toContain('None for the included web/Cloud Run scope');
+    expect(blanketGoldAchievementPlanSource).toContain('Current verdict: **historical May 8 scoped web/Cloud Run GO only; not a current blanket platform/native Gold certification**');
+    expect(blanketGoldAchievementPlanSource).toContain('live role canary, native-channel distribution proof, security hardening, Passport/report provenance, and role UI/theme consistency remain blockers');
     expect(blanketGoldAchievementPlanSource).toContain('Partner scope | Included for partner web evidence-facing workflows');
     expect(blanketGoldAchievementPlanSource).toContain('Native build proof | macOS local release build now passes');
     expect(blanketGoldAchievementPlanSource).toContain('iOS local release build now passes through `./scripts/deploy.sh flutter-ios`');
