@@ -283,12 +283,14 @@ class FirestoreService {
   Future<String> submitMissionAttempt({
     required String missionId,
     required String learnerId,
+    required String siteId,
     required Map<String, dynamic> submission,
   }) async {
     final DocumentReference<Map<String, dynamic>> docRef =
         await _firestore.collection('missionAttempts').add(<String, dynamic>{
       'missionId': missionId,
       'learnerId': learnerId,
+      'siteId': siteId,
       'submission': submission,
       'status': 'submitted',
       'submittedAt': FieldValue.serverTimestamp(),

@@ -43,13 +43,14 @@ Recent validated items:
 - Report share provenance slice completed: web share helpers and the `createReportShareRequest` callable now require non-empty, complete evidence provenance before an active report-share lifecycle record can be created, so contradictory metadata cannot convert a weak Passport/report into an active share. Focused web report tests passed 25/25, focused Functions report tests passed 28/28, Functions build passed, source-contract Jest passed 345/345, `npm run test:integration:rules` passed 144/144, and `npm run qa:secret-scan` passed.
 - Report share revocation slice completed: revoking explicit report-share consent now also revokes linked active report-share lifecycle records and records the cascade count in the consent revocation audit. Focused Functions report tests passed 29/29, Functions build passed, and `git diff --check` passed.
 - Report share media consent slice completed: `reportShareMedia/{learnerId}/{shareRequestId}/{fileName}` is now server-owned for writes and readable only while the Firestore `reportShareRequests/{shareRequestId}` lifecycle record is active, unexpired, linked to the learner, and visible to the learner, linked guardian, share creator, same-site staff, or HQ. Focused Storage rules tests passed 11/11 with revoked, expired, missing, wrong-learner, wrong-site, unauthenticated, and client-upload denials.
+- Mission/checkpoint evidence site-scope slice completed: `missionAttempts` and `checkpointHistory` now require `siteId` on create/read/update, deny missing-site and wrong-site records, and preserve learner/educator ownership semantics. Full Firestore plus Storage rules passed 151/151; focused source-contract tests passed 345/345; focused Flutter service analyzer and secret scan passed.
 
 Current release blockers and risks:
 
 - The latest live Flutter web revision has cleared local gates and HTTP probes; role-based live canary remains required before broader public-site gold claims.
 - Native distribution remains blocked until TestFlight, Google Play internal testing, and macOS signing/notarization proof exist; this slice only proves native proof bundle write shape/callable alignment locally.
 - Cloud Run project identity must stay explicit: live Flutter site currently matches `studio-3328096157-e3f79` / `empire-web`; project number `430675339898` maps to `scholesa-prod`, which does not host the serving `empire-web` service.
-- Firestore and Storage hardening is still gold-blocking beyond the validated rules/callable slices: broader collection-by-collection site-scope review, auth-claim parity, secret/compliance gates, and live role canary remain required.
+- Firestore and Storage hardening is still gold-blocking beyond the validated rules/callable slices: remaining collection-by-collection site-scope review, auth-claim parity, secret/compliance gates, and live role canary remain required.
 - Passport/report output remains partial until every claim can be traced to evidence, proof, rubric, growth event, portfolio item, and consent boundary.
 - Parent/guardian, partner, and admin interpretation layers must not ship claims without provenance.
 
@@ -68,7 +69,7 @@ Current release blockers and risks:
 Use the May 10 bottom-up plan before starting the next fix pass. The current queue is:
 
 1. Reconcile and preserve the current MiloOS typed/spoken request-modality proof.
-2. Continue Firestore/Storage hardening beyond the first passing emulator slice: collection-by-collection site scope and auth-claim parity. Learner media/site-scope and report-share media consent slices are complete.
+2. Continue Firestore/Storage hardening beyond the passing emulator slices: collection-by-collection site scope and auth-claim parity. Learner media/site-scope, report-share media consent, and mission/checkpoint evidence site-scope slices are complete.
 3. Prove callable/service boundaries for server-owned growth, mastery, proof verification/revision, AI audit, and report export. Mastery/growth client-write denial, AI audit site-scoping, proof bundle verification-status hardening, native proof site-scope/callable review alignment, report delivery audit spoofing denial, active report-share provenance consistency, explicit-consent revocation cascade, and report-share media consent access are complete; remaining report/share proof must cover live/operator verification.
 4. Run MiloOS typed/spoken modeling through Flutter, backend, browser/mobile, telemetry, and explain-back proof.
 5. Close the full HQ-to-Passport evidence chain with the same canonical evidence IDs across web, Flutter, Functions, and rules.

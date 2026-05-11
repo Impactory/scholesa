@@ -171,6 +171,137 @@ beforeEach(async () => {
       status: 'draft',
     });
 
+    await setDoc(doc(db, 'missionAttempts', 'attempt-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      missionId: 'mission-1',
+      status: 'submitted',
+      content: 'Site-scoped mission evidence',
+    });
+
+    await setDoc(doc(db, 'missionAttempts', 'attempt-nosite'), {
+      learnerId: learnerUser.uid,
+      missionId: 'mission-legacy',
+      status: 'submitted',
+      content: 'Legacy unscoped mission evidence',
+    });
+
+    await setDoc(doc(db, 'missionAttempts', 'attempt-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      missionId: 'mission-other-site',
+      status: 'submitted',
+      content: 'Wrong-site mission evidence',
+    });
+
+    await setDoc(doc(db, 'checkpointHistory', 'checkpoint-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      missionId: 'mission-1',
+      checkpointDefinitionId: 'checkpoint-1',
+      status: 'submitted',
+      answer: 'Site-scoped checkpoint evidence',
+    });
+
+    await setDoc(doc(db, 'checkpointHistory', 'checkpoint-nosite'), {
+      learnerId: learnerUser.uid,
+      missionId: 'mission-legacy',
+      checkpointDefinitionId: 'checkpoint-legacy',
+      status: 'submitted',
+      answer: 'Legacy unscoped checkpoint evidence',
+    });
+
+    await setDoc(doc(db, 'checkpointHistory', 'checkpoint-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      missionId: 'mission-other-site',
+      checkpointDefinitionId: 'checkpoint-other-site',
+      status: 'submitted',
+      answer: 'Wrong-site checkpoint evidence',
+    });
+
+    await setDoc(doc(db, 'skillEvidence', 'skill-evidence-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-1',
+      evidenceType: 'quiz',
+      description: 'Site-scoped skill evidence',
+      status: 'submitted',
+    });
+
+    await setDoc(doc(db, 'skillEvidence', 'skill-evidence-nosite'), {
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-legacy',
+      evidenceType: 'quiz',
+      description: 'Legacy unscoped skill evidence',
+      status: 'submitted',
+    });
+
+    await setDoc(doc(db, 'skillEvidence', 'skill-evidence-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-other-site',
+      evidenceType: 'quiz',
+      description: 'Wrong-site skill evidence',
+      status: 'submitted',
+    });
+
+    await setDoc(doc(db, 'learnerReflections', 'reflection-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      content: 'Site-scoped learner reflection',
+      portfolioItemId: 'portfolio-1',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'learnerReflections', 'reflection-nosite'), {
+      learnerId: learnerUser.uid,
+      content: 'Legacy unscoped learner reflection',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'learnerReflections', 'reflection-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      content: 'Wrong-site learner reflection',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-site1',
+      confidenceLevel: 3,
+      accuracyScore: 0.8,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'metacognitiveCalibrationRecords', 'calibration-nosite'), {
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-legacy',
+      confidenceLevel: 2,
+      accuracyScore: 0.4,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'metacognitiveCalibrationRecords', 'calibration-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-other-site',
+      confidenceLevel: 4,
+      accuracyScore: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
     await setDoc(doc(db, 'capabilityMastery', 'mastery-1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -1296,6 +1427,7 @@ describe('Mission Attempts', () => {
   test('learner can create their own attempt', async () => {
     const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
     await assertSucceeds(setDoc(doc(db, 'missionAttempts', 'attempt-1'), {
+      siteId: 'site1',
       learnerId: learnerUser.uid,
       missionId: 'mission-1',
       status: 'draft',
@@ -1308,6 +1440,254 @@ describe('Mission Attempts', () => {
       learnerId: 'other-learner',
       missionId: 'mission-1',
       status: 'draft',
+    }));
+  });
+
+  test('mission attempts require site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'missionAttempts', 'attempt-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'missionAttempts', 'attempt-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'missionAttempts', 'attempt-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'missionAttempts', 'attempt-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'missionAttempts', 'attempt-site2')));
+
+    await assertFails(setDoc(doc(learnerDb, 'missionAttempts', 'attempt-missing-site'), {
+      learnerId: learnerUser.uid,
+      missionId: 'mission-1',
+      status: 'draft',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'missionAttempts', 'attempt-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      missionId: 'mission-1',
+      status: 'draft',
+    }));
+  });
+
+  test('mission attempt updates cannot cross or remove site scope', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'missionAttempts', 'attempt-site1'), {
+      status: 'revised',
+    }));
+    await assertSucceeds(updateDoc(doc(educatorDb, 'missionAttempts', 'attempt-site1'), {
+      feedback: 'Reviewed by same-site educator.',
+    }));
+    await assertFails(updateDoc(doc(otherSiteDb, 'missionAttempts', 'attempt-site1'), {
+      feedback: 'Wrong site review.',
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'missionAttempts', 'attempt-site1'), {
+      siteId: 'site2',
+    }));
+  });
+});
+
+describe('Checkpoint History', () => {
+  test('checkpoint history requires site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'checkpointHistory', 'checkpoint-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'checkpointHistory', 'checkpoint-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-site2')));
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-new'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      checkpointDefinitionId: 'checkpoint-2',
+      status: 'submitted',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-missing-site'), {
+      learnerId: learnerUser.uid,
+      checkpointDefinitionId: 'checkpoint-2',
+      status: 'submitted',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      checkpointDefinitionId: 'checkpoint-2',
+      status: 'submitted',
+    }));
+  });
+
+  test('checkpoint history updates stay same-site educator owned', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(educatorDb, 'checkpointHistory', 'checkpoint-site1'), {
+      feedback: 'Reviewed by same-site educator.',
+    }));
+    await assertFails(updateDoc(doc(otherSiteDb, 'checkpointHistory', 'checkpoint-site1'), {
+      feedback: 'Wrong site review.',
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'checkpointHistory', 'checkpoint-site1'), {
+      feedback: 'Learner cannot self-review.',
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'checkpointHistory', 'checkpoint-site1'), {
+      siteId: 'site2',
+    }));
+  });
+});
+
+describe('Skill Evidence', () => {
+  test('skill evidence requires site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const parentDb = testEnv.authenticatedContext(parentUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'skillEvidence', 'skill-evidence-site1')));
+    await assertSucceeds(getDoc(doc(parentDb, 'skillEvidence', 'skill-evidence-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'skillEvidence', 'skill-evidence-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-site2')));
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-new'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-2',
+      evidenceType: 'quiz',
+      status: 'submitted',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-missing-site'), {
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-2',
+      evidenceType: 'quiz',
+      status: 'submitted',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      microSkillId: 'skill-2',
+      evidenceType: 'quiz',
+      status: 'submitted',
+    }));
+  });
+
+  test('skill evidence updates stay same-site educator owned', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(educatorDb, 'skillEvidence', 'skill-evidence-site1'), {
+      status: 'reviewed',
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'skillEvidence', 'skill-evidence-site1'), {
+      status: 'self-reviewed',
+    }));
+    await assertFails(updateDoc(doc(otherSiteDb, 'skillEvidence', 'skill-evidence-site1'), {
+      status: 'wrong-site-reviewed',
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'skillEvidence', 'skill-evidence-site1'), {
+      siteId: 'site2',
+    }));
+  });
+});
+
+describe('Learner Reflections', () => {
+  test('learner reflections require site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'learnerReflections', 'reflection-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'learnerReflections', 'reflection-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'learnerReflections', 'reflection-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'learnerReflections', 'reflection-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'learnerReflections', 'reflection-site2')));
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'learnerReflections', 'reflection-new'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      content: 'New site-scoped reflection',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'learnerReflections', 'reflection-missing-site'), {
+      learnerId: learnerUser.uid,
+      content: 'Missing site reflection',
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'learnerReflections', 'reflection-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      content: 'Wrong-site reflection',
+    }));
+  });
+
+  test('learner reflection updates cannot cross or remove site scope', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'learnerReflections', 'reflection-site1'), {
+      content: 'Revised reflection',
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'learnerReflections', 'reflection-site1'), {
+      content: 'Educator cannot edit learner reflection',
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'learnerReflections', 'reflection-site1'), {
+      siteId: 'site2',
+    }));
+  });
+});
+
+describe('Metacognitive Calibration Records', () => {
+  test('calibration records require site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'metacognitiveCalibrationRecords', 'calibration-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'metacognitiveCalibrationRecords', 'calibration-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-site2')));
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-new'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-new',
+      confidenceLevel: 3,
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-missing-site'), {
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-new',
+      confidenceLevel: 3,
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      sourceType: 'checkpoint',
+      sourceId: 'checkpoint-new',
+      confidenceLevel: 3,
+    }));
+  });
+
+  test('calibration record updates cannot cross or remove site scope', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      confidenceLevel: 4,
+    }));
+    await assertSucceeds(updateDoc(doc(educatorDb, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      educatorNote: 'Reviewed calibration.',
+    }));
+    await assertFails(updateDoc(doc(otherSiteDb, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      educatorNote: 'Wrong site review.',
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      siteId: 'site2',
     }));
   });
 });

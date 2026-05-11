@@ -210,16 +210,22 @@ service cloud.firestore {
     }
 
     match /skillEvidence/{id} {
-      allow read: if isAuthenticated() && (
-        resource.data.learnerId == request.auth.uid
-        || isEducator()
-        || (
-          resource.data.keys().hasAny(['learnerId'])
-          && isParentLinkedToLearner(resource.data.learnerId)
-        )
-      );
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
-      allow update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || (
+            resource.data.keys().hasAny(['learnerId'])
+            && isParentLinkedToLearner(resource.data.learnerId)
+          )
+        );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
 
@@ -228,9 +234,16 @@ service cloud.firestore {
     // - Create: Owner (Learner).
     // - Update: Owner or Educator (for grading/feedback).
     match /missionAttempts/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
     }
 
     match /reflections/{id} {
@@ -423,28 +436,48 @@ service cloud.firestore {
 
     // Learner Reflections: Users can write their own, educators can read
     match /learnerReflections/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && resource.data.learnerId == request.auth.uid;
       allow delete: if false; // Keep growth timeline
     }
 
     // Metacognitive Calibration Records: learners and educators can review longitudinal confidence vs. correctness history.
     match /metacognitiveCalibrationRecords/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && (request.resource.data.learnerId == request.auth.uid || isEducator());
-      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (request.resource.data.learnerId == request.auth.uid || isEducator());
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
       allow delete: if false; // Keep longitudinal calibration history
     }
 
     // Checkpoint History: Educators and learners (own) can create, educators can update
     match /checkpointHistory/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && (
-        isEducator() ||
-        request.resource.data.learnerId == request.auth.uid  // Learner submits own checkpoint
-      );
-      allow update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (
+          isEducator() ||
+          request.resource.data.learnerId == request.auth.uid  // Learner submits own checkpoint
+        );
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data);
       allow delete: if false; // Keep historical data
     }
 
