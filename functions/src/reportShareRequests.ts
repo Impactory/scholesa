@@ -142,6 +142,20 @@ export function canCreateReportShareRequestForPolicy(params: {
   return false;
 }
 
+export function reportShareRequestHasEvidenceProvenanceContract(params: {
+  requiresEvidenceProvenance: boolean;
+  expectedSignals: string[];
+  missingSignals: string[];
+  meetsProvenanceContract: boolean;
+}): boolean {
+  return (
+    params.requiresEvidenceProvenance === true &&
+    params.meetsProvenanceContract === true &&
+    params.expectedSignals.length > 0 &&
+    params.missingSignals.length === 0
+  );
+}
+
 export function doesReportShareRequestMatchDeliveryAudit(params: {
   data: Record<string, unknown>;
   actorId: string;
@@ -250,6 +264,34 @@ export async function revokeReportShareRequestRecord(params: {
       ...(params.reason ? { revocationReason: params.reason } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
+}
+
+export async function revokeReportShareRequestsLinkedToConsentRecord(params: {
+  shareRequestIds: string[];
+  actorId: string;
+  reason?: string;
+  collectionName?: string;
+}) {
+  const uniqueShareRequestIds = Array.from(new Set(params.shareRequestIds))
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+  if (uniqueShareRequestIds.length === 0) return 0;
+
+  const collectionName = params.collectionName ?? 'reportShareRequests';
+  const db = admin.firestore();
+  const batch = db.batch();
+  uniqueShareRequestIds.forEach((shareRequestId) => {
+    batch.update(db.collection(collectionName).doc(shareRequestId), {
+      status: 'revoked',
+      revokedAt: FieldValue.serverTimestamp(),
+      revokedBy: params.actorId,
+      ...(params.reason ? { revocationReason: params.reason } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+  await batch.commit();
+  return uniqueShareRequestIds.length;
 }
 
 export async function linkReportShareRequestDeliveryAuditRecord(params: {

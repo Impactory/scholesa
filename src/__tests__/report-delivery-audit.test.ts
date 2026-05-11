@@ -268,6 +268,30 @@ describe('report share request client helpers', () => {
       resolveReportShareRequestSkipReason(
         'copied',
         buildMetadata({
+          report_share_requires_evidence_provenance: false,
+        })
+      )
+    ).toBe('missing_evidence_provenance');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_expected_provenance_signals: [],
+        })
+      )
+    ).toBe('missing_evidence_provenance');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
+          report_missing_provenance_signals: ['proof'],
+        })
+      )
+    ).toBe('missing_evidence_provenance');
+    expect(
+      resolveReportShareRequestSkipReason(
+        'copied',
+        buildMetadata({
           report_share_family_safe: false,
         })
       )
@@ -493,6 +517,26 @@ describe('report share request client helpers', () => {
     });
 
     expect(blocked).toBeNull();
+    expect(httpsCallableMock).not.toHaveBeenCalled();
+
+    const weakMetadata = buildMetadata({
+      report_expected_provenance_signals: [],
+    });
+    const weakBlocked = await createExplicitConsentReportShareRequest({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      reportAction: 'share',
+      reportDelivery: 'shared',
+      metadata: weakMetadata,
+      module: 'passport',
+      surface: 'educator_evidence_review',
+      cta: 'educator_request_broader_report_share',
+      explicitConsentId: 'consent-1',
+      audience: 'guardian',
+      visibility: 'family',
+    });
+
+    expect(weakBlocked).toBeNull();
     expect(httpsCallableMock).not.toHaveBeenCalled();
   });
 

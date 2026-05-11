@@ -52,6 +52,42 @@ service firebase.storage {
         );
     }
 
+    function reportShareRequestPath(shareRequestId) {
+      return /databases/(default)/documents/reportShareRequests/$(shareRequestId);
+    }
+
+    function reportShareRequest(shareRequestId) {
+      return firestore.get(reportShareRequestPath(shareRequestId)).data;
+    }
+
+    function reportShareExists(shareRequestId) {
+      return firestore.exists(reportShareRequestPath(shareRequestId));
+    }
+
+    function reportShareHasActorSite(shareRequestId) {
+      return actorSiteIds().size() > 0
+        && actorSiteIds().hasAny([reportShareRequest(shareRequestId).siteId]);
+    }
+
+    function isActiveReportShareForLearner(learnerId, shareRequestId) {
+      return reportShareExists(shareRequestId)
+        && reportShareRequest(shareRequestId).status == 'active'
+        && reportShareRequest(shareRequestId).learnerId == learnerId
+        && reportShareRequest(shareRequestId).expiresAt > request.time;
+    }
+
+    function canReadReportShareMedia(learnerId, shareRequestId) {
+      return isAuthenticated()
+        && isActiveReportShareForLearner(learnerId, shareRequestId)
+        && (
+          request.auth.uid == learnerId
+          || request.auth.uid == reportShareRequest(shareRequestId).createdBy
+          || isLinkedGuardian(learnerId)
+          || isHQ()
+          || (isSameSiteStaff() && reportShareHasActorSite(shareRequestId))
+        );
+    }
+
     // Partner deliverables: partner/HQ can upload (max 25MB), auth required for read
     match /partnerDeliverables/{contractId}/{fileName} {
       allow read: if request.auth != null && (request.auth.token.role in ['partner', 'hq', 'site']);
@@ -77,6 +113,12 @@ service firebase.storage {
                    && requestSharesActorSite()
                    && request.resource.size < 50 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*|video/.*|audio/.*|application/pdf');
+    }
+
+    // Report-share media is readable only while the server-owned share lifecycle is active.
+    match /reportShareMedia/{learnerId}/{shareRequestId}/{fileName} {
+      allow read: if canReadReportShareMedia(learnerId, shareRequestId);
+      allow write: if false;
     }
 
     // Incident report attachments (max 10MB, educator/HQ only)

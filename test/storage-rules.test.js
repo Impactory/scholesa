@@ -4,11 +4,12 @@
  */
 
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, setDoc, setLogLevel } = require('firebase/firestore');
+const { doc, setDoc, setLogLevel, Timestamp } = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 
-const PROJECT_ID = 'scholesa-test';
+const firebaseRc = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../.firebaserc'), 'utf8'));
+const PROJECT_ID = firebaseRc.projects?.default ?? 'scholesa-test';
 
 let testEnv;
 
@@ -35,6 +36,10 @@ function authContext(user, token) {
 
 function portfolioMediaRef(context, fileName = 'artifact.png') {
   return context.storage().ref(`portfolioMedia/${learnerUser.uid}/${fileName}`);
+}
+
+function reportShareMediaRef(context, shareRequestId = 'share-active', learnerId = learnerUser.uid) {
+  return context.storage().ref(`reportShareMedia/${learnerId}/${shareRequestId}/passport.pdf`);
 }
 
 beforeAll(async () => {
@@ -98,6 +103,70 @@ beforeEach(async () => {
       .putString('seed learner media', 'raw', {
         contentType: 'image/png',
         customMetadata: { siteId: 'site1' },
+      });
+    await setDoc(doc(db, 'reportShareRequests', 'share-active'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+      audience: 'guardian',
+      visibility: 'family',
+      explicitConsentId: 'consent-active',
+      expiresAt: Timestamp.fromDate(new Date('2099-01-01T00:00:00.000Z')),
+    });
+    await setDoc(doc(db, 'reportShareRequests', 'share-revoked'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'revoked',
+      audience: 'guardian',
+      visibility: 'family',
+      explicitConsentId: 'consent-revoked',
+      expiresAt: Timestamp.fromDate(new Date('2099-01-01T00:00:00.000Z')),
+    });
+    await setDoc(doc(db, 'reportShareRequests', 'share-expired'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+      audience: 'guardian',
+      visibility: 'family',
+      explicitConsentId: 'consent-expired',
+      expiresAt: Timestamp.fromDate(new Date('2000-01-01T00:00:00.000Z')),
+    });
+    await setDoc(doc(db, 'reportShareRequests', 'share-other-learner'), {
+      siteId: 'site1',
+      learnerId: otherLearnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+      audience: 'guardian',
+      visibility: 'family',
+      explicitConsentId: 'consent-other-learner',
+      expiresAt: Timestamp.fromDate(new Date('2099-01-01T00:00:00.000Z')),
+    });
+    await storage
+      .ref(`reportShareMedia/${learnerUser.uid}/share-active/passport.pdf`)
+      .putString('seed report share media', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-active' },
+      });
+    await storage
+      .ref(`reportShareMedia/${learnerUser.uid}/share-revoked/passport.pdf`)
+      .putString('seed revoked report share media', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-revoked' },
+      });
+    await storage
+      .ref(`reportShareMedia/${learnerUser.uid}/share-expired/passport.pdf`)
+      .putString('seed expired report share media', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-expired' },
+      });
+    await storage
+      .ref(`reportShareMedia/${learnerUser.uid}/share-other-learner/passport.pdf`)
+      .putString('seed mismatched learner report share media', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-other-learner' },
       });
   });
 });
@@ -183,5 +252,69 @@ describe('portfolio media guardian and staff reads', () => {
 
     await assertFails(portfolioMediaRef(otherSiteContext).getMetadata());
     await assertFails(portfolioMediaRef(unauthenticatedContext).getMetadata());
+  });
+});
+
+describe('report share media consent lifecycle access', () => {
+  test('active report share media is readable by the learner, linked guardian, creator, same-site staff, and HQ', async () => {
+    const learnerContext = authContext(learnerUser, { role: 'learner', siteIds: ['site1'] });
+    const guardianContext = authContext(parentUser, {
+      role: 'parent',
+      siteIds: ['site1'],
+      linkedLearnerIds: [learnerUser.uid],
+    });
+    const creatorContext = authContext(educatorUser, { role: 'educator', siteIds: ['site1'] });
+    const siteContext = authContext(siteAdminUser, { role: 'site', siteIds: ['site1'] });
+    const hqContext = authContext(hqUser, { role: 'hq', siteIds: ['site1', 'site2'] });
+
+    await assertSucceeds(reportShareMediaRef(learnerContext).getMetadata());
+    await assertSucceeds(reportShareMediaRef(guardianContext).getMetadata());
+    await assertSucceeds(reportShareMediaRef(creatorContext).getMetadata());
+    await assertSucceeds(reportShareMediaRef(siteContext).getMetadata());
+    await assertSucceeds(reportShareMediaRef(hqContext).getMetadata());
+  });
+
+  test('report share media denies revoked, expired, missing, wrong-learner, and wrong-site access', async () => {
+    const guardianContext = authContext(parentUser, {
+      role: 'parent',
+      siteIds: ['site1'],
+      linkedLearnerIds: [learnerUser.uid],
+    });
+    const otherGuardianContext = authContext(otherParentUser, {
+      role: 'parent',
+      siteIds: ['site2'],
+      linkedLearnerIds: [otherLearnerUser.uid],
+    });
+    const otherSiteContext = authContext(otherSiteEducatorUser, {
+      role: 'educator',
+      siteIds: ['site2'],
+    });
+    const unauthenticatedContext = testEnv.unauthenticatedContext();
+
+    await assertFails(reportShareMediaRef(guardianContext, 'share-revoked').getMetadata());
+    await assertFails(reportShareMediaRef(guardianContext, 'share-expired').getMetadata());
+    await assertFails(reportShareMediaRef(guardianContext, 'share-missing').getMetadata());
+    await assertFails(reportShareMediaRef(guardianContext, 'share-other-learner').getMetadata());
+    await assertFails(reportShareMediaRef(otherGuardianContext).getMetadata());
+    await assertFails(reportShareMediaRef(otherSiteContext).getMetadata());
+    await assertFails(reportShareMediaRef(unauthenticatedContext).getMetadata());
+  });
+
+  test('report share media is server-owned and cannot be uploaded by clients', async () => {
+    const learnerContext = authContext(learnerUser, { role: 'learner', siteIds: ['site1'] });
+    const educatorContext = authContext(educatorUser, { role: 'educator', siteIds: ['site1'] });
+
+    await assertFails(
+      reportShareMediaRef(learnerContext, 'share-active', learnerUser.uid).putString('pdf', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-active' },
+      })
+    );
+    await assertFails(
+      reportShareMediaRef(educatorContext, 'share-active', learnerUser.uid).putString('pdf', 'raw', {
+        contentType: 'application/pdf',
+        customMetadata: { siteId: 'site1', shareRequestId: 'share-active' },
+      })
+    );
   });
 });

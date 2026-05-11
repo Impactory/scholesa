@@ -8,11 +8,15 @@ import {
   isReportShareRevocationReasonAllowedForActor,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
+  reportShareRequestHasEvidenceProvenanceContract,
+  revokeReportShareRequestsLinkedToConsentRecord,
   revokeReportShareRequestRecord,
 } from './reportShareRequests';
 
 const mockSet = jest.fn(async () => undefined);
 const mockUpdate = jest.fn(async () => undefined);
+const mockBatchUpdate = jest.fn();
+const mockBatchCommit = jest.fn(async () => undefined);
 const mockDoc = jest.fn((id?: string) => ({
   id: id ?? 'share-request-123',
   set: mockSet,
@@ -21,10 +25,15 @@ const mockDoc = jest.fn((id?: string) => ({
 const mockCollection = jest.fn(() => ({
   doc: mockDoc,
 }));
+const mockBatch = jest.fn(() => ({
+  update: mockBatchUpdate,
+  commit: mockBatchCommit,
+}));
 
 jest.mock('firebase-admin', () => ({
   firestore: jest.fn(() => ({
     collection: mockCollection,
+    batch: mockBatch,
   })),
 }));
 
@@ -218,6 +227,41 @@ describe('reportShareRequests', () => {
     ).toBe(false);
   });
 
+  it('requires non-empty, complete evidence provenance for report share records', () => {
+    expect(
+      reportShareRequestHasEvidenceProvenanceContract({
+        requiresEvidenceProvenance: true,
+        expectedSignals: ['evidence', 'proof'],
+        missingSignals: [],
+        meetsProvenanceContract: true,
+      })
+    ).toBe(true);
+    expect(
+      reportShareRequestHasEvidenceProvenanceContract({
+        requiresEvidenceProvenance: false,
+        expectedSignals: ['evidence'],
+        missingSignals: [],
+        meetsProvenanceContract: true,
+      })
+    ).toBe(false);
+    expect(
+      reportShareRequestHasEvidenceProvenanceContract({
+        requiresEvidenceProvenance: true,
+        expectedSignals: [],
+        missingSignals: [],
+        meetsProvenanceContract: true,
+      })
+    ).toBe(false);
+    expect(
+      reportShareRequestHasEvidenceProvenanceContract({
+        requiresEvidenceProvenance: true,
+        expectedSignals: ['evidence', 'proof'],
+        missingSignals: ['proof'],
+        meetsProvenanceContract: true,
+      })
+    ).toBe(false);
+  });
+
   it('matches delivery-audit linkage only to the originating share request actor and delivery', () => {
     const shareRequestData = {
       createdBy: 'parent-1',
@@ -355,6 +399,30 @@ describe('reportShareRequests', () => {
     });
     expect(updates[0][0].revokedAt).toBeDefined();
     expect(updates[0][0].updatedAt).toBeDefined();
+  });
+
+  it('revokes linked report share requests when explicit consent is revoked', async () => {
+    const revokedCount = await revokeReportShareRequestsLinkedToConsentRecord({
+      shareRequestIds: ['share-request-1', 'share-request-2', 'share-request-1'],
+      actorId: 'parent-1',
+      reason: 'guardian_revoked_report_share',
+    });
+
+    expect(revokedCount).toBe(2);
+    expect(mockBatch).toHaveBeenCalledTimes(1);
+    expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
+    expect(mockCollection).toHaveBeenCalledWith('reportShareRequests');
+    expect(mockDoc).toHaveBeenCalledWith('share-request-1');
+    expect(mockDoc).toHaveBeenCalledWith('share-request-2');
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        status: 'revoked',
+        revokedBy: 'parent-1',
+        revocationReason: 'guardian_revoked_report_share',
+      })
+    );
+    expect(mockBatchCommit).toHaveBeenCalledTimes(1);
   });
 
   it('links the lifecycle record back to the durable delivery audit', async () => {

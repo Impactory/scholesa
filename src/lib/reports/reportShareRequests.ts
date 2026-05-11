@@ -60,6 +60,7 @@ export type ReportShareRequestSkipReason =
   | 'missing_metadata'
   | 'failed_delivery_contract'
   | 'missing_share_policy'
+  | 'missing_evidence_provenance'
   | 'not_family_safe'
   | 'external_sharing_enabled'
   | 'unsupported_audience'
@@ -107,6 +108,7 @@ export function resolveReportShareRequestSkipReason(
   if (!shareRequestActorPolicyAligned) return 'actor_policy_misaligned';
   if (metadata.report_meets_delivery_contract !== true) return 'failed_delivery_contract';
   if (metadata.report_share_policy_declared !== true) return 'missing_share_policy';
+  if (!hasReportShareEvidenceProvenanceProof(metadata)) return 'missing_evidence_provenance';
   if (metadata.report_share_family_safe !== true) return 'not_family_safe';
   if (metadata.report_share_allows_external_sharing === true) return 'external_sharing_enabled';
   if (!supportedClientShareAudiences.has(metadata.report_share_audience)) {
@@ -116,6 +118,17 @@ export function resolveReportShareRequestSkipReason(
     return 'unsupported_visibility';
   }
   return null;
+}
+
+export function hasReportShareEvidenceProvenanceProof(
+  metadata: ReportProvenanceMetadata
+): boolean {
+  return (
+    metadata.report_share_requires_evidence_provenance === true &&
+    metadata.report_meets_provenance_contract === true &&
+    metadata.report_expected_provenance_signals.length > 0 &&
+    metadata.report_missing_provenance_signals.length === 0
+  );
 }
 
 export function reportShareRequestLifecycleMetadata(
@@ -261,6 +274,7 @@ export async function createExplicitConsentReportShareRequest({
   if (!completedDeliveryStatuses.has(reportDelivery)) return null;
   if (metadata.report_meets_delivery_contract !== true) return null;
   if (metadata.report_share_policy_declared !== true) return null;
+  if (!hasReportShareEvidenceProvenanceProof(metadata)) return null;
   if (metadata.report_share_audience !== audience || metadata.report_share_visibility !== visibility) {
     return null;
   }

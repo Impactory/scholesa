@@ -29,6 +29,8 @@ import {
   isReportShareRevocationReasonAllowedForActor,
   linkReportShareRequestDeliveryAuditRecord,
   persistReportShareRequestRecord,
+  reportShareRequestHasEvidenceProvenanceContract,
+  revokeReportShareRequestsLinkedToConsentRecord,
   revokeReportShareRequestRecord,
   type ReportShareRequestAction,
   type ReportShareRequestAudience,
@@ -5481,6 +5483,21 @@ export const createReportShareRequest = onCall(
         'Report share requests require a passing delivery contract.'
       );
     }
+    const expectedSignals = readStringArrayField(metadata.report_expected_provenance_signals);
+    const missingSignals = readStringArrayField(metadata.report_missing_provenance_signals);
+    if (
+      !reportShareRequestHasEvidenceProvenanceContract({
+        requiresEvidenceProvenance: metadata.report_share_requires_evidence_provenance === true,
+        expectedSignals,
+        missingSignals,
+        meetsProvenanceContract: metadata.report_meets_provenance_contract === true,
+      })
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Report share requests require complete evidence provenance.'
+      );
+    }
 
     const audience = normalizeReportShareAudience(
       readTrimmedField(data, 'audience') ?? metadata.report_share_audience
@@ -5595,8 +5612,8 @@ export const createReportShareRequest = onCall(
         includesLearnerIdentifiers: metadata.report_share_includes_learner_identifiers === true,
       },
       provenance: {
-        expectedSignals: readStringArrayField(metadata.report_expected_provenance_signals),
-        missingSignals: readStringArrayField(metadata.report_missing_provenance_signals),
+        expectedSignals,
+        missingSignals,
         meetsProvenanceContract: metadata.report_meets_provenance_contract === true,
         meetsDeliveryContract: metadata.report_meets_delivery_contract === true,
         sharePolicyDeclared: metadata.report_share_policy_declared === true,
@@ -6022,6 +6039,19 @@ export const revokeReportShareConsent = onCall(
       actorId: request.auth.uid,
       collectionName: REPORT_SHARE_CONSENTS_COLLECTION,
     });
+    const linkedShareRequestIds = readStringArrayField(
+      consentData.linkedReportShareRequestIds
+    );
+    const linkedShareRevocationReason = expectedReportShareRevocationReason(
+      actorRole as ReportShareRequestRole
+    );
+    const revokedLinkedShareRequestCount =
+      await revokeReportShareRequestsLinkedToConsentRecord({
+        shareRequestIds: linkedShareRequestIds,
+        actorId: request.auth.uid,
+        reason: linkedShareRevocationReason ?? undefined,
+        collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+      });
     await admin
       .firestore()
       .collection(AUDIT_COLLECTION)
@@ -6040,12 +6070,14 @@ export const revokeReportShareConsent = onCall(
           scope: consentData.scope ?? null,
           audience: consentData.audience ?? null,
           visibility: consentData.visibility ?? null,
+          revokedLinkedShareRequestCount,
         },
         metadata: {
           previousStatus: consentData.status ?? null,
           scope: consentData.scope ?? null,
           audience: consentData.audience ?? null,
           visibility: consentData.visibility ?? null,
+          revokedLinkedShareRequestCount,
         },
         createdAt: FieldValue.serverTimestamp(),
       });
