@@ -302,6 +302,32 @@ beforeEach(async () => {
       updatedAt: Date.now(),
     });
 
+    await setDoc(doc(db, 'habits', 'habit-site1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Site-scoped learning habit',
+      isActive: true,
+      currentStreak: 1,
+      totalCompletions: 2,
+    });
+
+    await setDoc(doc(db, 'habits', 'habit-nosite'), {
+      learnerId: learnerUser.uid,
+      title: 'Legacy unscoped learning habit',
+      isActive: true,
+      currentStreak: 1,
+      totalCompletions: 2,
+    });
+
+    await setDoc(doc(db, 'habits', 'habit-site2'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      title: 'Wrong-site learning habit',
+      isActive: true,
+      currentStreak: 1,
+      totalCompletions: 2,
+    });
+
     await setDoc(doc(db, 'capabilityMastery', 'mastery-1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -1687,6 +1713,57 @@ describe('Metacognitive Calibration Records', () => {
       educatorNote: 'Wrong site review.',
     }));
     await assertFails(updateDoc(doc(learnerDb, 'metacognitiveCalibrationRecords', 'calibration-site1'), {
+      siteId: 'site2',
+    }));
+  });
+});
+
+describe('Habits Collection', () => {
+  test('habits require site scope for read and create', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'habits', 'habit-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'habits', 'habit-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'habits', 'habit-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'habits', 'habit-nosite')));
+    await assertFails(getDoc(doc(learnerDb, 'habits', 'habit-site2')));
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'habits', 'habit-new'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'New learning habit',
+      isActive: true,
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'habits', 'habit-missing-site'), {
+      learnerId: learnerUser.uid,
+      title: 'Missing site learning habit',
+      isActive: true,
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'habits', 'habit-wrong-site'), {
+      siteId: 'site2',
+      learnerId: learnerUser.uid,
+      title: 'Wrong-site learning habit',
+      isActive: true,
+    }));
+  });
+
+  test('habit updates cannot cross or remove site scope', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(learnerDb, 'habits', 'habit-site1'), {
+      currentStreak: 2,
+    }));
+    await assertSucceeds(updateDoc(doc(educatorDb, 'habits', 'habit-site1'), {
+      reviewedBy: educatorUser.uid,
+    }));
+    await assertFails(updateDoc(doc(otherSiteDb, 'habits', 'habit-site1'), {
+      reviewedBy: otherSiteUser.uid,
+    }));
+    await assertFails(updateDoc(doc(learnerDb, 'habits', 'habit-site1'), {
       siteId: 'site2',
     }));
   });

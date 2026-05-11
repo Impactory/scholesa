@@ -54,6 +54,7 @@ Widget _buildHarness({required FirestoreService firestoreService, required Habit
 Future<void> _seedHabit(FakeFirebaseFirestore firestore) async {
   await firestore.collection('habits').doc('habit-1').set(<String, dynamic>{
     'learnerId': 'learner-1',
+    'siteId': 'site-1',
     'title': 'Read for 10 minutes',
     'description': 'Daily reading time',
     'emoji': '📚',
@@ -80,6 +81,7 @@ void main() {
     final HabitService habitService = HabitService(
       firestoreService: firestoreService,
       learnerId: 'learner-1',
+      siteId: 'site-1',
     );
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));
@@ -109,6 +111,7 @@ void main() {
     final HabitService habitService = HabitService(
       firestoreService: firestoreService,
       learnerId: 'learner-1',
+      siteId: 'site-1',
     );
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));
@@ -144,6 +147,7 @@ void main() {
     final HabitService habitService = HabitService(
       firestoreService: firestoreService,
       learnerId: 'learner-1',
+      siteId: 'site-1',
     );
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));

@@ -18,12 +18,14 @@ class HabitService extends ChangeNotifier {
   HabitService({
     required FirestoreService firestoreService,
     required this.learnerId,
+    this.siteId = '',
     Future<HabitLoadSnapshot> Function()? snapshotLoader,
   })  : _firestoreService = firestoreService,
         _snapshotLoader = snapshotLoader;
   final FirestoreService _firestoreService;
   final Future<HabitLoadSnapshot> Function()? _snapshotLoader;
   final String learnerId;
+  final String siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<Habit> _habits = <Habit>[];
@@ -83,6 +85,7 @@ class HabitService extends ChangeNotifier {
     final QuerySnapshot<Map<String, dynamic>> habitsSnapshot = await _firestore
         .collection('habits')
         .where('learnerId', isEqualTo: learnerId)
+      .where('siteId', isEqualTo: siteId)
         .where('isActive', isEqualTo: true)
         .get();
 
@@ -339,6 +342,7 @@ class HabitService extends ChangeNotifier {
       final DocumentReference<Map<String, dynamic>> docRef =
           await _firestore.collection('habits').add(<String, dynamic>{
         'learnerId': learnerId,
+        'siteId': siteId,
         'title': title,
         'description': description,
         'emoji': emoji,
@@ -393,6 +397,7 @@ class HabitService extends ChangeNotifier {
           await _firestore.collection('habitLogs').add(<String, dynamic>{
         'habitId': habitId,
         'learnerId': learnerId,
+        'siteId': siteId,
         'completedAt': FieldValue.serverTimestamp(),
         'durationMinutes': durationMinutes ?? habit.targetMinutes,
         'note': note,
@@ -415,6 +420,7 @@ class HabitService extends ChangeNotifier {
           .collection('habits')
           .doc(habitId)
           .update(<String, dynamic>{
+        'siteId': siteId,
         'currentStreak': newStreak,
         'longestStreak':
             newStreak > habit.longestStreak ? newStreak : habit.longestStreak,

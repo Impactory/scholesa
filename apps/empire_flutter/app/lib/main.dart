@@ -488,18 +488,23 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => HabitService(
             firestoreService: _firestoreService,
             learnerId: '',
+            siteId: '',
           ),
           update: (_, AppState appState, HabitService? previousHabitService) {
             final String learnerId = _normalizeContextValue(appState.userId);
+            final String siteId = _normalizeContextValue(appState.activeSiteId);
             if (previousHabitService != null &&
-                previousHabitService.learnerId == learnerId) {
+                previousHabitService.learnerId == learnerId &&
+                previousHabitService.siteId == siteId) {
               return previousHabitService;
             }
             final HabitService service = HabitService(
               firestoreService: _firestoreService,
               learnerId: learnerId,
+              siteId: siteId,
             );
             if (learnerId.isNotEmpty &&
+                siteId.isNotEmpty &&
                 (appState.role == UserRole.learner ||
                     appState.role == UserRole.hq)) {
               Future<void>.microtask(service.loadHabits);
