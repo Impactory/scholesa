@@ -8,7 +8,20 @@ LOCAL_SECRET_DIR="$REPO_ROOT/.secrets/app_store_connect"
 LOCAL_ENV_FILE="$REPO_ROOT/.env.app_store_connect.local"
 DEFAULT_TEAM_ID="CEUD8LB243"
 DEFAULT_IOS_BUNDLE_ID="com.scholesa.app"
-DEFAULT_FLUTTER_BIN="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+default_flutter_bin() {
+  local fvm_flutter="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+  if [[ -x "$fvm_flutter" ]]; then
+    printf '%s\n' "$fvm_flutter"
+    return 0
+  fi
+
+  if command -v flutter >/dev/null 2>&1; then
+    command -v flutter
+    return 0
+  fi
+
+  printf '%s\n' "$fvm_flutter"
+}
 
 fail() {
   echo "[app-store-connect] $*" >&2
@@ -33,6 +46,7 @@ mkdir -p "$LOCAL_SECRET_DIR"
 DEST_KEY_PATH="$LOCAL_SECRET_DIR/$SOURCE_BASENAME"
 cp "$SOURCE_KEY_PATH" "$DEST_KEY_PATH"
 chmod 600 "$DEST_KEY_PATH"
+FLUTTER_BIN_VALUE="$(default_flutter_bin)"
 
 cat > "$LOCAL_ENV_FILE" <<EOF
 APP_STORE_CONNECT_API_KEY_PATH=$DEST_KEY_PATH
@@ -40,7 +54,7 @@ APP_STORE_CONNECT_KEY_ID=$KEY_ID
 APP_STORE_CONNECT_ISSUER_ID=$ISSUER_ID
 IOS_APP_IDENTIFIER=$DEFAULT_IOS_BUNDLE_ID
 APPLE_DEVELOPER_TEAM_ID=$DEFAULT_TEAM_ID
-FLUTTER_BIN=$DEFAULT_FLUTTER_BIN
+FLUTTER_BIN=$FLUTTER_BIN_VALUE
 EOF
 
 if [[ -z "$ISSUER_ID" ]]; then

@@ -1,0 +1,281 @@
+Using rake 13.4.2
+Using CFPropertyList 3.0.9
+Using abbrev 0.1.2
+Using public_suffix 5.1.1
+Using addressable 2.9.0
+Using artifactory 3.0.17
+Using atomos 0.1.3
+Using aws-eventstream 1.3.2
+Using aws-partitions 1.1109.0
+Using aws-sigv4 1.11.0
+Using base64 0.2.0
+Using jmespath 1.6.2
+Using logger 1.7.0
+Using aws-sdk-core 3.224.1
+Using aws-sdk-kms 1.101.0
+Using aws-sdk-s3 1.188.0
+Using babosa 1.0.4
+Using bundler 1.17.2
+Using claide 1.1.0
+Using colored 1.2
+Using colored2 3.1.2
+Using highline 2.0.3
+Using commander 4.6.0
+Using csv 3.3.5
+Using declarative 0.0.20
+Using digest-crc 0.7.0
+Using unf 0.2.0
+Using domain_name 0.5.20190701
+Using dotenv 2.8.1
+Using emoji_regex 3.2.3
+Using excon 0.109.0
+Using faraday-em_http 1.0.0
+Using faraday-em_synchrony 1.0.1
+Using faraday-excon 1.1.0
+Using faraday-httpclient 1.0.1
+Using multipart-post 2.4.1
+Using faraday-multipart 1.2.0
+Using faraday-net_http 1.0.2
+Using faraday-net_http_persistent 1.2.0
+Using faraday-patron 1.0.0
+Using faraday-rack 1.0.0
+Using faraday-retry 1.0.4
+Using ruby2_keywords 0.0.5
+Using faraday 1.10.5
+Using http-cookie 1.0.8
+Using faraday-cookie_jar 0.0.8
+Using faraday_middleware 1.2.1
+Using fastimage 2.4.1
+Using fastlane-sirp 1.1.0
+Using gh_inspector 1.1.3
+Using jwt 2.10.2
+Using multi_json 1.15.0
+Using os 1.1.4
+Using signet 0.18.0
+Using googleauth 1.8.1
+Using mutex_m 0.3.0
+Using httpclient 2.9.0
+Using mini_mime 1.1.5
+Using trailblazer-option 0.1.2
+Using uber 0.1.0
+Using representable 3.2.0
+Using retriable 3.4.1
+Using rexml 3.4.4
+Using google-apis-core 0.11.3
+Using google-apis-androidpublisher_v3 0.54.0
+Using google-apis-playcustomapp_v1 0.13.0
+Using google-cloud-env 1.6.0
+Using google-apis-iamcredentials_v1 0.17.0
+Using google-apis-storage_v1 0.29.0
+Using google-cloud-errors 1.3.1
+Using google-cloud-core 1.6.1
+Using google-cloud-storage 1.45.0
+Using json 2.7.6
+Using mini_magick 4.13.2
+Using naturally 2.3.0
+Using nkf 0.2.0
+Using optparse 0.8.1
+Using plist 3.7.2
+Using rubyzip 2.4.1
+Using security 0.1.5
+Using simctl 1.6.10
+Using terminal-notifier 2.0.0
+Using unicode-display_width 2.6.0
+Using terminal-table 3.0.2
+Using tty-screen 0.8.2
+Using tty-cursor 0.7.1
+Using tty-spinner 0.9.3
+Using word_wrap 1.0.0
+Using nanaimo 0.4.0
+Using xcodeproj 1.27.0
+Using rouge 3.28.0
+Using xcpretty 0.4.1
+Using xcpretty-travis-formatter 1.0.1
+Using fastlane 2.230.0
+Bundle complete! 1 Gemfile dependency, 94 gems now installed.
+Bundled gems are installed into `./vendor/bundle`
+[11:17:49]: [32m------------------------------[0m
+[11:17:49]: [32m--- Step: default_platform ---[0m
+[11:17:49]: [32m------------------------------[0m
+[11:17:49]: [32m---------------------------[0m
+[11:17:49]: [32m--- Step: opt_out_usage ---[0m
+[11:17:49]: [32m---------------------------[0m
+[11:17:49]: Disabled upload of used actions
+[11:17:49]: [32mDriving the lane 'ios upload_testflight' 🚀[0m
+[11:17:49]: [32m---------------------------------------[0m
+[11:17:49]: [32m--- Step: app_store_connect_api_key ---[0m
+[11:17:49]: [32m---------------------------------------[0m
+[11:17:49]: [32m----------------------------------------------------------[0m
+[11:17:49]: [32m--- Step: /Users/impactory/flutter/bin/flutter pub get ---[0m
+[11:17:49]: [32m----------------------------------------------------------[0m
+[11:17:49]: [36m$ /Users/impactory/flutter/bin/flutter pub get[0m
+[11:17:49]: ▸ [35mResolving dependencies...[0m
+[11:17:49]: ▸ [35mDownloading packages...[0m
+[11:17:55]: ▸ [35m_fe_analyzer_shared 67.0.0 (100.0.0 available)[0m
+[11:17:55]: ▸ [35m_flutterfire_internals 1.3.69 (1.3.70 available)[0m
+[11:17:55]: ▸ [35manalyzer 6.4.1 (13.0.0 available)[0m
+[11:17:55]: ▸ [35mbuild 2.4.1 (4.0.6 available)[0m
+[11:17:55]: ▸ [35mbuild_config 1.1.2 (1.3.0 available)[0m
+[11:17:55]: ▸ [35mbuild_resolvers 2.4.2 (3.0.4 available)[0m
+[11:17:55]: ▸ [35mbuild_runner 2.4.13 (2.15.0 available)[0m
+[11:17:55]: ▸ [35mbuild_runner_core 7.3.2 (9.3.2 available)[0m
+[11:17:55]: ▸ [35mbuilt_value 8.12.5 (8.12.6 available)[0m
+[11:17:55]: ▸ [35mcloud_firestore 6.3.0 (6.4.0 available)[0m
+[11:17:55]: ▸ [35mcloud_firestore_platform_interface 7.2.0 (8.0.0 available)[0m
+[11:17:55]: ▸ [35mcloud_firestore_web 5.3.0 (5.4.0 available)[0m
+[11:17:55]: ▸ [35mcloud_functions 6.2.0 (6.3.0 available)[0m
+[11:17:55]: ▸ [35mcloud_functions_platform_interface 5.8.12 (6.0.0 available)[0m
+[11:17:55]: ▸ [35mcloud_functions_web 5.1.5 (5.1.6 available)[0m
+[11:17:55]: ▸ [35mdart_style 2.3.6 (3.1.9 available)[0m
+[11:17:55]: ▸ [35mfile_picker 10.3.10 (11.0.2 available)[0m
+[11:17:55]: ▸ [35mfirebase_auth 6.4.0 (6.5.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_auth_platform_interface 8.1.9 (9.0.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_auth_web 6.1.5 (6.2.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_core 4.7.0 (4.8.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_core_platform_interface 6.0.3 (7.0.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_core_web 3.6.0 (3.6.1 available)[0m
+[11:17:55]: ▸ [35mfirebase_storage 13.3.0 (13.4.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_storage_platform_interface 5.2.20 (6.0.0 available)[0m
+[11:17:55]: ▸ [35mfirebase_storage_web 3.11.5 (3.11.6 available)[0m
+[11:17:55]: ▸ [35mflutter_svg 2.2.4 (2.3.0 available)[0m
+[11:17:55]: ▸ [35mgo_router 17.2.2 (17.2.3 available)[0m
+[11:17:55]: ▸ [35mgoogle_fonts 8.0.2 (8.1.0 available)[0m
+[11:17:55]: ▸ [35mhooks 1.0.2 (1.0.3 available)[0m
+[11:17:55]: ▸ [35mmatcher 0.12.19 (0.12.20 available)[0m
+[11:17:55]: ▸ [35mmeta 1.17.0 (1.18.2 available)[0m
+[11:17:55]: ▸ [35mnative_toolchain_c 0.17.6 (0.18.0 available)[0m
+[11:17:55]: ▸ [35mrx 0.4.0 (0.5.0 available)[0m
+[11:17:55]: ▸ [35mshelf_web_socket 2.0.1 (3.0.0 available)[0m
+[11:17:55]: ▸ [35msource_gen 1.5.0 (4.2.3 available)[0m
+[11:17:55]: ▸ [35msource_helper 1.3.5 (1.3.12 available)[0m
+[11:17:55]: ▸ [35mtest_api 0.7.10 (0.7.12 available)[0m
+[11:17:55]: ▸ [35murl_launcher_web 2.4.2 (2.4.3 available)[0m
+[11:17:55]: ▸ [35mvector_graphics 1.1.21 (1.2.1 available)[0m
+[11:17:55]: ▸ [35mvector_graphics_compiler 1.2.0 (1.2.2 available)[0m
+[11:17:55]: ▸ [35mvector_math 2.2.0 (2.3.0 available)[0m
+[11:17:55]: ▸ [35mvm_service 15.1.0 (15.2.0 available)[0m
+[11:17:55]: ▸ [35mwin32 5.15.0 (6.2.0 available)[0m
+[11:17:55]: ▸ [35mxml 6.6.1 (7.0.1 available)[0m
+[11:17:55]: ▸ [35mGot dependencies![0m
+[11:17:55]: ▸ [35m45 packages have newer versions incompatible with dependency constraints.[0m
+[11:17:55]: ▸ [35mTry `flutter pub outdated` for more information.[0m
+[11:17:55]: [32m---------------------------[0m
+[11:17:55]: [32m--- Step: build_ios_app ---[0m
+[11:17:55]: [32m---------------------------[0m
+[11:17:55]: [33mResolving Swift Package Manager dependencies...[0m
+[11:17:55]: [36m$ xcodebuild -resolvePackageDependencies -workspace Runner.xcworkspace -scheme Runner -configuration Release[0m
+[11:17:56]: ▸ [35mCommand line invocation:[0m
+[11:17:56]: ▸ [35m    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -resolvePackageDependencies -workspace Runner.xcworkspace -scheme Runner -configuration Release[0m
+[11:17:57]: ▸ [35mresolved source packages: [0m
+[11:17:57]: [36m$ xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release 2>&1[0m
+
++-----------------------------------------------------------------------------+
+|                           [32mSummary for gym 2.230.0[0m                           |
++--------------------------------------+--------------------------------------+
+| workspace                            | Runner.xcworkspace                   |
+| scheme                               | Runner                               |
+| configuration                        | Release                              |
+| clean                                | true                                 |
+| export_method                        | app-store                            |
+| output_directory                     | /Users/impactory/Documents/GitHub/s  |
+|                                      | cholesa/apps/empire_flutter/app/bui  |
+|                                      | ld/ios/fastlane                      |
+| output_name                          | Scholesa                             |
+| xcargs                               | DEVELOPMENT_TEAM=CEUD8LB243          |
+|                                      | -allowProvisioningUpdates            |
+| catalyst_platform                    | ios                                  |
+| silent                               | false                                |
+| skip_package_ipa                     | false                                |
+| build_path                           | /Users/impactory/Library/Developer/  |
+|                                      | Xcode/Archives/2026-05-12            |
+| result_bundle                        | false                                |
+| buildlog_path                        | ~/Library/Logs/gym                   |
+| destination                          | generic/platform=iOS                 |
+| xcodebuild_formatter                 | xcpretty                             |
+| build_timing_summary                 | false                                |
+| skip_profile_detection               | false                                |
+| xcodebuild_command                   | xcodebuild                           |
+| skip_package_dependencies_resolutio  | false                                |
+| n                                    |                                      |
+| disable_package_automatic_updates    | false                                |
+| use_system_scm                       | false                                |
+| generate_appstore_info               | false                                |
+| skip_package_pkg                     | false                                |
+| xcode_path                           | /Applications/Xcode.app              |
++--------------------------------------+--------------------------------------+
+
+[11:17:59]: [36m$ set -o pipefail && xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' -archivePath /Users/impactory/Library/Developer/Xcode/Archives/2026-05-12/Scholesa\ 2026-05-12\ 11.17.59.xcarchive DEVELOPMENT_TEAM=CEUD8LB243 -allowProvisioningUpdates clean archive | tee /Users/impactory/Library/Logs/gym/Runner-Runner.log | xcpretty[0m
+[11:18:02]: [35m[33m▸[0m [39;1mClean[0m Succeeded[0m
+[11:18:06]: ▸ [35m    [33mRun script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'abseil' from project 'Pods')[0m
+[11:18:06]: ▸ [35m    [33mRun script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'BoringSSL-GRPC' from project 'Pods')[0m
+[11:18:06]: ▸ [35m    [33mRun script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'gRPC-Core' from project 'Pods')[0m
+[11:18:06]: ▸ [35m    [33mRun script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'gRPC-C++' from project 'Pods')[0m
+[11:18:06]: ▸ [35m** ARCHIVE FAILED **[0m
+[11:18:06]: ▸ [35mThe following build commands failed:[0m
+[11:18:06]: ▸ [35m	Archiving workspace Runner with scheme Runner[0m
+[11:18:06]: ▸ [35m(1 failure)[0m
+[11:18:06]: [31mExit status: 65[0m
+
++-----------------------------------------+
+|            [32m[33mBuild environment[0m            |
++---------------+-------------------------+
+| xcode_path    | /Applications/Xcode.app |
+| gym_version   | 2.230.0                 |
+| export_method | app-store               |
+| sdk           | iPhoneOS26.5.sdk        |
++---------------+-------------------------+
+
+[11:18:06]: ▸ [35m/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner.xcodeproj: error: No Accounts: Add a new account in Accounts settings. (in target 'Runner' from project 'Runner')[0m
+[11:18:06]: ▸ [35m/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner.xcodeproj: error: No profiles for 'com.scholesa.app' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'com.scholesa.app'. (in target 'Runner' from project 'Runner')[0m
+[11:18:06]: ▸ [35mnote: Run script build phase 'Run Script' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')[0m
+[11:18:06]: ▸ [35mnote: Run script build phase 'Thin Binary' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')[0m
+[11:18:06]: ▸ [35mwarning: Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'gRPC-C++' from project 'Pods')[0m
+[11:18:06]: 
+[11:18:06]: [31m⬆️  Check out the few lines of raw `xcodebuild` output above for potential hints on how to solve this error[0m
+[11:18:06]: [33m📋  For the complete and more detailed error log, check the full log at:[0m
+[11:18:06]: [33m📋  /Users/impactory/Library/Logs/gym/Runner-Runner.log[0m
+[11:18:06]: 
+[11:18:06]: [31mLooks like fastlane ran into a build/archive error with your project[0m
+[11:18:06]: [31mIt's hard to tell what's causing the error, so we wrote some guides on how[0m
+[11:18:06]: [31mto troubleshoot build and signing issues: https://docs.fastlane.tools/codesigning/getting-started/[0m
+[11:18:06]: [31mBefore submitting an issue on GitHub, please follow the guide above and make[0m
+[11:18:06]: [31msure your project is set up correctly.[0m
+[11:18:06]: [31mfastlane uses `xcodebuild` commands to generate your binary, you can see the[0m
+[11:18:06]: [31mthe full commands printed out in yellow in the above log.[0m
+[11:18:06]: [31mMake sure to inspect the output above, as usually you'll find more error information there[0m
+[11:18:06]: 
++------------------------------------------+
+|               [33mLane Context[0m               |
++------------------+-----------------------+
+| DEFAULT_PLATFORM | ios                   |
+| PLATFORM_NAME    | ios                   |
+| LANE_NAME        | ios upload_testflight |
++------------------+-----------------------+
+[11:18:06]: [31mCalled from Fastfile at line 167[0m
+[11:18:06]: [31m```[0m
+[11:18:06]: [31m    165:	    end[0m
+[11:18:06]: [31m    166:	[0m
+[11:18:06]: [31m => 167:	    build_ios_app([0m
+[11:18:06]: [31m    168:	      workspace: 'Runner.xcworkspace',[0m
+[11:18:06]: [31m    169:	      scheme: 'Runner',[0m
+[11:18:06]: [31m```[0m
+[11:18:06]: [31mError building the application - see the log above[0m
+
++---------------------------------------------+
+|              [32mfastlane summary[0m               |
++------+------------------------+-------------+
+| Step | Action                 | Time (in s) |
++------+------------------------+-------------+
+| 1    | default_platform       | 0           |
+| 2    | opt_out_usage          | 0           |
+| 3    | app_store_connect_api  | 0           |
+|      | _key                   |             |
+| 4    | /Users/impactory/flut  | 6           |
+|      | ter/bin/flutter pub    |             |
+|      | get                    |             |
+| 💥   | [31mbuild_ios_app[0m          | 10          |
++------+------------------------+-------------+
+
+[11:18:06]: [31mfastlane finished with errors[0m
+[31m
+[!] Error building the application - see the log above[0m

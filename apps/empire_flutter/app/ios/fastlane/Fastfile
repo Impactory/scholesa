@@ -170,9 +170,14 @@ platform :ios do
       configuration: 'Release',
       clean: true,
       export_method: 'app-store',
+      export_options: {
+        provisioningProfiles: {
+          ENV['IOS_APP_IDENTIFIER'].to_s.strip.empty? ? 'com.scholesa.app' : ENV['IOS_APP_IDENTIFIER'] => 'com.scholesa.app AppStore',
+        },
+      },
       output_directory: output_directory,
       output_name: 'Scholesa.ipa',
-      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']} -allowProvisioningUpdates"
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']}"
     )
 
     upload_to_testflight(

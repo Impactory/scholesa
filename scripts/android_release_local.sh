@@ -84,13 +84,22 @@ default_flutter_bin() {
   printf '%s\n' "$fvm_flutter"
 }
 
+resolve_flutter_bin() {
+  if [[ -n "${FLUTTER_BIN:-}" && -x "${FLUTTER_BIN:-}" ]]; then
+    printf '%s\n' "$FLUTTER_BIN"
+    return 0
+  fi
+
+  default_flutter_bin
+}
+
 if [[ "$COMMAND" != "verify_local_release" ]]; then
   require_google_play_env || exit 1
 fi
 
 export ANDROID_APP_IDENTIFIER="${ANDROID_APP_IDENTIFIER:-com.scholesa.app}"
 export PLAY_TRACK="${PLAY_TRACK:-internal}"
-export FLUTTER_BIN="${FLUTTER_BIN:-$(default_flutter_bin)}"
+export FLUTTER_BIN="$(resolve_flutter_bin)"
 export BUNDLE_PATH="${BUNDLE_PATH:-$BUNDLE_DIR}"
 export BUNDLE_APP_CONFIG
 export BUNDLE_USER_HOME="${BUNDLE_USER_HOME:-$BUNDLE_USER_HOME_DIR}"

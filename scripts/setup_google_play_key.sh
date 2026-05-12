@@ -7,7 +7,20 @@ LOCAL_SECRET_DIR="$REPO_ROOT/.secrets/google_play"
 LOCAL_ENV_FILE="$REPO_ROOT/.env.google_play.local"
 DEFAULT_ANDROID_APP_IDENTIFIER="com.scholesa.app"
 DEFAULT_PLAY_TRACK="internal"
-DEFAULT_FLUTTER_BIN="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+default_flutter_bin() {
+  local fvm_flutter="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+  if [[ -x "$fvm_flutter" ]]; then
+    printf '%s\n' "$fvm_flutter"
+    return 0
+  fi
+
+  if command -v flutter >/dev/null 2>&1; then
+    command -v flutter
+    return 0
+  fi
+
+  printf '%s\n' "$fvm_flutter"
+}
 
 fail() {
   echo "[google-play] $*" >&2
@@ -23,12 +36,13 @@ if [[ "$(cd "$(dirname "$SOURCE_KEY_PATH")" && pwd)/$(basename "$SOURCE_KEY_PATH
   cp "$SOURCE_KEY_PATH" "$DEST_KEY_PATH"
 fi
 chmod 600 "$DEST_KEY_PATH"
+FLUTTER_BIN_VALUE="$(default_flutter_bin)"
 
 cat > "$LOCAL_ENV_FILE" <<EOF
 GOOGLE_PLAY_JSON_KEY_PATH=$DEST_KEY_PATH
 ANDROID_APP_IDENTIFIER=$DEFAULT_ANDROID_APP_IDENTIFIER
 PLAY_TRACK=$DEFAULT_PLAY_TRACK
-FLUTTER_BIN=$DEFAULT_FLUTTER_BIN
+FLUTTER_BIN=$FLUTTER_BIN_VALUE
 EOF
 
 cat <<EOF
