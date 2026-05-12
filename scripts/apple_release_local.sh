@@ -78,13 +78,28 @@ require_local_ios_distribution_prereqs() {
   fi
 }
 
+default_flutter_bin() {
+  local fvm_flutter="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+  if [[ -x "$fvm_flutter" ]]; then
+    printf '%s\n' "$fvm_flutter"
+    return 0
+  fi
+
+  if command -v flutter >/dev/null 2>&1; then
+    command -v flutter
+    return 0
+  fi
+
+  printf '%s\n' "$fvm_flutter"
+}
+
 if [[ "$COMMAND" != "verify_local_release" ]]; then
   require_app_store_connect_env || exit 1
 fi
 
 export IOS_APP_IDENTIFIER="${IOS_APP_IDENTIFIER:-com.scholesa.app}"
 export APPLE_DEVELOPER_TEAM_ID="${APPLE_DEVELOPER_TEAM_ID:-CEUD8LB243}"
-export FLUTTER_BIN="${FLUTTER_BIN:-$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter}"
+export FLUTTER_BIN="${FLUTTER_BIN:-$(default_flutter_bin)}"
 export BUNDLE_PATH="${BUNDLE_PATH:-$BUNDLE_DIR}"
 export BUNDLE_APP_CONFIG
 export FASTLANE_HIDE_CHANGELOG=1

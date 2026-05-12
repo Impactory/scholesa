@@ -1,0 +1,179 @@
+Using rake 13.4.2
+Using CFPropertyList 3.0.9
+Using abbrev 0.1.2
+Using public_suffix 5.1.1
+Using addressable 2.9.0
+Using artifactory 3.0.17
+Using atomos 0.1.3
+Using aws-eventstream 1.3.2
+Using aws-partitions 1.1109.0
+Using aws-sigv4 1.11.0
+Using base64 0.2.0
+Using jmespath 1.6.2
+Using logger 1.7.0
+Using aws-sdk-core 3.224.1
+Using aws-sdk-kms 1.101.0
+Using aws-sdk-s3 1.188.0
+Using babosa 1.0.4
+Using bundler 1.17.2
+Using claide 1.1.0
+Using colored 1.2
+Using colored2 3.1.2
+Using highline 2.0.3
+Using commander 4.6.0
+Using csv 3.3.5
+Using declarative 0.0.20
+Using digest-crc 0.7.0
+Using unf 0.2.0
+Using domain_name 0.5.20190701
+Using dotenv 2.8.1
+Using emoji_regex 3.2.3
+Using excon 0.109.0
+Using faraday-em_http 1.0.0
+Using faraday-em_synchrony 1.0.1
+Using faraday-excon 1.1.0
+Using faraday-httpclient 1.0.1
+Using multipart-post 2.4.1
+Using faraday-multipart 1.2.0
+Using faraday-net_http 1.0.2
+Using faraday-net_http_persistent 1.2.0
+Using faraday-patron 1.0.0
+Using faraday-rack 1.0.0
+Using faraday-retry 1.0.4
+Using ruby2_keywords 0.0.5
+Using faraday 1.10.5
+Using http-cookie 1.0.8
+Using faraday-cookie_jar 0.0.8
+Using faraday_middleware 1.2.1
+Using fastimage 2.4.1
+Using fastlane-sirp 1.1.0
+Using gh_inspector 1.1.3
+Using jwt 2.10.2
+Using multi_json 1.15.0
+Using os 1.1.4
+Using signet 0.18.0
+Using googleauth 1.8.1
+Using mutex_m 0.3.0
+Using httpclient 2.9.0
+Using mini_mime 1.1.5
+Using trailblazer-option 0.1.2
+Using uber 0.1.0
+Using representable 3.2.0
+Using retriable 3.4.1
+Using rexml 3.4.4
+Using google-apis-core 0.11.3
+Using google-apis-androidpublisher_v3 0.54.0
+Using google-apis-playcustomapp_v1 0.13.0
+Using google-cloud-env 1.6.0
+Using google-apis-iamcredentials_v1 0.17.0
+Using google-apis-storage_v1 0.29.0
+Using google-cloud-errors 1.3.1
+Using google-cloud-core 1.6.1
+Using google-cloud-storage 1.45.0
+Using json 2.7.6
+Using mini_magick 4.13.2
+Using naturally 2.3.0
+Using nkf 0.2.0
+Using optparse 0.8.1
+Using plist 3.7.2
+Using rubyzip 2.4.1
+Using security 0.1.5
+Using simctl 1.6.10
+Using terminal-notifier 2.0.0
+Using unicode-display_width 2.6.0
+Using terminal-table 3.0.2
+Using tty-screen 0.8.2
+Using tty-cursor 0.7.1
+Using tty-spinner 0.9.3
+Using word_wrap 1.0.0
+Using nanaimo 0.4.0
+Using xcodeproj 1.27.0
+Using rouge 3.28.0
+Using xcpretty 0.4.1
+Using xcpretty-travis-formatter 1.0.1
+Using fastlane 2.230.0
+Bundle complete! 1 Gemfile dependency, 94 gems now installed.
+Bundled gems are installed into `./vendor/bundle`
+[11:14:03]: [32m------------------------------[0m
+[11:14:03]: [32m--- Step: default_platform ---[0m
+[11:14:03]: [32m------------------------------[0m
+[11:14:03]: [32m---------------------------[0m
+[11:14:03]: [32m--- Step: opt_out_usage ---[0m
+[11:14:03]: [32m---------------------------[0m
+[11:14:03]: Disabled upload of used actions
+[11:14:03]: [32mDriving the lane 'ios upload_testflight' 🚀[0m
+[11:14:03]: [32m---------------------------------------[0m
+[11:14:03]: [32m--- Step: app_store_connect_api_key ---[0m
+[11:14:03]: [32m---------------------------------------[0m
+[11:14:03]: [32m--------------------------------------------------------------------[0m
+[11:14:03]: [32mStep: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter pub get[0m
+[11:14:03]: [32m--------------------------------------------------------------------[0m
+[11:14:03]: [36m$ /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter pub get[0m
++------------------------------------------+
+|               [33mLane Context[0m               |
++------------------+-----------------------+
+| DEFAULT_PLATFORM | ios                   |
+| PLATFORM_NAME    | ios                   |
+| LANE_NAME        | ios upload_testflight |
++------------------+-----------------------+
+[11:14:03]: [31mCalled from Fastfile at line 164[0m
+[11:14:03]: [31m```[0m
+[11:14:03]: [31m    162:	[0m
+[11:14:03]: [31m    163:	    Dir.chdir(app_root) do[0m
+[11:14:03]: [31m => 164:	      sh("#{flutter_binary} pub get")[0m
+[11:14:03]: [31m    165:	    end[0m
+[11:14:03]: [31m    166:	[0m
+[11:14:03]: [31m```[0m
+[11:14:03]: [31mNo such file or directory - /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter[0m
+
++---------------------------------------------+
+|              [32mfastlane summary[0m               |
++------+------------------------+-------------+
+| Step | Action                 | Time (in s) |
++------+------------------------+-------------+
+| 1    | default_platform       | 0           |
+| 2    | opt_out_usage          | 0           |
+| 3    | app_store_connect_api  | 0           |
+|      | _key                   |             |
+| 💥   | [31m/Users/impactory/Docu [0m | 0           |
+|      | [31mments/GitHub/scholesa [0m |             |
+|      | [31m/apps/empire_flutte[0m    |             |
++------+------------------------+-------------+
+
+[11:14:03]: [31mfastlane finished with errors[0m
+
+[11:14:03]: [33mError accessing file, this might be due to fastlane's directory handling[0m
+[11:14:03]: [33mCheck out https://docs.fastlane.tools/advanced/#directory-behavior for more details[0m
+
+bundler: failed to load command: fastlane (/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/bin/fastlane)
+Errno::ENOENT: No such file or directory - /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter
+  /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/open3.rb:213:in `spawn'
+  /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/open3.rb:213:in `popen_run'
+  /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/open3.rb:208:in `popen2e'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/helper/sh_helper.rb:54:in `sh_control_output'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/helper/sh_helper.rb:16:in `sh_no_action'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/fast_file.rb:225:in `block in sh'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/actions/actions_helper.rb:69:in `execute_action'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/fast_file.rb:224:in `sh'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/fast_file.rb:216:in `sh'
+  Fastfile:164:in `block (3 levels) in parsing_binding'
+  Fastfile:163:in `chdir'
+  Fastfile:163:in `block (2 levels) in parsing_binding'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/lane.rb:41:in `call'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/runner.rb:49:in `block in execute'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/runner.rb:45:in `chdir'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/runner.rb:45:in `execute'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/lane_manager.rb:46:in `cruise_lane'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/command_line_handler.rb:34:in `handle'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/commands_generator.rb:110:in `block (2 levels) in run'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/commander-4.6.0/lib/commander/command.rb:187:in `call'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/commander-4.6.0/lib/commander/command.rb:157:in `run'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/commander-4.6.0/lib/commander/runner.rb:444:in `run_active_command'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:124:in `run!'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/commander-4.6.0/lib/commander/delegates.rb:18:in `run!'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/commands_generator.rb:363:in `run'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/commands_generator.rb:43:in `start'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/fastlane/lib/fastlane/cli_tools_distributor.rb:123:in `take_off'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/gems/fastlane-2.230.0/bin/fastlane:23:in `<top (required)>'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/bin/fastlane:23:in `load'
+  /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/vendor/bundle/bin/fastlane:23:in `<top (required)>'
