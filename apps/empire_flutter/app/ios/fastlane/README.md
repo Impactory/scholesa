@@ -23,6 +23,22 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Validate local or CI App Store Connect API key configuration
 
+### ios prepare_ios_signing
+
+```sh
+[bundle exec] fastlane ios prepare_ios_signing
+```
+
+Prepare iOS App Store signing from App Store Connect API key
+
+### ios prepare_macos_developer_id
+
+```sh
+[bundle exec] fastlane ios prepare_macos_developer_id
+```
+
+Prepare macOS Developer ID signing from App Store Connect API key
+
 ### ios upload_testflight
 
 ```sh

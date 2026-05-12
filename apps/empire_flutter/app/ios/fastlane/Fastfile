@@ -55,11 +55,61 @@ def scholesa_api_key
   app_store_connect_api_key(**app_store_connect_api_key_options)
 end
 
+def provisioning_profile_dir
+  File.expand_path('~/Library/MobileDevice/Provisioning Profiles')
+end
+
+def signing_output_dir(platform)
+  File.join(app_root, 'build', platform, 'fastlane', 'signing')
+end
+
 platform :ios do
   desc 'Validate local or CI App Store Connect API key configuration'
   lane :verify_api_key do
     scholesa_api_key
     UI.success("Loaded App Store Connect API key #{ENV['APP_STORE_CONNECT_KEY_ID']} for issuer #{ENV['APP_STORE_CONNECT_ISSUER_ID']}")
+  end
+
+  desc 'Prepare iOS App Store signing from App Store Connect API key'
+  lane :prepare_ios_signing do
+    require_env_values!(%w[APPLE_DEVELOPER_TEAM_ID IOS_APP_IDENTIFIER])
+    api_key = scholesa_api_key
+    FileUtils.mkdir_p(provisioning_profile_dir)
+    FileUtils.mkdir_p(signing_output_dir('ios'))
+
+    cert(
+      api_key: api_key,
+      development: false,
+      generate_apple_certs: true,
+      platform: 'ios',
+      team_id: ENV['APPLE_DEVELOPER_TEAM_ID'],
+      output_path: signing_output_dir('ios')
+    )
+
+    sigh(
+      api_key: api_key,
+      app_identifier: ENV['IOS_APP_IDENTIFIER'],
+      platform: 'ios',
+      team_id: ENV['APPLE_DEVELOPER_TEAM_ID'],
+      output_path: provisioning_profile_dir,
+      filename: "Scholesa_AppStore_#{ENV['IOS_APP_IDENTIFIER']}.mobileprovision",
+      readonly: false
+    )
+  end
+
+  desc 'Prepare macOS Developer ID signing from App Store Connect API key'
+  lane :prepare_macos_developer_id do
+    require_env_values!(%w[APPLE_DEVELOPER_TEAM_ID])
+    api_key = scholesa_api_key
+    FileUtils.mkdir_p(signing_output_dir('macos'))
+
+    cert(
+      api_key: api_key,
+      type: 'developer_id_application',
+      platform: 'macos',
+      team_id: ENV['APPLE_DEVELOPER_TEAM_ID'],
+      output_path: signing_output_dir('macos')
+    )
   end
 
   desc 'Build a signed iOS release IPA and upload it to TestFlight'

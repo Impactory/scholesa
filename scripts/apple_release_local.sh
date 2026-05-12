@@ -34,7 +34,7 @@ require_local_ios_distribution_identity() {
   local identities
   identities="$(security find-identity -v -p codesigning 2>/dev/null || true)"
   if ! printf '%s\n' "$identities" | grep -Eq '"(Apple|iOS) Distribution: .*\(' ; then
-    printf '%s\n' "Missing Apple Distribution signing identity with private key for iOS archive/TestFlight upload. Import the iOS distribution .p12 for team ${APPLE_DEVELOPER_TEAM_ID:-unknown}."
+    printf '%s\n' "Missing Apple Distribution signing identity with private key for iOS archive/TestFlight upload. Run ./scripts/apple_release_local.sh prepare_signing to generate/download signing assets with the App Store Connect .p8 key for team ${APPLE_DEVELOPER_TEAM_ID:-unknown}."
     return 1
   fi
 
@@ -72,7 +72,7 @@ require_local_ios_distribution_prereqs() {
     {
       echo "Local iOS distribution prerequisites are incomplete:"
       printf ' - %s\n' "${issues[@]}"
-      echo "Run ./scripts/apple_release_local.sh verify_api_key to confirm App Store Connect auth, then rerun ./scripts/apple_release_local.sh verify_local_release once the signing assets are installed."
+      echo "Run ./scripts/apple_release_local.sh verify_api_key to confirm App Store Connect auth, then ./scripts/apple_release_local.sh prepare_signing to generate/download signing assets with the .p8 key."
     } >&2
     exit 1
   fi
@@ -91,6 +91,14 @@ export BUNDLE_APP_CONFIG
 FASTLANE_LANE="$COMMAND"
 
 case "$COMMAND" in
+  prepare_signing)
+    require_app_store_connect_env || exit 1
+    FASTLANE_LANE="prepare_ios_signing"
+    ;;
+  prepare_macos_developer_id)
+    require_app_store_connect_env || exit 1
+    FASTLANE_LANE="prepare_macos_developer_id"
+    ;;
   verify_local_release)
     require_local_ios_distribution_prereqs
     FASTLANE_LANE="verify_api_key"
@@ -100,8 +108,8 @@ case "$COMMAND" in
     ;;
 esac
 
-if [[ "$FASTLANE_LANE" != "verify_api_key" && "$FASTLANE_LANE" != "upload_testflight" ]]; then
-  fail "Unknown command: $COMMAND. Supported commands: verify_api_key, verify_local_release, upload_testflight."
+if [[ "$FASTLANE_LANE" != "verify_api_key" && "$FASTLANE_LANE" != "prepare_ios_signing" && "$FASTLANE_LANE" != "prepare_macos_developer_id" && "$FASTLANE_LANE" != "upload_testflight" ]]; then
+  fail "Unknown command: $COMMAND. Supported commands: verify_api_key, prepare_signing, prepare_macos_developer_id, verify_local_release, upload_testflight."
 fi
 
 cd "$IOS_DIR"
