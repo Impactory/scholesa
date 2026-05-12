@@ -4,6 +4,7 @@ set -euo pipefail
 COMMAND="${1:-}"
 RUNNER_TEMP_DIR="${2:-${RUNNER_TEMP:-/tmp}}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LOCAL_ENV_FILE="$REPO_ROOT/.env.app_store_connect.local"
 APP_ROOT="$REPO_ROOT/apps/empire_flutter/app"
 DEFAULT_APP_PATH="$APP_ROOT/build/macos/Build/Products/Release/scholesa_app.app"
 MACOS_APP_PATH="${MACOS_APP_PATH:-$DEFAULT_APP_PATH}"
@@ -42,16 +43,6 @@ decode_base64_to_file() {
   fi
 }
 
-validate_developer_id_identity() {
-  local keychain_path="$1"
-  local identities
-  identities="$(security find-identity -v -p codesigning "$keychain_path" 2>/dev/null || true)"
-
-  if ! printf '%s\n' "$identities" | grep -Eq '"Developer ID Application: .*\(' ; then
-    fail "Imported certificate does not expose a Developer ID Application identity. Check MACOS_DEVELOPER_ID_CERT_P12_BASE64 and MACOS_DEVELOPER_ID_CERT_PASSWORD."
-  fi
-}
-
 resolve_developer_id_identity() {
   local identities
   identities="$(security find-identity -v -p codesigning 2>/dev/null || true)"
@@ -75,6 +66,14 @@ materialize_app_store_connect_key() {
   decode_base64_to_file "$APP_STORE_CONNECT_API_KEY_P8_BASE64" "$key_path"
   chmod 600 "$key_path"
 
+  cat > "$LOCAL_ENV_FILE" <<EOF
+APP_STORE_CONNECT_API_KEY_PATH=$key_path
+APP_STORE_CONNECT_KEY_ID=$APP_STORE_CONNECT_KEY_ID
+APP_STORE_CONNECT_ISSUER_ID=$APP_STORE_CONNECT_ISSUER_ID
+APPLE_DEVELOPER_TEAM_ID=$APPLE_DEVELOPER_TEAM_ID
+FLUTTER_BIN=flutter
+EOF
+
   write_github_env "APP_STORE_CONNECT_API_KEY_PATH=$key_path"
   write_github_env "APP_STORE_CONNECT_KEY_ID=$APP_STORE_CONNECT_KEY_ID"
   write_github_env "APP_STORE_CONNECT_ISSUER_ID=$APP_STORE_CONNECT_ISSUER_ID"
@@ -82,19 +81,9 @@ materialize_app_store_connect_key() {
 }
 
 import_developer_id_certificate() {
-  require_env_values MACOS_DEVELOPER_ID_CERT_P12_BASE64 MACOS_DEVELOPER_ID_CERT_PASSWORD
-  local cert_path="$RUNNER_TEMP_DIR/macos-developer-id.p12"
-  local keychain_path="$RUNNER_TEMP_DIR/macos-signing.keychain-db"
-
-  decode_base64_to_file "$MACOS_DEVELOPER_ID_CERT_P12_BASE64" "$cert_path"
-  security create-keychain -p temp-signing "$keychain_path"
-  security set-keychain-settings -lut 21600 "$keychain_path"
-  security unlock-keychain -p temp-signing "$keychain_path"
-  security import "$cert_path" -P "$MACOS_DEVELOPER_ID_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
-  security list-keychain -d user -s "$keychain_path"
-  security default-keychain -s "$keychain_path"
-  security set-key-partition-list -S apple-tool:,apple: -s -k temp-signing "$keychain_path"
-  validate_developer_id_identity "$keychain_path"
+  require_env_values APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_API_KEY_P8_BASE64 APPLE_DEVELOPER_TEAM_ID
+  [[ -f "$LOCAL_ENV_FILE" ]] || materialize_app_store_connect_key
+  "$REPO_ROOT/scripts/apple_release_local.sh" prepare_macos_developer_id
 }
 
 verify_notary_auth() {
@@ -134,7 +123,7 @@ notarize_and_staple_macos_app() {
 
 case "$COMMAND" in
   validate-macos-release)
-    require_env_values APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_API_KEY_P8_BASE64 APPLE_DEVELOPER_TEAM_ID MACOS_DEVELOPER_ID_CERT_P12_BASE64 MACOS_DEVELOPER_ID_CERT_PASSWORD
+    require_env_values APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_API_KEY_P8_BASE64 APPLE_DEVELOPER_TEAM_ID
     ;;
   materialize-app-store-connect)
     materialize_app_store_connect_key

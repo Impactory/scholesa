@@ -19,9 +19,6 @@ env:
   APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
   APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
   IOS_APP_IDENTIFIER: com.scholesa.app
-  IOS_SIGNING_CERT_P12_BASE64: ${{ secrets.IOS_SIGNING_CERT_P12_BASE64 }}
-  IOS_SIGNING_CERT_PASSWORD: ${{ secrets.IOS_SIGNING_CERT_PASSWORD }}
-  IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
 
 jobs:
   verify-app-store-connect:
@@ -72,7 +69,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate signing secrets
+      - name: Validate .p8 signing credentials
         run: ./scripts/apple_release_ci.sh validate-ios-release
 
       - name: Setup Node
@@ -101,7 +98,7 @@ jobs:
       - name: Materialize App Store Connect API key
         run: ./scripts/apple_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
 
-      - name: Import and validate signing assets
+      - name: Generate and validate signing assets from .p8
         run: ./scripts/apple_release_ci.sh import-signing-assets "$RUNNER_TEMP"
 
       - name: Upload to TestFlight

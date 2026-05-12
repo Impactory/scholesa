@@ -411,7 +411,7 @@ Blanket platform Gold for the included web/Cloud Run scope is achieved only when
 - [x] Apple GitHub-secret helper can publish macOS Developer ID certificate secrets for `.github/workflows/macos-release.yml` when external signing assets are available.
 - [x] Android GitHub-secret helper can publish Google Play and release signing secrets for `.github/workflows/android-release.yml` when external signing assets are available.
 - [x] Android local signing helper can create ignored `key.properties` and release-keystore files from an external keystore for local Play-release preflight.
-- [x] Apple local signing helper can import external iOS Distribution and macOS Developer ID `.p12` assets for local TestFlight/notarization preflight.
+- [x] Apple local signing helper can prepare iOS Distribution and macOS Developer ID signing through App Store Connect `.p8` credentials for local TestFlight/notarization preflight.
 - [x] Aggregate native distribution readiness gate reports iOS, Android, and macOS local distribution blockers in one fail-closed command.
 - [x] Guarded native distribution proof runner exists for live TestFlight, Google Play internal, and macOS notarization proof once external credentials are installed.
 - [x] Guarded aggregate CI workflow exists for remote native distribution proof artifacts across TestFlight, Google Play internal, and macOS notarization once GitHub secrets are installed.

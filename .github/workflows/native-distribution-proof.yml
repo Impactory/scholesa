@@ -35,14 +35,11 @@ jobs:
       APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
       APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
       IOS_APP_IDENTIFIER: com.scholesa.app
-      IOS_SIGNING_CERT_P12_BASE64: ${{ secrets.IOS_SIGNING_CERT_P12_BASE64 }}
-      IOS_SIGNING_CERT_PASSWORD: ${{ secrets.IOS_SIGNING_CERT_PASSWORD }}
-      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate iOS release secrets
+      - name: Validate iOS .p8 signing credentials
         run: ./scripts/apple_release_ci.sh validate-ios-release
 
       - name: Setup Node
@@ -71,7 +68,7 @@ jobs:
       - name: Materialize App Store Connect API key
         run: ./scripts/apple_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
 
-      - name: Import and validate iOS signing assets
+      - name: Generate and validate iOS signing assets from .p8
         run: ./scripts/apple_release_ci.sh import-signing-assets "$RUNNER_TEMP"
 
       - name: Upload iOS build to TestFlight
@@ -170,13 +167,11 @@ jobs:
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
       APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-      MACOS_DEVELOPER_ID_CERT_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_CERT_P12_BASE64 }}
-      MACOS_DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_CERT_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate macOS release secrets
+      - name: Validate macOS .p8 signing credentials
         run: ./scripts/macos_release_ci.sh validate-macos-release
 
       - name: Setup Node
@@ -198,7 +193,7 @@ jobs:
       - name: Materialize App Store Connect API key
         run: ./scripts/macos_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
 
-      - name: Import and validate Developer ID certificate
+      - name: Generate and validate Developer ID certificate from .p8
         run: ./scripts/macos_release_ci.sh import-developer-id-certificate "$RUNNER_TEMP"
 
       - name: Build macOS release app

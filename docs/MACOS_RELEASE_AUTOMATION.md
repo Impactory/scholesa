@@ -16,11 +16,10 @@ This document describes the local preflight for macOS distribution signing and n
 ./scripts/set_app_store_connect_issuer.sh <issuer-uuid>
 ```
 
-3. Install a Developer ID Application certificate with private key into the local keychain:
+3. Prepare a Developer ID Application identity from the App Store Connect `.p8` key:
 
 ```bash
-MACOS_DEVELOPER_ID_CERT_PASSWORD=<p12-password> \
-./scripts/setup_apple_signing.sh macos /absolute/path/to/developer-id-application.p12
+./scripts/setup_apple_signing.sh macos
 ```
 
 4. Verify local macOS distribution prerequisites without signing or notarizing anything:
@@ -49,7 +48,7 @@ Pass an explicit app bundle path as the second argument when notarizing a non-de
 
 The `.github/workflows/macos-release.yml` workflow mirrors the local release path for CI-controlled distribution:
 
-- `verify-macos-notary` validates App Store Connect and Developer ID secrets, materializes the `.p8` key, imports the Developer ID Application certificate, and verifies notarization auth.
+- `verify-macos-notary` validates App Store Connect `.p8` credentials, materializes the `.p8` key, generates/downloads the Developer ID Application identity, and verifies notarization auth.
 - `macos-notarize` is gated by the `notarize_macos` dispatch input; it builds the macOS release app, signs it with Developer ID, submits it to Apple notarization, staples the ticket, and runs `spctl` assessment.
 
 Required GitHub secrets:
@@ -58,14 +57,10 @@ Required GitHub secrets:
 - `APP_STORE_CONNECT_KEY_ID`
 - `APP_STORE_CONNECT_ISSUER_ID`
 - `APPLE_DEVELOPER_TEAM_ID`
-- `MACOS_DEVELOPER_ID_CERT_P12_BASE64`
-- `MACOS_DEVELOPER_ID_CERT_PASSWORD`
 
-The shared Apple secret helper can publish the App Store Connect secrets plus the macOS Developer ID certificate secrets when these variables are set:
+The shared Apple secret helper publishes the App Store Connect `.p8` secrets:
 
 ```bash
-MACOS_DEVELOPER_ID_CERT_P12_PATH=/absolute/path/to/developer-id-application.p12 \
-MACOS_DEVELOPER_ID_CERT_PASSWORD=<p12-password> \
 ./scripts/set_apple_github_secrets.sh Impactory/scholesa
 ```
 
@@ -74,7 +69,7 @@ MACOS_DEVELOPER_ID_CERT_PASSWORD=<p12-password> \
 - The local release build can pass without distribution assets; that proves buildability only.
 - macOS distribution Gold requires Developer ID signing plus notarization proof, not just `build/macos/Build/Products/Release/scholesa_app.app`.
 - `verify_local_release` does not submit a notarization request or staple a ticket. It only verifies that local prerequisites are present.
-- `sign_notarize_staple` and `.github/workflows/macos-release.yml` are executable distribution paths, but they remain unproven until valid Apple credentials and a Developer ID Application certificate are installed and a live notarization run succeeds.
+- `sign_notarize_staple` and `.github/workflows/macos-release.yml` are executable distribution paths, but they remain unproven until valid `.p8` Apple credentials can generate/download Developer ID signing and a live notarization run succeeds.
 - Use `./scripts/native_distribution_readiness.sh` when validating the full native-channel distribution boundary across iOS, Android, and macOS.
 - Use `./scripts/native_distribution_proof.sh execute-live` only when the release owner is ready to capture live native-channel distribution proof; it requires an explicit confirmation environment variable before uploading builds or notarizing the macOS app.
 - Use `.github/workflows/native-distribution-proof.yml` when proof should be captured in CI artifacts alongside iOS and Android proof. The workflow requires `native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS`.

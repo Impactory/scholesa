@@ -45,11 +45,6 @@ These secrets are required before iOS TestFlight, macOS notarization, or aggrega
 - `APP_STORE_CONNECT_KEY_ID` — App Store Connect API key ID.
 - `APP_STORE_CONNECT_ISSUER_ID` — App Store Connect issuer UUID.
 - `APPLE_DEVELOPER_TEAM_ID` — Apple Developer Team ID, currently expected to match team `CEUD8LB243`.
-- `IOS_SIGNING_CERT_P12_BASE64` — Base64-encoded Apple Distribution certificate with private key for TestFlight uploads.
-- `IOS_SIGNING_CERT_PASSWORD` — Password for the iOS Distribution `.p12`.
-- `IOS_PROVISIONING_PROFILE_BASE64` — Base64-encoded App Store provisioning profile for `com.scholesa.app`.
-- `MACOS_DEVELOPER_ID_CERT_P12_BASE64` — Base64-encoded Developer ID Application certificate with private key for macOS distribution.
-- `MACOS_DEVELOPER_ID_CERT_PASSWORD` — Password for the Developer ID Application `.p12`.
 
 ### Android Native Release / Proof
 

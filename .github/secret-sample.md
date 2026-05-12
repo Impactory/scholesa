@@ -26,9 +26,6 @@ Optional secrets for Apple release automation:
 - `APP_STORE_CONNECT_KEY_ID` — the 10-character App Store Connect key id, usually derived from the `AuthKey_<KEYID>.p8` filename.
 - `APP_STORE_CONNECT_ISSUER_ID` — the App Store Connect issuer UUID from Users and Access → Keys.
 - `APPLE_DEVELOPER_TEAM_ID` — Apple Developer team id used for the iOS target (`CEUD8LB243` in the current project).
-- `IOS_SIGNING_CERT_P12_BASE64` — base64-encoded iOS distribution certificate in `.p12` format.
-- `IOS_SIGNING_CERT_PASSWORD` — password for the `.p12` certificate.
-- `IOS_PROVISIONING_PROFILE_BASE64` — base64-encoded App Store provisioning profile for `com.scholesa.app`.
 
 Notes:
 - Keep service account keys secret. Prefer Secret Manager in production and grant minimal IAM roles.
