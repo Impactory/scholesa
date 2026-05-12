@@ -1578,7 +1578,7 @@ class AccountabilityCommitmentModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'siteId': siteId,
+        'siteId': siteId,
         'cycleId': cycleId,
         'userId': userId,
         'role': role,
@@ -1630,7 +1630,7 @@ class AccountabilityReviewModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'siteId': siteId,
+        'siteId': siteId,
         'cycleId': cycleId,
         'reviewerId': reviewerId,
         'revieweeId': revieweeId,
@@ -1929,7 +1929,7 @@ class PartnerOrgModel {
 class MarketplaceListingModel {
   const MarketplaceListingModel({
     required this.id,
-    required this.partnerOrgId,
+    required this.partnerId,
     required this.title,
     required this.price,
     required this.currency,
@@ -1948,7 +1948,7 @@ class MarketplaceListingModel {
   });
 
   final String id;
-  final String partnerOrgId;
+  final String partnerId;
   final String title;
   final String price;
   final String currency;
@@ -1970,7 +1970,8 @@ class MarketplaceListingModel {
     final data = doc.data() ?? <String, dynamic>{};
     return MarketplaceListingModel(
       id: doc.id,
-      partnerOrgId: data['partnerOrgId'] as String? ?? '',
+      partnerId:
+          data['partnerId'] as String? ?? data['partnerOrgId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       price: data['price'] as String? ?? '0',
       currency: data['currency'] as String? ?? 'USD',
@@ -1991,7 +1992,7 @@ class MarketplaceListingModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'partnerOrgId': partnerOrgId,
+        'partnerId': partnerId,
         'title': title,
         'price': price,
         'currency': currency,
@@ -2014,7 +2015,7 @@ class MarketplaceListingModel {
 class PartnerContractModel {
   const PartnerContractModel({
     required this.id,
-    required this.partnerOrgId,
+    required this.partnerId,
     required this.title,
     required this.amount,
     required this.currency,
@@ -2027,7 +2028,7 @@ class PartnerContractModel {
   });
 
   final String id;
-  final String partnerOrgId;
+  final String partnerId;
   final String title;
   final String amount;
   final String currency;
@@ -2043,7 +2044,8 @@ class PartnerContractModel {
     final data = doc.data() ?? <String, dynamic>{};
     return PartnerContractModel(
       id: doc.id,
-      partnerOrgId: data['partnerOrgId'] as String? ?? '',
+      partnerId:
+          data['partnerId'] as String? ?? data['partnerOrgId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       amount: data['amount'] as String? ?? '0',
       currency: data['currency'] as String? ?? 'USD',
@@ -2057,7 +2059,7 @@ class PartnerContractModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'partnerOrgId': partnerOrgId,
+        'partnerId': partnerId,
         'title': title,
         'amount': amount,
         'currency': currency,
@@ -2551,7 +2553,7 @@ class MissionSnapshotModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'siteId': siteId,
+        'siteId': siteId,
         'missionId': missionId,
         'contentHash': contentHash,
         'title': title,
@@ -6095,7 +6097,7 @@ class ExternalPullRequestLinkModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-    'siteId': siteId,
+        'siteId': siteId,
         'repoFullName': repoFullName,
         'prNumber': prNumber,
         'prUrl': prUrl,
@@ -7122,7 +7124,7 @@ class AICoachInteractionModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'learnerId': learnerId,
-      'siteId': siteId,
+        'siteId': siteId,
         'sessionId': sessionId,
         'mode': mode,
         'question': question,

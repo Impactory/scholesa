@@ -1996,9 +1996,19 @@ describe('Users Collection', () => {
     await assertFails(getDoc(doc(db, 'users', learnerUser.uid)));
   });
 
-  test('educator can read other profiles', async () => {
+  test('educator can read same-site profiles only', async () => {
     const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
     await assertSucceeds(getDoc(doc(db, 'users', learnerUser.uid)));
+    await assertFails(getDoc(doc(db, 'users', otherSiteUser.uid)));
+  });
+
+  test('site admin can read same-site profiles and HQ can read all profiles', async () => {
+    const siteDb = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(siteDb, 'users', learnerUser.uid)));
+    await assertFails(getDoc(doc(siteDb, 'users', otherSiteUser.uid)));
+    await assertSucceeds(getDoc(doc(hqDb, 'users', otherSiteUser.uid)));
   });
 
   test('user can update their own profile', async () => {
@@ -5468,6 +5478,39 @@ describe('Messaging Rules', () => {
   });
 });
 
+describe('Mission Step Governance Rules', () => {
+  test('mission steps are readable reference content but only HQ can manage them', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'missions', 'mission-governed', 'steps', 'step-1'), {
+        title: 'Launch challenge',
+        order: 1,
+      });
+    });
+
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'missions', 'mission-governed', 'steps', 'step-1')));
+    await assertSucceeds(setDoc(doc(hqDb, 'missions', 'mission-governed', 'steps', 'step-hq'), {
+      title: 'HQ-authored step',
+      order: 2,
+    }));
+    await assertSucceeds(updateDoc(doc(hqDb, 'missions', 'mission-governed', 'steps', 'step-1'), {
+      title: 'Updated launch challenge',
+    }));
+    await assertFails(setDoc(doc(educatorDb, 'missions', 'mission-governed', 'steps', 'step-educator'), {
+      title: 'Educator-authored global step',
+      order: 3,
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'missions', 'mission-governed', 'steps', 'step-1'), {
+      title: 'Educator global edit',
+    }));
+    await assertFails(deleteDoc(doc(educatorDb, 'missions', 'mission-governed', 'steps', 'step-1')));
+  });
+});
+
 describe('Partner Ownership Rules', () => {
   test('partner can create and read own organization only', async () => {
     const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
@@ -5522,6 +5565,39 @@ describe('Partner Ownership Rules', () => {
     }));
   });
 
+  test('marketplace listing drafts are owner or HQ visible and published listings are catalog visible', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-draft-owned'), {
+        partnerId: partnerUser.uid,
+        siteId: 'site1',
+        title: 'Draft Listing',
+        status: 'draft',
+      });
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-draft-other'), {
+        partnerId: 'partner-2',
+        siteId: 'site1',
+        title: 'Other Draft Listing',
+        status: 'draft',
+      });
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-published'), {
+        partnerId: 'partner-2',
+        siteId: 'site1',
+        title: 'Published Listing',
+        status: 'published',
+      });
+    });
+
+    const partnerDb = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(partnerDb, 'marketplaceListings', 'listing-draft-owned')));
+    await assertSucceeds(getDoc(doc(hqDb, 'marketplaceListings', 'listing-draft-other')));
+    await assertFails(getDoc(doc(learnerDb, 'marketplaceListings', 'listing-draft-other')));
+    await assertSucceeds(getDoc(doc(learnerDb, 'marketplaceListings', 'listing-published')));
+  });
+
   test('partner cannot create marketplace listing for different partner', async () => {
     const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
     await assertFails(setDoc(doc(db, 'marketplaceListings', 'listing-2'), {
@@ -5532,6 +5608,24 @@ describe('Partner Ownership Rules', () => {
     }));
   });
 
+  test('partner marketplace listing create rejects legacy owner and governance fields', async () => {
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'marketplaceListings', 'listing-legacy-owner'), {
+      partnerOrgId: partnerUser.uid,
+      siteId: 'site1',
+      title: 'Legacy Owner Listing',
+      status: 'draft',
+    }));
+    await assertFails(setDoc(doc(db, 'marketplaceListings', 'listing-with-governance'), {
+      partnerId: partnerUser.uid,
+      siteId: 'site1',
+      title: 'Governance Pollution Listing',
+      status: 'draft',
+      approvedBy: partnerUser.uid,
+      publishedAt: new Date(),
+    }));
+  });
+
   test('partner can create own contract', async () => {
     const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
     await assertSucceeds(setDoc(doc(db, 'partnerContracts', 'contract-1'), {
@@ -5539,6 +5633,42 @@ describe('Partner Ownership Rules', () => {
       status: 'pending',
       siteId: 'site1',
       title: 'Pilot Contract',
+    }));
+  });
+
+  test('partner contract writes cannot use legacy ownership or self-approve', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'partnerContracts', 'contract-owned'), {
+        partnerId: partnerUser.uid,
+        status: 'pending',
+        siteId: 'site1',
+        title: 'Owned Contract',
+      });
+    });
+
+    const partnerDb = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertFails(setDoc(doc(partnerDb, 'partnerContracts', 'contract-legacy-owner'), {
+      partnerOrgId: partnerUser.uid,
+      status: 'pending',
+      siteId: 'site1',
+      title: 'Legacy Owner Contract',
+    }));
+    await assertFails(updateDoc(doc(partnerDb, 'partnerContracts', 'contract-owned'), {
+      status: 'approved',
+      approvedBy: partnerUser.uid,
+      approvedAt: new Date(),
+    }));
+    await assertSucceeds(updateDoc(doc(partnerDb, 'partnerContracts', 'contract-owned'), {
+      title: 'Partner Updated Contract Title',
+      updatedAt: new Date(),
+    }));
+    await assertSucceeds(updateDoc(doc(hqDb, 'partnerContracts', 'contract-owned'), {
+      status: 'approved',
+      approvedBy: hqUser.uid,
+      approvedAt: new Date(),
     }));
   });
 
@@ -5556,6 +5686,51 @@ describe('Partner Ownership Rules', () => {
     const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
     await assertFails(updateDoc(doc(db, 'marketplaceListings', 'listing-foreign'), {
       status: 'archived',
+    }));
+  });
+
+  test('partner cannot self-publish marketplace listing or edit governance fields', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-owned-draft'), {
+        partnerId: partnerUser.uid,
+        siteId: 'site1',
+        title: 'Owned Draft Listing',
+        description: 'Partner-owned draft.',
+        status: 'draft',
+      });
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-owned-published'), {
+        partnerId: partnerUser.uid,
+        siteId: 'site1',
+        title: 'Owned Published Listing',
+        description: 'Partner-owned published listing.',
+        status: 'published',
+        publishedAt: new Date(),
+      });
+    });
+
+    const partnerDb = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(partnerDb, 'marketplaceListings', 'listing-owned-draft'), {
+      title: 'Edited Draft Listing',
+      updatedAt: new Date(),
+    }));
+    await assertSucceeds(updateDoc(doc(partnerDb, 'marketplaceListings', 'listing-owned-published'), {
+      title: 'Edited Published Listing',
+      description: 'Partner-maintained published listing.',
+      updatedAt: new Date(),
+    }));
+    await assertFails(updateDoc(doc(partnerDb, 'marketplaceListings', 'listing-owned-draft'), {
+      status: 'published',
+      publishedAt: new Date(),
+    }));
+    await assertFails(updateDoc(doc(partnerDb, 'marketplaceListings', 'listing-owned-draft'), {
+      partnerId: 'partner-2',
+    }));
+    await assertSucceeds(updateDoc(doc(hqDb, 'marketplaceListings', 'listing-owned-draft'), {
+      status: 'published',
+      publishedAt: new Date(),
     }));
   });
 
@@ -5709,6 +5884,61 @@ describe('Partner Ownership Rules', () => {
       ownerUserId: educatorUser.uid,
       sessionId: 'session-1',
     }));
+  });
+});
+
+describe('Artifact Rules', () => {
+  test('approved exemplar artifacts are readable by authenticated users for AI coaching', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'artifacts', 'artifact-exemplar-approved'), {
+        siteId: 'site1',
+        learnerId: learnerUser.uid,
+        title: 'Approved Exemplar',
+        status: 'approved',
+        isExemplar: true,
+      });
+    });
+
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'artifacts', 'artifact-exemplar-approved')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'artifacts', 'artifact-exemplar-approved')));
+  });
+
+  test('learner artifacts require site-scoped learner, linked parent, educator, or HQ access', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'artifacts', 'artifact-learner-site1'), {
+        siteId: 'site1',
+        learnerId: learnerUser.uid,
+        title: 'Learner Draft Artifact',
+        status: 'draft',
+        isExemplar: false,
+      });
+      await setDoc(doc(adminDb, 'artifacts', 'artifact-learner-nosite'), {
+        learnerId: learnerUser.uid,
+        title: 'Legacy Unscoped Artifact',
+        status: 'draft',
+        isExemplar: false,
+      });
+    });
+
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const parentDb = testEnv.authenticatedContext(parentUser.uid).firestore();
+    const otherParentDb = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'artifacts', 'artifact-learner-site1')));
+    await assertSucceeds(getDoc(doc(parentDb, 'artifacts', 'artifact-learner-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'artifacts', 'artifact-learner-site1')));
+    await assertFails(getDoc(doc(otherParentDb, 'artifacts', 'artifact-learner-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'artifacts', 'artifact-learner-site1')));
+    await assertFails(getDoc(doc(learnerDb, 'artifacts', 'artifact-learner-nosite')));
+    await assertSucceeds(getDoc(doc(hqDb, 'artifacts', 'artifact-learner-nosite')));
   });
 });
 

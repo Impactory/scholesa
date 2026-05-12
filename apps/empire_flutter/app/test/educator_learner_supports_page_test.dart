@@ -548,7 +548,11 @@ void main() {
           'We could not load learner supports right now. Retry to check the current state.'),
       findsOneWidget,
     );
-    expect(find.textContaining('Failed to load learners:'), findsOneWidget);
+    expect(
+      find.textContaining(
+          'Learner roster could not load right now. Refresh, or check again after the app reconnects.'),
+      findsOneWidget,
+    );
     expect(find.text('No support plans yet'), findsNothing);
     expect(find.text('Learner One'), findsNothing);
   });

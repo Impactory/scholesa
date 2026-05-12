@@ -121,6 +121,7 @@ void main() {
       const ShowcaseSubmissionModel m = ShowcaseSubmissionModel(
         id: 'sc1',
         learnerId: 'l1',
+        siteId: 'site1',
         portfolioItemId: 'pi1',
         title: 't',
         description: 'd',
@@ -140,8 +141,7 @@ void main() {
         goalText: 'g',
       );
       // Must support active/completed/abandoned lifecycle
-      expect(<String>['active', 'completed', 'abandoned'],
-          contains(m.status));
+      expect(<String>['active', 'completed', 'abandoned'], contains(m.status));
       // Must link to capability
       expect(m.targetCapabilityId, isNull);
     });

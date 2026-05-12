@@ -872,7 +872,10 @@ void main() {
         service.progress?.reviewedCapabilities,
         initialProgress?.reviewedCapabilities,
       );
-      expect(service.error, contains('Failed to load missions'));
+      expect(
+        service.error,
+        'We could not load missions right now. Check your connection and try again.',
+      );
       expect(service.isLoading, isFalse);
     });
 

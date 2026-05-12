@@ -10,6 +10,7 @@ module.exports = {
   },
   testPathIgnorePatterns: [
     '<rootDir>/test/firestore-rules.test.js',
+    '<rootDir>/test/storage-rules.test.js',
     '<rootDir>/src/lib/analytics/analyticsEngine.test.ts',
   ],
   modulePathIgnorePatterns: ['<rootDir>/functions/', '<rootDir>/apps/empire_flutter/app/'],

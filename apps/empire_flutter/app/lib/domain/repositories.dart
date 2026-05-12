@@ -1824,7 +1824,7 @@ class PartnerContractRepository {
       _firestore.collection('partnerContracts');
 
   Future<String> createDraft({
-    required String partnerOrgId,
+    required String partnerId,
     required String title,
     required String amount,
     required String currency,
@@ -1834,7 +1834,7 @@ class PartnerContractRepository {
     final doc = _col.doc();
     final model = PartnerContractModel(
       id: doc.id,
-      partnerOrgId: partnerOrgId,
+      partnerId: partnerId,
       title: title,
       amount: amount,
       currency: currency,
@@ -1849,7 +1849,7 @@ class PartnerContractRepository {
         event: 'contract.created',
         metadata: <String, dynamic>{
           'contractId': doc.id,
-          'partnerOrgId': partnerOrgId
+          'partnerId': partnerId
         },
       );
     } catch (_) {}
@@ -1861,7 +1861,8 @@ class PartnerContractRepository {
     final DocumentSnapshot<Map<String, dynamic>> existing = await ref.get();
     final Map<String, dynamic>? existingData = existing.data();
     final String? siteId = existingData?['siteId'] as String?;
-    final String? partnerOrgId = existingData?['partnerOrgId'] as String?;
+    final String? partnerId = existingData?['partnerId'] as String? ??
+        existingData?['partnerOrgId'] as String?;
 
     await ref.set(<String, dynamic>{
       'status': 'approved',
@@ -1874,17 +1875,16 @@ class PartnerContractRepository {
         siteId: siteId,
         metadata: <String, dynamic>{
           'contractId': id,
-          if (partnerOrgId != null && partnerOrgId.isNotEmpty)
-            'partnerOrgId': partnerOrgId,
+          if (partnerId != null && partnerId.isNotEmpty) 'partnerId': partnerId,
         },
       );
     } catch (_) {}
   }
 
-  Future<List<PartnerContractModel>> listByOrg(String partnerOrgId,
+  Future<List<PartnerContractModel>> listByPartner(String partnerId,
       {int limit = 20}) async {
     final snap = await _col
-        .where('partnerOrgId', isEqualTo: partnerOrgId)
+        .where('partnerId', isEqualTo: partnerId)
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();
@@ -2139,7 +2139,7 @@ class MarketplaceListingRepository {
       FirebaseFirestore.instance.collection('marketplaceListings');
 
   Future<String> createDraft({
-    required String partnerOrgId,
+    required String partnerId,
     required String title,
     required String price,
     required String currency,
@@ -2151,7 +2151,7 @@ class MarketplaceListingRepository {
     final doc = _col.doc();
     final model = MarketplaceListingModel(
       id: doc.id,
-      partnerOrgId: partnerOrgId,
+      partnerId: partnerId,
       title: title,
       price: price,
       currency: currency,
@@ -2208,10 +2208,10 @@ class MarketplaceListingRepository {
     return snap.docs.map(MarketplaceListingModel.fromDoc).toList();
   }
 
-  Future<List<MarketplaceListingModel>> listByPartner(String partnerOrgId,
+  Future<List<MarketplaceListingModel>> listByPartner(String partnerId,
       {int limit = 20}) async {
     final snap = await _col
-        .where('partnerOrgId', isEqualTo: partnerOrgId)
+        .where('partnerId', isEqualTo: partnerId)
         .orderBy('updatedAt', descending: true)
         .limit(limit)
         .get();

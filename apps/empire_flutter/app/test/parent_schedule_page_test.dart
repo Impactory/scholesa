@@ -37,6 +37,9 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   final String parentId;
 
   @override
+  final String? activeSiteId = 'site1';
+
+  @override
   final List<LearnerSummary> learnerSummaries;
 
   @override
@@ -86,6 +89,9 @@ class _SequencedParentService extends ChangeNotifier implements ParentService {
 
   @override
   final String parentId;
+
+  @override
+  final String? activeSiteId = 'site1';
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
   bool _isLoading = false;
@@ -285,7 +291,8 @@ void main() {
     expect(service.loadCallCount, loadCallCountAfterMount + 1);
   });
 
-  testWidgets('parent schedule empty state persists linked learner review requests',
+  testWidgets(
+      'parent schedule empty state persists linked learner review requests',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -308,14 +315,18 @@ void main() {
     await tester.tap(find.text('Request Linking Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Linked learner review request submitted.'), findsOneWidget);
+    expect(
+        find.text('Linked learner review request submitted.'), findsOneWidget);
     final requests = await firestore.collection('supportRequests').get();
     expect(requests.docs, hasLength(1));
-    expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
-    expect(requests.docs.single.data()['source'], 'parent_schedule_request_linked_learner_review');
+    expect(requests.docs.single.data()['requestType'],
+        'parent_linked_learner_review');
+    expect(requests.docs.single.data()['source'],
+        'parent_schedule_request_linked_learner_review');
   });
 
-  testWidgets('parent schedule empty state fails closed when support requests are unavailable',
+  testWidgets(
+      'parent schedule empty state fails closed when support requests are unavailable',
       (WidgetTester tester) async {
     final _StubParentService service = _StubParentService(
       parentId: 'parent-test-1',
@@ -330,10 +341,12 @@ void main() {
     await tester.tap(find.text('Request Linking Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Support requests are unavailable right now.'), findsOneWidget);
+    expect(find.text('Support requests are unavailable right now.'),
+        findsOneWidget);
   });
 
-  testWidgets('parent schedule month view changes visible content and persists on reopen',
+  testWidgets(
+      'parent schedule month view changes visible content and persists on reopen',
       (WidgetTester tester) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final _StubParentService service = _StubParentService(
@@ -354,9 +367,7 @@ void main() {
 
     final Finder monthToggle = find.byWidgetPredicate(
       (Widget widget) =>
-          widget is Text &&
-          widget.data == 'M' &&
-          widget.style?.fontSize == 12,
+          widget is Text && widget.data == 'M' && widget.style?.fontSize == 12,
       description: 'month view toggle',
     );
     await tester.tap(monthToggle);
@@ -380,7 +391,8 @@ void main() {
     expect(find.text('This Week'), findsNothing);
   });
 
-  testWidgets('parent schedule keeps stale learner schedule visible when a refresh fails',
+  testWidgets(
+      'parent schedule keeps stale learner schedule visible when a refresh fails',
       (WidgetTester tester) async {
     final _SequencedParentService service = _SequencedParentService(
       parentId: 'parent-test-1',

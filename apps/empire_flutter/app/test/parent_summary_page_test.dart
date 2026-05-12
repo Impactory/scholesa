@@ -37,6 +37,9 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   final String parentId;
 
   @override
+  final String? activeSiteId = 'site1';
+
+  @override
   final List<LearnerSummary> learnerSummaries;
 
   @override
@@ -93,6 +96,9 @@ class _SequencedParentService extends ChangeNotifier implements ParentService {
 
   @override
   final String parentId;
+
+  @override
+  final String? activeSiteId = 'site1';
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
   bool _isLoading = false;

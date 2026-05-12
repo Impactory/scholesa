@@ -43,6 +43,9 @@ class _FakeParentService extends ChangeNotifier implements ParentService {
   final String parentId;
 
   @override
+  final String? activeSiteId = 'site1';
+
+  @override
   final BillingSummary? billingSummary = null;
 
   @override

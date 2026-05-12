@@ -90,7 +90,12 @@ service cloud.firestore {
     // - Users can read/write their own profile.
     // - Educators/HQ can read profiles (to view learners).
     match /users/{userId} {
-      allow read: if isOwner(userId) || isEducator();
+      allow read: if isOwner(userId)
+        || isHQ()
+        || (
+          (hasRoleSafe('educator') || hasRoleSafe('siteLead') || hasRoleSafe('site') || hasRoleSafe('admin'))
+          && (isSiteScopedRead(resource.data) || requestSharesActorSite(resource.data))
+        );
       // Only HQ and site admins can create user profiles
       allow create: if isHQ() || (
         hasRoleSafe('site')
@@ -154,11 +159,11 @@ service cloud.firestore {
       allow create, update: if isHQ() && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
-    // Mission steps subcollection: HQ/educator writes, authenticated reads
+    // Mission steps subcollection: global curriculum reference content, HQ-managed.
     match /missions/{missionId}/steps/{stepId} {
       allow read: if isAuthenticated();
-      allow create, update: if isEducator() || isHQ();
-      allow delete: if isEducator() || isHQ(); // Educators need delete for step edit (delete+recreate pattern)
+      allow create, update: if isHQ();
+      allow delete: if isHQ();
     }
 
     // Operational (Sessions, Occurrences):
@@ -975,12 +980,48 @@ service cloud.firestore {
 
     // Marketplace
     match /marketplaceListings/{id} {
-      allow read: if isAuthenticated();
-      allow create: if isHQ() || (isAuthenticated() && request.resource.data.partnerId == request.auth.uid);
+      allow read: if isAuthenticated() && (
+        isHQ()
+        || resource.data.partnerId == request.auth.uid
+        || resource.data.status == 'published'
+      );
+      allow create: if isHQ() || (
+        isAuthenticated()
+        && request.resource.data.keys().hasOnly([
+          'partnerId',
+          'siteId',
+          'title',
+          'description',
+          'category',
+          'productId',
+          'price',
+          'currency',
+          'imageUrl',
+          'entitlementRoles',
+          'status',
+          'createdBy',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll(['partnerId', 'title', 'status'])
+        && request.resource.data.partnerId == request.auth.uid
+        && request.resource.data.status == 'draft'
+      );
       allow update: if isHQ() || (
         isAuthenticated()
         && resource.data.partnerId == request.auth.uid
         && request.resource.data.partnerId == resource.data.partnerId
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'description',
+          'category',
+          'productId',
+          'price',
+          'currency',
+          'imageUrl',
+          'updatedAt'
+        ])
       );
       allow delete: if false;
     }
@@ -1068,11 +1109,45 @@ service cloud.firestore {
     }
     match /partnerContracts/{id} {
       allow read: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
-      allow create: if isHQ() || (isAuthenticated() && request.resource.data.partnerId == request.auth.uid);
+      allow create: if isHQ() || (
+        isAuthenticated()
+        && request.resource.data.keys().hasOnly([
+          'partnerId',
+          'siteId',
+          'title',
+          'amount',
+          'totalValue',
+          'currency',
+          'status',
+          'createdBy',
+          'dueDate',
+          'startDate',
+          'endDate',
+          'deliverables',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll(['partnerId', 'status'])
+        && request.resource.data.partnerId == request.auth.uid
+        && ['draft', 'pending', 'submitted'].hasAny([request.resource.data.status])
+      );
       allow update: if isHQ() || (
         isAuthenticated()
         && resource.data.partnerId == request.auth.uid
         && request.resource.data.partnerId == resource.data.partnerId
+        && ['draft', 'pending', 'submitted'].hasAny([request.resource.data.status])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'amount',
+          'totalValue',
+          'currency',
+          'status',
+          'dueDate',
+          'startDate',
+          'endDate',
+          'deliverables',
+          'updatedAt'
+        ])
       );
       allow delete: if false;
     }
@@ -1676,13 +1751,23 @@ service cloud.firestore {
     }
 
     // AI vector store collections — read-only for AI coaching
-    match /assessmentRubrics/{id} {
-      allow read: if isAuthenticated();
-      allow write: if isHQ();
-    }
-
     match /artifacts/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (
+        isHQ()
+        || (
+          resource.data.isExemplar == true
+          && resource.data.status == 'approved'
+        )
+        || (
+          isSiteScopedRead(resource.data)
+          && resource.data.keys().hasAny(['learnerId'])
+          && (
+            resource.data.learnerId == request.auth.uid
+            || isEducator()
+            || isParentLinkedToLearner(resource.data.learnerId)
+          )
+        )
+      );
       allow write: if false; // System-managed
     }
 

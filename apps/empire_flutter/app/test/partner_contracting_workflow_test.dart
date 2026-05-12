@@ -443,14 +443,14 @@ void main() {
       telemetryPayloads.add(payload);
     }, () async {
       final String contractId = await contractRepository.createDraft(
-        partnerOrgId: 'partner-org-1',
+        partnerId: 'partner-1',
         title: 'Studio Launch Agreement',
         amount: '2400',
         currency: 'USD',
         createdBy: 'partner-1',
       );
       await firestore.collection('partnerContracts').doc(contractId).set(
-        <String, dynamic>{'partnerId': 'partner-1', 'siteId': 'site-1'},
+        <String, dynamic>{'siteId': 'site-1'},
         SetOptions(merge: true),
       );
 

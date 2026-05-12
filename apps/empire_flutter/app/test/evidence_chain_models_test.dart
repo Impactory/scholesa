@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:scholesa_app/domain/models.dart';
 
 void main() {
@@ -138,6 +139,86 @@ void main() {
     });
   });
 
+  group('MarketplaceListingModel', () {
+    test('toMap writes partnerId for Firestore rules alignment', () {
+      const MarketplaceListingModel model = MarketplaceListingModel(
+        id: 'listing-1',
+        partnerId: 'partner-1',
+        title: 'Studio Robotics Lab',
+        price: '49',
+        currency: 'USD',
+      );
+
+      final Map<String, dynamic> map = model.toMap();
+      expect(map['partnerId'], 'partner-1');
+      expect(map.containsKey('partnerOrgId'), isFalse);
+      expect(map['status'], 'draft');
+    });
+
+    test('fromDoc reads legacy partnerOrgId rows', () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await firestore
+          .collection('marketplaceListings')
+          .doc('listing-legacy')
+          .set(
+        <String, dynamic>{
+          'partnerOrgId': 'partner-org-legacy',
+          'title': 'Legacy Listing',
+          'price': '99',
+          'currency': 'USD',
+        },
+      );
+
+      final doc = await firestore
+          .collection('marketplaceListings')
+          .doc('listing-legacy')
+          .get();
+      final MarketplaceListingModel model =
+          MarketplaceListingModel.fromDoc(doc);
+
+      expect(model.partnerId, 'partner-org-legacy');
+      expect(model.title, 'Legacy Listing');
+    });
+  });
+
+  group('PartnerContractModel', () {
+    test('toMap writes partnerId for Firestore rules alignment', () {
+      const PartnerContractModel model = PartnerContractModel(
+        id: 'contract-1',
+        partnerId: 'partner-1',
+        title: 'Studio Launch Agreement',
+        amount: '2400',
+        currency: 'USD',
+      );
+
+      final Map<String, dynamic> map = model.toMap();
+      expect(map['partnerId'], 'partner-1');
+      expect(map.containsKey('partnerOrgId'), isFalse);
+      expect(map['status'], 'draft');
+    });
+
+    test('fromDoc reads legacy partnerOrgId rows', () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await firestore.collection('partnerContracts').doc('contract-legacy').set(
+        <String, dynamic>{
+          'partnerOrgId': 'partner-org-legacy',
+          'title': 'Legacy Contract',
+          'amount': '1200',
+          'currency': 'USD',
+        },
+      );
+
+      final doc = await firestore
+          .collection('partnerContracts')
+          .doc('contract-legacy')
+          .get();
+      final PartnerContractModel model = PartnerContractModel.fromDoc(doc);
+
+      expect(model.partnerId, 'partner-org-legacy');
+      expect(model.title, 'Legacy Contract');
+    });
+  });
+
   group('PeerFeedbackModel', () {
     test('toMap contains peer review fields', () {
       const PeerFeedbackModel m = PeerFeedbackModel(
@@ -218,6 +299,7 @@ void main() {
       const ShowcaseSubmissionModel m = ShowcaseSubmissionModel(
         id: 'sc1',
         learnerId: 'l1',
+        siteId: 'site1',
         portfolioItemId: 'pi1',
         title: 'My Project',
         description: 'A great project',
@@ -236,6 +318,7 @@ void main() {
       const ShowcaseSubmissionModel m = ShowcaseSubmissionModel(
         id: 'sc1',
         learnerId: 'l1',
+        siteId: 'site1',
         portfolioItemId: 'pi1',
         title: 't',
         description: 'd',

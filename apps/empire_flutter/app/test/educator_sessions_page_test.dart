@@ -296,7 +296,7 @@ void main() {
     expect(find.text('Robotics Warm-up'), findsOneWidget);
     expect(
       find.text(
-        'Unable to refresh sessions right now. Showing the last successful data. Failed to load sessions: Exception: network down',
+        'Unable to refresh sessions right now. Showing the last successful data. Session list could not load right now. Refresh, or check again after the app reconnects.',
       ),
       findsOneWidget,
     );
