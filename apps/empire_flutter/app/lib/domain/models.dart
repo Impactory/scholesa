@@ -1540,6 +1540,7 @@ class AccountabilityCycleModel {
 class AccountabilityCommitmentModel {
   const AccountabilityCommitmentModel({
     required this.id,
+    required this.siteId,
     required this.cycleId,
     required this.userId,
     required this.role,
@@ -1550,6 +1551,7 @@ class AccountabilityCommitmentModel {
   });
 
   final String id;
+  final String siteId;
   final String cycleId;
   final String userId;
   final String role;
@@ -1563,6 +1565,7 @@ class AccountabilityCommitmentModel {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityCommitmentModel(
       id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
       cycleId: data['cycleId'] as String? ?? '',
       userId: data['userId'] as String? ?? '',
       role: data['role'] as String? ?? 'learner',
@@ -1575,6 +1578,7 @@ class AccountabilityCommitmentModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'siteId': siteId,
         'cycleId': cycleId,
         'userId': userId,
         'role': role,
@@ -1589,6 +1593,7 @@ class AccountabilityCommitmentModel {
 class AccountabilityReviewModel {
   const AccountabilityReviewModel({
     required this.id,
+    required this.siteId,
     required this.cycleId,
     required this.reviewerId,
     required this.revieweeId,
@@ -1599,6 +1604,7 @@ class AccountabilityReviewModel {
   });
 
   final String id;
+  final String siteId;
   final String cycleId;
   final String reviewerId;
   final String revieweeId;
@@ -1612,6 +1618,7 @@ class AccountabilityReviewModel {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityReviewModel(
       id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
       cycleId: data['cycleId'] as String? ?? '',
       reviewerId: data['reviewerId'] as String? ?? '',
       revieweeId: data['revieweeId'] as String? ?? '',
@@ -1623,6 +1630,7 @@ class AccountabilityReviewModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'siteId': siteId,
         'cycleId': cycleId,
         'reviewerId': reviewerId,
         'revieweeId': revieweeId,
@@ -2490,6 +2498,7 @@ class RoomModel {
 class MissionSnapshotModel {
   const MissionSnapshotModel({
     required this.id,
+    required this.siteId,
     required this.missionId,
     required this.contentHash,
     required this.title,
@@ -2505,6 +2514,7 @@ class MissionSnapshotModel {
   });
 
   final String id;
+  final String siteId;
   final String missionId;
   final String contentHash;
   final String title;
@@ -2523,6 +2533,7 @@ class MissionSnapshotModel {
     final data = doc.data() ?? <String, dynamic>{};
     return MissionSnapshotModel(
       id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
       missionId: data['missionId'] as String? ?? '',
       contentHash: data['contentHash'] as String? ?? '',
       title: data['title'] as String? ?? '',
@@ -2540,6 +2551,7 @@ class MissionSnapshotModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'siteId': siteId,
         'missionId': missionId,
         'contentHash': contentHash,
         'title': title,
@@ -6043,6 +6055,7 @@ class ExternalRepoLinkModel {
 class ExternalPullRequestLinkModel {
   const ExternalPullRequestLinkModel({
     required this.id,
+    required this.siteId,
     required this.repoFullName,
     required this.prNumber,
     required this.prUrl,
@@ -6054,6 +6067,7 @@ class ExternalPullRequestLinkModel {
   });
 
   final String id;
+  final String siteId;
   final String repoFullName;
   final int prNumber;
   final String prUrl;
@@ -6068,6 +6082,7 @@ class ExternalPullRequestLinkModel {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalPullRequestLinkModel(
       id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
       repoFullName: data['repoFullName'] as String? ?? '',
       prNumber: (data['prNumber'] as num?)?.toInt() ?? 0,
       prUrl: data['prUrl'] as String? ?? '',
@@ -6080,6 +6095,7 @@ class ExternalPullRequestLinkModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'siteId': siteId,
         'repoFullName': repoFullName,
         'prNumber': prNumber,
         'prUrl': prUrl,

@@ -582,13 +582,21 @@ class ParentService extends ChangeNotifier {
       return sessionEvents.take(5).toList();
     }
 
-    final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await _firestore
-        .collection('events')
-        .where('learnerId', isEqualTo: learnerId)
-        .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
-        .orderBy('dateTime')
-        .limit(5)
-        .get();
+    Query<Map<String, dynamic>> eventsQuery = _firestore
+      .collection('events')
+      .where('learnerId', isEqualTo: learnerId);
+    final String normalizedActiveSiteId = activeSiteId?.trim() ?? '';
+    if (normalizedActiveSiteId.isNotEmpty) {
+      eventsQuery = eventsQuery.where(
+        'siteId',
+        isEqualTo: normalizedActiveSiteId,
+      );
+    }
+    final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await eventsQuery
+      .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
+      .orderBy('dateTime')
+      .limit(5)
+      .get();
 
     return eventsSnapshot.docs.map(
       (QueryDocumentSnapshot<Map<String, dynamic>> doc) {

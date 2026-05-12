@@ -73,7 +73,10 @@ export class IntelligenceService {
     // Track analytics if analytics event provided
     if (payload.analyticsEvent && payload.analyticsEvent.event_name) {
       promises.push(
-        AnalyticsEngine.trackEvent(payload.analyticsEvent as AnalyticsEventType)
+        AnalyticsEngine.trackEvent({
+          ...payload.analyticsEvent,
+          siteId: payload.siteId,
+        } as AnalyticsEventType)
       );
     }
     

@@ -4109,10 +4109,11 @@ async function loadParentUpcomingEvents(params: {
   }
 
   try {
-    const eventsSnap = await admin
-      .firestore()
-      .collection('events')
-      .where('learnerId', '==', learnerId)
+    let eventsQuery = admin.firestore().collection('events').where('learnerId', '==', learnerId);
+    if (siteId) {
+      eventsQuery = eventsQuery.where('siteId', '==', siteId);
+    }
+    const eventsSnap = await eventsQuery
       .where('dateTime', '>=', Timestamp.fromDate(now))
       .orderBy('dateTime')
       .limit(5)
@@ -4347,6 +4348,9 @@ async function computeRoleDashboardStats(params: {
     try {
       if (learnerIds.length > 0) {
         let query: FirebaseFirestore.Query = db.collection('events');
+        if (siteId) {
+          query = query.where('siteId', '==', siteId);
+        }
         query = query.where('dateTime', '>=', Timestamp.fromDate(now));
         const events = await query.get();
         upcomingSessions = events.docs.filter((doc) =>

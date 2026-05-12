@@ -218,6 +218,7 @@ export interface AccountabilityKPI {
 
 export interface AccountabilityCommitment {
   id: string;
+  siteId: string;
   learnerId: string;
   cycleId: string;
   content: string;
@@ -227,6 +228,7 @@ export interface AccountabilityCommitment {
 
 export interface AccountabilityReview {
   id: string;
+  siteId: string;
   learnerId: string;
   cycleId: string;
   content: string;

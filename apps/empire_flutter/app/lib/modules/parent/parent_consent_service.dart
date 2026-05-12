@@ -114,11 +114,18 @@ class ParentConsentService {
             ? const <String, dynamic>{}
             : learnerProfilesSnapshot.docs.first.data();
 
-    final QuerySnapshot<Map<String, dynamic>> mediaSnapshot = await _firestore
+    final String? siteId = _nonEmptyOrNull(
+      learnerProfile['siteId'] ?? learnerData['activeSiteId'],
+    );
+
+    Query<Map<String, dynamic>> mediaQuery = _firestore
         .collection('mediaConsents')
-        .where('learnerId', isEqualTo: learnerId)
-        .limit(1)
-        .get();
+        .where('learnerId', isEqualTo: learnerId);
+    if (siteId != null) {
+      mediaQuery = mediaQuery.where('siteId', isEqualTo: siteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> mediaSnapshot =
+        await mediaQuery.limit(1).get();
     final QuerySnapshot<Map<String, dynamic>> researchSnapshot =
         await _firestore
             .collection('researchConsents')
@@ -126,9 +133,6 @@ class ParentConsentService {
             .where('parentId', isEqualTo: parentId)
             .limit(1)
             .get();
-    final String? siteId = _nonEmptyOrNull(
-      learnerProfile['siteId'] ?? learnerData['activeSiteId'],
-    );
     final List<ParentReportShareRequest> activeReportShares =
         await _listActiveReportShares(learnerId: learnerId, siteId: siteId);
 

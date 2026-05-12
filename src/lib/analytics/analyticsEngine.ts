@@ -52,6 +52,7 @@ export interface AnalyticsEvent {
   event_id: string;
   event_name: string;
   event_time: Timestamp;
+  siteId?: string;
   class_id: string;
   session_id?: string;
   student_id: string;
@@ -225,6 +226,7 @@ export class AnalyticsEngine {
     try {
       const docRef = await addDoc(collection(db, 'analyticsEvents'), {
         ...event,
+        siteId: event.siteId || event.class_id,
         event_time: event.event_time || Timestamp.now(),
         app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
         device_type: this.getDeviceType(),

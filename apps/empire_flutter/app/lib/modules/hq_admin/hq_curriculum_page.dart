@@ -3861,6 +3861,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               : title;
       final List<dynamic> pillarCodes = (mission['pillarCodes'] as List?) ??
           <dynamic>[_pillarCodeFromLabel(curriculum.pillar)];
+        final String siteId = (mission['siteId'] as String?)?.trim().isNotEmpty == true
+          ? (mission['siteId'] as String).trim()
+          : (appState?.activeSiteId ?? '').trim();
 
       final String hashSource = <String>[
         curriculum.id,
@@ -3875,6 +3878,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       final String snapshotId = await firestoreService.createDocument(
         'missionSnapshots',
         <String, dynamic>{
+          'siteId': siteId,
           'missionId': curriculum.id,
           'contentHash': contentHash,
           'title': title,
