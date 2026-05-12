@@ -21,7 +21,7 @@ require_developer_id_identity() {
   identities="$(security find-identity -v -p codesigning 2>/dev/null || true)"
   local team_id="${APPLE_DEVELOPER_TEAM_ID:-$DEFAULT_TEAM_ID}"
   if ! printf '%s\n' "$identities" | grep -Eq '"Developer ID Application: .*\(' ; then
-    printf '%s\n' "Missing Developer ID Application signing identity with private key for macOS distribution. Run ./scripts/apple_release_local.sh prepare_macos_developer_id to generate/download it with the App Store Connect .p8 key for team $team_id."
+    printf '%s\n' "Missing Developer ID Application signing identity with private key for macOS distribution. Try ./scripts/apple_release_local.sh prepare_macos_developer_id first. If Apple reports that only the Account Holder can create Developer ID certificates, run ./scripts/setup_apple_signing.sh macos-csr and have the Account Holder create the certificate from that CSR."
     return 1
   fi
 
@@ -73,7 +73,7 @@ require_local_macos_distribution_prereqs() {
     {
       echo "Local macOS distribution prerequisites are incomplete:"
       printf ' - %s\n' "${issues[@]}"
-      echo "Run ./scripts/setup_app_store_connect_key.sh to install notarization credentials, then ./scripts/apple_release_local.sh prepare_macos_developer_id to generate/download the Developer ID Application identity with the .p8 key."
+      echo "Run ./scripts/setup_app_store_connect_key.sh to install notarization credentials. Then run ./scripts/apple_release_local.sh prepare_macos_developer_id, or ./scripts/setup_apple_signing.sh macos-csr if Apple requires the Account Holder to create the Developer ID certificate."
     } >&2
     exit 1
   fi

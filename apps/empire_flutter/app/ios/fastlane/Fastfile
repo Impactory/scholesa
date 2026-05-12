@@ -84,6 +84,21 @@ def signing_output_dir(platform)
   File.join(app_root, 'build', platform, 'fastlane', 'signing')
 end
 
+def normalize_developer_id_certificate_type!
+  certificate_type = Spaceship::ConnectAPI::Certificate::CertificateType
+  supported_type = certificate_type::DEVELOPER_ID_APPLICATION
+  return if certificate_type::DEVELOPER_ID_APPLICATION_G2 == supported_type
+
+  certificate_type.send(:remove_const, :DEVELOPER_ID_APPLICATION_G2)
+  certificate_type.const_set(:DEVELOPER_ID_APPLICATION_G2, supported_type)
+end
+
+def developer_id_account_holder_message(error)
+  return unless error.message.include?('Account Holder')
+
+  UI.user_error!("Apple requires the Account Holder to create Developer ID Application certificates. Generate a CSR with ./scripts/setup_macos_developer_id_csr.sh generate_csr, have the Account Holder create the Developer ID Application certificate in Apple Developer, then import the downloaded .cer with ./scripts/setup_macos_developer_id_csr.sh import_cer /path/to/certificate.cer. Original Apple response: #{error.message}")
+end
+
 platform :ios do
   desc 'Validate local or CI App Store Connect API key configuration'
   lane :verify_api_key do
@@ -123,6 +138,7 @@ platform :ios do
   lane :prepare_macos_developer_id do
     require_env_values!(%w[APPLE_DEVELOPER_TEAM_ID])
     api_key = scholesa_api_key
+    normalize_developer_id_certificate_type!
     FileUtils.mkdir_p(signing_output_dir('macos'))
 
     cert(
@@ -132,6 +148,9 @@ platform :ios do
       team_id: ENV['APPLE_DEVELOPER_TEAM_ID'],
       output_path: signing_output_dir('macos')
     )
+  rescue Spaceship::UnexpectedResponse => error
+    developer_id_account_holder_message(error)
+    raise
   end
 
   desc 'Build a signed iOS release IPA and upload it to TestFlight'

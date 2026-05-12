@@ -19,7 +19,9 @@ fail() {
 
 mkdir -p "$LOCAL_SECRET_DIR"
 DEST_KEY_PATH="$LOCAL_SECRET_DIR/$(basename "$SOURCE_KEY_PATH")"
-cp "$SOURCE_KEY_PATH" "$DEST_KEY_PATH"
+if [[ "$(cd "$(dirname "$SOURCE_KEY_PATH")" && pwd)/$(basename "$SOURCE_KEY_PATH")" != "$DEST_KEY_PATH" ]]; then
+  cp "$SOURCE_KEY_PATH" "$DEST_KEY_PATH"
+fi
 chmod 600 "$DEST_KEY_PATH"
 
 cat > "$LOCAL_ENV_FILE" <<EOF

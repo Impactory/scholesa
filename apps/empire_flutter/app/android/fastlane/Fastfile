@@ -1,6 +1,9 @@
 default_platform(:android)
 opt_out_usage
 
+require 'google/apis/androidpublisher_v3'
+require 'googleauth'
+
 def require_env_values!(keys)
   missing = keys.select { |key| ENV[key].to_s.strip.empty? }
   return if missing.empty?
@@ -29,15 +32,35 @@ def google_play_json_key_path
   json_key_path
 end
 
+def google_play_client_email
+  JSON.parse(File.read(google_play_json_key_path))['client_email']
+end
+
+def verify_google_play_app_access!(package_name)
+  key_path = google_play_json_key_path
+  scope = Google::Apis::AndroidpublisherV3::AUTH_ANDROIDPUBLISHER
+  credentials = Google::Auth::ServiceAccountCredentials.make_creds(
+    json_key_io: File.open(key_path),
+    scope: scope
+  )
+  service = Google::Apis::AndroidpublisherV3::AndroidPublisherService.new
+  service.authorization = credentials
+
+  edit = service.insert_edit(package_name)
+  service.delete_edit(package_name, edit.id) if edit&.id
+rescue Google::Apis::AuthorizationError, Google::Apis::ClientError => error
+  UI.user_error!("Google Play service account key loaded for #{google_play_client_email}, but Play Console rejected access to #{package_name}: #{error.message}. Grant this service account access to the app in Google Play Console -> Users and permissions, then rerun this lane.")
+end
+
 platform :android do
   desc 'Validate local or CI Google Play service account configuration'
   lane :verify_play_key do
     require_env_values!(%w[ANDROID_APP_IDENTIFIER])
     validate_play_store_json_key(
-      json_key: google_play_json_key_path,
-      package_name: ENV['ANDROID_APP_IDENTIFIER']
+      json_key: google_play_json_key_path
     )
-    UI.success("Loaded Google Play service account key for #{ENV['ANDROID_APP_IDENTIFIER']}")
+    verify_google_play_app_access!(ENV['ANDROID_APP_IDENTIFIER'])
+    UI.success("Verified Google Play service account access for #{ENV['ANDROID_APP_IDENTIFIER']}")
   end
 
   desc 'Build a signed Android App Bundle and upload it to Google Play internal testing'

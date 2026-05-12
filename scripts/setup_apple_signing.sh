@@ -18,7 +18,10 @@ case "$MODE" in
     "$REPO_ROOT/scripts/apple_release_local.sh" prepare_macos_developer_id
     echo "[apple-signing] Prepared macOS Developer ID signing with the App Store Connect .p8 key."
     ;;
+  macos-csr)
+    "$REPO_ROOT/scripts/setup_macos_developer_id_csr.sh" generate_csr
+    ;;
   *)
-    fail "Unknown mode: ${MODE:-missing}. Supported modes: ios, macos. Install .p8 auth first with ./scripts/setup_app_store_connect_key.sh."
+    fail "Unknown mode: ${MODE:-missing}. Supported modes: ios, macos, macos-csr. Install .p8 auth first with ./scripts/setup_app_store_connect_key.sh."
     ;;
 esac

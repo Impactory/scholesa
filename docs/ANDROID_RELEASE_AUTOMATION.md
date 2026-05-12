@@ -16,6 +16,8 @@ This document describes the local and GitHub Actions setup for Google Play authe
 ./scripts/android_release_local.sh verify_play_key
 ```
 
+If this reports that Play Console rejected app access, add the service-account email from `.env.google_play.local`'s JSON key to Google Play Console -> Users and permissions for `com.scholesa.app`, with permission to view app information and manage releases for the internal testing track.
+
 3. Install local Android release signing from an existing release keystore:
 
 ```bash
@@ -25,6 +27,14 @@ ANDROID_KEY_PASSWORD=<key-password> \
 ```
 
 This writes the ignored `apps/empire_flutter/app/android/key.properties` file and copies the keystore into the ignored `apps/empire_flutter/app/android/app/release-keystore.jks` path. If `keytool` is available, the helper verifies that the alias exists before writing `key.properties`.
+
+If no existing Google Play upload key exists yet, generate a local upload keystore instead:
+
+```bash
+./scripts/setup_android_signing.sh --generate
+```
+
+This generates ignored local signing files with random passwords. Back up `apps/empire_flutter/app/android/key.properties` and `apps/empire_flutter/app/android/app/release-keystore.jks` securely before registering the upload key with Google Play.
 
 4. Verify local Play-release signing prerequisites without uploading anything:
 

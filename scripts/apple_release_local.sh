@@ -103,6 +103,7 @@ case "$COMMAND" in
     ;;
   verify_local_release)
     require_local_ios_distribution_prereqs
+    require_app_store_connect_env || exit 1
     FASTLANE_LANE="verify_api_key"
     ;;
   upload_testflight)

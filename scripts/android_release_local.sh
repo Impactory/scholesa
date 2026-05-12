@@ -86,6 +86,7 @@ FASTLANE_LANE="$COMMAND"
 case "$COMMAND" in
   verify_local_release)
     require_local_android_signing_prereqs
+    require_google_play_env || exit 1
     FASTLANE_LANE="verify_play_key"
     ;;
   upload_internal)

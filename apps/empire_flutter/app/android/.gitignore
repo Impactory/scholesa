@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+/.bundle
+/.bundle_home
+/vendor/bundle
+/fastlane/report.xml
+/fastlane/README.md

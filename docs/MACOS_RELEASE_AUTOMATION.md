@@ -22,6 +22,18 @@ This document describes the local preflight for macOS distribution signing and n
 ./scripts/setup_apple_signing.sh macos
 ```
 
+Apple may restrict Developer ID Application certificate creation to the Account Holder even when the `.p8` key has Admin access. If that happens, generate a local CSR and keep the private key on this machine:
+
+```bash
+./scripts/setup_apple_signing.sh macos-csr
+```
+
+The Account Holder must create the Developer ID Application certificate in Apple Developer by uploading the generated CSR. After downloading the `.cer`, import it with:
+
+```bash
+./scripts/setup_macos_developer_id_csr.sh import_cer /absolute/path/to/developer_id.cer
+```
+
 4. Verify local macOS distribution prerequisites without signing or notarizing anything:
 
 ```bash
