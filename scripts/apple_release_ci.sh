@@ -28,14 +28,15 @@ require_env_values() {
 }
 
 write_github_env() {
-  [[ -n "${GITHUB_ENV:-}" ]] || fail "GITHUB_ENV is not set"
+  [[ -n "${GITHUB_ENV:-}" ]] || return 0
   printf '%s\n' "$1" >> "$GITHUB_ENV"
 }
 
 decode_base64_to_file() {
   local payload="$1"
   local destination="$2"
-  if ! printf '%s' "$payload" | base64 --decode > "$destination"; then
+  if ! printf '%s' "$payload" | base64 --decode > "$destination" 2>/dev/null && \
+    ! printf '%s' "$payload" | base64 -D > "$destination" 2>/dev/null; then
     fail "Unable to decode base64 payload into $destination"
   fi
 }
