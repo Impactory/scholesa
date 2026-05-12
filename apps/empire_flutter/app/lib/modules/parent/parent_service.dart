@@ -21,6 +21,7 @@ class ParentService extends ChangeNotifier {
   ParentService({
     required FirestoreService firestoreService,
     required this.parentId,
+    this.activeSiteId,
     Future<List<LearnerSummary>> Function()? bundleLoader,
     Future<BillingSummary?> Function()? billingLoader,
   })  : _firestoreService = firestoreService,
@@ -28,6 +29,7 @@ class ParentService extends ChangeNotifier {
         _billingLoader = billingLoader;
   final FirestoreService _firestoreService;
   final String parentId;
+  final String? activeSiteId;
   final Future<List<LearnerSummary>> Function()? _bundleLoader;
   final Future<BillingSummary?> Function()? _billingLoader;
   FirestoreService get firestoreService => _firestoreService;
@@ -291,10 +293,18 @@ class ParentService extends ChangeNotifier {
         await _firestore.collection('learnerProgress').doc(learnerId).get();
     final Map<String, dynamic>? progressData = progressDoc.data();
 
+    Query<Map<String, dynamic>> activitiesQuery = _firestore
+        .collection('activities')
+        .where('learnerId', isEqualTo: learnerId);
+    final String normalizedActiveSiteId = activeSiteId?.trim() ?? '';
+    if (normalizedActiveSiteId.isNotEmpty) {
+      activitiesQuery = activitiesQuery.where(
+        'siteId',
+        isEqualTo: normalizedActiveSiteId,
+      );
+    }
     final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot =
-        await _firestore
-            .collection('activities')
-            .where('learnerId', isEqualTo: learnerId)
+        await activitiesQuery
             .orderBy('timestamp', descending: true)
             .limit(10)
             .get();

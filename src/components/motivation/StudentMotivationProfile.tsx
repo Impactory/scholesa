@@ -106,7 +106,7 @@ export function StudentMotivationProfile() {
         // Fetch skills from skillMastery collection
         const skillsQuery = query(
           collection(db, 'skillMastery'),
-          where('userId', '==', learnerId),
+          where('learnerId', '==', learnerId),
           where('siteId', '==', siteId),
           orderBy('lastUpdated', 'desc'),
           limit(10)
@@ -147,7 +147,7 @@ export function StudentMotivationProfile() {
         // Fetch goals from learnerGoals collection
         const goalsQuery = query(
           collection(db, 'learnerGoals'),
-          where('userId', '==', learnerId),
+          where('learnerId', '==', learnerId),
           where('siteId', '==', siteId),
           where('status', '==', 'active'),
           orderBy('createdAt', 'desc'),

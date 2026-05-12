@@ -358,21 +358,60 @@ service cloud.firestore {
 
     // Learner Goals: Users can manage their own, educators can read
     match /learnerGoals/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update, delete: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && resource.data.learnerId == request.auth.uid
+        && request.resource.data.learnerId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && resource.data.learnerId == request.auth.uid;
     }
 
     // Learner Interest Profiles: Users can manage their own, educators can read
     match /learnerInterestProfiles/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && resource.data.learnerId == request.auth.uid
+        && request.resource.data.learnerId == request.auth.uid;
       allow delete: if false; // Keep historical data
     }
 
     // Skill Mastery: Educators can write, learners can read their own
     match /skillMastery/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isEducator()
+        && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data);
       allow delete: if false; // Keep historical data
     }
 
@@ -483,10 +522,18 @@ service cloud.firestore {
 
     // Showcase Submissions: Public read, learners can submit their own
     match /showcaseSubmissions/{id} {
-      allow read: if isAuthenticated(); // Public within school
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && resource.data.learnerId == request.auth.uid
+        && request.resource.data.learnerId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && resource.data.learnerId == request.auth.uid;
     }
 
     // Peer Feedback: Users can give feedback, educators can moderate
@@ -531,31 +578,77 @@ service cloud.firestore {
 
     // Learner/Parent Profiles & GuardianLinks
     match /learnerProfiles/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (
+          request.resource.data.learnerId == request.auth.uid
+          || isEducator()
+        );
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.learnerId == resource.data.learnerId
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+        );
       allow delete: if false;
     }
     match /parentProfiles/{id} {
-      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator() || isHQ());
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.parentId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (request.resource.data.parentId == request.auth.uid || isEducator());
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.parentId == resource.data.parentId
+        && (resource.data.parentId == request.auth.uid || isEducator() || isHQ());
       allow delete: if false;
     }
     match /guardianLinks/{id} {
-      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if (isEducator() || isHQ()) && isSiteScopedWrite(request.resource.data);
-      allow delete: if isHQ(); // HQ can remove guardian links (e.g., custody changes)
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.parentId == request.auth.uid
+          || resource.data.learnerId == request.auth.uid
+          || isEducator()
+        );
+      allow create: if (isEducator() || isHQ()) && isSiteScopedWrite(request.resource.data);
+      allow update: if (isEducator() || isHQ())
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.parentId == resource.data.parentId
+        && request.resource.data.learnerId == resource.data.learnerId;
+      allow delete: if isHQ() && isSiteScopedRead(resource.data); // HQ can remove guardian links (e.g., custody changes)
     }
     match /educatorLearnerLinks/{id} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
         isHQ() ||
         (resource.data.keys().hasAny(['educatorId']) && resource.data.educatorId == request.auth.uid)
       );
-      allow create, update: if isAuthenticated() && (
+      allow create: if isAuthenticated() && isSiteScopedWrite(request.resource.data) && (
         isHQ() ||
         (request.resource.data.keys().hasAny(['educatorId']) && request.resource.data.educatorId == request.auth.uid)
       );
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.educatorId == resource.data.educatorId
+        && request.resource.data.learnerId == resource.data.learnerId
+        && (
+          isHQ() ||
+          (request.resource.data.keys().hasAny(['educatorId']) && request.resource.data.educatorId == request.auth.uid)
+        );
       allow delete: if false;
     }
 
@@ -580,8 +673,19 @@ service cloud.firestore {
 
     // Mission Plans & Snapshots
     match /missionPlans/{id} {
-      allow read: if isAuthenticated();
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && (
+          !resource.data.keys().hasAny(['educatorId'])
+          || (
+            request.resource.data.keys().hasAny(['educatorId'])
+            && request.resource.data.educatorId == resource.data.educatorId
+          )
+        );
       allow delete: if false;
     }
     match /missionSnapshots/{id} {
@@ -605,9 +709,22 @@ service cloud.firestore {
 
     // Portfolios (container)
     match /portfolios/{id} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isAuthenticated()
+        && request.resource.data.learnerId == request.auth.uid
+        && isSiteScopedWrite(request.resource.data);
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId
+        && (resource.data.learnerId == request.auth.uid || isEducator());
       allow delete: if false;
     }
 
@@ -726,8 +843,14 @@ service cloud.firestore {
       allow delete: if isHQ();
     }
     match /rubricApplications/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow write: if false; // Server-owned via applyRubricToEvidence.
       allow delete: if false;
     }
     // Rubric templates: reusable rubric definitions created by HQ, read by educators.
@@ -907,9 +1030,20 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /missionAssignments/{id} {
-      allow read: if isAuthenticated();
-      allow create: if isEducator();
-      allow update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId
+        && request.resource.data.missionId == resource.data.missionId;
       allow delete: if false;
     }
     match /conversations/{id} {
@@ -929,17 +1063,40 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /skillAssessments/{id} {
-      allow read: if isAuthenticated();
-      allow create: if isEducator();
-      allow update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId;
       allow delete: if false;
     }
     match /learnerProgress/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || id == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
       allow write: if false; // Server-only writes
     }
     match /activities/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (
+          resource.data.learnerId == request.auth.uid
+          || isEducator()
+          || isParentLinkedToLearner(resource.data.learnerId)
+        );
       allow write: if false; // Server-only writes
     }
     match /events/{id} {
@@ -949,11 +1106,11 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /billingAccounts/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isHQ() || id == request.auth.uid || resource.data.parentId == request.auth.uid);
       allow write: if false; // Server-only — billing is admin-managed
     }
     match /payments/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isHQ() || resource.data.parentId == request.auth.uid);
       allow write: if false; // Server-only — payment records
     }
     match /habitLogs/{id} {
@@ -1291,8 +1448,12 @@ service cloud.firestore {
 
     // Student assents — learner reads own, educator reads
     match /studentAssents/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && request.resource.data.learnerId == request.auth.uid
+        && isSiteScopedWrite(request.resource.data);
       allow update: if false; // Immutable
       allow delete: if false;
     }
@@ -1306,16 +1467,28 @@ service cloud.firestore {
 
     // Item responses — learner creates own, educator reads
     match /itemResponses/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated()
+        && request.resource.data.learnerId == request.auth.uid
+        && isSiteScopedWrite(request.resource.data);
       allow update: if false; // Immutable
       allow delete: if false;
     }
 
     // Learner next steps — educator creates, learner reads own
     match /learnerNextSteps/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId
+        && request.resource.data.capabilityId == resource.data.capabilityId;
       allow delete: if false;
     }
 
@@ -1344,15 +1517,29 @@ service cloud.firestore {
 
     // Learner support plans — educator creates/updates, site-scoped
     match /learnerSupportPlans/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId;
       allow delete: if false;
     }
 
     // Learner differentiation plans — educator creates/updates, site-scoped
     match /learnerDifferentiationPlans/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.siteId == resource.data.siteId
+        && request.resource.data.learnerId == resource.data.learnerId;
       allow delete: if false;
     }
 

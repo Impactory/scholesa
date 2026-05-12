@@ -666,6 +666,7 @@ class SkillMasteryModel {
   const SkillMasteryModel({
     required this.id,
     required this.learnerId,
+    required this.siteId,
     required this.skillId,
     required this.level,
     this.evidenceIds = const <String>[],
@@ -675,6 +676,7 @@ class SkillMasteryModel {
 
   final String id;
   final String learnerId;
+  final String siteId;
   final String skillId;
   final int level;
   final List<String> evidenceIds;
@@ -687,6 +689,7 @@ class SkillMasteryModel {
     return SkillMasteryModel(
       id: doc.id,
       learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
       skillId: data['skillId'] as String? ?? '',
       level: (data['level'] as num?)?.toInt() ?? 0,
       evidenceIds:
@@ -698,6 +701,7 @@ class SkillMasteryModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'learnerId': learnerId,
+        'siteId': siteId,
         'skillId': skillId,
         'level': level,
         'evidenceIds': evidenceIds,
@@ -7290,6 +7294,7 @@ class ShowcaseSubmissionModel {
   const ShowcaseSubmissionModel({
     required this.id,
     required this.learnerId,
+    required this.siteId,
     required this.portfolioItemId,
     required this.title,
     required this.description,
@@ -7303,6 +7308,7 @@ class ShowcaseSubmissionModel {
 
   final String id;
   final String learnerId;
+  final String siteId;
   final String portfolioItemId;
   final String title;
   final String description;
@@ -7323,6 +7329,7 @@ class ShowcaseSubmissionModel {
     return ShowcaseSubmissionModel(
       id: doc.id,
       learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
       portfolioItemId: data['portfolioItemId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
@@ -7337,6 +7344,7 @@ class ShowcaseSubmissionModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'learnerId': learnerId,
+        'siteId': siteId,
         'portfolioItemId': portfolioItemId,
         'title': title,
         'description': description,

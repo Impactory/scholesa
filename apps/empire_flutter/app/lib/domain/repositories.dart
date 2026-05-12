@@ -358,8 +358,14 @@ class SkillMasteryRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('skillMastery');
 
-  Future<List<SkillMasteryModel>> listByLearner(String learnerId) async {
-    final snap = await _col.where('learnerId', isEqualTo: learnerId).get();
+  Future<List<SkillMasteryModel>> listByLearner(
+    String learnerId, {
+    required String siteId,
+  }) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId)
+        .get();
     return snap.docs.map(SkillMasteryModel.fromDoc).toList();
   }
 
@@ -2934,9 +2940,13 @@ class ShowcaseSubmissionRepository {
     return doc.id;
   }
 
-  Future<List<ShowcaseSubmissionModel>> listByLearner(String learnerId) async {
+  Future<List<ShowcaseSubmissionModel>> listByLearner(
+    String learnerId, {
+    required String siteId,
+  }) async {
     final snap = await _col
         .where('learnerId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId)
         .orderBy('createdAt', descending: true)
         .get();
     return snap.docs.map(ShowcaseSubmissionModel.fromDoc).toList();
@@ -2944,6 +2954,7 @@ class ShowcaseSubmissionRepository {
 
   Future<List<ShowcaseSubmissionModel>> listApproved(String siteId) async {
     final snap = await _col
+        .where('siteId', isEqualTo: siteId)
         .where('approvalStatus', isEqualTo: 'approved')
         .orderBy('createdAt', descending: true)
         .get();
@@ -2974,10 +2985,15 @@ class LearnerNextStepRepository {
   Future<void> upsert(LearnerNextStepModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 
-  Future<List<LearnerNextStepModel>> listByLearner(String learnerId,
-      {String? capabilityId, int limit = 20}) async {
-    Query<Map<String, dynamic>> query =
-        _col.where('learnerId', isEqualTo: learnerId);
+  Future<List<LearnerNextStepModel>> listByLearner(
+    String learnerId, {
+    required String siteId,
+    String? capabilityId,
+    int limit = 20,
+  }) async {
+    Query<Map<String, dynamic>> query = _col
+        .where('siteId', isEqualTo: siteId)
+        .where('learnerId', isEqualTo: learnerId);
     if (capabilityId != null) {
       query = query.where('capabilityId', isEqualTo: capabilityId);
     }

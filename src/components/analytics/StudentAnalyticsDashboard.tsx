@@ -81,7 +81,7 @@ export function StudentAnalyticsDashboard() {
         // Get goals
         const goalsQuery = query(
           collection(db, 'learnerGoals'),
-          where('userId', '==', learnerId),
+          where('learnerId', '==', learnerId),
           where('siteId', '==', siteId)
         );
         const goalsSnapshot = await getDocs(goalsQuery);
@@ -91,7 +91,7 @@ export function StudentAnalyticsDashboard() {
         // Get checkpoints
         const checkpointsQuery = query(
           collection(db, 'checkpointHistory'),
-          where('userId', '==', learnerId),
+          where('learnerId', '==', learnerId),
           where('siteId', '==', siteId),
           where('status', '==', 'passed')
         );

@@ -241,11 +241,18 @@ class MissionService extends ChangeNotifier {
   }
 
   Future<_MissionLoadSnapshot> _loadMissionSnapshot() async {
+    Query<Map<String, dynamic>> assignmentsQuery = _firestore
+        .collection('missionAssignments')
+        .where('learnerId', isEqualTo: learnerId);
+    final String normalizedActiveSiteId = activeSiteId?.trim() ?? '';
+    if (normalizedActiveSiteId.isNotEmpty) {
+      assignmentsQuery = assignmentsQuery.where(
+        'siteId',
+        isEqualTo: normalizedActiveSiteId,
+      );
+    }
     final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
-        await _firestore
-            .collection('missionAssignments')
-            .where('learnerId', isEqualTo: learnerId)
-            .get();
+        await assignmentsQuery.get();
 
     final List<Mission> loadedMissions = <Mission>[];
     final Map<String, _MissionConfusabilityProfile> loadedProfiles =

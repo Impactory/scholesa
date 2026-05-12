@@ -542,16 +542,22 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => ParentService(
             firestoreService: _firestoreService,
             parentId: '',
+            activeSiteId: null,
           ),
           update: (_, AppState appState, ParentService? previousParentService) {
             final String parentId = _normalizeContextValue(appState.userId);
+            final String activeSiteId = _normalizeContextValue(
+              appState.activeSiteId,
+            );
             if (previousParentService != null &&
-                previousParentService.parentId == parentId) {
+                previousParentService.parentId == parentId &&
+                previousParentService.activeSiteId == activeSiteId) {
               return previousParentService;
             }
             final ParentService service = ParentService(
               firestoreService: _firestoreService,
               parentId: parentId,
+              activeSiteId: activeSiteId,
             );
             if (parentId.isNotEmpty &&
                 (appState.role == UserRole.parent ||

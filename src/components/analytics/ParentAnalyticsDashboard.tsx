@@ -161,7 +161,7 @@ export function ParentAnalyticsDashboard() {
           // Fetch upcoming goals
           const goalsQuery = query(
             collection(db, 'learnerGoals'),
-            where('userId', '==', childId),
+            where('learnerId', '==', childId),
             where('siteId', '==', siteId),
             where('status', '==', 'active'),
             orderBy('targetDate', 'asc'),

@@ -2744,13 +2744,14 @@ async function buildParentLearnerSummary(params: {
 
   let recentActivities: Array<Record<string, unknown>> = [];
   try {
-    const activitiesSnap = await admin
+    let activitiesQuery = admin
       .firestore()
       .collection('activities')
-      .where('learnerId', '==', learnerId)
-      .orderBy('timestamp', 'desc')
-      .limit(10)
-      .get();
+      .where('learnerId', '==', learnerId);
+    if (siteId) {
+      activitiesQuery = activitiesQuery.where('siteId', '==', siteId);
+    }
+    const activitiesSnap = await activitiesQuery.orderBy('timestamp', 'desc').limit(10).get();
     recentActivities = activitiesSnap.docs.map((doc) => {
       const data = doc.data() as Record<string, unknown>;
       return {

@@ -263,12 +263,18 @@ class FirestoreService {
 
   /// Get missions for a learner
   Future<List<Map<String, dynamic>>> getLearnerMissions(
-      String learnerId) async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+    String learnerId, {
+    String? siteId,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('missionAssignments')
         .where('learnerId', isEqualTo: learnerId)
-        .orderBy('createdAt', descending: true)
-        .get();
+        .orderBy('createdAt', descending: true);
+    final String normalizedSiteId = siteId?.trim() ?? '';
+    if (normalizedSiteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: normalizedSiteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
 
     return snapshot.docs
         .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
@@ -503,12 +509,18 @@ class FirestoreService {
 
   /// Get learner skill assessments
   Future<List<Map<String, dynamic>>> getLearnerSkillAssessments(
-      String learnerId) async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+    String learnerId, {
+    String? siteId,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('skillAssessments')
         .where('learnerId', isEqualTo: learnerId)
-        .orderBy('assessedAt', descending: true)
-        .get();
+        .orderBy('assessedAt', descending: true);
+    final String normalizedSiteId = siteId?.trim() ?? '';
+    if (normalizedSiteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: normalizedSiteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
 
     return snapshot.docs
         .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
