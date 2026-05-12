@@ -71,6 +71,23 @@ service cloud.firestore {
       return hasSiteField(data) && (isHQ() || userHasSite(data.siteId));
     }
 
+    function canReadOptionalSiteScopedReference(data) {
+      return isAuthenticated() && (
+        isHQ()
+        || !hasSiteField(data)
+        || isSiteScopedRead(data)
+      );
+    }
+
+    function canReadOptionalSiteOrStudioScopedReference(data) {
+      return isAuthenticated() && (
+        isHQ()
+        || isSiteScopedRead(data)
+        || (data.keys().hasAny(['studioId']) && userHasSite(data.studioId))
+        || (!hasSiteField(data) && !data.keys().hasAny(['studioId']))
+      );
+    }
+
     function isClientOwnedProofAssembly(data) {
       return request.auth != null
         && data.learnerId == request.auth.uid
@@ -121,9 +138,9 @@ service cloud.firestore {
     // - Write: HQ or Site Leads (depending on scope, defaulting to HQ/Educator for simplicity).
     match /sites/{id} { allow read: if isAuthenticated() && (isHQ() || userHasSite(id)); allow create, update: if isHQ(); allow delete: if false; }
     match /rooms/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow write: if isEducator() && isSiteScopedWrite(request.resource.data); }
-    match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
-    match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
-    match /capabilities/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
+    match /programs/{id} { allow read: if canReadOptionalSiteOrStudioScopedReference(resource.data); allow write: if isHQ(); }
+    match /courses/{id} { allow read: if canReadOptionalSiteOrStudioScopedReference(resource.data); allow write: if isHQ(); }
+    match /capabilities/{id} { allow read: if canReadOptionalSiteScopedReference(resource.data); allow create, update: if isHQ(); allow delete: if false; }
     match /stages/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /aiInteractionLogs/{id} {
       allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
@@ -153,7 +170,7 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
-    match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /missions/{id} { allow read: if canReadOptionalSiteScopedReference(resource.data); allow write: if isHQ(); }
     match /checkpoints/{id} {
       allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
       allow create, update: if isHQ() && isSiteScopedWrite(request.resource.data);
@@ -161,7 +178,11 @@ service cloud.firestore {
     }
     // Mission steps subcollection: global curriculum reference content, HQ-managed.
     match /missions/{missionId}/steps/{stepId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && exists(/databases/$(database)/documents/missions/$(missionId))
+        && canReadOptionalSiteScopedReference(
+          get(/databases/$(database)/documents/missions/$(missionId)).data
+        );
       allow create, update: if isHQ();
       allow delete: if isHQ();
     }
@@ -478,7 +499,7 @@ service cloud.firestore {
 
     // Process Domains: HQ/admin defines, educators can read.
     match /processDomains/{id} {
-      allow read: if isAuthenticated();
+      allow read: if canReadOptionalSiteScopedReference(resource.data);
       allow create, update: if isHQ();
       allow delete: if false;
     }
@@ -882,9 +903,16 @@ service cloud.firestore {
 
     // Messaging
     match /messageThreads/{id} {
-      allow read: if isAuthenticated() && (request.auth.uid in resource.data.participantIds || isHQ());
-      allow create: if isAuthenticated() && request.resource.data.participantIds.hasAny([request.auth.uid]);
+      allow read: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && (request.auth.uid in resource.data.participantIds || isHQ());
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.keys().hasAll(['participantIds', 'siteId'])
+        && request.resource.data.participantIds.hasAny([request.auth.uid]);
       allow update: if isAuthenticated()
+                    && isSiteScopedRead(resource.data)
+                    && isSiteScopedWrite(request.resource.data)
                     && request.auth.uid in resource.data.participantIds
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                       'title',
@@ -894,27 +922,56 @@ service cloud.firestore {
                       'participantNames',
                       'updatedAt'
                     ])
-                    && request.resource.data.participantIds == resource.data.participantIds;
+                    && request.resource.data.participantIds == resource.data.participantIds
+                    && request.resource.data.siteId == resource.data.siteId
+                    && (
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastMessageSenderId'])
+                      || request.resource.data.lastMessageSenderId == request.auth.uid
+                    );
       allow delete: if false;
     }
     match /messages/{id} {
       allow read: if isAuthenticated() && (
-        resource.data.recipientId == request.auth.uid
-        || resource.data.senderId == request.auth.uid
-        || isHQ()
+        isHQ()
+        || (
+          isSiteScopedRead(resource.data)
+          && (
+            resource.data.recipientId == request.auth.uid
+            || resource.data.senderId == request.auth.uid
+          )
+        )
       );
-      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.keys().hasAll(['threadId', 'recipientId', 'senderId', 'siteId'])
+        && exists(/databases/$(database)/documents/messageThreads/$(request.resource.data.threadId))
+        && get(/databases/$(database)/documents/messageThreads/$(request.resource.data.threadId)).data.siteId == request.resource.data.siteId
+        && get(/databases/$(database)/documents/messageThreads/$(request.resource.data.threadId)).data.participantIds.hasAll([
+          request.resource.data.senderId,
+          request.resource.data.recipientId
+        ]);
       allow update: if isAuthenticated()
+                    && isSiteScopedRead(resource.data)
                     && resource.data.recipientId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                       'isRead',
                       'readAt',
                       'updatedAt'
-                    ]);
+                    ])
+                    && request.resource.data.siteId == resource.data.siteId
+                    && request.resource.data.threadId == resource.data.threadId
+                    && request.resource.data.senderId == resource.data.senderId
+                    && request.resource.data.recipientId == resource.data.recipientId;
       allow delete: if isAuthenticated() && (
-        resource.data.recipientId == request.auth.uid
-        || resource.data.senderId == request.auth.uid
-        || isHQ()
+        isHQ()
+        || (
+          isSiteScopedRead(resource.data)
+          && (
+            resource.data.recipientId == request.auth.uid
+            || resource.data.senderId == request.auth.uid
+          )
+        )
       );
     }
 
@@ -928,13 +985,13 @@ service cloud.firestore {
 
     // Rubrics
     match /rubrics/{id} {
-      allow read: if isAuthenticated();
+      allow read: if canReadOptionalSiteScopedReference(resource.data);
       allow create, update: if isHQ();
       allow delete: if isHQ();
     }
     // Assessment rubrics: HQ-managed capability rubric templates (HqCapabilityFrameworkRenderer).
     match /assessmentRubrics/{id} {
-      allow read: if isAuthenticated();
+      allow read: if canReadOptionalSiteScopedReference(resource.data);
       allow create, update: if isHQ();
       allow delete: if isHQ();
     }
@@ -1288,10 +1345,21 @@ service cloud.firestore {
     }
     match /conversations/{id} {
       allow read: if isAuthenticated() && (
-        resource.data.participantIds.hasAny([request.auth.uid]) || isEducator()
+        isHQ()
+        || (
+          isSiteScopedRead(resource.data)
+          && resource.data.participantIds.hasAny([request.auth.uid])
+        )
       );
-      allow create: if isAuthenticated() && request.resource.data.participantIds.hasAny([request.auth.uid]);
-      allow update: if isAuthenticated() && resource.data.participantIds.hasAny([request.auth.uid]);
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.participantIds.hasAny([request.auth.uid]);
+      allow update: if isAuthenticated()
+        && isSiteScopedRead(resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && resource.data.participantIds.hasAny([request.auth.uid])
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.siteId == resource.data.siteId;
       allow delete: if false;
     }
     match /incidents/{id} {
@@ -1506,10 +1574,12 @@ service cloud.firestore {
     // interactionEvents: client writes own events, server reads for FDM pipeline
     match /interactionEvents/{id} {
       allow read: if isHQ() || isAdminOrHQ() || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data));
-      allow create: if isAuthenticated() && (
-        request.resource.data.userId == request.auth.uid ||
-        request.resource.data.actorId == request.auth.uid  // Backend uses actorId field
-      );
+      allow create: if isAuthenticated()
+        && isSiteScopedWrite(request.resource.data)
+        && (
+          request.resource.data.userId == request.auth.uid ||
+          request.resource.data.actorId == request.auth.uid  // Backend uses actorId field
+        );
       allow update: if false;
       allow delete: if false;
     }
@@ -1772,7 +1842,7 @@ service cloud.firestore {
     }
 
     match /commonMisconceptions/{id} {
-      allow read: if isAuthenticated();
+      allow read: if canReadOptionalSiteScopedReference(resource.data);
       allow write: if isHQ();
     }
 
@@ -1780,7 +1850,7 @@ service cloud.firestore {
 
     // MicroSkills — HQ admin defines, read by all (used by growth engine)
     match /microSkills/{id} {
-      allow read: if isAuthenticated();
+      allow read: if canReadOptionalSiteScopedReference(resource.data);
       allow create, update: if isHQ();
       allow delete: if false;
     }
@@ -1879,7 +1949,7 @@ service cloud.firestore {
 
     // Assessment instruments — HQ defines, authenticated reads
     match /assessmentInstruments/{id} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
       allow create, update: if isHQ();
       allow delete: if false;
     }

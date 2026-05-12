@@ -1719,6 +1719,7 @@ beforeEach(async () => {
     });
 
     await setDoc(doc(db, 'messageThreads', 'thread-1'), {
+      siteId: 'site1',
       participantIds: [educatorUser.uid, parentUser.uid],
       participantNames: ['Educator One', 'Parent One'],
       title: 'Family follow-up',
@@ -1727,6 +1728,7 @@ beforeEach(async () => {
     });
 
     await setDoc(doc(db, 'messages', 'message-1'), {
+      siteId: 'site1',
       threadId: 'thread-1',
       recipientId: parentUser.uid,
       senderId: educatorUser.uid,
@@ -2716,6 +2718,34 @@ describe('Interaction Events Collection', () => {
     await assertFails(
       getDocs(query(collection(db, 'interactionEvents'), where('siteId', '==', 'site1')))
     );
+  });
+
+  test('clients can create only own site-scoped interaction events', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+
+    await assertSucceeds(setDoc(doc(learnerDb, 'interactionEvents', 'event-create-own-site'), {
+      siteId: 'site1',
+      actorId: learnerUser.uid,
+      eventType: 'ai_help_opened',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'interactionEvents', 'event-create-missing-site'), {
+      actorId: learnerUser.uid,
+      eventType: 'ai_help_opened',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'interactionEvents', 'event-create-wrong-site'), {
+      siteId: 'site2',
+      actorId: learnerUser.uid,
+      eventType: 'ai_help_opened',
+      createdAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(learnerDb, 'interactionEvents', 'event-create-spoofed-actor'), {
+      siteId: 'site1',
+      actorId: educatorUser.uid,
+      eventType: 'ai_help_opened',
+      createdAt: Date.now(),
+    }));
   });
 });
 
@@ -3858,6 +3888,39 @@ describe('Showcase Submissions Collection', () => {
 });
 
 describe('Learner Support and Assessment Boundary Collections', () => {
+  test('assessment instruments require same-site or HQ reads', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'assessmentInstruments', 'instrument-site1'), {
+        siteId: 'site1',
+        title: 'Studio pre-check',
+        type: 'pre_test',
+        items: [],
+      });
+      await setDoc(doc(adminDb, 'assessmentInstruments', 'instrument-nosite'), {
+        title: 'Legacy unscoped instrument',
+        type: 'pre_test',
+        items: [],
+      });
+      await setDoc(doc(adminDb, 'assessmentInstruments', 'instrument-site2'), {
+        siteId: 'site2',
+        title: 'Other site pre-check',
+        type: 'pre_test',
+        items: [],
+      });
+    });
+
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'assessmentInstruments', 'instrument-site1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'assessmentInstruments', 'instrument-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'assessmentInstruments', 'instrument-nosite')));
+    await assertFails(getDoc(doc(educatorDb, 'assessmentInstruments', 'instrument-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'assessmentInstruments', 'instrument-site2')));
+  });
+
   test('student assents require site scope for learner create and read', async () => {
     const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
     const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
@@ -5442,6 +5505,97 @@ describe('Credentials Access', () => {
 });
 
 describe('Messaging Rules', () => {
+  test('message threads require site scope and participant access', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const parentDb = testEnv.authenticatedContext(parentUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(parentDb, 'messageThreads', 'thread-1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'messageThreads', 'thread-1')));
+
+    await assertSucceeds(setDoc(doc(educatorDb, 'messageThreads', 'thread-new'), {
+      siteId: 'site1',
+      participantIds: [educatorUser.uid, parentUser.uid],
+      participantNames: ['Educator One', 'Parent One'],
+      title: 'New family follow-up',
+      status: 'open',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(educatorDb, 'messageThreads', 'thread-missing-site'), {
+      participantIds: [educatorUser.uid, parentUser.uid],
+      title: 'Missing site thread',
+      status: 'open',
+    }));
+    await assertFails(setDoc(doc(educatorDb, 'messageThreads', 'thread-wrong-site'), {
+      siteId: 'site2',
+      participantIds: [educatorUser.uid, parentUser.uid],
+      title: 'Wrong site thread',
+      status: 'open',
+    }));
+  });
+
+  test('message thread updates preserve participants, site, and sender identity', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+
+    await assertSucceeds(updateDoc(doc(educatorDb, 'messageThreads', 'thread-1'), {
+      lastMessagePreview: 'Updated preview',
+      lastMessageSenderId: educatorUser.uid,
+      updatedAt: Date.now(),
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'messageThreads', 'thread-1'), {
+      participantIds: [educatorUser.uid, learnerUser.uid],
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'messageThreads', 'thread-1'), {
+      siteId: 'site2',
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'messageThreads', 'thread-1'), {
+      lastMessageSenderId: parentUser.uid,
+    }));
+  });
+
+  test('message creates require matching site-scoped thread participants', async () => {
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(setDoc(doc(educatorDb, 'messages', 'message-new'), {
+      siteId: 'site1',
+      threadId: 'thread-1',
+      recipientId: parentUser.uid,
+      senderId: educatorUser.uid,
+      title: 'Follow-up',
+      body: 'Please review this.',
+      type: 'direct',
+      isRead: false,
+      status: 'sent',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+    await assertFails(setDoc(doc(educatorDb, 'messages', 'message-missing-site'), {
+      threadId: 'thread-1',
+      recipientId: parentUser.uid,
+      senderId: educatorUser.uid,
+      title: 'Missing site',
+      body: 'No site.',
+    }));
+    await assertFails(setDoc(doc(educatorDb, 'messages', 'message-wrong-thread-site'), {
+      siteId: 'site2',
+      threadId: 'thread-1',
+      recipientId: parentUser.uid,
+      senderId: educatorUser.uid,
+      title: 'Wrong site',
+      body: 'Wrong site.',
+    }));
+    await assertFails(setDoc(doc(otherSiteDb, 'messages', 'message-nonparticipant'), {
+      siteId: 'site1',
+      threadId: 'thread-1',
+      recipientId: parentUser.uid,
+      senderId: otherSiteUser.uid,
+      title: 'Not a participant',
+      body: 'Should fail.',
+    }));
+  });
+
   test('recipient can mark message as read', async () => {
     const db = testEnv.authenticatedContext(parentUser.uid).firestore();
     await assertSucceeds(updateDoc(doc(db, 'messages', 'message-1'), {
@@ -5464,6 +5618,8 @@ describe('Messaging Rules', () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const adminDb = context.firestore();
       await setDoc(doc(adminDb, 'messages', 'message-delete'), {
+        siteId: 'site1',
+        threadId: 'thread-1',
         recipientId: parentUser.uid,
         senderId: educatorUser.uid,
         title: 'Delete me',
@@ -5482,17 +5638,43 @@ describe('Mission Step Governance Rules', () => {
   test('mission steps are readable reference content but only HQ can manage them', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'missions', 'mission-governed'), {
+        siteId: 'site1',
+        title: 'Governed Mission',
+        status: 'published',
+      });
+      await setDoc(doc(adminDb, 'missions', 'mission-global'), {
+        title: 'Global Mission',
+        status: 'published',
+      });
+      await setDoc(doc(adminDb, 'missions', 'mission-site2'), {
+        siteId: 'site2',
+        title: 'Other Site Mission',
+        status: 'published',
+      });
       await setDoc(doc(adminDb, 'missions', 'mission-governed', 'steps', 'step-1'), {
         title: 'Launch challenge',
+        order: 1,
+      });
+      await setDoc(doc(adminDb, 'missions', 'mission-site2', 'steps', 'step-1'), {
+        title: 'Other site launch challenge',
         order: 1,
       });
     });
 
     const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
     const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
     const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
 
+    await assertSucceeds(getDoc(doc(learnerDb, 'missions', 'mission-governed')));
+    await assertSucceeds(getDoc(doc(learnerDb, 'missions', 'mission-global')));
+    await assertFails(getDoc(doc(learnerDb, 'missions', 'mission-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'missions', 'mission-site2')));
     await assertSucceeds(getDoc(doc(learnerDb, 'missions', 'mission-governed', 'steps', 'step-1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'missions', 'mission-governed', 'steps', 'step-1')));
+    await assertFails(getDoc(doc(learnerDb, 'missions', 'mission-site2', 'steps', 'step-1')));
+    await assertSucceeds(getDoc(doc(hqDb, 'missions', 'mission-site2', 'steps', 'step-1')));
     await assertSucceeds(setDoc(doc(hqDb, 'missions', 'mission-governed', 'steps', 'step-hq'), {
       title: 'HQ-authored step',
       order: 2,
@@ -5953,8 +6135,31 @@ describe('Rubric Governance Rules', () => {
         status: 'draft',
         createdBy: hqUser.uid,
       });
+      await setDoc(doc(adminDb, 'rubrics', 'rubric-site1'), {
+        siteId: 'site1',
+        title: 'Site 1 Systems Thinking L1-L4',
+        capabilityId: 'capability-systems-thinking',
+        levelCount: 4,
+        status: 'draft',
+        createdBy: hqUser.uid,
+      });
+      await setDoc(doc(adminDb, 'rubrics', 'rubric-site2'), {
+        siteId: 'site2',
+        title: 'Site 2 Systems Thinking L1-L4',
+        capabilityId: 'capability-systems-thinking',
+        levelCount: 4,
+        status: 'draft',
+        createdBy: hqUser.uid,
+      });
       await setDoc(doc(adminDb, 'assessmentRubrics', 'assessment-rubric-1'), {
         title: 'Evidence Reasoning',
+        capabilityIds: ['capability-evidence-reasoning'],
+        status: 'published',
+        createdBy: hqUser.uid,
+      });
+      await setDoc(doc(adminDb, 'assessmentRubrics', 'assessment-rubric-site2'), {
+        siteId: 'site2',
+        title: 'Other Site Evidence Reasoning',
         capabilityIds: ['capability-evidence-reasoning'],
         status: 'published',
         createdBy: hqUser.uid,
@@ -5990,7 +6195,12 @@ describe('Rubric Governance Rules', () => {
     const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
 
     await assertSucceeds(getDoc(doc(learnerDb, 'rubrics', 'rubric-1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'rubrics', 'rubric-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'rubrics', 'rubric-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'rubrics', 'rubric-site2')));
     await assertSucceeds(getDoc(doc(educatorDb, 'assessmentRubrics', 'assessment-rubric-1')));
+    await assertFails(getDoc(doc(educatorDb, 'assessmentRubrics', 'assessment-rubric-site2')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'assessmentRubrics', 'assessment-rubric-site2')));
     await assertSucceeds(getDoc(doc(educatorDb, 'rubricTemplates', 'rubric-template-site1')));
     await assertSucceeds(getDoc(doc(hqDb, 'rubricTemplates', 'rubric-template-site1')));
     await assertFails(getDoc(doc(otherSiteDb, 'rubricTemplates', 'rubric-template-site1')));
@@ -6046,6 +6256,157 @@ describe('Rubric Governance Rules', () => {
     }));
     await assertSucceeds(deleteDoc(doc(hqDb, 'rubrics', 'rubric-1')));
     await assertFails(deleteDoc(doc(educatorDb, 'assessmentRubrics', 'assessment-rubric-1')));
+  });
+});
+
+describe('Capability Framework Reference Rules', () => {
+  test('program and course catalogs respect optional site or legacy studio scope', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'programs', 'program-global'), {
+        name: 'Global Studio Program',
+        active: true,
+      });
+      await setDoc(doc(adminDb, 'programs', 'program-site1'), {
+        siteId: 'site1',
+        name: 'Site 1 Program',
+        active: true,
+      });
+      await setDoc(doc(adminDb, 'programs', 'program-site2'), {
+        siteId: 'site2',
+        name: 'Site 2 Program',
+        active: true,
+      });
+      await setDoc(doc(adminDb, 'programs', 'program-studio-site1'), {
+        studioId: 'site1',
+        name: 'Legacy Site 1 Studio Program',
+        active: true,
+      });
+      await setDoc(doc(adminDb, 'courses', 'course-site1'), {
+        siteId: 'site1',
+        name: 'Site 1 Course',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'courses', 'course-site2'), {
+        siteId: 'site2',
+        name: 'Site 2 Course',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'courses', 'course-global'), {
+        name: 'Global Course',
+        status: 'active',
+      });
+    });
+
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'programs', 'program-global')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'programs', 'program-site1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'programs', 'program-studio-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'programs', 'program-site2')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'programs', 'program-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'programs', 'program-site2')));
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'courses', 'course-global')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'courses', 'course-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'courses', 'course-site2')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'courses', 'course-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'courses', 'course-site2')));
+  });
+
+  test('capability and process-domain definitions respect optional site scope', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'capabilities', 'capability-global'), {
+        title: 'Global Systems Thinking',
+        pillarCode: 'future_skills',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'capabilities', 'capability-site1'), {
+        siteId: 'site1',
+        title: 'Site 1 Systems Thinking',
+        pillarCode: 'future_skills',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'capabilities', 'capability-site2'), {
+        siteId: 'site2',
+        title: 'Site 2 Systems Thinking',
+        pillarCode: 'future_skills',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'processDomains', 'process-domain-global'), {
+        title: 'Global Collaboration',
+        pillarCode: 'leadership',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'processDomains', 'process-domain-site1'), {
+        siteId: 'site1',
+        title: 'Site 1 Collaboration',
+        pillarCode: 'leadership',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'processDomains', 'process-domain-site2'), {
+        siteId: 'site2',
+        title: 'Site 2 Collaboration',
+        pillarCode: 'leadership',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'microSkills', 'micro-skill-site1'), {
+        siteId: 'site1',
+        name: 'Evidence-backed explanation',
+        pillarCode: 'future_skills',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'microSkills', 'micro-skill-site2'), {
+        siteId: 'site2',
+        name: 'Peer critique',
+        pillarCode: 'leadership',
+        status: 'active',
+      });
+      await setDoc(doc(adminDb, 'commonMisconceptions', 'misconception-global'), {
+        misconception: 'Robust evidence means more files, not better provenance.',
+        correctUnderstanding: 'Evidence quality depends on provenance and explanation.',
+        isActive: true,
+      });
+      await setDoc(doc(adminDb, 'commonMisconceptions', 'misconception-site1'), {
+        siteId: 'site1',
+        misconception: 'Prototype completion proves capability mastery.',
+        correctUnderstanding: 'Capability claims require verified evidence over time.',
+        isActive: true,
+      });
+      await setDoc(doc(adminDb, 'commonMisconceptions', 'misconception-site2'), {
+        siteId: 'site2',
+        misconception: 'A reflection alone verifies authentic understanding.',
+        correctUnderstanding: 'Reflection must be paired with proof-of-learning.',
+        isActive: true,
+      });
+    });
+
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'capabilities', 'capability-global')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'capabilities', 'capability-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'capabilities', 'capability-site2')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'capabilities', 'capability-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'capabilities', 'capability-site2')));
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'processDomains', 'process-domain-global')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'processDomains', 'process-domain-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'processDomains', 'process-domain-site2')));
+    await assertSucceeds(getDoc(doc(otherSiteDb, 'processDomains', 'process-domain-site2')));
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'microSkills', 'micro-skill-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'microSkills', 'micro-skill-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'microSkills', 'micro-skill-site2')));
+
+    await assertSucceeds(getDoc(doc(educatorDb, 'commonMisconceptions', 'misconception-global')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'commonMisconceptions', 'misconception-site1')));
+    await assertFails(getDoc(doc(educatorDb, 'commonMisconceptions', 'misconception-site2')));
+    await assertSucceeds(getDoc(doc(hqDb, 'commonMisconceptions', 'misconception-site2')));
   });
 });
 
