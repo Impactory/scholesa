@@ -30,7 +30,7 @@ if [[ "$failures" -gt 0 ]]; then
   cat <<EOF
 [native-readiness] Native-channel distribution is not gold-ready.
 [native-readiness] Blocked checks: $failures
-[native-readiness] Resolve the missing .p8-authorized signing/store credentials, rerun this script, then capture live TestFlight, Google Play internal, and macOS notarization proof before claiming native-channel Gold.
+[native-readiness] Resolve the blocked signing/store credential or app-permission checks, rerun this script, then capture live TestFlight, Google Play internal, and macOS notarization proof before claiming native-channel Gold.
 EOF
   exit 1
 fi
