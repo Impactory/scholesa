@@ -401,7 +401,7 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
     uid: 'synthetic-miloos-gold-site-lead',
     displayName: 'Synthetic MiloOS Site Lead',
     email: 'miloos.site@synthetic.scholesa.test',
-    role: 'siteLead',
+    role: 'site',
     siteIds: [siteId],
     activeSiteId: siteId,
     synthetic: true,

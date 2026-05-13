@@ -32,7 +32,7 @@ Deployment continuation order:
 2. Re-run focused verification for the proof queue, Firestore index coverage, theme icon controls, evidence-chain contracts, and navigation/logo contracts.
 3. Re-run broad non-mutating local gates.
 4. Verify Firebase index readiness for all release-critical proof/verification, dashboard, role-cutover, and evidence-chain query shapes.
-5. Confirm the current `gold-rehearsal` no-traffic web revision remains `scholesa-web-00049-rmm` or create a newer current-worktree no-traffic web revision if additional web changes land.
+5. Confirm the current `gold-rehearsal` no-traffic web revision remains `scholesa-web-00069-qiy` or create a newer current-worktree no-traffic web revision if additional web changes land.
 6. Smoke the tagged rehearsal URL before any traffic movement.
 7. Preserve the May 8 authenticated browser note: `/en/educator/proof-review` and `/en/educator/verification` render `Proof-of-Learning Verification` without `Failed to load verification queue`, and the theme switch exposes `System`, `Light`, and `Dark` only through `aria-label`/`title`, not visible text.
 8. Ask the release owner to choose exactly one final control: traffic promotion, rollback drill, or documented traffic-pinning acceptance.

@@ -96,28 +96,40 @@ function buildModeConfig(t: (key: string) => string) {
   }>;
 }
 
-function buildVoiceTransparencyMessage(metadata: VoiceTransparencyMeta): string | null {
+function buildVoiceTransparencyMessage(
+  metadata: VoiceTransparencyMeta,
+  inputModality: MiloOSInputModality,
+): string | null {
   const understandingSource = metadata.understandingSource ?? null;
   const responseGenerationSource = metadata.responseGenerationSource ?? null;
   const understandingConfidence = metadata.understanding?.confidence ?? null;
 
   if (responseGenerationSource === 'guardrail' && understandingSource === 'heuristic') {
+    if (inputModality === 'typed') {
+      return 'MiloOS is being careful here because it could not verify enough context for this typed request yet.';
+    }
     return 'MiloOS is being careful here because it could not understand the voice request clearly enough yet.';
   }
   if (responseGenerationSource === 'local' && understandingSource === 'heuristic') {
+    if (inputModality === 'typed') {
+      return 'MiloOS answered with a local evidence scaffold. Treat this as a thinking prompt, not a verified capability judgment.';
+    }
     return 'MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
   }
   if (responseGenerationSource === 'model' && understandingSource === 'heuristic') {
+    if (inputModality === 'typed') {
+      return 'MiloOS used the model to write the reply, with local checks around the typed request.';
+    }
     return 'MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.';
   }
   if (understandingSource === 'blended') {
     const confidenceText = typeof understandingConfidence === 'number'
       ? ` Confidence in that reading: ${Math.round(understandingConfidence * 100)}%.`
       : '';
-    return `MiloOS used both a quick local check and model support to understand this voice turn.${confidenceText}`;
+    return `MiloOS used both a quick local check and model support to understand this ${inputModality} turn.${confidenceText}`;
   }
   if (understandingSource === 'model') {
-    return 'MiloOS used model support to understand this voice turn.';
+    return `MiloOS used model support to understand this ${inputModality} turn.`;
   }
   return null;
 }
@@ -468,7 +480,7 @@ Guidance: ${
         });
       }
       setVoiceInputTraceId(inputModality === 'voice' ? voiceResponse.metadata.traceId : null);
-      setVoiceTransparencyMessage(buildVoiceTransparencyMessage(voiceResponse.metadata));
+      setVoiceTransparencyMessage(buildVoiceTransparencyMessage(voiceResponse.metadata, inputModality));
 
       setResponse(aiResponse);
       const audioUrl = voiceResponse.tts.available ? (voiceResponse.tts.audioUrl ?? null) : null;
@@ -598,7 +610,7 @@ Guidance: ${
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 bg-app-surface-raised rounded-lg shadow-2xl border border-app z-50 flex flex-col max-h-[600px]">
+    <div className="fixed bottom-6 right-6 z-50 flex max-h-[calc(100vh-3rem)] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-lg border border-app bg-app-surface-raised shadow-2xl">
       {/* Header */}
       <div className="bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 rounded-t-lg p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
@@ -791,7 +803,7 @@ Guidance: ${
             </div>
 
             <div className="rounded-lg border border-app bg-app-surface-muted p-3 text-sm">
-              <p className="font-medium text-app-foreground">MiloOS response transcript</p>
+              <p className="font-medium text-app-foreground">{t('aiCoach.responseTranscript')}</p>
               <p className="mt-2 whitespace-pre-wrap text-app-muted">
                 {response.answer.trim()}
               </p>

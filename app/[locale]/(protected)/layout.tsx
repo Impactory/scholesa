@@ -57,7 +57,7 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
           <section
             className="rounded-md border border-cyan-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-            aria-label="Gold evidence cockpit"
+            aria-label={t('goldShell.ariaLabel')}
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-3">
@@ -66,14 +66,13 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div>
                   <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">
-                    Current Gold operating surface
+                    {t('goldShell.kicker')}
                   </p>
                   <h1 className="mt-1 text-xl font-bold text-slate-950 dark:text-white">
-                    Evidence chain cockpit
+                    {t('goldShell.title')}
                   </h1>
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    Capture, verify, interpret, and communicate learner capability evidence with
-                    provenance across the active role view.
+                    {t('goldShell.body')}
                   </p>
                 </div>
               </div>
@@ -81,23 +80,23 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
                   <div className="flex items-center gap-2 text-sm font-bold text-emerald-800 dark:text-emerald-200">
                     <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                    Web GO
+                    {t('goldShell.webGo')}
                   </div>
-                  <p className="mt-1 text-xs text-emerald-900 dark:text-emerald-100">Cloud Run evidence packet</p>
+                  <p className="mt-1 text-xs text-emerald-900 dark:text-emerald-100">{t('goldShell.cloudRunPacket')}</p>
                 </div>
                 <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
                   <div className="flex items-center gap-2 text-sm font-bold text-blue-800 dark:text-blue-200">
                     <Network className="h-4 w-4" aria-hidden="true" />
                     {profile?.role || 'role'}
                   </div>
-                  <p className="mt-1 text-xs text-blue-900 dark:text-blue-100">Role-scoped evidence view</p>
+                  <p className="mt-1 text-xs text-blue-900 dark:text-blue-100">{t('goldShell.roleScopedView')}</p>
                 </div>
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
                   <div className="flex items-center gap-2 text-sm font-bold text-amber-900 dark:text-amber-100">
                     <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                    Native gated
+                    {t('goldShell.nativeGated')}
                   </div>
-                  <p className="mt-1 text-xs text-amber-950 dark:text-amber-100">Store proof still required</p>
+                  <p className="mt-1 text-xs text-amber-950 dark:text-amber-100">{t('goldShell.storeProofRequired')}</p>
                 </div>
               </div>
             </div>

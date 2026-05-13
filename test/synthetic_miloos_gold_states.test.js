@@ -37,7 +37,7 @@ describe('synthetic MiloOS gold-readiness states', () => {
       activeSiteId: 'synthetic-site-miloos-gold',
     });
     expect(users.get('synthetic-miloos-gold-site-lead')).toMatchObject({
-      role: 'siteLead',
+      role: 'site',
       siteIds: ['synthetic-site-miloos-gold'],
       activeSiteId: 'synthetic-site-miloos-gold',
     });

@@ -23,9 +23,64 @@
   "landing": {
     "title": "Scholesa",
     "tagline": "Skills-first learning OS. Empowering learners, educators, and communities.",
+    "heroEyebrow": "Capability learning, made visible",
+    "heroTitle": "The proof engine for real capability growth.",
+    "heroBody": "Scholesa turns classroom moments into inspectable proof: observations, learner artifacts, explain-backs, rubric judgments, growth history, portfolios, reports, and partner deliverables all tied to the evidence that earned the claim.",
+    "primaryCta": "Enter the evidence engine",
+    "proofFlowCta": "See the Proof Flow",
+    "commandCenterTitle": "Evidence command center",
+    "commandCenterSubtitle": "Capture, verify, interpret, and communicate growth.",
+    "trustedBadge": "Trusted",
+    "commandCenterQuestion": "Every view is designed to answer the same question: what can this learner do, and what evidence makes that claim trustworthy?",
     "loginCta": "Log in",
     "registerCta": "Register",
-    "registerArrow": "Register →"
+    "registerArrow": "Register →",
+    "homeAria": "Scholesa home",
+    "brandSubtitle": "Evidence OS",
+    "publicNavigationAria": "Public navigation",
+    "evidenceCommandCenterAria": "Evidence command center",
+    "evidenceChainAria": "Evidence chain",
+    "evidenceChain": {
+      "hqFramework": { "label": "HQ framework", "detail": "capabilities, rubrics, checkpoints" },
+      "liveSession": { "label": "Live session", "detail": "teacher capture during studio time" },
+      "learnerProof": { "label": "Learner proof", "detail": "artifact, reflection, explain-back" },
+      "growthUpdate": { "label": "Growth update", "detail": "rubric-linked capability history" },
+      "portfolioOutput": { "label": "Portfolio output", "detail": "best evidence with provenance" }
+    },
+    "proofLanes": {
+      "capture": { "label": "Capture", "value": "live observations" },
+      "verify": { "label": "Verify", "value": "proof review" },
+      "interpret": { "label": "Interpret", "value": "growth events" },
+      "communicate": { "label": "Communicate", "value": "portfolio + Passport" }
+    },
+    "roleSurfacesKicker": "Role surfaces",
+    "roleSurfacesTitle": "Six roles. One chain of truth.",
+    "roleSurfacesBody": "Learners see what they are creating. Educators capture proof in the moment. Families, schools, HQ, and partners see the evidence behind every claim.",
+    "roles": {
+      "learner": { "label": "Learner", "proof": "missions, proof prompts, portfolio evidence" },
+      "educator": { "label": "Educator", "proof": "quick capture, proof review, verification queue" },
+      "guardian": { "label": "Guardian", "proof": "capability progress with evidence links" },
+      "school": { "label": "School", "proof": "implementation health and evidence coverage" },
+      "hq": { "label": "HQ", "proof": "framework governance and rubric structure" },
+      "partner": { "label": "Partner", "proof": "evidence-facing deliverables and contracts" }
+    },
+    "trustTitle": "Trust you can inspect",
+    "trustSignals": {
+      "claimEvidence": "Every learner claim can point back to evidence, context, and reviewer judgment",
+      "educatorCapture": "Educators can capture meaningful observations during the live flow of class",
+      "familyProgress": "Families see capability progress without reducing growth to marks or averages",
+      "leaderCoverage": "School and HQ teams can trace implementation health through evidence coverage"
+    },
+    "accountableTitle": "Built for accountable growth",
+    "trustOutcomes": {
+      "learners": { "label": "Learners", "detail": "know what they are creating, what they can explain, and what belongs in their portfolio" },
+      "educators": { "label": "Educators", "detail": "see the next evidence action without losing the rhythm of studio time" },
+      "families": { "label": "Families", "detail": "understand growth through real work, not vague summaries or unexplained scores" },
+      "leaders": { "label": "Leaders", "detail": "spot evidence gaps, support teachers, and protect the integrity of every claim" }
+    },
+    "finalCtaTitle": "Make growth impossible to miss.",
+    "finalCtaBody": "Bring proof, reflection, feedback, and portfolio-worthy work into one clear flow.",
+    "signInCta": "Sign in"
   },
   "auth": {
     "login": {
@@ -90,7 +145,19 @@
     "themeLabel": "Theme",
     "themeSystem": "System",
     "themeLight": "Light",
-    "themeDark": "Dark"
+    "themeDark": "Dark",
+    "dashboardAria": "Scholesa dashboard"
+  },
+  "goldShell": {
+    "ariaLabel": "Gold evidence cockpit",
+    "kicker": "Current Gold operating surface",
+    "title": "Evidence chain cockpit",
+    "body": "Capture, verify, interpret, and communicate learner capability evidence with provenance across the active role view.",
+    "webGo": "Web GO",
+    "cloudRunPacket": "Cloud Run evidence packet",
+    "roleScopedView": "Role-scoped evidence view",
+    "nativeGated": "Native gated",
+    "storeProofRequired": "Store proof still required"
   },
   "dashboard": {
     "redirecting": "Redirecting to your dashboard..."
@@ -527,6 +594,7 @@
     "tooltip": "Ask for help",
     "openAria": "Open MiloOS",
     "minimizeAria": "Minimize MiloOS",
+    "responseTranscript": "MiloOS response transcript",
     "teacherGuidance": "Check with your teacher before using MiloOS.",
     "howCanIHelp": "How can I help you today?",
     "mode": {

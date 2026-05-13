@@ -40,7 +40,9 @@ function includeByName(fullPath, relativePath) {
   // Compliance scanners intentionally contain banned markers for detection logic.
   if (relativePath.startsWith('scripts/compliance/')) return false;
   if (relativePath === 'scripts/scan.sh') return false;
-  // Ignore generated iOS Ruby/Bundler trees. They are tooling artifacts, not app runtime code.
+  // Ignore generated Flutter Ruby/Bundler trees. They are tooling artifacts, not app runtime code.
+  if (relativePath.startsWith('apps/empire_flutter/app/android/vendor/')) return false;
+  if (relativePath.startsWith('apps/empire_flutter/app/android/.bundle/')) return false;
   if (relativePath.startsWith('apps/empire_flutter/app/ios/vendor/')) return false;
   if (relativePath.startsWith('apps/empire_flutter/app/ios/.bundle/')) return false;
   const base = path.basename(fullPath);

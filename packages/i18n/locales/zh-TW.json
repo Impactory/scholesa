@@ -23,9 +23,64 @@
   "landing": {
     "title": "Scholesa",
     "tagline": "未來技能學院。賦能學習者、教育者與社群。",
+    "heroEyebrow": "讓能力學習被清楚看見",
+    "heroTitle": "讓真實能力成長擁有可驗證證據。",
+    "heroBody": "Scholesa 把課堂中的關鍵時刻轉化為可檢查的證明：觀察紀錄、學習者作品、獨立講解、量規判斷、成長歷史、作品集、報告和合作交付，都連接到支撐能力聲明的真實證據。",
+    "primaryCta": "進入證據引擎",
+    "proofFlowCta": "查看證明流程",
+    "commandCenterTitle": "證據指揮中心",
+    "commandCenterSubtitle": "捕捉、驗證、解讀並傳達成長。",
+    "trustedBadge": "可信",
+    "commandCenterQuestion": "每個視圖都回答同一個問題：這位學習者現在能做什麼，哪些證據讓這個聲明值得信任？",
     "loginCta": "登入",
     "registerCta": "註冊",
-    "registerArrow": "註冊 →"
+    "registerArrow": "註冊 →",
+    "homeAria": "Scholesa 首頁",
+    "brandSubtitle": "證據系統",
+    "publicNavigationAria": "公開導覽",
+    "evidenceCommandCenterAria": "證據指揮中心",
+    "evidenceChainAria": "證據鏈",
+    "evidenceChain": {
+      "hqFramework": { "label": "總部框架", "detail": "能力、量規、檢查點" },
+      "liveSession": { "label": "即時課堂", "detail": "教師在工作室時間內記錄" },
+      "learnerProof": { "label": "學習者證明", "detail": "作品、反思、獨立講解" },
+      "growthUpdate": { "label": "成長更新", "detail": "連接量規的能力歷史" },
+      "portfolioOutput": { "label": "作品集輸出", "detail": "帶來源的最佳證據" }
+    },
+    "proofLanes": {
+      "capture": { "label": "捕捉", "value": "即時觀察" },
+      "verify": { "label": "驗證", "value": "證明審核" },
+      "interpret": { "label": "解讀", "value": "成長事件" },
+      "communicate": { "label": "傳達", "value": "作品集 + Passport" }
+    },
+    "roleSurfacesKicker": "角色介面",
+    "roleSurfacesTitle": "六個角色。一條真實證據鏈。",
+    "roleSurfacesBody": "學習者看到自己正在創造什麼。教育者在當下記錄證明。家庭、學校、總部和合作夥伴都能看到每個聲明背後的證據。",
+    "roles": {
+      "learner": { "label": "學習者", "proof": "任務、證明提示、作品集證據" },
+      "educator": { "label": "教育者", "proof": "快速記錄、證明審核、驗證佇列" },
+      "guardian": { "label": "監護人", "proof": "帶證據連結的能力進展" },
+      "school": { "label": "學校", "proof": "實施健康度與證據覆蓋" },
+      "hq": { "label": "總部", "proof": "框架治理與量規結構" },
+      "partner": { "label": "合作夥伴", "proof": "面向證據的交付與合約" }
+    },
+    "trustTitle": "可檢查的信任",
+    "trustSignals": {
+      "claimEvidence": "每個學習者聲明都能回到證據、情境和審核判斷",
+      "educatorCapture": "教育者能在課堂現場記錄有意義的觀察",
+      "familyProgress": "家庭能看到能力進展，而不是被分數或平均值取代",
+      "leaderCoverage": "學校和總部能透過證據覆蓋追蹤實施健康度"
+    },
+    "accountableTitle": "為負責任的成長而建",
+    "trustOutcomes": {
+      "learners": { "label": "學習者", "detail": "知道自己在創造什麼、能解釋什麼，以及哪些內容屬於作品集" },
+      "educators": { "label": "教育者", "detail": "在不打斷課堂節奏的情況下看到下一步證據行動" },
+      "families": { "label": "家庭", "detail": "透過真實作品理解成長，而不是模糊摘要或無法解釋的分數" },
+      "leaders": { "label": "領導者", "detail": "發現證據缺口、支持教師，並保護每個聲明的可信度" }
+    },
+    "finalCtaTitle": "讓成長無法被忽略。",
+    "finalCtaBody": "把證明、反思、回饋和可進入作品集的成果放進一條清晰流程。",
+    "signInCta": "登入"
   },
   "auth": {
     "login": {
@@ -90,7 +145,19 @@
     "themeLabel": "主題",
     "themeSystem": "跟隨系統",
     "themeLight": "淺色",
-    "themeDark": "深色"
+    "themeDark": "深色",
+    "dashboardAria": "Scholesa 控制台"
+  },
+  "goldShell": {
+    "ariaLabel": "Gold 證據駕駛艙",
+    "kicker": "目前 Gold 運行介面",
+    "title": "證據鏈駕駛艙",
+    "body": "在目前角色視圖中，帶著來源捕捉、驗證、解讀並傳達學習者能力證據。",
+    "webGo": "Web 可用",
+    "cloudRunPacket": "Cloud Run 證據包",
+    "roleScopedView": "按角色限定的證據視圖",
+    "nativeGated": "原生端受門禁控制",
+    "storeProofRequired": "仍需商店發布證明"
   },
   "dashboard": {
     "redirecting": "正在導向您的儀表板..."
@@ -527,6 +594,7 @@
     "tooltip": "取得幫助",
     "openAria": "開啟 MiloOS",
     "minimizeAria": "收起 MiloOS",
+    "responseTranscript": "MiloOS 回覆文字記錄",
     "teacherGuidance": "使用 MiloOS 前，請先和老師確認。",
     "howCanIHelp": "今天我可以怎麼幫你？",
     "mode": {

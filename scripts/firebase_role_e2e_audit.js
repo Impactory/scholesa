@@ -3,6 +3,14 @@
 const { initializeFirebaseRestClients, resolveProjectId } = require('./firebase_runtime_auth');
 
 const VALID_ROLES = new Set(['learner', 'educator', 'parent', 'site', 'partner', 'hq']);
+const ROLE_ALIASES = new Map([
+  ['student', 'learner'],
+  ['teacher', 'educator'],
+  ['guardian', 'parent'],
+  ['sitelead', 'site'],
+  ['site_lead', 'site'],
+  ['admin', 'hq'],
+]);
 const argv = process.argv.slice(2);
 const strict = argv.includes('--strict');
 const json = argv.includes('--json');
@@ -12,6 +20,14 @@ const projectId =
   '';
 
 const { db, auth } = initializeFirebaseRestClients({ projectId });
+
+function normalizeRole(role) {
+  if (typeof role !== 'string') return '';
+  const trimmed = role.trim();
+  if (!trimmed) return '';
+  const lowered = trimmed.toLowerCase();
+  return ROLE_ALIASES.get(lowered) || trimmed;
+}
 
 async function listAuthUsers(auth) {
   const users = new Map();
@@ -50,12 +66,13 @@ async function main() {
 
   for (const [uid, data] of firestoreUsers) {
     const role = typeof data.role === 'string' ? data.role.trim() : '';
+    const normalizedRole = normalizeRole(role);
     report.firestoreRoles[role || '__missing__'] =
       (report.firestoreRoles[role || '__missing__'] || 0) + 1;
 
     if (!role) {
       report.missingFirestoreRoles.push({ uid, email: data.email || null });
-    } else if (!VALID_ROLES.has(role)) {
+    } else if (!VALID_ROLES.has(normalizedRole)) {
       report.invalidFirestoreRoles.push({ uid, role, email: data.email || null });
     }
 
@@ -65,7 +82,7 @@ async function main() {
 
     const siteIds = Array.isArray(data.siteIds) ? data.siteIds.filter(Boolean) : [];
     const activeSiteId = typeof data.activeSiteId === 'string' ? data.activeSiteId.trim() : '';
-    const requiresSite = role === 'educator' || role === 'parent' || role === 'site' || role === 'partner';
+    const requiresSite = normalizedRole === 'educator' || normalizedRole === 'parent' || normalizedRole === 'site' || normalizedRole === 'partner';
     if (requiresSite && !activeSiteId && siteIds.length === 0) {
       report.missingSiteContext.push({ uid, role, email: data.email || null });
     }
@@ -76,14 +93,15 @@ async function main() {
       continue;
     }
 
-    const claimRole = typeof authUser.customClaims?.role === 'string'
+    const rawClaimRole = typeof authUser.customClaims?.role === 'string'
       ? authUser.customClaims.role.trim()
       : '';
+    const claimRole = normalizeRole(rawClaimRole);
     if (role && !claimRole) {
       report.missingAuthRoleClaims.push({ uid, email: data.email || authUser.email || null, role });
     }
-    if (claimRole && role && claimRole !== role) {
-      report.mismatchedRoles.push({ uid, email: data.email || authUser.email || null, firestoreRole: role, claimRole });
+    if (claimRole && normalizedRole && claimRole !== normalizedRole) {
+      report.mismatchedRoles.push({ uid, email: data.email || authUser.email || null, firestoreRole: role, claimRole: rawClaimRole });
     }
   }
 

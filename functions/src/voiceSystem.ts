@@ -47,6 +47,7 @@ const TELEMETRY_COLLECTION = 'telemetryEvents';
 const BOS_INTERACTION_COLLECTION = 'interactionEvents';
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
 const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
+const AUDIO_TOKEN_TTL_MS = 10 * 60 * 1000;
 
 const LOW_CONFIDENCE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
   en: 'I want to be careful here. Tell me what you have already tried, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
@@ -2060,8 +2061,23 @@ function signPayload(payloadBase64: string): string {
     .replace(/=+$/g, '');
 }
 
-function createAudioToken(payload: AudioTokenPayload): string {
-  const json = JSON.stringify(payload);
+function audioTokenChecksum(payload: Omit<AudioTokenPayload, 'checksum'>): string {
+  return createHash('sha256')
+    .update(`${payload.traceId}|${payload.locale}|${payload.voiceProfile}|${payload.text}|${payload.expMs}`)
+    .digest('hex');
+}
+
+function createAudioToken(
+  payload: Omit<AudioTokenPayload, 'expMs' | 'checksum'> & Partial<Pick<AudioTokenPayload, 'expMs'>>,
+): string {
+  const maxExpMs = Date.now() + AUDIO_TOKEN_TTL_MS;
+  const expMs = payload.expMs ? Math.min(payload.expMs, maxExpMs) : maxExpMs;
+  const tokenPayload: AudioTokenPayload = {
+    ...payload,
+    expMs,
+    checksum: audioTokenChecksum({ ...payload, expMs }),
+  };
+  const json = JSON.stringify(tokenPayload);
   const encoded = encodeBase64Url(json);
   const signature = signPayload(encoded);
   return `${encoded}.${signature}`;
@@ -2081,9 +2097,7 @@ function verifyAudioToken(token: string): AudioTokenPayload {
   if (!parsed.expMs || Date.now() > parsed.expMs) {
     throw new VoiceHttpError(410, 'expired_token', 'Audio token has expired.');
   }
-  const checksum = createHash('sha256')
-    .update(`${parsed.traceId}|${parsed.locale}|${parsed.voiceProfile}|${parsed.text}|${parsed.expMs}`)
-    .digest('hex');
+  const checksum = audioTokenChecksum(parsed);
   if (parsed.checksum !== checksum) {
     throw new VoiceHttpError(403, 'invalid_token', 'Audio token payload checksum mismatch.');
   }

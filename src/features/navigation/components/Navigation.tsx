@@ -51,7 +51,7 @@ export function Navigation() {
               <Link
                 href={`/${locale}/dashboard`}
                 className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-primary"
-                aria-label="Scholesa dashboard"
+                aria-label={t('navigation.dashboardAria')}
               >
                 <Image
                   src="/logo/scholesa-logo-192.png"
