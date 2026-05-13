@@ -1612,6 +1612,16 @@ beforeEach(async () => {
       occurredAt: Date.now(),
     });
 
+    await setDoc(doc(db, 'evidenceProcessingJobs', 'badge-site1-learner1-capability1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      jobKind: 'badgeEligibility',
+      status: 'queued',
+      attempts: 0,
+      updatedAt: Date.now(),
+    });
+
     await setDoc(doc(db, 'processDomainMastery', 'process-mastery-1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -5153,6 +5163,32 @@ describe('Passport evidence chain access', () => {
       processDomainId: 'process-domain-1',
       level: 4,
     }));
+  });
+
+  test('evidence processing jobs are server-owned and only readable by same-site HQ', async () => {
+    const hqDb = testEnv.authenticatedContext(hqUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+
+    await assertSucceeds(
+      getDoc(doc(hqDb, 'evidenceProcessingJobs', 'badge-site1-learner1-capability1'))
+    );
+    await assertFails(
+      getDoc(doc(educatorDb, 'evidenceProcessingJobs', 'badge-site1-learner1-capability1'))
+    );
+    await assertFails(
+      getDoc(doc(learnerDb, 'evidenceProcessingJobs', 'badge-site1-learner1-capability1'))
+    );
+    await assertFails(setDoc(doc(hqDb, 'evidenceProcessingJobs', 'manual-job'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      jobKind: 'badgeEligibility',
+      status: 'queued',
+    }));
+    await assertFails(updateDoc(
+      doc(hqDb, 'evidenceProcessingJobs', 'badge-site1-learner1-capability1'),
+      { status: 'completed' }
+    ));
   });
 
   test('missing-site Passport provenance is denied even to same-site actors', async () => {

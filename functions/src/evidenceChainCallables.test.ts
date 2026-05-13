@@ -343,6 +343,69 @@ describe('Collection naming consistency', () => {
     expect(badgeFn).toContain('currentLevel');
     expect(badgeFn).toContain('latestLevel');
   });
+
+  it('queues badge eligibility as idempotent evidence processing work', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const queueStart = source.indexOf('async function enqueueBadgeEligibilityJob');
+    const queueEnd = source.indexOf('export const applyRubricToEvidence', queueStart);
+    const queueSection = source.slice(queueStart, queueEnd);
+
+    expect(source).toContain("const EVIDENCE_PROCESSING_JOBS_COLLECTION = 'evidenceProcessingJobs'");
+    expect(queueSection).toContain('idempotencyKey: jobId');
+    expect(queueSection).toContain("status: 'queued'");
+    expect(queueSection).toContain('{ merge: true }');
+  });
+
+  it('processes evidence jobs from a scheduled stateless worker', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const workerStart = source.indexOf('export const processEvidenceProcessingJobs');
+    const workerEnd = source.indexOf('// ---------------------------------------------------------------------------', workerStart);
+    const workerSection = source.slice(workerStart, workerEnd);
+
+    expect(workerSection).toContain("onSchedule('every 5 minutes'");
+    expect(workerSection).toContain('collection(EVIDENCE_PROCESSING_JOBS_COLLECTION)');
+    expect(workerSection).toContain("where('status', '==', 'queued')");
+    expect(workerSection).toContain('evaluateBadgeEligibilityInternal(learnerId, siteId, capabilityId)');
+    expect(workerSection).toContain("status: 'completed'");
+    expect(workerSection).toContain('status: nextStatus');
+  });
+
+  it('does not use fire-and-forget badge evaluation after mastery writes', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    expect(source).toContain('enqueueBadgeEligibilityJob');
+    expect(source).not.toContain('Badge evaluation after rubric apply failed');
+    expect(source).not.toContain('Badge evaluation after checkpoint mastery failed');
+  });
+
+  it('keeps evidence processing jobs server-owned in Firestore rules', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const rules = fs.readFileSync(path.resolve(__dirname, '../../firestore.rules'), 'utf-8');
+    const ruleStart = rules.indexOf('match /evidenceProcessingJobs/{id}');
+    const ruleEnd = rules.indexOf('\n    // Process Domains', ruleStart);
+    const ruleSection = rules.slice(ruleStart, ruleEnd);
+
+    expect(ruleSection).toContain('allow read: if isHQ() && isSiteScopedRead(resource.data);');
+    expect(ruleSection).toContain('allow create, update, delete: if false;');
+  });
 });
 
 describe('buildParentLearnerSummary integration', () => {

@@ -11127,6 +11127,71 @@ interface RubricScoreInput {
   maxScore: number;
 }
 
+const EVIDENCE_PROCESSING_JOBS_COLLECTION = 'evidenceProcessingJobs';
+
+type EvidenceProcessingJobKind = 'badgeEligibility';
+
+function safeJobIdPart(value: string | undefined): string {
+  return (value ?? 'all').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120) || 'all';
+}
+
+function evidenceProcessingJobId(input: {
+  kind: EvidenceProcessingJobKind;
+  siteId: string;
+  learnerId: string;
+  capabilityId?: string;
+}): string {
+  return [
+    input.kind,
+    safeJobIdPart(input.siteId),
+    safeJobIdPart(input.learnerId),
+    safeJobIdPart(input.capabilityId),
+  ].join('__');
+}
+
+async function enqueueBadgeEligibilityJob(input: {
+  learnerId: string;
+  siteId: string;
+  capabilityId?: string;
+  reason: 'rubric_applied' | 'checkpoint_mastery_updated';
+  sourceId?: string | null;
+}): Promise<string> {
+  const learnerId = typeof input.learnerId === 'string' ? input.learnerId.trim() : '';
+  const siteId = typeof input.siteId === 'string' ? input.siteId.trim() : '';
+  const capabilityId =
+    typeof input.capabilityId === 'string' && input.capabilityId.trim()
+      ? input.capabilityId.trim()
+      : null;
+  if (!learnerId || !siteId) {
+    throw new Error('Badge eligibility jobs require learnerId and siteId.');
+  }
+
+  const jobId = evidenceProcessingJobId({
+    kind: 'badgeEligibility',
+    siteId,
+    learnerId,
+    capabilityId: capabilityId ?? undefined,
+  });
+  await admin.firestore().collection(EVIDENCE_PROCESSING_JOBS_COLLECTION).doc(jobId).set(
+    {
+      jobKind: 'badgeEligibility',
+      idempotencyKey: jobId,
+      siteId,
+      learnerId,
+      capabilityId,
+      reason: input.reason,
+      sourceId: input.sourceId ?? null,
+      status: 'queued',
+      attempts: 0,
+      maxAttempts: 5,
+      queuedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  return jobId;
+}
+
 export const applyRubricToEvidence = onCall(
   async (
     request: CallableRequest<{
@@ -11637,15 +11702,23 @@ export const applyRubricToEvidence = onCall(
 
     await portfolioBatch.commit();
 
-    // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
-    evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
-      console.warn('Badge evaluation after rubric apply failed (non-blocking):', err)
+    const badgeEligibilityJobIds = await Promise.all(
+      Array.from(scoresByCapability.keys()).map((capabilityId) =>
+        enqueueBadgeEligibilityJob({
+          learnerId,
+          siteId,
+          capabilityId,
+          reason: 'rubric_applied',
+          sourceId: rubricAppRef.id,
+        })
+      )
     );
 
     return {
       rubricApplicationId: rubricAppRef.id,
       growthEventIds,
       portfolioItemIds,
+      badgeEligibilityJobIds,
       capabilitiesProcessed: scoresByCapability.size,
     };
   }
@@ -12057,6 +12130,75 @@ export const evaluateBadgeEligibility = onCall(
   }
 );
 
+export const processEvidenceProcessingJobs = onSchedule('every 5 minutes', async () => {
+  const db = admin.firestore();
+  const queuedSnap = await db
+    .collection(EVIDENCE_PROCESSING_JOBS_COLLECTION)
+    .where('status', '==', 'queued')
+    .where('jobKind', '==', 'badgeEligibility')
+    .limit(25)
+    .get();
+
+  for (const jobSnap of queuedSnap.docs) {
+    const jobData = jobSnap.data();
+    const learnerId = typeof jobData.learnerId === 'string' ? jobData.learnerId.trim() : '';
+    const siteId = typeof jobData.siteId === 'string' ? jobData.siteId.trim() : '';
+    const capabilityId =
+      typeof jobData.capabilityId === 'string' && jobData.capabilityId.trim()
+        ? jobData.capabilityId.trim()
+        : undefined;
+    const attempts = typeof jobData.attempts === 'number' ? jobData.attempts : 0;
+    const maxAttempts = typeof jobData.maxAttempts === 'number' ? jobData.maxAttempts : 5;
+
+    if (!learnerId || !siteId) {
+      await jobSnap.ref.set(
+        {
+          status: 'failed',
+          error: 'Badge eligibility job is missing learnerId or siteId.',
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      continue;
+    }
+
+    await jobSnap.ref.set(
+      {
+        status: 'processing',
+        processingStartedAt: FieldValue.serverTimestamp(),
+        attempts: attempts + 1,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    try {
+      const result = await evaluateBadgeEligibilityInternal(learnerId, siteId, capabilityId);
+      await jobSnap.ref.set(
+        {
+          status: 'completed',
+          processedAt: FieldValue.serverTimestamp(),
+          awardedCount: result.awarded.length,
+          awardedBadgeIds: result.awarded.map((award) => award.badgeId),
+          error: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      const nextStatus = attempts + 1 >= maxAttempts ? 'failed' : 'queued';
+      await jobSnap.ref.set(
+        {
+          status: nextStatus,
+          error: error instanceof Error ? error.message : String(error),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+  }
+});
+
 // ---------------------------------------------------------------------------
 // S4-1: Checkpoint completion → capability mastery update
 // ---------------------------------------------------------------------------
@@ -12330,9 +12472,16 @@ export const processCheckpointMasteryUpdate = onCall(
     if (growthEvents.length > 0) {
       await batch.commit();
 
-      // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
-      evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
-        console.warn('Badge evaluation after checkpoint mastery failed (non-blocking):', err)
+      await Promise.all(
+        growthEvents.map((event) =>
+          enqueueBadgeEligibilityJob({
+            learnerId,
+            siteId,
+            capabilityId: event.capabilityId,
+            reason: 'checkpoint_mastery_updated',
+            sourceId: checkpointId || null,
+          })
+        )
       );
     }
 

@@ -497,6 +497,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Evidence Processing Jobs: server-owned async work queue for idempotent evidence tasks.
+    match /evidenceProcessingJobs/{id} {
+      allow read: if isHQ() && isSiteScopedRead(resource.data);
+      allow create, update, delete: if false;
+    }
+
     // Process Domains: HQ/admin defines, educators can read.
     match /processDomains/{id} {
       allow read: if canReadOptionalSiteScopedReference(resource.data);
