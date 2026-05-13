@@ -19,12 +19,14 @@ Reliability controls:
 - Readiness and liveness probes use real service endpoints.
 - Topology spread constraints avoid concentrating all replicas on one node when capacity allows.
 - NetworkPolicy defaults to deny ingress, then opens public web domains and keeps compliance internal to namespace pods.
+- NetworkPolicy defaults to deny egress, then allows DNS and HTTPS egress for web/compliance Firebase and managed-service calls.
 
 Tenant isolation model:
 
 - Runtime tenant boundaries remain enforced by Firebase Auth claims, Firestore rules, route metadata, and application code.
 - Kubernetes isolates service domains and network ingress, but it does not replace site-scoped reads/writes.
 - Do not create per-tenant static manifests with committed secrets or service-account JSON. Use workload identity or out-of-band secret creation.
+- Pods must remain stateless. Site and learner state belongs in Firebase/Firestore, Cloud Storage, or approved managed services, always keyed by `siteId` where the data model requires it.
 
 Build images:
 
@@ -79,4 +81,12 @@ Evidence-heavy classroom workload notes:
 - Web and Flutter web can scale independently for classroom login, navigation, evidence capture, and learner/guardian viewing spikes.
 - Compliance remains internal and separately scalable so release/compliance scans cannot starve classroom-facing pods.
 - Firestore and Firebase remain the evidence persistence tier; verify Firestore indexes and rules before any classroom-heavy cutover.
+- Evidence-heavy writes should remain idempotent, site-scoped, and provenance-preserving. Horizontal scaling must never create in-pod queues, local caches as source of truth, or cross-tenant shared filesystems.
 - For internal LLM/STT/TTS inference, use the dedicated `docs/k8s` inference plane blueprints only after real internal images and model artifact stores are available.
+
+Security boundaries:
+
+- Namespace pod security labels enforce the Kubernetes restricted profile.
+- Runtime secrets are not represented as YAML in this repo.
+- Compliance is not internet-facing; expose it through operator-controlled internal access only.
+- Public `LoadBalancer` services should be replaced by an ingress/gateway with managed certificates and WAF rules when the cluster ingress standard is chosen.

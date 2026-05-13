@@ -14,6 +14,7 @@ resources:
   - compliance-hpa.yaml
   - compliance-pod-disruption-budget.yaml
   - network-policy.yaml
+  - network-policy-egress.yaml
 images:
   - name: scholesa-web
     newName: scholesa-web
