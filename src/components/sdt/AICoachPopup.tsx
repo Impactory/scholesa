@@ -35,6 +35,8 @@ import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
 import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
 import type { UserRole } from '@/src/types/user';
 
+type MiloOSInputModality = 'voice' | 'typed';
+
 interface AICoachPopupProps {
   actorId: string;
   actorRole: UserRole;
@@ -199,7 +201,7 @@ export function AICoachPopup({
     locale,
     disabled: loading,
     getTraceId: () => voiceInputTraceId || undefined,
-    buildContext: () => buildBosVoiceContext(voiceInputTraceId),
+    buildContext: () => buildBosVoiceContext('voice', voiceInputTraceId),
     onTranscript: async ({ transcript, metadata }) => {
       setStatusMessage(null);
       setQuestion(transcript);
@@ -283,7 +285,7 @@ export function AICoachPopup({
     });
   };
 
-  const buildBosVoiceContext = (traceId?: string | null) => ({
+  const buildBosVoiceContext = (inputModality: MiloOSInputModality, traceId?: string | null) => ({
     actorId,
     actorRole,
     learnerId: intelligenceLearnerId,
@@ -297,14 +299,17 @@ export function AICoachPopup({
     contextMode: sprintSessionId ? 'in_class' : 'homework',
     conceptTags: [
       'ai_coach_popup',
-      'voice',
+      inputModality,
+      `input:${inputModality}`,
       `role:${actorRole}`,
       mode ? `mode:${mode}` : null,
     ].filter((tag): tag is string => Boolean(tag)),
-    traceId: traceId || undefined,
-    voiceTraceId: traceId || undefined,
-    voiceInputTraceId: traceId || undefined,
-    source: 'ai_coach_popup_voice',
+    traceId: inputModality === 'voice' ? traceId || undefined : undefined,
+    voiceTraceId: inputModality === 'voice' ? traceId || undefined : undefined,
+    voiceInputTraceId: inputModality === 'voice' ? traceId || undefined : undefined,
+    inputModality,
+    modality: inputModality,
+    source: `ai_coach_popup_${inputModality}`,
   });
 
   const handleOpenPopup = () => {
@@ -327,7 +332,7 @@ export function AICoachPopup({
     setIsMinimized(true);
   };
 
-  const handleAsk = async (questionOverride?: string) => {
+  const handleAsk = async (questionOverride?: string, inputModality: MiloOSInputModality = 'voice') => {
     const resolvedQuestion = (questionOverride ?? question).trim();
     if (!resolvedQuestion || !mode) return;
 
@@ -393,7 +398,7 @@ Guidance: ${
         ? `${personalizedContext}\n\nStudent Question: ${resolvedQuestion}`
         : resolvedQuestion;
       if (!user) {
-        throw new Error('Sign in to use MiloOS by voice.');
+        throw new Error('Sign in to use MiloOS.');
       }
       if (!voiceApiConfigured()) {
         throw new Error('Voice help is not available right now. Complete voice setup and try again.');
@@ -406,10 +411,10 @@ Guidance: ${
         siteId,
         locale,
         screenId: 'ai_coach_popup',
-        traceId: voiceInputTraceId || undefined,
+        traceId: inputModality === 'voice' ? voiceInputTraceId || undefined : undefined,
         gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
         context: {
-          ...buildBosVoiceContext(voiceInputTraceId),
+          ...buildBosVoiceContext(inputModality, voiceInputTraceId),
           taskType: taskTypeMap[mode],
           studentLevel,
           linkedLearnerCount: linkedLearnerIds.length,
@@ -462,7 +467,7 @@ Guidance: ${
             : {}),
         });
       }
-      setVoiceInputTraceId(voiceResponse.metadata.traceId);
+      setVoiceInputTraceId(inputModality === 'voice' ? voiceResponse.metadata.traceId : null);
       setVoiceTransparencyMessage(buildVoiceTransparencyMessage(voiceResponse.metadata));
 
       setResponse(aiResponse);
@@ -561,7 +566,7 @@ Guidance: ${
     if (!mode) return;
     const transcript = question.trim();
     if (!transcript || isListening || isTranscribing || loading || response) return;
-    void handleAsk(transcript);
+    void handleAsk(transcript, 'voice');
   }, [mode, question, isListening, isTranscribing, loading, response]);
 
   const reset = () => {
@@ -572,6 +577,7 @@ Guidance: ${
     setExplainBack('');
     setStatusMessage(null);
     setVoiceTransparencyMessage(null);
+    setVoiceInputTraceId(null);
     clearSpokenResponse();
   };
 
@@ -718,7 +724,7 @@ Guidance: ${
               />
               <button
                 type="button"
-                onClick={() => void handleAsk(typedQuestion)}
+                onClick={() => void handleAsk(typedQuestion, 'typed')}
                 disabled={!typedQuestion.trim() || loading || isTranscribing}
                 className="mt-3 w-full rounded-lg bg-app-primary px-4 py-2 text-sm font-medium text-app-primary-foreground transition-colors hover:bg-app-primary-emphasis disabled:cursor-not-allowed disabled:opacity-50"
               >

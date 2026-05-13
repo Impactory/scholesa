@@ -43,7 +43,6 @@ const _STT_MODEL_VERSION = 'scholesa-stt-v2';
 const _TTS_MODEL_VERSION = 'scholesa-tts-v2';
 const MIN_AUTONOMOUS_STUDENT_CONFIDENCE = 0.97;
 const MIN_AUTONOMOUS_POLICY_CONFIDENCE = 0.97;
-const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const BOS_INTERACTION_COLLECTION = 'interactionEvents';
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
@@ -2091,30 +2090,6 @@ function verifyAudioToken(token: string): AudioTokenPayload {
   return parsed;
 }
 
-function functionBasePath(req: Request): string {
-  const originalUrl = req.originalUrl || req.url || '';
-  const path = req.path || '';
-  if (path && originalUrl.includes(path)) {
-    return originalUrl.slice(0, originalUrl.indexOf(path));
-  }
-  return originalUrl;
-}
-
-function buildAudioUrl(req: Request, token: string): string {
-  const explicitBase = normalizeString(process.env.VOICE_PUBLIC_BASE_URL);
-  if (explicitBase) {
-    return `${explicitBase.replace(/\/+$/g, '')}/voice/audio/${encodeURIComponent(token)}`;
-  }
-  const host = req.get('host');
-  if (!host) {
-    throw new VoiceHttpError(500, 'internal', 'Unable to build audio URL because host header is missing.');
-  }
-  const protoHeader = req.get('x-forwarded-proto') || req.protocol || 'https';
-  const proto = protoHeader.split(',')[0]?.trim() || 'https';
-  const basePath = functionBasePath(req);
-  return `${proto}://${host}${basePath}/voice/audio/${encodeURIComponent(token)}`;
-}
-
 function buildWavHeader(dataLength: number, sampleRate: number): Buffer {
   const blockAlign = 2;
   const byteRate = sampleRate * blockAlign;
@@ -3296,13 +3271,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const modelToolHintCount = modelToolHints.length > 0
       ? toolsInvoked.filter((tool) => modelToolHints.includes(tool)).length
       : 0;
-    const voiceInput = body.voice as Record<string, unknown> | undefined;
-    const voiceOutputEnabled = normalizeBoolean(voiceInput?.enabled, true) && normalizeBoolean(voiceInput?.output, true);
     const quietModeActive = isQuietModeActive(settings, new Date());
     const knownNames = extractKnownNames(body);
     const preparedSpeech = redactTextForSpeech(candidateText, knownNames);
-    const voiceProfile = chooseVoiceProfile(locale, authContext.requesterRole, authContext.gradeBand);
-    const shouldSpeak = voiceOutputEnabled && !quietModeActive && preparedSpeech.speechText.length > 0;
 
     let effectiveSafetyOutcome: SafetyOutcome = safety.safetyOutcome;
     let effectiveSafetyReasonCode = safety.safetyReasonCode;
@@ -3317,22 +3288,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       effectiveSafetyReasonCode = 'child_inference_unavailable';
     }
 
-    let audioUrl: string | undefined;
-    if (shouldSpeak) {
-      const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
-      const checksum = createHash('sha256')
-        .update(`${traceId}|${locale}|${voiceProfile}|${preparedSpeech.speechText}|${expMs}`)
-        .digest('hex');
-      const token = createAudioToken({
-        traceId,
-        locale,
-        voiceProfile,
-        text: preparedSpeech.speechText,
-        expMs,
-        checksum,
-      });
-      audioUrl = buildAudioUrl(req, token);
-    }
+    const audioUrl: string | undefined = undefined;
 
     const languageCompatible = detectLanguageCompatibility(candidateText, locale);
     const responseText = languageCompatible
@@ -3605,7 +3561,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       tts: {
         available: Boolean(audioUrl),
         audioUrl,
-        voiceProfile: shouldSpeak ? voiceProfile : undefined,
+        voiceProfile: undefined,
       },
     });
   } catch (error) {
@@ -3955,20 +3911,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     ]);
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
-    const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
-    const checksum = createHash('sha256')
-      .update(`${traceId}|${locale}|${voiceProfile}|${speech.speechText}|${expMs}`)
-      .digest('hex');
-    const token = createAudioToken({
-      traceId,
-      locale,
-      voiceProfile,
-      text: speech.speechText,
-      expMs,
-      checksum,
-    });
-    const fallbackAudioUrl = buildAudioUrl(req, token);
-    let audioUrl = fallbackAudioUrl;
+    let audioUrl: string | undefined;
     let effectiveVoiceProfile = voiceProfile;
     let ttsModelVersion: string | null = null;
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta('tts', 'not_attempted');
