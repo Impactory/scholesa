@@ -1219,10 +1219,11 @@ describe('Renderers delegate to real evidence components', () => {
     expect(deployScriptSource).toContain('require_android_sdk');
     expect(deployScriptSource).toContain('Android SDK not found. Install Android Studio command-line tools or set ANDROID_HOME');
     expect(finalSignoffSource).toContain('`./scripts/macos_release_local.sh verify_local_release`');
-    expect(finalSignoffSource).toContain('missing Developer ID Application identity plus `.env.app_store_connect.local`');
+    expect(finalSignoffSource).toContain('no Developer ID Application identity');
+    expect(finalSignoffSource).toContain('no `.env.app_store_connect.local`');
     expect(finalSignoffSource).toContain('no Apple Distribution / iOS Distribution identity');
     expect(finalSignoffSource).toContain('no iOS provisioning profile');
-    expect(finalSignoffSource).toContain('no Android `apps/empire_flutter/app/android/key.properties` release signing file');
+    expect(finalSignoffSource).toContain('no `.env.google_play.local`');
     expect(appleReleaseLocalSource).toContain('require_app_store_connect_env');
     expect(appleReleaseLocalSource).toContain('Missing local iOS provisioning profile');
     expect(appleReleaseLocalSource).toContain('Local iOS distribution prerequisites are incomplete');

@@ -32,7 +32,7 @@ describe('protected web logout availability', () => {
     expect(navigationSource).toContain('<Button');
     expect(navigationSource).toContain("import Image from 'next/image';");
     expect(navigationSource).toContain('src="/logo/scholesa-logo-192.png"');
-    expect(navigationSource).toContain('aria-label="Scholesa dashboard"');
+    expect(navigationSource).toContain("aria-label={t('navigation.dashboardAria')}");
     expect(navigationSource).toContain('<ThemeModeToggle');
   });
 
