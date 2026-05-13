@@ -25,6 +25,7 @@ run_check() {
 run_check "iOS TestFlight local distribution" "./scripts/apple_release_local.sh verify_local_release"
 run_check "Android Play local distribution" "./scripts/android_release_local.sh verify_local_release"
 run_check "macOS Developer ID notarization" "./scripts/macos_release_local.sh verify_local_release"
+run_check "Native icon Pillow tooling" 'PYTHON_BIN="${PYTHON:-.venv/bin/python}"; if [[ ! -x "$PYTHON_BIN" ]]; then PYTHON_BIN="python3"; fi; "$PYTHON_BIN" -c "import PIL"'
 
 if [[ "$failures" -gt 0 ]]; then
   cat <<EOF

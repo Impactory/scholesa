@@ -20,6 +20,13 @@ else
 fi
 REPO_ROOT="${REPO_ROOT:-$REPO_ROOT_CANDIDATE}"
 SOURCE_SVG="$REPO_ROOT/scholesa.svg"
+if [[ -n "${PYTHON:-}" ]]; then
+  PYTHON_BIN="$PYTHON"
+elif [[ -x "$REPO_ROOT/.venv/bin/python" ]]; then
+  PYTHON_BIN="$REPO_ROOT/.venv/bin/python"
+else
+  PYTHON_BIN="python3"
+fi
 
 ANDROID_SRC="$ICONS_DIR/android"
 IOS_SRC="$ICONS_DIR/ios"
@@ -47,7 +54,7 @@ has_cmd() {
 }
 
 python_has_pillow() {
-  python3 - <<'PY' >/dev/null 2>&1
+  "$PYTHON_BIN" - <<'PY' >/dev/null 2>&1
 import importlib.util
 import sys
 
@@ -132,7 +139,7 @@ copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/scholesa.svg"
 copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/scholesa.svg"
 
 if python_has_pillow; then
-  python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
+  "$PYTHON_BIN" "$ROOT_DIR/scripts/convert_brand_assets.py"
 else
   echo "[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets" >&2
 fi
@@ -146,7 +153,7 @@ convert_png_to_opaque() {
   mkdir -p "$(dirname "$dst")"
 
   # Convert PNG to opaque RGB by removing alpha and filling transparent areas with white
-  python3 -c "
+  "$PYTHON_BIN" -c "
 from PIL import Image
 import sys
 
