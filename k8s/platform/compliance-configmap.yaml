@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scholesa-compliance-config
+  namespace: scholesa
+  labels:
+    app.kubernetes.io/name: scholesa-compliance
+    app.kubernetes.io/part-of: scholesa
+    scholesa.com/service-domain: compliance
+data:
+  COMPLIANCE_ALLOW_UNAUTH: "0"
+  PORT: "8080"

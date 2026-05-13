@@ -43,6 +43,7 @@ pnpm-lock.yaml
 **/__pycache__
 **/.pytest_cache
 docs
+k8s
 dataconnect
 scripts
 test

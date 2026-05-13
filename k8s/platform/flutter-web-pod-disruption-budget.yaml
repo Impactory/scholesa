@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scholesa-flutter-web
+  namespace: scholesa
+  labels:
+    app.kubernetes.io/name: scholesa-flutter-web
+    app.kubernetes.io/part-of: scholesa
+    scholesa.com/service-domain: flutter-web
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scholesa-flutter-web

@@ -1,27 +1,25 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: scholesa-web
+  name: scholesa-compliance
   namespace: scholesa
   labels:
-    app.kubernetes.io/name: scholesa-web
+    app.kubernetes.io/name: scholesa-compliance
     app.kubernetes.io/part-of: scholesa
+    scholesa.com/service-domain: compliance
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: scholesa-web
+    name: scholesa-compliance
   minReplicas: 3
-  maxReplicas: 10
+  maxReplicas: 8
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 60
       policies:
         - type: Percent
           value: 100
-          periodSeconds: 60
-        - type: Pods
-          value: 4
           periodSeconds: 60
       selectPolicy: Max
     scaleDown:

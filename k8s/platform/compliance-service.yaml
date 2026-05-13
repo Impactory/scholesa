@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scholesa-compliance
+  namespace: scholesa
+  labels:
+    app.kubernetes.io/name: scholesa-compliance
+    app.kubernetes.io/part-of: scholesa
+    scholesa.com/service-domain: compliance
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: scholesa-compliance
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

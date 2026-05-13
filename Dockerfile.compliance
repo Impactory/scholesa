@@ -12,4 +12,7 @@ ENV COMPLIANCE_ALLOW_UNAUTH=0
 
 EXPOSE 8080
 
+RUN useradd --user-group --create-home --shell /bin/false appuser
+USER appuser
+
 CMD ["node", "services/scholesa-compliance/src/server.js"]

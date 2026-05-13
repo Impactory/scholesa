@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: scholesa-web
+  name: scholesa-flutter-web
   namespace: scholesa
   labels:
-    app.kubernetes.io/name: scholesa-web
+    app.kubernetes.io/name: scholesa-flutter-web
     app.kubernetes.io/part-of: scholesa
-    scholesa.com/service-domain: web
+    scholesa.com/service-domain: flutter-web
 spec:
   replicas: 3
   revisionHistoryLimit: 5
   selector:
     matchLabels:
-      app.kubernetes.io/name: scholesa-web
+      app.kubernetes.io/name: scholesa-flutter-web
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -21,65 +21,51 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: scholesa-web
+        app.kubernetes.io/name: scholesa-flutter-web
         app.kubernetes.io/part-of: scholesa
-        scholesa.com/service-domain: web
+        scholesa.com/service-domain: flutter-web
     spec:
-      serviceAccountName: scholesa-web
+      serviceAccountName: scholesa-flutter-web
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: scholesa-web
+              app.kubernetes.io/name: scholesa-flutter-web
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsUser: 101
+        runAsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: web
-          image: scholesa-web:latest
+        - name: flutter-web
+          image: scholesa-flutter-web:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8080
-          env:
-            - name: NODE_ENV
-              value: production
-            - name: PORT
-              value: "8080"
-            - name: HOSTNAME
-              value: 0.0.0.0
-          envFrom:
-            - configMapRef:
-                name: scholesa-web-public-config
-            - secretRef:
-                name: scholesa-web-server-secrets
-                optional: true
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
+              cpu: 100m
+              memory: 128Mi
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 500m
+              memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /api/healthz
+              path: /index.html
               port: http
-            initialDelaySeconds: 10
+            initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /api/healthz
+              path: /index.html
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 20
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 3

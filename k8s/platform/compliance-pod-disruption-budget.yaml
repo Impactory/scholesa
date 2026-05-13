@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scholesa-compliance
+  namespace: scholesa
+  labels:
+    app.kubernetes.io/name: scholesa-compliance
+    app.kubernetes.io/part-of: scholesa
+    scholesa.com/service-domain: compliance
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scholesa-compliance

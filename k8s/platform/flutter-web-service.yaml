@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: scholesa-web
+  name: scholesa-flutter-web
   namespace: scholesa
   labels:
-    app.kubernetes.io/name: scholesa-web
+    app.kubernetes.io/name: scholesa-flutter-web
     app.kubernetes.io/part-of: scholesa
-    scholesa.com/service-domain: web
+    scholesa.com/service-domain: flutter-web
 spec:
   type: LoadBalancer
   selector:
-    app.kubernetes.io/name: scholesa-web
+    app.kubernetes.io/name: scholesa-flutter-web
   ports:
     - name: http
       port: 80
