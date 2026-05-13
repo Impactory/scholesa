@@ -405,11 +405,13 @@ test('hq routes deny unauthenticated access', async ({ page }) => {
 
 test('zh-CN landing and login render localized copy', async ({ page }) => {
   await page.goto('/zh-CN');
+  const publicNav = page.getByLabel('公开导航');
+  const main = page.getByRole('main');
   await expect(page.getByRole('heading', { name: '让真实能力成长拥有可验证证据。' })).toBeVisible();
-  await expect(page.getByRole('link', { name: '进入证据引擎' })).toBeVisible();
+  await expect(main.getByRole('link', { name: '进入证据引擎' })).toBeVisible();
   await expect(page.getByRole('button', { name: '查看证明流程' })).toBeVisible();
-  await expect(page.getByRole('link', { name: '登录' })).toBeVisible();
-  await expect(page.getByRole('link', { name: '注册 →' })).toBeVisible();
+  await expect(publicNav.getByRole('link', { name: '登录' })).toBeVisible();
+  await expect(main.getByRole('link', { name: '注册 →' })).toBeVisible();
 
   await page.goto('/zh-CN/login');
   await expect(page.getByRole('heading', { name: '欢迎回来' })).toBeVisible();

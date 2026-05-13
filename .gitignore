@@ -7,6 +7,8 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
 apps/empire_flutter/app/test/failures/
 
 # next.js
@@ -20,6 +22,8 @@ apps/empire_flutter/app/test/failures/
 
 # misc
 .tmp/
+/tmp/
+/temp/
 **/__pycache__/
 *.pyc
 .DS_Store

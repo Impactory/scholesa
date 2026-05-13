@@ -28,6 +28,10 @@ functions/lib
 functions/.tsbuildinfo
 coverage
 .tmp
+tmp
+temp
+test-results
+playwright-report
 .DS_Store
 .gitignore
 firebase-debug.log

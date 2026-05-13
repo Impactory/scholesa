@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scholesa-web
+  namespace: scholesa
+  labels:
+    app.kubernetes.io/name: scholesa-web
+    app.kubernetes.io/part-of: scholesa
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scholesa-web
