@@ -5,6 +5,7 @@ import {
   BookOpenCheck,
   BriefcaseBusiness,
   CheckCircle2,
+  CalendarDays,
   ClipboardCheck,
   FileCheck2,
   GraduationCap,
@@ -90,6 +91,13 @@ export default function LandingPage() {
           </Link>
           <nav className="flex items-center gap-2" aria-label={t('landing.publicNavigationAria')}>
             <ThemeModeToggle compact />
+            <Link
+              href={`/${locale}/summer-camp-2026`}
+              className="hidden min-touch-target items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring md:inline-flex dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 dark:hover:bg-amber-950/50"
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              Summer Camp
+            </Link>
             <Link
               href={`/${locale}/login`}
               className="min-touch-target inline-flex items-center rounded-md border border-app bg-app-surface px-4 py-2 text-sm font-semibold text-app-foreground hover:bg-app-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
