@@ -1,5 +1,5 @@
-import { LearnerDashboardToday } from '@/src/components/dashboards/LearnerDashboardToday';
+import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
 
-export default function LearnerTodayPage() {
-  return <LearnerDashboardToday />;
+export default function WorkflowPage() {
+  return <WorkflowRoutePage routePath='/learner/today' />;
 }
