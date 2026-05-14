@@ -1,3 +1,90 @@
-Local macOS distribution prerequisites are incomplete:
- - Developer ID private-key access is blocked. Approve the Keychain Access prompt, or run security unlock-keychain ~/Library/Keychains/login.keychain-db and security set-key-partition-list -S apple-tool:,apple: -s -k <login-keychain-password> ~/Library/Keychains/login.keychain-db locally. Do not store the keychain password in repo files, shell history, CI logs, or release proof artifacts.
-Run ./scripts/setup_app_store_connect_key.sh to install notarization credentials. Then run ./scripts/apple_release_local.sh prepare_macos_developer_id, or ./scripts/setup_apple_signing.sh macos-csr if Apple requires the Account Holder to create the Developer ID certificate.
+/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app: replacing existing signature
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAuthInterop.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAuthInterop.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/objective_c.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/objective_c.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/AppCheckCore.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/AppCheckCore.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/grpcpp.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/grpcpp.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/libswift_Concurrency.dylib
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/libswift_Concurrency.dylib
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GTMAppAuth.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/CwlCatchException.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GTMAppAuth.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GTMSessionFetcher.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/CwlCatchException.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FBLPromises.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FBLPromises.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GTMSessionFetcher.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFirestore.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFirestore.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/AppAuth.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/AppAuth.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCoreInternal.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GoogleUtilities.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCore.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseSharedSwift.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseSharedSwift.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GoogleUtilities.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCoreInternal.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCore.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/record_macos.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FlutterMacOS.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/speech_to_text.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAppCheckInterop.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/record_macos.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCoreExtension.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAppCheckInterop.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/speech_to_text.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseMessagingInterop.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/CwlCatchExceptionSupport.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseMessagingInterop.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseCoreExtension.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FlutterMacOS.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/CwlCatchExceptionSupport.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAuth.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseAuth.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFirestoreInternal.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFirestoreInternal.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/nanopb.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/flutter_tts.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/audioplayers_darwin.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/flutter_tts.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/nanopb.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/audioplayers_darwin.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/shared_preferences_foundation.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/leveldb.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/shared_preferences_foundation.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFunctions.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/leveldb.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseFunctions.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/absl.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/openssl_grpc.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/App.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/absl.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/openssl_grpc.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GoogleSignIn.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/file_picker.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/connectivity_plus.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/file_picker.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseStorage.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/connectivity_plus.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/FirebaseStorage.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/App.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/GoogleSignIn.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/url_launcher_macos.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/url_launcher_macos.framework/Versions/Current/.
+--prepared:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/grpc.framework/Versions/Current/.
+--validated:/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app/Contents/Frameworks/grpc.framework/Versions/Current/.
+/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app: valid on disk
+/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app: satisfies its Designated Requirement
+[macos-release] Signed macOS app at /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Release/scholesa_app.app.
+Conducting pre-submission checks for scholesa-macos-notary.zip and initiating connection to the Apple notary service...
+Submission ID received
+  id: 63629add-3b9d-4449-ba62-1b185c66f9a8
+Successfully uploaded file
+  id: 63629add-3b9d-4449-ba62-1b185c66f9a8
+  path: /Users/impactory/Documents/GitHub/scholesa/.tmp/scholesa-macos-notary.zip
+Waiting for processing to complete.
+Current status: In Progress...Current status: In Progress....Current status: In Progress.....Current status: In Progress......Current status: In Progress.......

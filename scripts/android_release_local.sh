@@ -34,10 +34,9 @@ require_google_play_env() {
 
 require_local_android_signing_prereqs() {
   local issues=()
-  local message
 
-  if ! message="$(require_google_play_env 2>&1)"; then
-    issues+=("$message")
+  if ! require_google_play_env; then
+    issues+=("Unable to load Google Play release environment from $LOCAL_ENV_FILE.")
   fi
 
   if [[ ! -f "$KEY_PROPERTIES_FILE" ]]; then

@@ -76,15 +76,27 @@ jobs:
 
       - name: Upload iOS build to TestFlight
         run: |
-          set -o pipefail
           cd apps/empire_flutter/app/ios
-          bundle exec fastlane ios upload_testflight 2>&1 | tee "$RUNNER_TEMP/ios-testflight.log"
+          set +e
+          bundle exec fastlane ios upload_testflight > "$RUNNER_TEMP/ios-testflight.log" 2>&1
+          status=$?
+          "$GITHUB_WORKSPACE/scripts/redact_native_proof_log.sh" "$RUNNER_TEMP/ios-testflight.log"
+          if [[ $status -ne 0 ]]; then
+            tail -120 "$RUNNER_TEMP/ios-testflight.log"
+          fi
+          exit $status
 
       - name: Verify iOS build is visible in TestFlight
         run: |
-          set -o pipefail
           cd apps/empire_flutter/app/ios
-          bundle exec fastlane ios verify_testflight_build 2>&1 | tee "$RUNNER_TEMP/ios-testflight-visibility.log"
+          set +e
+          bundle exec fastlane ios verify_testflight_build > "$RUNNER_TEMP/ios-testflight-visibility.log" 2>&1
+          status=$?
+          "$GITHUB_WORKSPACE/scripts/redact_native_proof_log.sh" "$RUNNER_TEMP/ios-testflight-visibility.log"
+          if [[ $status -ne 0 ]]; then
+            tail -120 "$RUNNER_TEMP/ios-testflight-visibility.log"
+          fi
+          exit $status
 
       - name: Write iOS proof summary
         if: always()
@@ -97,6 +109,7 @@ jobs:
 
           Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
           Commands: bundle exec fastlane ios upload_testflight; bundle exec fastlane ios verify_testflight_build
+          Log handling: proof logs are redacted before artifact upload or failure output.
           Required verification: release owner confirms the uploaded build is visible in App Store Connect TestFlight.
           EOF
 
@@ -150,9 +163,15 @@ jobs:
 
       - name: Upload Android build to Google Play internal testing
         run: |
-          set -o pipefail
           cd apps/empire_flutter/app/android
-          bundle exec fastlane android upload_internal 2>&1 | tee "$RUNNER_TEMP/android-play-internal.log"
+          set +e
+          bundle exec fastlane android upload_internal > "$RUNNER_TEMP/android-play-internal.log" 2>&1
+          status=$?
+          "$GITHUB_WORKSPACE/scripts/redact_native_proof_log.sh" "$RUNNER_TEMP/android-play-internal.log"
+          if [[ $status -ne 0 ]]; then
+            tail -120 "$RUNNER_TEMP/android-play-internal.log"
+          fi
+          exit $status
 
       - name: Write Android proof summary
         if: always()
@@ -164,6 +183,7 @@ jobs:
 
           Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
           Command: bundle exec fastlane android upload_internal
+          Log handling: proof logs are redacted before artifact upload or failure output.
           Required verification: release owner confirms the uploaded release is visible in Google Play internal testing.
           EOF
 
@@ -216,13 +236,25 @@ jobs:
 
       - name: Build macOS release app
         run: |
-          set -o pipefail
-          ./scripts/deploy.sh flutter-macos 2>&1 | tee "$RUNNER_TEMP/macos-build.log"
+          set +e
+          ./scripts/deploy.sh flutter-macos > "$RUNNER_TEMP/macos-build.log" 2>&1
+          status=$?
+          ./scripts/redact_native_proof_log.sh "$RUNNER_TEMP/macos-build.log"
+          if [[ $status -ne 0 ]]; then
+            tail -120 "$RUNNER_TEMP/macos-build.log"
+          fi
+          exit $status
 
       - name: Sign, notarize, and staple macOS app
         run: |
-          set -o pipefail
-          ./scripts/macos_release_ci.sh sign-notarize-staple "$RUNNER_TEMP" 2>&1 | tee "$RUNNER_TEMP/macos-notarization.log"
+          set +e
+          ./scripts/macos_release_ci.sh sign-notarize-staple "$RUNNER_TEMP" > "$RUNNER_TEMP/macos-notarization.log" 2>&1
+          status=$?
+          ./scripts/redact_native_proof_log.sh "$RUNNER_TEMP/macos-notarization.log"
+          if [[ $status -ne 0 ]]; then
+            tail -120 "$RUNNER_TEMP/macos-notarization.log"
+          fi
+          exit $status
 
       - name: Write macOS proof summary
         if: always()
@@ -235,6 +267,7 @@ jobs:
 
           Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
           Commands: ./scripts/deploy.sh flutter-macos; ./scripts/macos_release_ci.sh sign-notarize-staple
+          Log handling: proof logs are redacted before artifact upload or failure output.
           Required verification: release owner confirms notarization succeeded, stapling succeeded, and spctl assessment passed.
           EOF
 
