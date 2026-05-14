@@ -3,6 +3,7 @@ opt_out_usage
 
 require 'base64'
 require 'spaceship'
+require 'yaml'
 
 def require_env_values!(keys)
   missing = keys.select { |key| ENV[key].to_s.strip.empty? }
@@ -23,6 +24,15 @@ def flutter_binary
   return fvm_binary if File.exist?(fvm_binary)
 
   'flutter'
+end
+
+def flutter_release_version
+  pubspec_path = File.join(app_root, 'pubspec.yaml')
+  version = YAML.load_file(pubspec_path).fetch('version').to_s.strip
+  match = version.match(/\A(?<name>\d+\.\d+\.\d+)\+(?<number>\d+)\z/)
+  UI.user_error!("Expected pubspec.yaml version to use semantic version plus build number, got: #{version}") unless match
+
+  { name: match[:name], number: match[:number] }
 end
 
 def app_store_connect_api_key_options
@@ -157,6 +167,7 @@ platform :ios do
   lane :upload_testflight do
     require_env_values!(%w[APPLE_DEVELOPER_TEAM_ID])
     api_key = scholesa_api_key
+    release_version = flutter_release_version
     output_directory = File.join(app_root, 'build', 'ios', 'fastlane')
     ipa_path = File.join(output_directory, 'Scholesa.ipa')
 
@@ -177,7 +188,7 @@ platform :ios do
       },
       output_directory: output_directory,
       output_name: 'Scholesa.ipa',
-      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']}"
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']} FLUTTER_BUILD_NAME=#{release_version[:name]} FLUTTER_BUILD_NUMBER=#{release_version[:number]}"
     )
 
     upload_to_testflight(

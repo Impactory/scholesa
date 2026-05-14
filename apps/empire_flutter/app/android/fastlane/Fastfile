@@ -12,7 +12,7 @@ def require_env_values!(keys)
 end
 
 def app_root
-  File.expand_path('..', __dir__)
+  File.expand_path('../..', __dir__)
 end
 
 def flutter_binary

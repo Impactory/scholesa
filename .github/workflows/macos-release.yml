@@ -60,6 +60,9 @@ jobs:
         with:
           channel: stable
 
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
+
       - name: Install Flutter dependencies
         run: |
           cd apps/empire_flutter/app

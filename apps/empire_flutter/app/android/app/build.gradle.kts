@@ -17,6 +17,12 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+fun resolveKeystoreFile(path: String) = if (File(path).isAbsolute) {
+    File(path)
+} else {
+    rootProject.file(path)
+}
+
 android {
     namespace = "com.scholesa.app"
     compileSdk = flutter.compileSdkVersion
@@ -45,7 +51,7 @@ android {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
+            storeFile = keystoreProperties["storeFile"]?.let { resolveKeystoreFile(it as String) }
             storePassword = keystoreProperties["storePassword"] as String?
         }
     }

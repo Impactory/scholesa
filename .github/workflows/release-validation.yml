@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
@@ -119,6 +122,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
 
       - name: Run full platform gates (no deploy)
         run: npm run flow:platform:gates

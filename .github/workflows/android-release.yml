@@ -37,6 +37,9 @@ jobs:
         with:
           channel: stable
 
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -67,6 +70,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
