@@ -148,7 +148,9 @@ No verified TestFlight (iOS), Google Play internal (Android), or Developer ID no
 **CI workflows exist:** `.github/workflows/apple-release.yml`, `.github/workflows/android-release.yml`, `.github/workflows/macos-release.yml`, and `.github/workflows/native-distribution-proof.yml`.
 **What is needed:**
 - Successful signed iOS upload to TestFlight through `./scripts/apple_release_local.sh upload_testflight` or `.github/workflows/native-distribution-proof.yml`.
+- App Store Connect visibility for the expected Flutter build number confirmed through `./scripts/apple_release_local.sh verify_testflight_build` or equivalent App Store Connect evidence.
 - Successful signed Android App Bundle upload to Google Play internal testing through `./scripts/android_release_local.sh upload_internal` or `.github/workflows/native-distribution-proof.yml`.
+- Google Play Console privacy policy configured for `com.scholesa.app` before Android upload proof, because the Android app declares microphone access for AI coach voice input. Local proof requires `ANDROID_PRIVACY_POLICY_URL=https://<production-domain>/en/privacy` and `ANDROID_PRIVACY_POLICY_CONFIRMED=I_HAVE_SET_PLAY_CONSOLE_PRIVACY_POLICY` after that console setting is complete.
 - Successful macOS Developer ID signing, notarization, stapling, and `spctl` assessment through `./scripts/macos_release_local.sh sign_notarize_staple` or `.github/workflows/native-distribution-proof.yml`.
 - Proof logs or workflow artifacts saved in `docs/native-distribution-proof-<timestamp>/` or attached to the GitHub Actions run, plus release-owner verification in App Store Connect, Google Play Console, and notarization output.
 

@@ -12,6 +12,7 @@ def require_env_values!(keys)
   UI.user_error!("Missing required environment values: #{missing.join(', ')}")
 end
 
+
 def app_root
   File.expand_path('../..', __dir__)
 end
@@ -84,6 +85,18 @@ def verify_app_store_connect_api_key!(api_key)
   Spaceship::ConnectAPI::App.all(limit: 1)
 rescue Spaceship::UnauthorizedAccessError => error
   UI.user_error!("App Store Connect .p8 key loaded locally, but Apple rejected live API auth: #{error.message}. Verify the key id, issuer id, team, and access role in App Store Connect.")
+end
+
+def verify_expected_testflight_build!(bundle_id, release_version)
+  app = Spaceship::ConnectAPI::App.find(bundle_id)
+  UI.user_error!("App Store Connect app not found for bundle id #{bundle_id}.") unless app
+
+  builds = app.get_builds(limit: 100, sort: '-uploadedDate')
+  matching_build = builds.find { |build| build.version.to_s == release_version[:number].to_s }
+  UI.user_error!("Expected TestFlight build #{release_version[:number]} for #{bundle_id} is not visible in App Store Connect yet.") unless matching_build
+
+  processing_state = matching_build.respond_to?(:processing_state) ? matching_build.processing_state : 'UNKNOWN'
+  UI.success("Verified TestFlight build #{release_version[:number]} for #{bundle_id}; processing_state=#{processing_state}")
 end
 
 def provisioning_profile_dir
@@ -197,5 +210,14 @@ platform :ios do
       skip_waiting_for_build_processing: true,
       distribute_external: false,
     )
+  end
+
+  desc 'Verify the expected Flutter build number is visible in TestFlight'
+  lane :verify_testflight_build do
+    api_key = scholesa_api_key
+    verify_app_store_connect_api_key!(api_key)
+    release_version = flutter_release_version
+    bundle_id = ENV['IOS_APP_IDENTIFIER'].to_s.strip.empty? ? 'com.scholesa.app' : ENV['IOS_APP_IDENTIFIER']
+    verify_expected_testflight_build!(bundle_id, release_version)
   end
 end

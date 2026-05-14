@@ -111,3 +111,8 @@ jobs:
         run: |
           cd apps/empire_flutter/app/ios
           bundle exec fastlane ios upload_testflight
+
+      - name: Verify TestFlight build visibility
+        run: |
+          cd apps/empire_flutter/app/ios
+          bundle exec fastlane ios verify_testflight_build

@@ -80,16 +80,23 @@ jobs:
           cd apps/empire_flutter/app/ios
           bundle exec fastlane ios upload_testflight 2>&1 | tee "$RUNNER_TEMP/ios-testflight.log"
 
+      - name: Verify iOS build is visible in TestFlight
+        run: |
+          set -o pipefail
+          cd apps/empire_flutter/app/ios
+          bundle exec fastlane ios verify_testflight_build 2>&1 | tee "$RUNNER_TEMP/ios-testflight-visibility.log"
+
       - name: Write iOS proof summary
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/native-distribution-proof-ios"
           cp "$RUNNER_TEMP/ios-testflight.log" "$RUNNER_TEMP/native-distribution-proof-ios/ios-testflight.log" 2>/dev/null || true
+          cp "$RUNNER_TEMP/ios-testflight-visibility.log" "$RUNNER_TEMP/native-distribution-proof-ios/ios-testflight-visibility.log" 2>/dev/null || true
           cat > "$RUNNER_TEMP/native-distribution-proof-ios/README.md" <<EOF
           # iOS TestFlight Native Distribution Proof
 
           Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          Command: bundle exec fastlane ios upload_testflight
+          Commands: bundle exec fastlane ios upload_testflight; bundle exec fastlane ios verify_testflight_build
           Required verification: release owner confirms the uploaded build is visible in App Store Connect TestFlight.
           EOF
 
@@ -111,6 +118,8 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_PRIVACY_POLICY_URL: ${{ vars.ANDROID_PRIVACY_POLICY_URL }}
+      ANDROID_PRIVACY_POLICY_CONFIRMED: ${{ vars.ANDROID_PRIVACY_POLICY_CONFIRMED }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

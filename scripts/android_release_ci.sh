@@ -56,6 +56,13 @@ validate_google_play_key_json() {
   ' "$key_path" || fail "Google Play service account JSON is invalid at $key_path"
 }
 
+require_android_privacy_policy_attestation() {
+  if grep -q 'android.permission.RECORD_AUDIO' "$ANDROID_DIR/app/src/main/AndroidManifest.xml"; then
+    [[ "${ANDROID_PRIVACY_POLICY_URL:-}" =~ ^https:// ]] || fail "ANDROID_PRIVACY_POLICY_URL must be set to the public https privacy policy URL configured in Google Play Console."
+    [[ "${ANDROID_PRIVACY_POLICY_CONFIRMED:-}" == "I_HAVE_SET_PLAY_CONSOLE_PRIVACY_POLICY" ]] || fail "Set ANDROID_PRIVACY_POLICY_CONFIRMED=I_HAVE_SET_PLAY_CONSOLE_PRIVACY_POLICY after configuring the privacy policy URL in Google Play Console."
+  fi
+}
+
 materialize_google_play_key() {
   require_env_values GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64
   local key_dir="$RUNNER_TEMP_DIR/google_play"
@@ -68,6 +75,8 @@ materialize_google_play_key() {
   write_github_env "ANDROID_APP_IDENTIFIER=$ANDROID_APP_IDENTIFIER"
   write_github_env "PLAY_TRACK=$PLAY_TRACK"
   write_github_env "FLUTTER_BIN=flutter"
+  write_github_env "ANDROID_PRIVACY_POLICY_URL=${ANDROID_PRIVACY_POLICY_URL:-}"
+  write_github_env "ANDROID_PRIVACY_POLICY_CONFIRMED=${ANDROID_PRIVACY_POLICY_CONFIRMED:-}"
 }
 
 materialize_android_signing() {
@@ -94,6 +103,7 @@ case "$COMMAND" in
     ;;
   validate-android-release)
     require_env_values GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD
+    require_android_privacy_policy_attestation
     ;;
   materialize-play-store-key)
     materialize_google_play_key

@@ -10,10 +10,35 @@ DEFAULT_TEAM_ID="CEUD8LB243"
 MACOS_APP_PATH="${2:-${MACOS_APP_PATH:-$DEFAULT_APP_PATH}}"
 MACOS_ENTITLEMENTS_PATH="${MACOS_ENTITLEMENTS_PATH:-$APP_ROOT/macos/Runner/Release.entitlements}"
 MACOS_ARCHIVE_PATH="${MACOS_ARCHIVE_PATH:-$REPO_ROOT/.tmp/scholesa-macos-notary.zip}"
+MACOS_CODESIGN_PROBE_TIMEOUT_SECONDS="${MACOS_CODESIGN_PROBE_TIMEOUT_SECONDS:-20}"
+MACOS_CODESIGN_TIMEOUT_SECONDS="${MACOS_CODESIGN_TIMEOUT_SECONDS:-300}"
 
 fail() {
   echo "[macos-release] $*" >&2
   exit 1
+}
+
+run_with_timeout() {
+  local timeout_seconds="$1"
+  local timeout_message="$2"
+  shift 2
+
+  "$@" &
+  local command_pid=$!
+  local elapsed_seconds=0
+
+  while kill -0 "$command_pid" 2>/dev/null; do
+    if (( elapsed_seconds >= timeout_seconds )); then
+      kill "$command_pid" 2>/dev/null || true
+      wait "$command_pid" 2>/dev/null || true
+      printf '%s\n' "$timeout_message" >&2
+      return 124
+    fi
+    sleep 1
+    elapsed_seconds=$((elapsed_seconds + 1))
+  done
+
+  wait "$command_pid"
 }
 
 require_developer_id_identity() {
@@ -69,6 +94,10 @@ require_local_macos_distribution_prereqs() {
     issues+=("$message")
   fi
 
+  if ! message="$(require_codesign_private_key_access 2>&1)"; then
+    issues+=("$message")
+  fi
+
   if [[ ${#issues[@]} -gt 0 ]]; then
     {
       echo "Local macOS distribution prerequisites are incomplete:"
@@ -85,13 +114,30 @@ resolve_developer_id_identity() {
 
   local identity
   if [[ -n "${APPLE_DEVELOPER_TEAM_ID:-}" ]]; then
-    identity="$(printf '%s\n' "$identities" | awk -v team="$APPLE_DEVELOPER_TEAM_ID" '/"Developer ID Application: / && index($0, "(" team ")") { sub(/^.*\"/, ""); sub(/\".*$/, ""); print; exit }')"
+    identity="$(printf '%s\n' "$identities" | sed -nE "/\"Developer ID Application: .*\\($APPLE_DEVELOPER_TEAM_ID\\)\"/s/^ *[0-9]+\) [A-F0-9]+ \"([^\"]+)\".*$/\1/p" | head -n 1)"
   else
-    identity="$(printf '%s\n' "$identities" | awk '/"Developer ID Application: / { sub(/^.*\"/, ""); sub(/\".*$/, ""); print; exit }')"
+    identity="$(printf '%s\n' "$identities" | sed -nE '/"Developer ID Application: /s/^ *[0-9]+\) [A-F0-9]+ "([^"]+)".*$/\1/p' | head -n 1)"
   fi
 
   [[ -n "$identity" ]] || fail "Developer ID Application signing identity is not available in the active keychain."
   printf '%s\n' "$identity"
+}
+
+keychain_access_message() {
+  printf '%s\n' "Developer ID private-key access is blocked. Approve the Keychain Access prompt, or run security unlock-keychain ~/Library/Keychains/login.keychain-db and security set-key-partition-list -S apple-tool:,apple: -s -k <login-keychain-password> ~/Library/Keychains/login.keychain-db locally. Do not store the keychain password in repo files, shell history, CI logs, or release proof artifacts."
+}
+
+require_codesign_private_key_access() {
+  local identity
+  identity="$(resolve_developer_id_identity)"
+
+  local probe_dir
+  probe_dir="$(mktemp -d)"
+  trap 'rm -rf "$probe_dir"' RETURN
+  printf 'scholesa macos codesign probe\n' > "$probe_dir/probe.txt"
+
+  run_with_timeout "$MACOS_CODESIGN_PROBE_TIMEOUT_SECONDS" "$(keychain_access_message)" \
+    codesign --force --sign "$identity" "$probe_dir/probe.txt" >/dev/null
 }
 
 sign_macos_app() {
@@ -101,7 +147,8 @@ sign_macos_app() {
 
   local identity
   identity="$(resolve_developer_id_identity)"
-  codesign --force --deep --options runtime --timestamp \
+  run_with_timeout "$MACOS_CODESIGN_TIMEOUT_SECONDS" "$(keychain_access_message)" \
+    codesign --force --deep --options runtime --timestamp \
     --entitlements "$MACOS_ENTITLEMENTS_PATH" \
     --sign "$identity" \
     "$MACOS_APP_PATH"

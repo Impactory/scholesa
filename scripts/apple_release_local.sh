@@ -133,10 +133,14 @@ case "$COMMAND" in
   upload_testflight)
     require_local_ios_distribution_prereqs
     ;;
+  verify_testflight_build)
+    require_app_store_connect_env || exit 1
+    FASTLANE_LANE="verify_testflight_build"
+    ;;
 esac
 
-if [[ "$FASTLANE_LANE" != "verify_api_key" && "$FASTLANE_LANE" != "prepare_ios_signing" && "$FASTLANE_LANE" != "prepare_macos_developer_id" && "$FASTLANE_LANE" != "upload_testflight" ]]; then
-  fail "Unknown command: $COMMAND. Supported commands: verify_api_key, prepare_signing, prepare_macos_developer_id, verify_local_release, upload_testflight."
+if [[ "$FASTLANE_LANE" != "verify_api_key" && "$FASTLANE_LANE" != "prepare_ios_signing" && "$FASTLANE_LANE" != "prepare_macos_developer_id" && "$FASTLANE_LANE" != "upload_testflight" && "$FASTLANE_LANE" != "verify_testflight_build" ]]; then
+  fail "Unknown command: $COMMAND. Supported commands: verify_api_key, prepare_signing, prepare_macos_developer_id, verify_local_release, upload_testflight, verify_testflight_build."
 fi
 
 cd "$IOS_DIR"

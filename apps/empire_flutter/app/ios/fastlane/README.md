@@ -47,6 +47,14 @@ Prepare macOS Developer ID signing from App Store Connect API key
 
 Build a signed iOS release IPA and upload it to TestFlight
 
+### ios verify_testflight_build
+
+```sh
+[bundle exec] fastlane ios verify_testflight_build
+```
+
+Verify the expected Flutter build number is visible in TestFlight
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

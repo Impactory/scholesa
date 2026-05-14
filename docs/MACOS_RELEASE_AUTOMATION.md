@@ -40,7 +40,18 @@ The Account Holder must create the Developer ID Application certificate in Apple
 ./scripts/macos_release_local.sh verify_local_release
 ```
 
-This fails closed and reports all missing local prerequisites in one pass: Developer ID Application identity, `.env.app_store_connect.local`, App Store Connect key path, key id, and issuer id.
+This fails closed and reports all missing local prerequisites in one pass: Developer ID Application identity, Developer ID private-key signing access, `.env.app_store_connect.local`, App Store Connect key path, key id, and issuer id.
+
+If `verify_local_release` reports blocked Developer ID private-key access, macOS is usually waiting for private-key access approval for the Developer ID Application identity. Approve the Keychain Access prompt if it is visible. If the prompt does not appear, unlock the login keychain and run the key partition-list repair locally with the keychain password typed by the operator:
+
+```bash
+security unlock-keychain ~/Library/Keychains/login.keychain-db
+security set-key-partition-list -S apple-tool:,apple: -s -k <login-keychain-password> ~/Library/Keychains/login.keychain-db
+```
+
+Do not store the keychain password in the repo, shell history, CI logs, or release proof artifacts.
+
+The local preflight uses a bounded temp-file codesign probe. Override `MACOS_CODESIGN_PROBE_TIMEOUT_SECONDS` only when debugging slow keychain prompts. Live app signing is also bounded by `MACOS_CODESIGN_TIMEOUT_SECONDS` so native proof cannot hang indefinitely.
 
 5. Verify notarization authentication once the credentials are installed:
 

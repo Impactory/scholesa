@@ -84,7 +84,7 @@ Use `.github/workflows/apple-release.yml`.
 The workflow delegates secret validation and signing material setup to `./scripts/apple_release_ci.sh` so the CI logic stays aligned with the local release scripts.
 
 - `verify-app-store-connect` validates the App Store Connect API key setup on a macOS runner.
-- `ios-testflight` is gated behind the `upload_to_testflight` workflow input and generates signing assets from the `.p8` credentials before upload.
+- `ios-testflight` is gated behind the `upload_to_testflight` workflow input, generates signing assets from the `.p8` credentials, uploads the build, then verifies that the expected Flutter build number is visible in App Store Connect.
 
 If VS Code shows `Context access might be invalid` on the workflow secret references, that is an editor validation warning until the matching GitHub secrets exist for the repository. The workflow logic itself was validated locally through `scripts/apple_release_ci.sh` and `scripts/apple_release_local.sh`.
 
@@ -95,4 +95,5 @@ If VS Code shows `Context access might be invalid` on the workflow secret refere
 - iOS TestFlight and macOS notarization share App Store Connect auth but generate/use separate signing identities. Keep Apple Distribution and Developer ID Application identities distinct.
 - Use `./scripts/native_distribution_readiness.sh` when validating the full native-channel distribution boundary across iOS, Android, and macOS.
 - Use `./scripts/native_distribution_proof.sh execute-live` only when the release owner is ready to capture live native-channel distribution proof; it requires an explicit confirmation environment variable before uploading builds.
+- After a TestFlight upload, use `./scripts/apple_release_local.sh verify_testflight_build` to confirm the expected Flutter build number from `pubspec.yaml` is visible in App Store Connect. Uploader transfer success alone is not native-channel Gold proof.
 - Use `.github/workflows/native-distribution-proof.yml` when proof should be captured in CI artifacts alongside Android and macOS proof. The workflow requires `native_distribution_confirmation=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS`.
