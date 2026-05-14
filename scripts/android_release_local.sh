@@ -59,6 +59,16 @@ require_local_android_signing_prereqs() {
     fi
   fi
 
+  if grep -q 'android.permission.RECORD_AUDIO' "$ANDROID_DIR/app/src/main/AndroidManifest.xml"; then
+    if [[ ! "${ANDROID_PRIVACY_POLICY_URL:-}" =~ ^https:// ]]; then
+      issues+=("ANDROID_PRIVACY_POLICY_URL must be set to the public https privacy policy URL, for example https://<domain>/en/privacy")
+    fi
+
+    if [[ "${ANDROID_PRIVACY_POLICY_CONFIRMED:-}" != "I_HAVE_SET_PLAY_CONSOLE_PRIVACY_POLICY" ]]; then
+      issues+=("Set ANDROID_PRIVACY_POLICY_CONFIRMED=I_HAVE_SET_PLAY_CONSOLE_PRIVACY_POLICY after configuring that URL in Google Play Console for the app")
+    fi
+  fi
+
   if [[ ${#issues[@]} -gt 0 ]]; then
     {
       echo "Local Android release prerequisites are incomplete:"

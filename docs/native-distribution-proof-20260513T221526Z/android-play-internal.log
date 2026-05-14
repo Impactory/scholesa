@@ -109,3 +109,192 @@ Bundled gems are installed into `./vendor/bundle`
 [22:09:28]: [36m$ /Users/impactory/flutter/bin/flutter pub get[0m
 [22:09:28]: ▸ [35mResolving dependencies...[0m
 [22:09:28]: ▸ [35mDownloading packages...[0m
+[22:09:35]: ▸ [35m_fe_analyzer_shared 67.0.0 (100.0.0 available)[0m
+[22:09:35]: ▸ [35m_flutterfire_internals 1.3.69 (1.3.70 available)[0m
+[22:09:35]: ▸ [35manalyzer 6.4.1 (13.0.0 available)[0m
+[22:09:35]: ▸ [35mbuild 2.4.1 (4.0.6 available)[0m
+[22:09:35]: ▸ [35mbuild_config 1.1.2 (1.3.0 available)[0m
+[22:09:35]: ▸ [35mbuild_resolvers 2.4.2 (3.0.4 available)[0m
+[22:09:35]: ▸ [35mbuild_runner 2.4.13 (2.15.0 available)[0m
+[22:09:35]: ▸ [35mbuild_runner_core 7.3.2 (9.3.2 available)[0m
+[22:09:35]: ▸ [35mbuilt_value 8.12.5 (8.12.6 available)[0m
+[22:09:35]: ▸ [35mcloud_firestore 6.3.0 (6.4.0 available)[0m
+[22:09:35]: ▸ [35mcloud_firestore_platform_interface 7.2.0 (8.0.0 available)[0m
+[22:09:35]: ▸ [35mcloud_firestore_web 5.3.0 (5.4.0 available)[0m
+[22:09:35]: ▸ [35mcloud_functions 6.2.0 (6.3.0 available)[0m
+[22:09:35]: ▸ [35mcloud_functions_platform_interface 5.8.12 (6.0.0 available)[0m
+[22:09:35]: ▸ [35mcloud_functions_web 5.1.5 (5.1.6 available)[0m
+[22:09:35]: ▸ [35mdart_style 2.3.6 (3.1.9 available)[0m
+[22:09:35]: ▸ [35mfile_picker 10.3.10 (11.0.2 available)[0m
+[22:09:35]: ▸ [35mfirebase_auth 6.4.0 (6.5.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_auth_platform_interface 8.1.9 (9.0.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_auth_web 6.1.5 (6.2.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_core 4.7.0 (4.8.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_core_platform_interface 6.0.3 (7.0.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_core_web 3.6.0 (3.6.1 available)[0m
+[22:09:35]: ▸ [35mfirebase_storage 13.3.0 (13.4.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_storage_platform_interface 5.2.20 (6.0.0 available)[0m
+[22:09:35]: ▸ [35mfirebase_storage_web 3.11.5 (3.11.6 available)[0m
+[22:09:35]: ▸ [35mflutter_svg 2.2.4 (2.3.0 available)[0m
+[22:09:35]: ▸ [35mgo_router 17.2.2 (17.2.3 available)[0m
+[22:09:35]: ▸ [35mgoogle_fonts 8.0.2 (8.1.0 available)[0m
+[22:09:35]: ▸ [35mhooks 1.0.2 (1.0.3 available)[0m
+[22:09:35]: ▸ [35mmatcher 0.12.19 (0.12.20 available)[0m
+[22:09:35]: ▸ [35mmeta 1.17.0 (1.18.2 available)[0m
+[22:09:35]: ▸ [35mnative_toolchain_c 0.17.6 (0.18.0 available)[0m
+[22:09:35]: ▸ [35mrx 0.4.0 (0.5.0 available)[0m
+[22:09:35]: ▸ [35mshelf_web_socket 2.0.1 (3.0.0 available)[0m
+[22:09:35]: ▸ [35msource_gen 1.5.0 (4.2.3 available)[0m
+[22:09:35]: ▸ [35msource_helper 1.3.5 (1.3.12 available)[0m
+[22:09:35]: ▸ [35mtest_api 0.7.10 (0.7.12 available)[0m
+[22:09:35]: ▸ [35murl_launcher_web 2.4.2 (2.4.3 available)[0m
+[22:09:35]: ▸ [35mvector_graphics 1.1.21 (1.2.1 available)[0m
+[22:09:35]: ▸ [35mvector_graphics_compiler 1.2.0 (1.2.2 available)[0m
+[22:09:35]: ▸ [35mvector_math 2.2.0 (2.3.0 available)[0m
+[22:09:35]: ▸ [35mvm_service 15.1.0 (15.2.0 available)[0m
+[22:09:35]: ▸ [35mwin32 5.15.0 (6.2.0 available)[0m
+[22:09:35]: ▸ [35mxml 6.6.1 (7.0.1 available)[0m
+[22:09:35]: ▸ [35mGot dependencies![0m
+[22:09:35]: ▸ [35m45 packages have newer versions incompatible with dependency constraints.[0m
+[22:09:35]: ▸ [35mTry `flutter pub outdated` for more information.[0m
+[22:09:35]: [32m--------------------------------------------------------------------[0m
+[22:09:35]: [32mStep: /Users/impactory/flutter/bin/flutter build appbundle --release[0m
+[22:09:35]: [32m--------------------------------------------------------------------[0m
+[22:09:35]: [36m$ /Users/impactory/flutter/bin/flutter build appbundle --release[0m
+[22:09:39]: ▸ [35mRunning Gradle task 'bundleRelease'...                              3.0s[0m
+[22:09:40]: ▸ [35m✓ Built build/app/outputs/bundle/release/app-release.aab (56.7MB)[0m
+[22:09:40]: [32m----------------------------------[0m
+[22:09:40]: [32m--- Step: upload_to_play_store ---[0m
+[22:09:40]: [32m----------------------------------[0m
+
++---------------------------------------------------------------------------+
+|                        [32mSummary for supply 2.230.0[0m                         |
++------------------------------------+--------------------------------------+
+| json_key                           | /Users/impactory/Documents/GitHub/s  |
+|                                    | cholesa/.secrets/google_play/schole  |
+|                                    | sa-google-play-release.json          |
+| package_name                       | com.scholesa.app                     |
+| aab                                | /Users/impactory/Documents/GitHub/s  |
+|                                    | cholesa/apps/empire_flutter/app/bui  |
+|                                    | ld/app/outputs/bundle/release/app-r  |
+|                                    | elease.aab                           |
+| track                              | internal                             |
+| skip_upload_metadata               | true                                 |
+| skip_upload_images                 | true                                 |
+| skip_upload_screenshots            | true                                 |
+| release_status                     | completed                            |
+| skip_upload_apk                    | false                                |
+| skip_upload_aab                    | false                                |
+| skip_upload_changelogs             | false                                |
+| sync_image_upload                  | false                                |
+| track_promote_release_status       | completed                            |
+| validate_only                      | false                                |
+| check_superseded_tracks            | false                                |
+| timeout                            | 300                                  |
+| deactivate_on_promote              | true                                 |
+| changes_not_sent_for_review        | false                                |
+| rescue_changes_not_sent_for_review | true                                 |
+| ack_bundle_installation_warning    | false                                |
++------------------------------------+--------------------------------------+
+
+[22:09:40]: Preparing aab at path '/Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/build/app/outputs/bundle/release/app-release.aab' for upload...
++--------------------------------------------+
+|                [33mLane Context[0m                |
++------------------+-------------------------+
+| DEFAULT_PLATFORM | android                 |
+| PLATFORM_NAME    | android                 |
+| LANE_NAME        | android upload_internal |
++------------------+-------------------------+
+[22:10:09]: [31mCalled from Fastfile at line 78[0m
+[22:10:09]: [31m```[0m
+[22:10:09]: [31m    76:	    UI.user_error!("Expected Android App Bundle not found: #{aab_path}") unless File.exist?(aab_path)[0m
+[22:10:09]: [31m    77:	[0m
+[22:10:09]: [31m => 78:	    upload_to_play_store([0m
+[22:10:09]: [31m    79:	      json_key: google_play_json_key_path,[0m
+[22:10:09]: [31m    80:	      package_name: ENV['ANDROID_APP_IDENTIFIER'],[0m
+[22:10:09]: [31m```[0m
+[22:10:09]: [31mGoogle Api Error: Invalid request - The apk has permissions that require a privacy policy set for the app, e.g: android.permission.RECORD_AUDIO.[0m
+
++---------------------------------------------+
+|              [32mfastlane summary[0m               |
++------+------------------------+-------------+
+| Step | Action                 | Time (in s) |
++------+------------------------+-------------+
+| 1    | default_platform       | 0           |
+| 2    | opt_out_usage          | 0           |
+| 3    | /Users/impactory/flut  | 7           |
+|      | ter/bin/flutter pub    |             |
+|      | get                    |             |
+| 4    | /Users/impactory/flut  | 4           |
+|      | ter/bin/flutter build  |             |
+|      | appbundle --releas     |             |
+| 💥   | [31mupload_to_play_store[0m   | 29          |
++------+------------------------+-------------+
+
+[22:10:09]: [31mfastlane finished with errors[0m
+[31m
+[!] Google Api Error: Invalid request - The apk has permissions that require a privacy policy set for the app, e.g: android.permission.RECORD_AUDIO.[0m
+
+#######################################################################
+# fastlane 2.234.0 is available. You are on 2.230.0.
+# You should use the latest version.
+# Please update using `bundle update fastlane`.
+#######################################################################
+
+[32m2.234.0 Improvements[0m
+> [!TIP]
+> Appreciate fastlane? Want to support further development? Donate via OpenCollective - https://opencollective.com/fastlane
+
+* [docs] adjust CoC contact email away from Google (#30024) via Connor Tumbleson (@iBotPeaches)
+* [spaceship] fix provisioning profile repair when certificates include nil (#29935) via via-guy (@via-guy)
+* build(deps): bump rubygems/configure-rubygems-credentials from 1.0.0 to 2.0.0 (#30013) via dependabot[bot] (@dependabot[bot])
+* [supply] Fix issue when playstore production track doesn't have any release (#21506) via Fadel Trivandi Dipantara (@fadeltd)
+* [deliver] improve documentation & clarify on territory_ids behavior for upload_price_tier (#30019) via orbisai0security (@orbisai0security)
+* [match] Fix match_nuke certificate_id filtering (#30022) via Nakshatra Singh (@nakshatrasinghh)
+* [sigh] fix: prevent empty string as input to codesign on KEYCHAIN_FLAG (#30018) via zengchunshan (@zengchunshan)
+* [scan] default_derived_data supports build for running off (#22231) via Jozsef Mihalicza (@jmihaliczas3d)
+* Add support for 11 new App Store Connect locales (#29959) via Ryu (@Ryu0118)
+* [match] Fix match nuke deletion for provisioning profiles with wildcard filenames (#30014) via Nakshatra Singh (@nakshatrasinghh)
+* [increment_version_number] support MARKETING_VERSION resolving. (#30011) via Connor Tumbleson (@iBotPeaches)
+* [robocop] suppress suggestions for new extensions (#30005) via Connor Tumbleson (@iBotPeaches)
+* [core] relax constraint on abbrev, base64, mutex_m and nfk (#30009) via Connor Tumbleson (@iBotPeaches)
+* fix: migrate to standard which() helper to prevent ci spam (#29933) via Connor Tumbleson (@iBotPeaches)
+* [app_store_connect_api_key] Trim `key_id` / `issuer_id` to prevent malformed JWT claims (#29986) via Copilot (@Copilot)
+* [gem] allow CFPropertyList > 4 (#29993) via Connor Tumbleson (@iBotPeaches)
+* chore: ruby 3.2 is eol, 3.3 is suggested (#29979) via Connor Tumbleson (@iBotPeaches)
+* feat: add funding (opencollective) (#29972) via Connor Tumbleson (@iBotPeaches)
+* [frameit] Add iPhone 16 and iPhone 17 device frame support (#29921) via Events-Mate-Apps (@Events-Mate-Apps)
+* [Fastlane Swift] Update Runner Project to 14.6 (#29990) via Ethan Pippin (@LePips)
+* [supply] Support authorized_user and Application Default Credentials for Google authentication (#29982) via Tyler Renslow (@trenslow)
+
+[32m2.233.1 Improvements[0m
+* [deliver] fix app previews always running during usage. (#29989) via Connor Tumbleson (@iBotPeaches)
+
+[32m2.233.0 Improvements[0m
+* [scan] Fix default_os_version when xcodebuild sdkVersion differs from simctl sdkVersion (#29977) via Felix Lisczyk (@FelixLisczyk)
+* [core] build: move to fastlane-sirp 1.1.0 (#29973) via Connor Tumbleson (@iBotPeaches)
+* fix: use certificate id param on match (#29966) via James Collins (@java-james)
+* [action][swiftlint] Adds '--progress' flag (#21922) via Erik Lippmann (@ObjectiveCesar)
+* [sigh, match] Pass keychain_path through Sigh::Manager to ProvisioningProfile (#29963) via Dmitry Pchelintsev (@Pchol)
+* Support individual api tokens in altool (#29961) via Oliver Fox (@foxware00)
+* [spaceship] Fix getting App Preview Sets with new endpoint (#29960) via Cristian Caruceru (@ccaruceru)
+* [frameit] Change the default iPhone 14 Pro/Pro Max frame colors from `PURPLE` to `BLACK`. (#21927) via Michael Lenaghan (@michaellenaghan)
+* [gym] Add app_name parameter to skip xcodebuild -showBuildSettings (#29953) via 정고은 (@Goeun1001)
+* [deliver, pilot] Add provider_public_id option for altool uploads (#29898) via Hasancan Akgündüz (@hasancanakgunduz)
+* [sigh] add: introduce ability to control codesign page_size (#29952) via Aliaksei Siauko (@asevko)
+* build: assert bin/* contents in built gem to prevent global pollution. (#29915) via Connor Tumbleson (@iBotPeaches)
+* [match] feat(s3_storage): add support for AWS STS credentials (#22139) via monholm (@monholm)
+* [deliver] Initial App Preview (video) upload support for iPhone and iPad (#29831) via Cristian Caruceru (@ccaruceru)
+* [scan] output_remove_retry_attempts should also remove retries when the test is skipped (#29887) via Oliver Fox (@foxware00)
+* [precheck] add 'nsfw' as blocklisted term (#29937) via Jamie (@jtlthe2)
+* [scan] Fix simulator selection when runtime build is missing from installed runtimes (#29894) via Felix Lisczyk (@FelixLisczyk)
+* [gem] move to faraday-retry 1.0.4 (#29944) via Connor Tumbleson (@iBotPeaches)
+* [precheck] document `rules/rules_data/curse_word_hashes` (#29941) via Jamie (@jtlthe2)
+* Add RSpec tests for resign.sh bash functions (#29934) via Sergei Selivanov (@cergfix)
+* build(deps): bump actions/download-artifact from 7 to 8 (#29930) via dependabot[bot] (@dependabot[bot])
+* build(deps): bump actions/upload-artifact from 6 to 7 (#29931) via dependabot[bot] (@dependabot[bot])
+* [ci] remove AppVeyor for Windows tests on GitHub Actions (#29876) via Connor Tumbleson (@iBotPeaches)
+
+[32mTo see all new releases, open https://github.com/fastlane/fastlane/releases[0m
+
+[32mPlease update using `bundle update fastlane`[0m
