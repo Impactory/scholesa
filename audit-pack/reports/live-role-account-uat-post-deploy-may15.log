@@ -29,3 +29,6 @@ Live role UAT route family: /en/parent/passport
 Live role UAT Flutter login mentor attempt 1
 Live role UAT route mentor: /en/partner/listings
 Live role UAT route mentor: /en/educator/evidence
+  ✓  1 [chromium] › tests/e2e/live-role-account-uat-certification.spec.ts:340:7 › Live role-account UAT certification › certifies deployed role accounts across the Scholesa product chain (2.1m)
+
+  1 passed (2.3m)
