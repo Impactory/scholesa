@@ -160,6 +160,7 @@ String appInitialLocation({
 GoRouter createAppRouter(
   AppState appState, {
   GlobalKey<NavigatorState>? navigatorKey,
+  Uri? initialUri,
 }) {
   const String unauthenticatedEntry = kIsWeb ? '/welcome' : '/login';
 
@@ -169,6 +170,7 @@ GoRouter createAppRouter(
     initialLocation: appInitialLocation(
       isWeb: kIsWeb,
       unauthenticatedEntry: unauthenticatedEntry,
+      baseUri: initialUri,
     ),
     overridePlatformDefaultLocation: kIsWeb,
     debugLogDiagnostics: true,

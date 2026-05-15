@@ -46,6 +46,7 @@ import 'modules/attendance/attendance_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
+  final Uri launchUri = Uri.base;
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
     usePathUrlStrategy();
@@ -57,7 +58,10 @@ void main() async {
     initialize: () async {
       startupIssues = await _bootstrapRuntime(appResilience);
     },
-    launch: () => runApp(ScholesaApp(startupIssues: startupIssues)),
+    launch: () => runApp(ScholesaApp(
+      startupIssues: startupIssues,
+      launchUri: launchUri,
+    )),
   );
 }
 
@@ -154,9 +158,11 @@ class ScholesaApp extends StatefulWidget {
   const ScholesaApp({
     super.key,
     this.startupIssues = const <AppStartupIssue>[],
+    this.launchUri,
   });
 
   final List<AppStartupIssue> startupIssues;
+  final Uri? launchUri;
 
   @override
   State<ScholesaApp> createState() => _ScholesaAppState();
@@ -267,6 +273,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
       _router = createAppRouter(
         _appState,
         navigatorKey: _rootNavigatorKey,
+        initialUri: widget.launchUri,
       );
 
       if (!kIsWeb) {
