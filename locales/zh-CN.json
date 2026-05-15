@@ -30,7 +30,10 @@
       "site_leads": "站点负责人与校长",
       "partners": "合作伙伴",
       "hq": "总部与网络"
-    }
+    },
+    "publicNavigationAria": "Public navigation",
+    "summerCamp": "Summer Camp",
+    "summerCampShort": "Camp"
   },
   "navigation": {
     "signedInAs": "当前登录：{{identity}}",
@@ -143,5 +146,175 @@
   },
   "dashboard": {
     "redirecting": "正在跳转到你的工作区..."
+  },
+  "privacy": {
+    "homeLink": "Scholesa",
+    "kicker": "Privacy Policy",
+    "title": "Scholesa Privacy Policy",
+    "lastUpdated": "Last updated: May 13, 2026",
+    "intro": "Scholesa is a capability-first evidence platform for schools and learning studios. This policy explains how Scholesa handles information in the web app and mobile app, including classroom evidence, learner reflections, and optional voice input used by the AI coach experience.",
+    "informationHeading": "Information Scholesa Processes",
+    "informationBody": "Scholesa may process account profile information, school and site membership, session participation, learner artifacts, reflections, educator observations, proof-of-learning records, rubric judgments, capability growth records, portfolio outputs, support messages, device and diagnostic data, and audit records needed to keep evidence trustworthy.",
+    "voiceHeading": "Voice And Microphone Use",
+    "voiceBody": "The mobile app may request microphone access when a learner or educator uses voice input in the AI coach or related learning workflow. Audio is used to turn speech into text for the requested learning action. Scholesa does not use microphone access in the background. Users can deny or revoke microphone permission in device settings and continue using typed input.",
+    "useHeading": "How Information Is Used",
+    "useBody": "Information is used to run learning sessions, capture and verify evidence, support educator feedback, update capability growth over time, communicate progress to authorized users, maintain safety and reliability, and meet school operational and compliance requirements.",
+    "aiHeading": "AI Assistance And Authenticity",
+    "aiBody": "Where AI assistance is available, Scholesa treats AI as support rather than a substitute for learner understanding. The platform may keep records of AI-use disclosures, prompts, responses, learner changes, verification intent, and proof-of-learning so educators can evaluate authenticity.",
+    "sharingHeading": "Sharing And Access",
+    "sharingBody": "Access is role-based. Learners, educators, guardians, school leaders, partners, and platform operators can only access information appropriate to their role, site, and permissions. Scholesa does not sell learner personal information.",
+    "storageHeading": "Storage, Security, And Retention",
+    "storageBody": "Scholesa uses tenant-scoped persistence, security rules, audit trails, and operational controls to protect evidence and account data. Schools and platform administrators determine retention and deletion requirements according to their agreements, legal obligations, and learning records policies.",
+    "contactHeading": "Contact",
+    "contactBody": "For privacy questions or school data requests, contact the Scholesa operator or the school organization responsible for the learner account."
+  },
+  "summerCamp": {
+    "homeAria": "Scholesa home",
+    "navAria": "Summer camp navigation",
+    "weeksAria": "Summer camp weeks",
+    "brandSubtitle": "Young Innovators",
+    "privacy": "Privacy",
+    "reserve": "Reserve",
+    "eyebrow": "Summer Camp 2026",
+    "ages": "Grades 1-6 · Ages 6-11",
+    "heroTitleBefore": "Young Innovators build future skills through",
+    "heroTitleHighlight": "creativity",
+    "heroTitleAfter": "and invention.",
+    "heroBody": "A creativity-driven camp that helps young minds imagine, design, test, and explain ideas with helpful impact. Two weeks. Ten sessions. Real projects learners are proud to show.",
+    "primaryCta": "Reserve your spot",
+    "halfDaySessions": "Half-day sessions",
+    "capabilitiesKicker": "What learners build",
+    "capabilitiesTitle": "Five durable capabilities, visible through real artifacts.",
+    "capabilitiesBody": "Every session is designed around capability growth. Learners leave with skills they can show, explain, improve, and use.",
+    "scheduleKicker": "Session by session",
+    "scheduleTitle": "Two weeks. Ten sessions. Every day builds on the last.",
+    "scheduleBody": "Each session follows the Scholesa rhythm: hook, build, checkpoint, reflect. Learners always know what they are making and why.",
+    "differentiatorsKicker": "A different kind of camp",
+    "differentiatorsTitle": "Built for evidence, confidence, and real-world creativity.",
+    "differentiatorsBody": "The camp experience stays playful, but the learning record is serious: projects, reflections, feedback, and showcase moments can become evidence learners are proud to revisit.",
+    "limitedKicker": "Limited spots available",
+    "limitedTitle": "Small groups. Big impact. Register early.",
+    "limitedBody": "Cohorts are intentionally small to protect the learning experience. Reach out to hold your child's place for Scholesa Young Innovators Summer Camp 2026.",
+    "email": "info@scholesa.com",
+    "stats": {
+      "sessions": "sessions",
+      "weeks": "weeks",
+      "capabilityStrands": "capability strands",
+      "portfolioArtifacts": "portfolio artifacts",
+      "familyShowcase": "family showcase"
+    },
+    "capabilities": {
+      "think": {
+        "label": "Think",
+        "detail": "Notice problems, ask better questions, and reason from what you observe."
+      },
+      "make": {
+        "label": "Make",
+        "detail": "Design, build, test, and improve real things with physical materials."
+      },
+      "communicate": {
+        "label": "Communicate",
+        "detail": "Explain your ideas clearly to peers, educators, and families."
+      },
+      "lead": {
+        "label": "Lead",
+        "detail": "Take initiative, contribute in team roles, and reflect on your impact."
+      },
+      "world": {
+        "label": "Build for the world",
+        "detail": "Create ideas that are helpful, fair, and meaningful beyond school."
+      }
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri"
+    },
+    "tags": {
+      "think": "Think",
+      "observe": "Observe",
+      "make": "Make",
+      "lead": "Lead",
+      "communicate": "Communicate",
+      "buildForWorld": "Build for world"
+    },
+    "weeks": {
+      "week1": {
+        "label": "Week 1",
+        "title": "Young Inventors Lab",
+        "date": "July 6-10, 2026",
+        "description": "Design, build, and prototype inventions that create helpful impact in the real world.",
+        "sessions": {
+          "problem": {
+            "name": "What Problem Can I Solve?",
+            "theme": "Noticing needs in the world around us"
+          },
+          "sketch": {
+            "name": "Sketch It, Name It, Claim It",
+            "theme": "From observation to invention concept"
+          },
+          "build": {
+            "name": "Build Sprint Day 1",
+            "theme": "Materials, making, and first prototype"
+          },
+          "improve": {
+            "name": "Test, Break, Improve",
+            "theme": "Peer feedback and revision sprint"
+          },
+          "showcase": {
+            "name": "Innovation Showcase - Week 1",
+            "theme": "Present your invention to families"
+          }
+        }
+      },
+      "week2": {
+        "label": "Week 2",
+        "title": "Future City Builders",
+        "date": "July 13-17, 2026",
+        "description": "Collaborate to design and build a smart, eco-friendly city of tomorrow through team projects and big ideas.",
+        "sessions": {
+          "need": {
+            "name": "What Does Our City Need?",
+            "theme": "Map your community and choose your city challenge"
+          },
+          "system": {
+            "name": "Design the Smart System",
+            "theme": "Eco-friendly features, people, and planet thinking"
+          },
+          "city": {
+            "name": "Build the City - Team Sprint",
+            "theme": "Roles assigned, building together, decisions made"
+          },
+          "pitch": {
+            "name": "Rehearse Your City Pitch",
+            "theme": "Explain your design and prepare for showcase"
+          },
+          "showcase": {
+            "name": "City Showcase - Final Day",
+            "theme": "Present to families and earn a portfolio badge"
+          }
+        }
+      }
+    },
+    "differentiators": {
+      "handsOn": {
+        "title": "Hands-on every day",
+        "detail": "Every session has a build sprint. Learners make something real instead of completing worksheets."
+      },
+      "screenTime": {
+        "title": "Minimal screen time",
+        "detail": "Physical materials, teamwork, and face-to-face problem solving keep the experience grounded."
+      },
+      "portfolio": {
+        "title": "Visible portfolio growth",
+        "detail": "Every learner leaves with artifacts, reflections, and evidence of capability growth."
+      },
+      "impact": {
+        "title": "Ideas that help people",
+        "detail": "Every project asks who it helps and how. Purpose is built in from day one."
+      }
+    }
   }
 }

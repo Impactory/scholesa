@@ -19,7 +19,7 @@ Reliability controls:
 - Readiness and liveness probes use real service endpoints.
 - Topology spread constraints avoid concentrating all replicas on one node when capacity allows.
 - NetworkPolicy defaults to deny ingress, then opens public web domains and keeps compliance internal to namespace pods.
-- NetworkPolicy defaults to deny egress, then allows DNS and HTTPS egress for web/compliance Firebase and managed-service calls.
+- NetworkPolicy defaults to deny egress, then allows DNS, HTTPS egress for web/compliance Firebase and managed-service calls, and Flutter-to-web egress for the public Next.js route bridge.
 
 Tenant isolation model:
 
@@ -80,6 +80,7 @@ Evidence-heavy classroom workload notes:
 
 - Web and Flutter web can scale independently for classroom login, navigation, evidence capture, and learner/guardian viewing spikes.
 - Compliance remains internal and separately scalable so release/compliance scans cannot starve classroom-facing pods.
+- Flutter web routes public Next.js pages and assets to the in-cluster `scholesa-web` service through `SCHOLESA_WEB_UPSTREAM`, so the Kubernetes platform can operate without depending on the Cloud Run web origin.
 - Firestore and Firebase remain the evidence persistence tier; verify Firestore indexes and rules before any classroom-heavy cutover.
 - Evidence-heavy writes should remain idempotent, site-scoped, and provenance-preserving. Horizontal scaling must never create in-pod queues, local caches as source of truth, or cross-tenant shared filesystems.
 - For internal LLM/STT/TTS inference, use the dedicated `docs/k8s` inference plane blueprints only after real internal images and model artifact stores are available.

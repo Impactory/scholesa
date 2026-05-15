@@ -96,8 +96,8 @@ export default function LandingPage() {
               className="min-touch-target inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/60 sm:px-4"
             >
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
-              <span className="sm:hidden">Camp</span>
-              <span className="hidden sm:inline">Summer Camp</span>
+              <span className="sm:hidden">{t('landing.summerCampShort')}</span>
+              <span className="hidden sm:inline">{t('landing.summerCamp')}</span>
             </Link>
             <Link
               href={`/${locale}/login`}

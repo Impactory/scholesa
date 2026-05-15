@@ -32,7 +32,11 @@ FROM nginx:1.25-alpine
 # Copy compiled Flutter web assets from build stage
 COPY --from=builder /workspace/apps/empire_flutter/app/build/web /usr/share/nginx/html
 
-# Nginx config for SPA routing, WASM content types, cache headers, gzip, and Cloud Run port 8080
+# Nginx config for SPA routing, WASM content types, cache headers, gzip, and Cloud Run port 8080.
+# The public Next.js upstream is configurable so Kubernetes can route to the in-cluster
+# scholesa-web service while Cloud Run keeps the current managed service origin.
+ENV SCHOLESA_WEB_UPSTREAM=https://scholesa-web-gu5vyrn2tq-uc.a.run.app
+ENV SCHOLESA_WEB_HOST=scholesa-web-gu5vyrn2tq-uc.a.run.app
 RUN printf '\
 server {\n\
     listen 8080;\n\
@@ -58,27 +62,27 @@ server {\n\
     }\n\
     location ~ ^/(en|es|th|zh-CN|zh-TW)(/privacy|/summer-camp-2026)?/?$ {\n\
         proxy_ssl_server_name on;\n\
-        proxy_set_header Host scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n\
         proxy_set_header X-Forwarded-Host $host;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-        proxy_pass https://scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n\
     }\n\
     location ^~ /_next/ {\n\
         proxy_ssl_server_name on;\n\
-        proxy_set_header Host scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n\
         proxy_set_header X-Forwarded-Host $host;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-        proxy_pass https://scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n\
     }\n\
     location ^~ /logo/ {\n\
         proxy_ssl_server_name on;\n\
-        proxy_set_header Host scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n\
         proxy_set_header X-Forwarded-Host $host;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-        proxy_pass https://scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
+        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n\
     }\n\
     location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
         add_header Cache-Control "public, max-age=31536000, immutable";\n\
@@ -88,7 +92,7 @@ server {\n\
         try_files $uri $uri/ /index.html;\n\
     }\n\
     error_page 404 /index.html;\n\
-}\n' > /etc/nginx/conf.d/default.conf
+}\n' > /etc/nginx/templates/default.conf.template
 
 ENV PORT=8080
 EXPOSE 8080

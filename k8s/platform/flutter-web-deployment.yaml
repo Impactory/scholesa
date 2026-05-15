@@ -46,6 +46,11 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          env:
+            - name: SCHOLESA_WEB_UPSTREAM
+              value: http://scholesa-web.scholesa.svc.cluster.local
+            - name: SCHOLESA_WEB_HOST
+              value: scholesa-web.scholesa.svc.cluster.local
           resources:
             requests:
               cpu: 100m
