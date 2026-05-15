@@ -37,7 +37,7 @@ COPY --from=builder /workspace/apps/empire_flutter/app/build/web /usr/share/ngin
 # scholesa-web service while Cloud Run keeps the current managed service origin.
 ENV SCHOLESA_WEB_UPSTREAM=https://scholesa-web-gu5vyrn2tq-uc.a.run.app
 ENV SCHOLESA_WEB_HOST=scholesa-web-gu5vyrn2tq-uc.a.run.app
-RUN printf '\
+RUN mkdir -p /etc/nginx/templates && printf '\
 server {\n\
     listen 8080;\n\
     server_name _;\n\
