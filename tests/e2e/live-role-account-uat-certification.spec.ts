@@ -27,6 +27,7 @@ type RoleProof = {
 };
 
 const liveBaseUrl = process.env.LIVE_ROLE_UAT_BASE_URL || process.env.PLAYWRIGHT_BASE_URL || '';
+const liveLoginPath = process.env.LIVE_ROLE_UAT_LOGIN_PATH || (usesFlutterFrontDoor(liveBaseUrl) ? '/login' : '/en/login');
 const password = process.env.LIVE_ROLE_UAT_PASSWORD ||
   process.env.TEST_LOGIN_PASSWORD ||
   process.env.TEST_USER_PASSWORD ||
@@ -169,6 +170,15 @@ const accounts: RoleAccount[] = [
   },
 ];
 
+function usesFlutterFrontDoor(baseUrl: string): boolean {
+  try {
+    const { hostname } = new URL(baseUrl);
+    return hostname === 'scholesa.com' || hostname.endsWith('.scholesa.com');
+  } catch {
+    return false;
+  }
+}
+
 function requireLiveUatInputs() {
   if (!liveBaseUrl) {
     throw new Error('Set LIVE_ROLE_UAT_BASE_URL or PLAYWRIGHT_BASE_URL to a deployed Scholesa URL.');
@@ -179,7 +189,7 @@ function requireLiveUatInputs() {
 }
 
 async function loginAs(page: Page, account: RoleAccount) {
-  await page.goto('/en/login', { waitUntil: 'domcontentloaded' });
+  await page.goto(liveLoginPath, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
   if ((await page.locator('input[name="email"]').count()) === 0) {
     const signIn = page.getByRole('link', { name: /sign in/i }).or(page.getByRole('button', { name: /sign in/i })).first();
