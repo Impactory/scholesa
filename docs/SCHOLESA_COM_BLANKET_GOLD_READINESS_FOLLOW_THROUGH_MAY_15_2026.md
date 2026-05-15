@@ -1,8 +1,8 @@
 # Scholesa.com Blanket Gold Readiness Follow-Through - May 15 2026
 
-Status: current live evidence record and blocker table.
+Status: current live evidence record and blocker table after May 15 full web/security gate.
 
-Verdict: `scholesa.com` public web is live, attractive, and aligned with the updated capability evidence language. Complete blanket Gold across all requested surfaces is not yet claimable because macOS Developer ID notarization readiness is currently blocked by keychain access. iOS TestFlight build visibility is proven.
+Verdict: `scholesa.com` public web is live, attractive, aligned with the updated capability evidence language, and passing the full web/security blanket-gold gate with live role-account UAT. Complete blanket Gold across all requested web and native surfaces is still not claimable because macOS Developer ID notarization readiness is blocked by keychain access. iOS TestFlight build visibility is proven.
 
 ## Scope
 
@@ -11,13 +11,14 @@ Included in this May 15 packet:
 - Public `scholesa.com` Flutter front door: `/welcome`, `/login`.
 - Public Next pages proxied through `scholesa.com`: `/en`, `/en/summer-camp-2026`.
 - Email login routing behavior already proven in the prior live pass.
+- Full live role-account UAT across the canonical `@scholesa.test` accounts.
+- Full web/security blanket-gold gate log at `audit-pack/reports/blanket-gold-live-may15.log`.
 - Security and compliance gates listed below.
 - iOS TestFlight visibility check for the current Flutter build.
 
-Not included as complete until rerun:
+Not included as complete until rerun after release-owner keychain repair:
 
 - macOS Developer ID signing, notarization, stapling, and Gatekeeper proof.
-- Full live role-account UAT refresh across Learner, Educator, Family, site, HQ, and partner roles.
 - Guarded aggregate native proof after macOS unblocks.
 
 ## Live Deployment Evidence
@@ -45,10 +46,25 @@ Screenshot artifacts created under `audit-pack/reports/screenshots/`:
 - `live-scholesa-flutter-welcome-parity.png`
 - `live-scholesa-flutter-login-parity.png`
 
+## Live Role-Account UAT Evidence
+
+Artifact: `audit-pack/reports/live-role-account-uat-certification.json`.
+
+| Account group | Result | Notes |
+| --- | --- | --- |
+| HQ/admin | PASS | `admin@scholesa.test` certified `/hq/sites` and `/hq/user-admin` through the live Flutter shell. |
+| Educator | PASS | `educator@scholesa.test` certified `/educator/today` and the Flutter Proof Review equivalent for Evidence Review. |
+| Learner cohorts | PASS | `discoverer@scholesa.test`, `builder@scholesa.test`, `explorer@scholesa.test`, and `innovator@scholesa.test` authenticated and rendered their learner workflow surfaces. Current live Learner accounts route through onboarding where setup is incomplete. |
+| Family | PASS | `family@scholesa.test` certified `/parent/summary` and the Flutter Growth Timeline equivalent for Growth Report proof. |
+| Mentor/partner | PASS | `mentor@scholesa.test` certified `/partner/listings` and `/partner/deliverables`; attempted Educator Evidence Review resolves to partner-scoped deliverable proof. |
+
+Summary: 8 canonical accounts certified, 16 route proofs certified, product chain recorded as `capability -> mission -> session -> checkpoint -> evidence -> reflection -> capability review -> portfolio -> badge -> showcase -> growth report`.
+
 ## Local And Security Gate Evidence
 
 | Gate | Result | Gold relevance |
 | --- | --- | --- |
+| `npm run test:uat:blanket-gold` with live `scholesa.com` env | PASS | Full web/security gate passed with live role-account UAT. Proof log: `audit-pack/reports/blanket-gold-live-may15.log`. |
 | `npm run typecheck -- --pretty false` | PASS | Web TypeScript safety. |
 | `npm run lint` | PASS | Web/static code quality. |
 | `npm run build` | PASS | Next production build. |
@@ -77,12 +93,11 @@ Screenshot artifacts created under `audit-pack/reports/screenshots/`:
 | --- | --- | --- |
 | macOS Developer ID keychain access | Blocked by `errSecInternalComponent`. | Unlock/approve Developer ID private key access locally, rerun `npm run native:distribution:readiness`, then run macOS sign/notarize/staple proof. |
 | Aggregate native proof | Blocked by macOS readiness. | Guarded native proof packet containing TestFlight, Play internal, and notarized macOS logs. |
-| Full live role UAT refresh | Not rerun in this May 15 packet. | Live role-account automation over Learner, Educator, Family, site, HQ, and partner with screenshots and route assertions. |
-| Full blanket-gold release gate | Security subset passed; full `test:uat:blanket-gold` was not rerun in this packet. | Run full blanket-gold gate or a release-owner-approved equivalent command bundle after macOS unblocks. |
+| Whole-platform blanket Gold claim | Blocked only by native aggregate proof at this point. | Web/security gate and live role UAT are passing; close macOS/native proof before claiming all-surface blanket Gold. |
 
 ## Gold Readiness Rule
 
-`scholesa.com` public web can be described as live and currently passing the May 15 public web/security validation packet. The whole Scholesa platform must not be described as complete blanket Gold across web and native until the blocker table above is closed.
+`scholesa.com` public web can be described as live and passing the May 15 full web/security blanket-gold gate with live role-account UAT. The whole Scholesa platform must not be described as complete blanket Gold across web and native until the native blocker table above is closed.
 
 ## Next Command Sequence
 

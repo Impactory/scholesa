@@ -22,6 +22,8 @@
     "test:uat": "jest --runInBand tests/unit tests/integration tests/uat && npx playwright test --config playwright.config.ts tests/e2e tests/accessibility",
     "test:uat:blanket-gold": "npm run lint && npm run typecheck && npm run qa:k8s:manifests && npm run test:uat && npm run test:integration:rules && npm run test:integration:evidence-chain && npm run test:integration:analytics && npm run qa:secret-scan && npm run ai:internal-only:all && npm run qa:coppa:guards && npm run test && npm run build",
     "test:uat:live-role-accounts": "npx playwright test --config playwright.config.ts tests/e2e/live-role-account-uat-certification.spec.ts",
+    "refactor:baseline": "npm run typecheck -- --pretty false && npm run lint && npm run qa:workflow:no-mock && npm run qa:secret-scan && npm run ai:internal-only:all && npm run compliance:scan",
+    "refactor:full": "npm run refactor:baseline && npm run test:integration:rules && npm --prefix functions run build && npm --prefix functions run test -- --runInBand && npm run test:flutter:ci && npm run build",
     "test:functions:workflow-feature-flags": "npm --prefix functions run test -- --runInBand src/workflowOps.featureFlags.test.ts",
     "test:e2e:web:install": "npx playwright install chromium",
     "test:e2e:web": "npx playwright test --config playwright.config.ts",

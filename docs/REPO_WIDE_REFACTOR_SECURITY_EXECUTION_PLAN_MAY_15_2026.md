@@ -30,6 +30,8 @@ Scholesa is refactor-ready when all of these are true:
 | Firestore and Storage rules emulator tests | PASS, 238 tests |
 | Compliance scan | PASS |
 | High-severity npm audit | PASS, with low-severity transitive advisories remaining |
+| Live role-account UAT | PASS, 8 canonical accounts and 16 route proofs against `https://scholesa.com` |
+| Full web/security blanket-gold gate | PASS, proof log `audit-pack/reports/blanket-gold-live-may15.log` |
 
 Rollback rule: if a later refactor causes any Phase 0 gate to fail, stop and either fix the exact regression or revert that phase only.
 

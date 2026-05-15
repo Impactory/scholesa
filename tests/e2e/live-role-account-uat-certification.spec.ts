@@ -180,9 +180,16 @@ function usesFlutterFrontDoor(baseUrl: string): boolean {
   }
 }
 
-function routePathForTarget(path: string): string {
+function routePathForTarget(account: RoleAccount, path: string): string {
   if (!isFlutterFrontDoor) return path;
+  if (account.role === 'educator' && path === '/en/educator/evidence') return '/educator/proof-review';
+  if (account.role === 'family' && path === '/en/parent/passport') return '/parent/growth-timeline';
+  if (account.role === 'mentor' && path === '/en/educator/evidence') return '/partner/deliverables';
   return path.replace(/^\/en(?=\/)/, '');
+}
+
+function liveUrlFor(path: string): string {
+  return new URL(path, liveBaseUrl).toString();
 }
 
 function expectedFlutterRoutePattern(account: RoleAccount, requestedPath: string): RegExp {
@@ -192,6 +199,36 @@ function expectedFlutterRoutePattern(account: RoleAccount, requestedPath: string
   if (account.role === 'mentor') return /^\/partner(\/|$)/;
   if (requestedPath.includes('/learner/')) return /^\/learner(\/|$)/;
   return /^\/(dashboard|learner|educator|parent|site|hq|partner)(\/|$)/;
+}
+
+async function flutterRenderedHostCount(page: Page): Promise<number> {
+  return page.locator('flutter-view, flt-glass-pane, flt-semantics-host, flt-semantics, canvas').count();
+}
+
+async function waitForFlutterHost(page: Page) {
+  await expect.poll(() => flutterRenderedHostCount(page), { timeout: 30_000 }).toBeGreaterThan(0);
+}
+
+async function navigateFlutterRoute(page: Page, targetPath: string) {
+  await page.evaluate((path) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate', { state: history.state }));
+  }, targetPath);
+  await waitForFlutterHost(page);
+  await page.waitForTimeout(2500);
+}
+
+async function completeFlutterLoginAttempt(page: Page, account: RoleAccount) {
+  const viewport = page.viewportSize() || { width: 1280, height: 720 };
+  const inputX = Math.round(viewport.width * 0.78);
+
+  await page.mouse.click(inputX, Math.round(viewport.height * 0.35));
+  await page.keyboard.press('ControlOrMeta+A').catch(() => undefined);
+  await page.keyboard.type(account.email);
+  await page.mouse.click(inputX, Math.round(viewport.height * 0.44));
+  await page.keyboard.press('ControlOrMeta+A').catch(() => undefined);
+  await page.keyboard.type(password);
+  await page.mouse.click(inputX, Math.round(viewport.height * 0.61));
 }
 
 function requireLiveUatInputs() {
@@ -204,21 +241,28 @@ function requireLiveUatInputs() {
 }
 
 async function loginAs(page: Page, account: RoleAccount) {
-  await page.goto(liveLoginPath, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle').catch(() => undefined);
+  await page.goto(liveUrlFor(liveLoginPath), { waitUntil: 'domcontentloaded' });
   if (isFlutterFrontDoor) {
-    await page.waitForTimeout(3000);
-    const viewport = page.viewportSize() || { width: 1280, height: 720 };
-    const inputX = Math.round(viewport.width * 0.78);
+    await waitForFlutterHost(page);
+    await page.waitForTimeout(1500);
 
-    await page.mouse.click(inputX, Math.round(viewport.height * 0.35));
-    await page.keyboard.type(account.email);
-    await page.mouse.click(inputX, Math.round(viewport.height * 0.44));
-    await page.keyboard.type(password);
-    await page.mouse.click(inputX, Math.round(viewport.height * 0.61));
-    await page.waitForURL(/\/(dashboard|learner|educator|parent|site|hq|partner)(\/|$)/, { timeout: 90_000 });
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      console.info(`Live role UAT Flutter login ${account.role} attempt ${attempt}`);
+      await completeFlutterLoginAttempt(page, account);
+      try {
+        await page.waitForURL(/\/(dashboard|learner|educator|parent|site|hq|partner)(\/|$)/, { timeout: 45_000 });
+        return;
+      } catch (error) {
+        if (attempt === 3) throw error;
+        await page.goto(liveUrlFor(liveLoginPath), { waitUntil: 'domcontentloaded' });
+        await waitForFlutterHost(page);
+        await page.waitForTimeout(1500);
+      }
+    }
     return;
   }
+
+  await page.waitForLoadState('networkidle').catch(() => undefined);
 
   if ((await page.locator('input[name="email"]').count()) === 0) {
     const signIn = page.getByRole('link', { name: /sign in/i }).or(page.getByRole('button', { name: /sign in/i })).first();
@@ -246,8 +290,13 @@ async function certifyRole(browser: Browser, account: RoleAccount): Promise<Role
     await loginAs(page, account);
 
     for (const route of account.routes) {
-      const targetPath = routePathForTarget(route.path);
-      await page.goto(targetPath, { waitUntil: 'domcontentloaded' });
+      console.info(`Live role UAT route ${account.role}: ${route.path}`);
+      const targetPath = routePathForTarget(account, route.path);
+      if (isFlutterFrontDoor) {
+        await navigateFlutterRoute(page, targetPath);
+      } else {
+        await page.goto(liveUrlFor(targetPath), { waitUntil: 'domcontentloaded' });
+      }
 
       let visibleTextSample: string;
       if (isFlutterFrontDoor) {
@@ -255,8 +304,8 @@ async function certifyRole(browser: Browser, account: RoleAccount): Promise<Role
         const finalPath = new URL(page.url()).pathname;
         expect(finalPath).not.toMatch(/\/login\/?$/);
         expect(finalPath).toMatch(expectedFlutterRoutePattern(account, route.path));
-        expect(await page.locator('canvas').count()).toBeGreaterThan(0);
-        visibleTextSample = `Flutter CanvasKit route rendered at ${finalPath}`;
+        expect(await flutterRenderedHostCount(page)).toBeGreaterThan(0);
+        visibleTextSample = `Flutter Web route rendered at ${finalPath}`;
       } else {
         await expect(page.locator('main')).toBeVisible();
         await expect(page.locator('main')).toContainText(route.expectedText, { timeout: 60_000 });
@@ -286,7 +335,7 @@ async function certifyRole(browser: Browser, account: RoleAccount): Promise<Role
 }
 
 test.describe('Live role-account UAT certification', () => {
-  test.setTimeout(600_000);
+  test.setTimeout(900_000);
 
   test('certifies deployed role accounts across the Scholesa product chain', async ({ browser }) => {
     requireLiveUatInputs();

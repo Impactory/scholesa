@@ -20,34 +20,512 @@
 > jest --runInBand tests/unit tests/integration tests/uat && npx playwright test --config playwright.config.ts tests/e2e tests/accessibility
 
 PASS tests/unit/uat-mission-card.test.tsx
-PASS tests/uat/launch-blocker-gate.test.ts
 PASS tests/uat/family-access.test.ts
 PASS tests/uat/capability-graph-integrity.test.ts
+PASS tests/uat/launch-blocker-gate.test.ts
 PASS tests/uat/miloos-coach-policy-safety-logs.test.ts
+PASS tests/uat/evidence-proof-of-work.test.ts
 PASS tests/uat/uat-completeness-gate.test.ts
 PASS tests/uat/gold-workflow-gate.test.ts
-PASS tests/unit/uat-seed-data.test.ts
-PASS tests/uat/tenant-cohort-readiness.test.ts
-PASS tests/uat/product-promise-gate.test.ts
 PASS tests/uat/portfolio-credentialing.test.ts
-PASS tests/uat/performance-reliability.test.ts
 PASS tests/uat/mission-session-delivery.test.ts
-PASS tests/uat/evidence-proof-of-work.test.ts
 PASS tests/uat/educator-workflows.test.ts
-PASS tests/integration/uat-evidence-chain.test.ts
+PASS tests/uat/tenant-cohort-readiness.test.ts
 PASS tests/uat/reporting-analytics.test.ts
-PASS tests/uat/mission-acceptance.test.ts
+PASS tests/uat/performance-reliability.test.ts
 PASS tests/uat/mentor-access.test.ts
-PASS tests/uat/blanket-gold-live-readiness-gate.test.ts
+PASS tests/uat/product-promise-gate.test.ts
+PASS tests/uat/mission-acceptance.test.ts
 PASS tests/uat/accessibility-udl.test.ts
+PASS tests/uat/blanket-gold-live-readiness-gate.test.ts
+PASS tests/unit/uat-seed-data.test.ts
+PASS tests/integration/uat-evidence-chain.test.ts
 PASS tests/unit/mock-services.test.ts
 
 Test Suites: 22 passed, 22 total
 Tests:       112 passed, 112 total
 Snapshots:   0 total
-Time:        0.694 s, estimated 1 s
+Time:        1.152 s, estimated 2 s
 Ran all test suites matching /tests\/unit|tests\/integration|tests\/uat/i.
 
 Running 3 tests using 1 worker
 
-  ✓  1 [chromium] › tests/accessibility/landing-accessibility.spec.ts:18:5 › @wcag public Summer Camp CTA flow meets automated accessibility baseline (1.9s)
+  ✓  1 [chromium] › tests/accessibility/landing-accessibility.spec.ts:18:5 › @wcag public Summer Camp CTA flow meets automated accessibility baseline (7.3s)
+Live role UAT Flutter login admin attempt 1
+Live role UAT route admin: /en/hq/sites
+Live role UAT route admin: /en/hq/user-admin
+Live role UAT Flutter login educator attempt 1
+Live role UAT route educator: /en/educator/today
+Live role UAT route educator: /en/educator/evidence
+Live role UAT Flutter login discoverer attempt 1
+Live role UAT Flutter login discoverer attempt 2
+Live role UAT route discoverer: /en/learner/today
+Live role UAT route discoverer: /en/learner/miloos
+Live role UAT Flutter login builder attempt 1
+Live role UAT route builder: /en/learner/today
+Live role UAT route builder: /en/learner/portfolio
+Live role UAT Flutter login explorer attempt 1
+Live role UAT route explorer: /en/learner/checkpoints
+Live role UAT route explorer: /en/learner/reflections
+Live role UAT Flutter login innovator attempt 1
+Live role UAT route innovator: /en/learner/proof-assembly
+Live role UAT route innovator: /en/learner/portfolio
+Live role UAT Flutter login family attempt 1
+Live role UAT route family: /en/parent/summary
+Live role UAT route family: /en/parent/passport
+Live role UAT Flutter login mentor attempt 1
+Live role UAT route mentor: /en/partner/listings
+Live role UAT route mentor: /en/educator/evidence
+  ✓  2 [chromium] › tests/e2e/live-role-account-uat-certification.spec.ts:340:7 › Live role-account UAT certification › certifies deployed role accounts across the Scholesa product chain (3.7m)
+  ✓  3 [chromium] › tests/e2e/uat-public-mission-smoke.spec.ts:10:5 › UAT mission smoke verifies UI plus backend/API permission chain (590ms)
+
+  3 passed (3.9m)
+
+> scholesa@0.1.0 test:integration:rules
+> npx --yes firebase-tools emulators:exec --only firestore,storage "npx jest --runInBand --config jest.rules.config.js"
+
+i  emulators: Starting emulators: firestore, storage
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator was started in standard edition.
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+⚠  Unexpected rules runtime error: WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by com.google.protobuf.UnsafeUtil$MemoryAccessor (file:/Users/impactory/.cache/firebase/emulators/cloud-storage-rules-runtime-v1.1.3.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.protobuf.UnsafeUtil$MemoryAccessor
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+
+i  Running script: npx jest --runInBand --config jest.rules.config.js
+PASS test/firestore-rules.test.js (17.741 s)
+PASS test/storage-rules.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       238 passed, 238 total
+Snapshots:   0 total
+Time:        20.251 s, estimated 49 s
+Ran all test suites.
+✔  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+i  storage: Stopping Storage Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+
+> scholesa@0.1.0 test:integration:evidence-chain
+> npx --yes firebase-tools emulators:exec --only firestore "RUN_EMULATOR_TESTS=1 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm --prefix functions run test -- --runInBand src/evidenceChainEmulator.test.ts"
+
+i  emulators: Starting emulators: firestore
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator was started in standard edition.
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: RUN_EMULATOR_TESTS=1 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm --prefix functions run test -- --runInBand src/evidenceChainEmulator.test.ts
+
+> test
+> jest --runInBand src/evidenceChainEmulator.test.ts
+
+  console.warn
+    genAiCoach inference guard engaged {
+      coachMode: 'explain',
+      siteId: 'site-1',
+      reason: 'Internal AI inference is required but unavailable.'
+    }
+
+      1550 |       responseConfidence = generated.confidence;
+      1551 |     } catch (error) {
+    > 1552 |       console.warn('genAiCoach inference guard engaged', {
+           |               ^
+      1553 |         coachMode,
+      1554 |         siteId,
+      1555 |         reason: error instanceof Error ? error.message : String(error),
+
+      at src/index.ts:1552:15
+      at Object.<anonymous> (src/evidenceChainEmulator.test.ts:616:30)
+
+  console.warn
+    genAiCoach inference guard engaged {
+      coachMode: 'hint',
+      siteId: 'site-1',
+      reason: 'Internal AI inference is required but unavailable.'
+    }
+
+      1550 |       responseConfidence = generated.confidence;
+      1551 |     } catch (error) {
+    > 1552 |       console.warn('genAiCoach inference guard engaged', {
+           |               ^
+      1553 |         coachMode,
+      1554 |         siteId,
+      1555 |         reason: error instanceof Error ? error.message : String(error),
+
+      at src/index.ts:1552:15
+      at Object.<anonymous> (src/evidenceChainEmulator.test.ts:643:5)
+
+PASS src/evidenceChainEmulator.test.ts
+  Evidence chain emulator integration
+    ✓ drives session-backed evidence through proof, rubric, mastery, and passport bundles (1741 ms)
+    ✓ drives MiloOS help through explain-back and learner-loop insight without mastery writes (162 ms)
+    ✓ uses configured internal inference in the MiloOS explain-back journey (49 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        3.072 s, estimated 8 s
+Ran all test suites matching /src\/evidenceChainEmulator.test.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.
+✔  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+
+> scholesa@0.1.0 test:integration:analytics
+> npx --yes firebase-tools emulators:exec --only firestore "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand --config jest.analytics.config.js"
+
+i  emulators: Starting emulators: firestore
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator was started in standard edition.
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand --config jest.analytics.config.js
+  console.error
+    Telemetry tracking failed: [FunctionsError [FirebaseError]: not-found] {
+      code: 'functions/not-found',
+      customData: undefined,
+      details: undefined
+    }
+
+      269 |     } catch (err) {
+      270 |       if (!this.isExpectedTelemetryWriteError(err)) {
+    > 271 |         console.error('Telemetry tracking failed:', err);
+          |                 ^
+      272 |       }
+      273 |       // Don't throw - telemetry failures shouldn't break app
+      274 |       return 'error';
+
+      at TelemetryService.track (src/lib/telemetry/telemetryService.ts:271:17)
+          at async Promise.all (index 0)
+      at IntelligenceService.trackUnifiedEvent (src/lib/analytics/intelligenceService.ts:84:5)
+      at Object.<anonymous> (src/lib/analytics/analyticsEngine.test.ts:157:7)
+
+  console.error
+    Telemetry tracking failed: [FunctionsError [FirebaseError]: not-found] {
+      code: 'functions/not-found',
+      customData: undefined,
+      details: undefined
+    }
+
+      269 |     } catch (err) {
+      270 |       if (!this.isExpectedTelemetryWriteError(err)) {
+    > 271 |         console.error('Telemetry tracking failed:', err);
+          |                 ^
+      272 |       }
+      273 |       // Don't throw - telemetry failures shouldn't break app
+      274 |       return 'error';
+
+      at TelemetryService.track (src/lib/telemetry/telemetryService.ts:271:17)
+      at Object.<anonymous> (src/lib/analytics/analyticsEngine.test.ts:239:22)
+
+PASS src/lib/analytics/analyticsEngine.test.ts
+  Analytics Implementation
+    Event Tracking
+      ✓ should track mission selected event (1050 ms)
+      ✓ should track checkpoint submission event (9 ms)
+    Computed Metrics
+      ✓ should compute checkpoint pass rate (25 ms)
+      ✓ should compute choice distribution (5 ms)
+      ✓ should compute hint dependency index (5 ms)
+    Insight Rules
+      ✓ should evaluate threshold-based insight rules (10 ms)
+      ✓ should detect ai_overhelping rule (7 ms)
+    Internal AI Integration
+      ✓ should be configured to internal AI provider
+      ✓ should generate threshold-based insights with proper structure (9 ms)
+    Intelligence Service
+      ✓ should track unified events (326 ms)
+      ✓ should get learner profile (12 ms)
+      ✓ should get class insights (11 ms)
+      ✓ should generate personalized recommendations (6 ms)
+      ✓ should detect learning patterns (5 ms)
+    Telemetry Service
+      ✓ should track telemetry events (133 ms)
+      ✓ should get SDT profile (5 ms)
+      ✓ should get engagement score (4 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        1.869 s, estimated 7 s
+Ran all test suites.
+✔  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+
+> scholesa@0.1.0 qa:secret-scan
+> python3 scripts/secret_scan.py
+
+Secret scan PASS (no tracked secret patterns detected).
+
+> scholesa@0.1.0 ai:internal-only:all
+> npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none
+
+
+> scholesa@0.1.0 ai:dependency-ban
+> node scripts/ai_dependency_ban.js
+
+PASS ai-dependency-ban -> /Users/impactory/Documents/GitHub/scholesa/audit-pack/reports/ai-dependency-ban.json
+
+> scholesa@0.1.0 ai:import-ban
+> node scripts/ai_import_ban.js
+
+PASS ai-import-ban -> /Users/impactory/Documents/GitHub/scholesa/audit-pack/reports/ai-import-ban.json
+
+> scholesa@0.1.0 ai:domain-ban
+> node scripts/ai_domain_ban.js
+
+PASS ai-domain-ban -> /Users/impactory/Documents/GitHub/scholesa/audit-pack/reports/ai-domain-ban.json
+
+> scholesa@0.1.0 ai:egress-none
+> node scripts/ai_egress_none.js
+
+PASS ai-egress-none -> /Users/impactory/Documents/GitHub/scholesa/audit-pack/reports/ai-egress-none.json
+
+> scholesa@0.1.0 qa:coppa:guards
+> bash -lc 'cd functions && npm run test:coppa'
+
+
+> test:coppa
+> ts-node src/coppaGuards.spec.ts
+
+COPPA regression suite passed.
+
+> scholesa@0.1.0 test
+> jest --runInBand
+
+PASS test/synthetic_miloos_gold_states.test.js
+PASS src/__tests__/assistant-legacy-branding-guard.test.ts
+PASS src/__tests__/miloos-ai-coach-screen.test.tsx
+PASS tests/unit/uat-mission-card.test.tsx
+PASS src/__tests__/report-generated-payloads.test.ts
+PASS src/__tests__/evidence-chain-renderer-wiring.test.ts
+PASS src/__tests__/report-share-request-manager.test.tsx
+PASS src/__tests__/lti-launch.test.ts
+PASS src/__tests__/workflow-route-page.feature-flags.test.tsx
+PASS src/__tests__/workflow-route-parity.test.ts
+PASS src/__tests__/report-share-consent-requester.test.tsx
+PASS src/__tests__/educator-ai-audit-miloos-provenance.test.tsx
+PASS src/__tests__/miloos-learner-support-snapshot.test.tsx
+PASS src/__tests__/evidence-chain-components.test.ts
+PASS src/__tests__/skills-first-honesty-entrypoints.test.ts
+PASS src/__tests__/ai-help-wording-availability.test.ts
+PASS src/__tests__/enterprise-sso.test.ts
+  ● Console
+
+    console.info
+      {"event":"auth.sso.login","uid":"user-1","providerId":"oidc.acme","targetLocale":"zh-TW"}
+
+      at POST (app/api/auth/session-login/route.ts:158:13)
+
+PASS src/__tests__/report-delivery-audit.test.ts
+PASS tests/uat/family-access.test.ts
+PASS src/__tests__/evidence-chain.test.ts
+PASS tests/uat/launch-blocker-gate.test.ts
+PASS tests/uat/capability-graph-integrity.test.ts
+PASS src/__tests__/report-share-export.test.ts
+PASS test/workflow-security-contract.test.ts
+PASS src/__tests__/routing.test.ts
+PASS src/__tests__/navigation-signout-availability.test.ts
+PASS src/__tests__/firestore-index-coverage.test.ts
+PASS src/__tests__/invariants.test.ts
+PASS src/__tests__/healthz.test.ts
+PASS src/__tests__/parent-workflow-wording-availability.test.ts
+PASS test/web-route-parity.test.ts
+PASS src/__tests__/voice-reliability-wording-availability.test.ts
+PASS src/__tests__/educator-analytics-locale-wording.test.ts
+PASS src/__tests__/curriculum-architecture-contract.test.ts
+PASS tests/uat/miloos-coach-policy-safety-logs.test.ts
+PASS src/__tests__/learner-profile-wording-availability.test.ts
+PASS src/__tests__/locale-json-parse-smoke.test.ts
+PASS src/__tests__/auth-session-e2e-guard.test.ts
+PASS src/__tests__/auth-provider-failure-paths.test.ts
+PASS test/flutter-route-registry-parity.test.ts
+PASS test/bos_mia_synthetic_training.test.js
+PASS tests/uat/evidence-proof-of-work.test.ts
+PASS tests/uat/gold-workflow-gate.test.ts
+PASS src/__tests__/models.test.ts
+PASS src/__tests__/flutter-web-signout-availability.test.ts
+PASS src/__tests__/e2e-infrastructure-noise.test.ts
+PASS test/firebase-config-source-contract.test.js
+PASS src/lib/auth/activeSite.test.ts
+PASS tests/uat/tenant-cohort-readiness.test.ts
+PASS tests/uat/uat-completeness-gate.test.ts
+PASS tests/uat/product-promise-gate.test.ts
+PASS tests/uat/mission-session-delivery.test.ts
+PASS tests/uat/educator-workflows.test.ts
+PASS tests/uat/accessibility-udl.test.ts
+PASS tests/uat/mission-acceptance.test.ts
+PASS tests/uat/reporting-analytics.test.ts
+PASS tests/uat/portfolio-credentialing.test.ts
+PASS tests/uat/mentor-access.test.ts
+PASS tests/unit/uat-seed-data.test.ts
+PASS tests/uat/performance-reliability.test.ts
+PASS tests/uat/blanket-gold-live-readiness-gate.test.ts
+PASS tests/integration/uat-evidence-chain.test.ts
+PASS tests/unit/mock-services.test.ts
+
+Test Suites: 63 passed, 63 total
+Tests:       710 passed, 710 total
+Snapshots:   0 total
+Time:        1.99 s, estimated 5 s
+Ran all test suites.
+
+> scholesa@0.1.0 prebuild
+> npm run icons:sync
+
+
+> scholesa@0.1.0 icons:sync
+> bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh
+
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/20.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/60.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/29.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/58.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/87.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/80.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/50.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/100.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/57.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/114.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/180.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/72.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/144.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/76.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/152.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/167.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/1024.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+
+> scholesa@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.6 (webpack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.2s
+  Running TypeScript ...
+  Finished TypeScript in 4.9s ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/10) ...
+  Generating static pages using 9 workers (2/10)
+  Generating static pages using 9 workers (4/10)
+  Generating static pages using 9 workers (7/10)
+✓ Generating static pages using 9 workers (10/10) in 90ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/dashboard
+├ ƒ /[locale]/educator
+├ ƒ /[locale]/educator/analytics
+├ ƒ /[locale]/educator/attendance
+├ ƒ /[locale]/educator/evidence
+├ ƒ /[locale]/educator/integrations
+├ ƒ /[locale]/educator/learner-supports
+├ ƒ /[locale]/educator/learners
+├ ƒ /[locale]/educator/mission-plans
+├ ƒ /[locale]/educator/missions/review
+├ ƒ /[locale]/educator/observations
+├ ƒ /[locale]/educator/proof-review
+├ ƒ /[locale]/educator/rubrics/apply
+├ ƒ /[locale]/educator/sessions
+├ ƒ /[locale]/educator/today
+├ ƒ /[locale]/educator/verification
+├ ƒ /[locale]/hq
+├ ƒ /[locale]/hq/analytics
+├ ƒ /[locale]/hq/approvals
+├ ƒ /[locale]/hq/audit
+├ ƒ /[locale]/hq/billing
+├ ƒ /[locale]/hq/capabilities
+├ ƒ /[locale]/hq/capability-frameworks
+├ ƒ /[locale]/hq/curriculum
+├ ƒ /[locale]/hq/feature-flags
+├ ƒ /[locale]/hq/integrations-health
+├ ƒ /[locale]/hq/role-switcher
+├ ƒ /[locale]/hq/rubric-builder
+├ ƒ /[locale]/hq/safety
+├ ƒ /[locale]/hq/sites
+├ ƒ /[locale]/hq/user-admin
+├ ƒ /[locale]/learner
+├ ƒ /[locale]/learner/checkpoints
+├ ƒ /[locale]/learner/habits
+├ ƒ /[locale]/learner/miloos
+├ ƒ /[locale]/learner/missions
+├ ƒ /[locale]/learner/peer-feedback
+├ ƒ /[locale]/learner/portfolio
+├ ƒ /[locale]/learner/profile
+├ ƒ /[locale]/learner/proof-assembly
+├ ƒ /[locale]/learner/reflections
+├ ƒ /[locale]/learner/timeline
+├ ƒ /[locale]/learner/today
+├ ƒ /[locale]/login
+├ ƒ /[locale]/messages
+├ ƒ /[locale]/notifications
+├ ƒ /[locale]/parent
+├ ƒ /[locale]/parent/billing
+├ ƒ /[locale]/parent/growth-timeline
+├ ƒ /[locale]/parent/passport
+├ ƒ /[locale]/parent/portfolio
+├ ƒ /[locale]/parent/schedule
+├ ƒ /[locale]/parent/summary
+├ ƒ /[locale]/partner
+├ ƒ /[locale]/partner/contracts
+├ ƒ /[locale]/partner/deliverables
+├ ƒ /[locale]/partner/integrations
+├ ƒ /[locale]/partner/listings
+├ ƒ /[locale]/partner/payouts
+├ ƒ /[locale]/privacy
+├ ƒ /[locale]/profile
+├ ƒ /[locale]/register
+├ ƒ /[locale]/settings
+├ ƒ /[locale]/site
+├ ƒ /[locale]/site/billing
+├ ƒ /[locale]/site/checkin
+├ ƒ /[locale]/site/clever
+├ ƒ /[locale]/site/dashboard
+├ ƒ /[locale]/site/evidence-health
+├ ƒ /[locale]/site/identity
+├ ƒ /[locale]/site/incidents
+├ ƒ /[locale]/site/integrations-health
+├ ƒ /[locale]/site/ops
+├ ƒ /[locale]/site/provisioning
+├ ƒ /[locale]/site/sessions
+├ ƒ /[locale]/summer-camp-2026
+├ ƒ /api/ai/complete
+├ ƒ /api/auth/session-login
+├ ƒ /api/auth/session-logout
+├ ƒ /api/auth/sso/providers
+├ ƒ /api/healthz
+├ ƒ /api/lti/launch
+└ ƒ /api/stages
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

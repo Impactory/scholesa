@@ -49,7 +49,7 @@ describe('skills-first honesty entrypoints', () => {
     expect(manifest).not.toContain('/scholesa.svg');
     expect(manifest).not.toContain('Future Skills Academy');
 
-    expect(sharedEn).toContain('Skills-first learning OS');
+    expect(sharedEn).toContain('Capability evidence platform for learners, educators, families, and communities.');
     expect(sharedEn).not.toContain('Future Skills Academy');
 
     expect(hqDashboard).toContain('Legacy Curriculum Families');
