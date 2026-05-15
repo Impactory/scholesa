@@ -35,7 +35,7 @@ Current verdict: `scholesa.com` public web is live, serving the updated Flutter 
 | `npm run qa:k8s:manifests` | PASS | Kubernetes manifests rendered and structural checks passed. |
 | `npm run qa:workflow:no-mock` | PASS | 215 files scanned, 0 findings. |
 | `npm run qa:coppa:guards` | PASS | COPPA regression suite passed. |
-| `npm run test:integration:rules` | PASS | Firestore and Storage emulator rules passed 238 tests. |
+| `npm run test:integration:rules` | PASS | Firestore and Storage emulator rules passed 239 tests after report-share boundary hardening. |
 | `npm run test:uat:live-role-accounts` via full gate | PASS | 8 canonical `@scholesa.test` accounts and 16 route proofs passed against live `https://scholesa.com`; artifact `audit-pack/reports/live-role-account-uat-certification.json`. |
 | `npm run test:uat:blanket-gold` with live env | PASS | Full web/security gate passed; artifact `audit-pack/reports/blanket-gold-live-may15.log`. |
 | `npm run refactor:baseline` | PASS | New non-mutating refactor ratchet passed: typecheck, lint, workflow no-mock, secret scan, AI internal-only, compliance scan. |
@@ -59,6 +59,7 @@ Current verdict: `scholesa.com` public web is live, serving the updated Flutter 
 | --- | --- |
 | Validation ratchet scripts | Added `refactor:baseline` and `refactor:full` to `package.json`. |
 | Route ownership docs | Updated `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` Flutter/Next split and live UAT route equivalents. |
+| Rules hardening proof | Added report-share request/consent emulator coverage for linked Family access, unrelated Family denial, missing-site denial, wrong-site denial, and server-owned writes. |
 | Baseline proof | `npm run refactor:baseline` passed on May 15. |
 | Full refactor proof | `npm run refactor:full` passed on May 15; log stored at `audit-pack/reports/refactor-full-may15.log`. |
 

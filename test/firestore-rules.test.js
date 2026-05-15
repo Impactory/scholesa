@@ -453,6 +453,40 @@ beforeEach(async () => {
       status: 'draft',
     });
 
+    await setDoc(doc(db, 'reportShareRequests', 'report-share-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+      audience: 'guardian',
+      visibility: 'family',
+    });
+
+    await setDoc(doc(db, 'reportShareRequests', 'report-share-nosite'), {
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+      audience: 'guardian',
+      visibility: 'family',
+    });
+
+    await setDoc(doc(db, 'reportShareConsents', 'report-consent-1'), {
+      siteId: 'site1',
+      requestId: 'report-share-1',
+      requesterId: educatorUser.uid,
+      learnerId: learnerUser.uid,
+      approverId: parentUser.uid,
+      status: 'granted',
+    });
+
+    await setDoc(doc(db, 'reportShareConsents', 'report-consent-nosite'), {
+      requestId: 'report-share-nosite',
+      requesterId: educatorUser.uid,
+      learnerId: learnerUser.uid,
+      approverId: parentUser.uid,
+      status: 'granted',
+    });
+
     await setDoc(doc(db, 'missionAttempts', 'attempt-site1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -5082,6 +5116,37 @@ describe('Portfolio Access', () => {
 });
 
 describe('Passport evidence chain access', () => {
+  test('report share requests and consents require site scope, linked Family access, and server-owned writes', async () => {
+    const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    const parentDb = testEnv.authenticatedContext(parentUser.uid).firestore();
+    const otherParentDb = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    const otherSiteDb = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+
+    await assertSucceeds(getDoc(doc(learnerDb, 'reportShareRequests', 'report-share-1')));
+    await assertSucceeds(getDoc(doc(parentDb, 'reportShareRequests', 'report-share-1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'reportShareRequests', 'report-share-1')));
+    await assertSucceeds(getDoc(doc(parentDb, 'reportShareConsents', 'report-consent-1')));
+    await assertSucceeds(getDoc(doc(educatorDb, 'reportShareConsents', 'report-consent-1')));
+
+    await assertFails(getDoc(doc(otherParentDb, 'reportShareRequests', 'report-share-1')));
+    await assertFails(getDoc(doc(otherParentDb, 'reportShareConsents', 'report-consent-1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'reportShareRequests', 'report-share-1')));
+    await assertFails(getDoc(doc(otherSiteDb, 'reportShareConsents', 'report-consent-1')));
+    await assertFails(getDoc(doc(learnerDb, 'reportShareRequests', 'report-share-nosite')));
+    await assertFails(getDoc(doc(parentDb, 'reportShareConsents', 'report-consent-nosite')));
+
+    await assertFails(setDoc(doc(educatorDb, 'reportShareRequests', 'client-share'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      createdBy: educatorUser.uid,
+      status: 'active',
+    }));
+    await assertFails(updateDoc(doc(educatorDb, 'reportShareConsents', 'report-consent-1'), {
+      status: 'revoked',
+    }));
+  });
+
   test('learner can read their own capability mastery', async () => {
     const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
     await assertSucceeds(getDoc(doc(db, 'capabilityMastery', 'mastery-1')));

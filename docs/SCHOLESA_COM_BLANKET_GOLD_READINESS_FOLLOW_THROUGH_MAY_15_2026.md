@@ -76,7 +76,7 @@ Summary: 8 canonical accounts certified, 16 route proofs certified, product chai
 | `npm run qa:k8s:manifests` | PASS | Kubernetes manifest structure and security posture render. |
 | `npm run qa:workflow:no-mock` | PASS | No mock workflow findings in strict audit. |
 | `npm run qa:coppa:guards` | PASS | Minor-safety guard regression suite. |
-| `npm run test:integration:rules` | PASS | Firestore and Storage rules passed 238 emulator tests. |
+| `npm run test:integration:rules` | PASS | Firestore and Storage rules passed 239 emulator tests, including report-share request/consent boundary coverage. |
 | `npm run compliance:scan` | PASS | Compliance repo-structure scan passed. |
 | `npm audit --audit-level=high` | PASS with low advisories | No high or critical advisories; 9 low transitive advisories remain. |
 

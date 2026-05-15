@@ -27,13 +27,14 @@ Scholesa is refactor-ready when all of these are true:
 | Kubernetes manifest render | PASS |
 | Workflow no-mock audit | PASS |
 | COPPA guard tests | PASS |
-| Firestore and Storage rules emulator tests | PASS, 238 tests |
+| Firestore and Storage rules emulator tests | PASS, 239 tests |
 | Compliance scan | PASS |
 | High-severity npm audit | PASS, with low-severity transitive advisories remaining |
 | Live role-account UAT | PASS, 8 canonical accounts and 16 route proofs against `https://scholesa.com` |
 | Full web/security blanket-gold gate | PASS, proof log `audit-pack/reports/blanket-gold-live-may15.log` |
 | Refactor baseline gate | PASS, `npm run refactor:baseline` on May 15 |
 | Refactor full gate | PASS, `npm run refactor:full` on May 15, proof log `audit-pack/reports/refactor-full-may15.log` |
+| Rules hardening slice | PASS, report-share request/consent boundary emulator proof added |
 
 Rollback rule: if a later refactor causes any Phase 0 gate to fail, stop and either fix the exact regression or revert that phase only.
 
@@ -184,4 +185,4 @@ Exit criteria:
 2. **Rules hardening slice**: classify Firestore/Storage collections and add denial tests for missing site scope plus unrelated Family access.
 3. **Native small-screen slice**: implement responsive shell and bottom-action patterns from the Phase 2 native UX plan, with focused Flutter tests before broad visual work.
 
-May 15 progress: the route truth slice has refreshed `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` ownership split, refactor gates, and live route UAT equivalents. Next implementation slice should target rules hardening or native small-screen tests; do not start a repo-wide move/rename pass first.
+May 15 progress: the route truth slice has refreshed `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` ownership split, refactor gates, and live route UAT equivalents. The rules hardening slice added direct emulator coverage for `reportShareRequests` and `reportShareConsents`, proving linked Family access, unlinked Family denial, missing-site denial, wrong-site denial, and server-owned writes. Next implementation slice should target native small-screen tests; do not start a repo-wide move/rename pass first.
