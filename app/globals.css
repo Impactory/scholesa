@@ -3,18 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --scholesa-font-stack: "Noto Sans", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "PingFang SC", "PingFang TC", "Microsoft YaHei", "Nirmala UI", "Leelawadee UI", "Inter", "Segoe UI", sans-serif;
-  --scholesa-public-display: Georgia, "Times New Roman", serif;
-  --scholesa-public-navy: #1B3A5C;
-  --scholesa-public-navy-deep: #0F2340;
-  --scholesa-public-teal: #00897B;
-  --scholesa-public-teal-light: #00BFA5;
-  --scholesa-public-gold: #F5A623;
-  --scholesa-public-gold-light: #FFD166;
-  --scholesa-public-coral: #E84855;
-  --scholesa-public-purple: #5B4A8A;
-  --scholesa-public-cream: #FEFCF7;
-  --scholesa-public-off-white: #F7F5F0;
+  --scholesa-font-stack: "Inter", "Nunito Sans", "Noto Sans", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "PingFang SC", "PingFang TC", "Microsoft YaHei", "Nirmala UI", "Leelawadee UI", "Segoe UI", sans-serif;
+  --scholesa-public-display: "Sora", "Manrope", "Inter", system-ui, sans-serif;
+  --scholesa-navy: #0F2D4B;
+  --scholesa-sky: #0F96C3;
+  --scholesa-teal: #006969;
+  --scholesa-emerald: #1EA569;
+  --scholesa-gold: #F0C31E;
+  --scholesa-orange: #F0963C;
+  --scholesa-coral: #F0695A;
+  --scholesa-page: #F7FAFC;
+  --scholesa-warm: #F8FBF9;
+  --scholesa-sky-soft: #E8F6FB;
+  --scholesa-teal-soft: #E5F3F3;
+  --scholesa-emerald-soft: #EAF7F1;
+  --scholesa-gold-soft: #FFF7D6;
+  --scholesa-orange-soft: #FFF0E3;
+  --scholesa-coral-soft: #FDECEA;
+  --scholesa-public-navy: var(--scholesa-navy);
+  --scholesa-public-navy-deep: #082033;
+  --scholesa-public-teal: var(--scholesa-teal);
+  --scholesa-public-teal-light: var(--scholesa-sky);
+  --scholesa-public-gold: var(--scholesa-gold);
+  --scholesa-public-gold-light: #FFF7D6;
+  --scholesa-public-coral: var(--scholesa-coral);
+  --scholesa-public-cream: var(--scholesa-page);
+  --scholesa-public-off-white: var(--scholesa-warm);
   --background: 210 40% 98%;
   --foreground: 222 47% 11%;
   --surface: 0 0% 100%;
@@ -168,12 +182,12 @@ html[data-theme='dark'] body {
 
 .public-site {
   background: var(--scholesa-public-cream);
-  color: #1A1A2E;
+  color: var(--scholesa-navy);
 }
 
 .public-header {
-  border-color: rgb(15 35 64 / 0.1);
-  background: rgb(254 252 247 / 0.94);
+  border-color: rgb(15 45 75 / 0.1);
+  background: rgb(247 250 252 / 0.94);
   backdrop-filter: blur(16px);
 }
 
@@ -194,7 +208,7 @@ html[data-theme='dark'] body {
 .public-hero {
   position: relative;
   overflow: hidden;
-  background: var(--scholesa-public-navy-deep);
+  background: linear-gradient(135deg, var(--scholesa-navy) 0%, var(--scholesa-teal) 100%);
   color: white;
 }
 
@@ -203,8 +217,7 @@ html[data-theme='dark'] body {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 18% 50%, rgb(0 137 123 / 0.18) 0%, transparent 62%),
-    radial-gradient(ellipse 50% 80% at 84% 20%, rgb(245 166 35 / 0.1) 0%, transparent 54%);
+    linear-gradient(135deg, rgb(15 150 195 / 0.16) 0%, rgb(0 105 105 / 0.08) 28%, rgb(30 165 105 / 0.08) 48%, rgb(240 195 30 / 0.12) 72%, rgb(240 150 60 / 0.08) 88%, rgb(240 105 90 / 0.1) 100%);
   pointer-events: none;
 }
 
@@ -228,9 +241,9 @@ html[data-theme='dark'] body {
   width: fit-content;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgb(245 166 35 / 0.42);
+  border: 1px solid rgb(240 195 30 / 0.42);
   border-radius: 999px;
-  background: rgb(245 166 35 / 0.14);
+  background: rgb(240 195 30 / 0.14);
   color: var(--scholesa-public-gold-light);
   font-size: 0.72rem;
   font-weight: 800;
@@ -243,8 +256,8 @@ html[data-theme='dark'] body {
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 999px;
-  background: var(--scholesa-public-gold);
-  box-shadow: 0 0 0 5px rgb(245 166 35 / 0.12);
+  background: var(--scholesa-gold);
+  box-shadow: 0 0 0 5px rgb(240 195 30 / 0.12);
 }
 
 .public-panel {
@@ -255,20 +268,32 @@ html[data-theme='dark'] body {
 }
 
 .public-card {
-  border: 1px solid rgb(27 58 92 / 0.1);
-  background: rgb(255 255 255 / 0.82);
-  box-shadow: 0 14px 36px rgb(15 35 64 / 0.08);
+  border: 1px solid #E4ECF2;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 18px 45px rgb(15 45 75 / 0.1);
 }
 
 .public-button-primary {
-  background: linear-gradient(135deg, var(--scholesa-public-gold) 0%, #E8940A 100%);
-  color: var(--scholesa-public-navy-deep);
-  box-shadow: 0 10px 30px rgb(245 166 35 / 0.3);
+  background: linear-gradient(135deg, var(--scholesa-orange) 0%, var(--scholesa-coral) 100%);
+  color: white;
+  box-shadow: 0 12px 28px rgb(240 105 90 / 0.28);
 }
 
 .public-button-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 36px rgb(245 166 35 / 0.4);
+  box-shadow: 0 16px 36px rgb(240 105 90 / 0.34);
+}
+
+.public-learning-gradient {
+  background: linear-gradient(135deg, var(--scholesa-sky) 0%, var(--scholesa-emerald) 52%, var(--scholesa-gold) 100%);
+}
+
+.public-warm-gradient {
+  background: linear-gradient(135deg, var(--scholesa-orange) 0%, var(--scholesa-coral) 100%);
+}
+
+.public-trust-gradient {
+  background: linear-gradient(135deg, var(--scholesa-navy) 0%, var(--scholesa-teal) 100%);
 }
 
 .public-button-secondary {

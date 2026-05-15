@@ -2,16 +2,24 @@
 
 import {
   ArrowRight,
+  BadgeCheck,
   BookOpenCheck,
+  Bot,
+  BrainCircuit,
   BriefcaseBusiness,
   CheckCircle2,
   CalendarDays,
   ClipboardCheck,
+  Code2,
   FileCheck2,
   GraduationCap,
+  Images,
+  Lightbulb,
   LineChart,
+  Mic,
   Network,
   PlayCircle,
+  Rocket,
   School,
   ShieldCheck,
   Sparkles,
@@ -60,6 +68,63 @@ const trustOutcomes = [
   'educators',
   'families',
   'leaders',
+];
+
+const trustStrip = [
+  { label: 'Capability-first learning', icon: BrainCircuit },
+  { label: 'Evidence-based progress', icon: FileCheck2 },
+  { label: 'AI-safe by stage', icon: ShieldCheck },
+  { label: 'Portfolio-ready outcomes', icon: BadgeCheck },
+  { label: 'Built for schools, academies, and families', icon: School },
+];
+
+const workSteps = [
+  {
+    label: 'Discover',
+    icon: Lightbulb,
+    tone: 'border-scholesa-sky/20 bg-scholesa-skySoft text-scholesa-sky',
+    detail: 'Learners meet a meaningful challenge through a story, question, or real-world problem.',
+  },
+  {
+    label: 'Build',
+    icon: Code2,
+    tone: 'border-scholesa-orange/20 bg-scholesa-orangeSoft text-scholesa-orange',
+    detail: 'Learners create, code, prototype, test, discuss, and improve through guided missions.',
+  },
+  {
+    label: 'Show Evidence',
+    icon: FileCheck2,
+    tone: 'border-scholesa-emerald/20 bg-scholesa-emeraldSoft text-scholesa-emerald',
+    detail: 'Learners submit proof of work through reflections, screenshots, demos, voice notes, drawings, or prototypes.',
+  },
+  {
+    label: 'Grow Portfolio',
+    icon: BadgeCheck,
+    tone: 'border-scholesa-gold/30 bg-scholesa-goldSoft text-scholesa-navy',
+    detail: 'Strong work becomes visible in a learner portfolio connected to future-ready capabilities.',
+  },
+];
+
+const stageCards = [
+  { label: 'Discoverers', grades: 'Grades 1-3', color: 'bg-scholesa-skySoft text-scholesa-sky', detail: 'Playful invention, logic, communication, and confidence through structured missions.' },
+  { label: 'Builders', grades: 'Grades 4-6', color: 'bg-scholesa-emeraldSoft text-scholesa-emerald', detail: 'Guided project work where learners begin coding, documenting, collaborating, and explaining their choices.' },
+  { label: 'Explorers', grades: 'Grades 7-9', color: 'bg-scholesa-tealSoft text-scholesa-teal', detail: 'Applied labs and deeper autonomy across programming, research, bias detection, and product thinking.' },
+  { label: 'Innovators', grades: 'Grades 10-12', color: 'bg-scholesa-goldSoft text-scholesa-navy', detail: 'Portfolio-driven venture, AI, research, ethics, and leadership work with mentor feedback.' },
+];
+
+const evidenceTypes = [
+  { label: 'Written reflections', icon: BookOpenCheck },
+  { label: 'Drawings and screenshots', icon: Images },
+  { label: 'Audio explain-it-back', icon: Mic },
+  { label: 'Video demos', icon: PlayCircle },
+  { label: 'Code or prototype links', icon: Code2 },
+  { label: 'Educator observations', icon: ClipboardCheck },
+];
+
+const audienceBenefits = [
+  { label: 'Educators', detail: 'Fast evidence review, capability progress, AI log review, and suggested next actions.' },
+  { label: 'Families', detail: 'Clear views of what learners built, how they reflected, and what is ready for showcase.' },
+  { label: 'Schools and Academies', detail: 'A trusted operating layer for cohorts, missions, portfolios, badges, and Growth Reports.' },
 ];
 
 export default function LandingPage() {
@@ -193,6 +258,172 @@ export default function LandingPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-app bg-white px-4 py-6 sm:px-6 lg:px-8 dark:bg-slate-950" aria-label="Scholesa trust signals">
+          <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {trustStrip.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="flex items-center gap-3 rounded-card border border-scholesa-sky/15 bg-scholesa-page p-4 shadow-soft dark:border-slate-700 dark:bg-slate-900">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-scholesa-teal shadow-sm dark:bg-slate-950 dark:text-scholesa-sky">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <p className="text-sm font-extrabold leading-5 text-scholesa-navy dark:text-white">{item.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="border-b border-app bg-scholesa-warm px-4 py-16 sm:px-6 lg:px-8 dark:bg-slate-900">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-3xl">
+              <p className="public-kicker">How Scholesa Works</p>
+              <h2 className="mt-3 font-heading text-3xl font-black leading-tight text-scholesa-navy sm:text-4xl dark:text-white">
+                Learning that becomes visible.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
+                Every mission is connected to capabilities learners can practice, evidence they can submit, and portfolio growth families and educators can understand.
+              </p>
+            </div>
+            <div className="mt-8 grid gap-4 md:grid-cols-4">
+              {workSteps.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <article key={step.label} className={`rounded-card border p-5 shadow-scholesa ${step.tone}`}>
+                    <Icon className="h-7 w-7" aria-hidden="true" />
+                    <h3 className="mt-5 text-xl font-black">{step.label}</h3>
+                    <p className="mt-3 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{step.detail}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-app bg-white px-4 py-16 sm:px-6 lg:px-8 dark:bg-slate-950">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
+            <div>
+              <p className="public-kicker">Stage Framework</p>
+              <h2 className="mt-3 font-heading text-3xl font-black leading-tight text-scholesa-navy sm:text-4xl dark:text-white">
+                Future-skills pathways for every learner stage.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
+                Scholesa scales from playful invention to portfolio-driven capstone work while preserving capability context, evidence provenance, and educator guidance.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {stageCards.map((stage) => (
+                <article key={stage.label} className="rounded-card border border-app bg-white p-5 shadow-scholesa dark:bg-slate-900">
+                  <span className={`inline-flex rounded-full px-3 py-1 text-sm font-black ${stage.color}`}>{stage.grades}</span>
+                  <h3 className="mt-4 text-2xl font-black text-scholesa-navy dark:text-white">{stage.label}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{stage.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-app bg-scholesa-page px-4 py-16 sm:px-6 lg:px-8 dark:bg-slate-900">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+            <div>
+              <p className="public-kicker">Evidence and Portfolio</p>
+              <h2 className="mt-3 font-heading text-3xl font-black leading-tight text-scholesa-navy sm:text-4xl dark:text-white">
+                Scholesa does not only track completion.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-300">
+                It captures evidence of what learners can actually do, then carries the best work into portfolios, badges, showcases, and Growth Reports.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {evidenceTypes.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-app bg-white p-4 shadow-soft dark:bg-slate-950">
+                      <Icon className="h-5 w-5 shrink-0 text-scholesa-teal" aria-hidden="true" />
+                      <span className="text-sm font-bold text-scholesa-navy dark:text-white">{item.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="rounded-panel border border-scholesa-teal/20 bg-white p-5 shadow-scholesa dark:bg-slate-950">
+              <div className="rounded-card public-learning-gradient p-1">
+                <div className="rounded-[20px] bg-white p-5 dark:bg-slate-950">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-full bg-scholesa-goldSoft px-3 py-1 text-xs font-black text-scholesa-navy">Showcase Ready</span>
+                    <BadgeCheck className="h-6 w-6 text-scholesa-emerald" aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-5 text-2xl font-black text-scholesa-navy dark:text-white">Build a Helpful Robot</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">Evidence includes a prototype photo, explain-it-back audio, reflection, and educator observation.</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {['Coding', 'Design Thinking', 'Communication'].map((chip) => (
+                      <span key={chip} className="rounded-full bg-scholesa-skySoft px-3 py-1 text-xs font-black text-scholesa-sky">{chip}</span>
+                    ))}
+                  </div>
+                  <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <div className="h-full w-4/5 rounded-full public-learning-gradient" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-app public-trust-gradient px-4 py-16 text-white sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="text-sm font-black uppercase text-scholesa-gold">Milo AI Coach and Safety</p>
+              <h2 className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">Milo supports thinking, not shortcuts.</h2>
+              <p className="mt-4 text-base leading-7 text-white/75">Learners receive hints, questions, feedback, and reflection support while educators stay in control of age-appropriate AI use.</p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {['Educator-led', 'Guided', 'Logged', 'Reviewed'].map((badge) => (
+                  <span key={badge} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black text-white">{badge}</span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-panel border border-white/15 bg-white/10 p-5 shadow-scholesa backdrop-blur">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-scholesa-sky text-white"><Bot className="h-6 w-6" aria-hidden="true" /></span>
+                <div>
+                  <h3 className="font-black">MiloOS Coach</h3>
+                  <p className="text-sm text-white/60">AI-safe learning support</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 text-sm leading-6">
+                {['Tell me what you tried first.', 'What part should we test?', 'I can give you a hint, not the full answer.', 'Would you like a simpler clue or a bigger challenge?'].map((prompt) => (
+                  <p key={prompt} className="rounded-2xl bg-white/10 p-3 text-white/85">{prompt}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-app bg-white px-4 py-16 sm:px-6 lg:px-8 dark:bg-slate-950" id="summer-pilot">
+          <div className="mx-auto grid max-w-7xl gap-6 rounded-panel public-trust-gradient p-6 text-white shadow-scholesa lg:grid-cols-[1fr_0.9fr] lg:p-8">
+            <div>
+              <span className="inline-flex rounded-full bg-scholesa-gold px-3 py-1 text-sm font-black text-scholesa-navy">Summer Pilot</span>
+              <h2 className="mt-4 font-heading text-3xl font-black leading-tight sm:text-4xl">A 2-week future-skills pilot for young builders.</h2>
+              <p className="mt-4 text-base leading-7 text-white/75">Learners create, test, explain, and showcase real work through AI-safe, educator-guided missions.</p>
+              <div className="mt-6 flex flex-wrap gap-2 text-sm font-bold text-white/85">
+                {['Designed for K-5 learners', 'Hands-on missions', 'Portfolio-ready evidence', 'Family-friendly showcase'].map((item) => (
+                  <span key={item} className="rounded-full bg-white/10 px-3 py-1">{item}</span>
+                ))}
+              </div>
+              <Link href={`/${locale}/summer-camp-2026`} className="public-button-primary mt-7 inline-flex min-touch-target items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring">
+                Join the Summer Pilot
+                <Rocket className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {audienceBenefits.map((benefit) => (
+                <article key={benefit.label} className="rounded-card border border-white/15 bg-white/10 p-4 backdrop-blur">
+                  <h3 className="font-black">{benefit.label}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/70">{benefit.detail}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>

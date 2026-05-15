@@ -4,110 +4,119 @@ import 'package:flutter/material.dart';
 class ScholesaColors {
   ScholesaColors._();
 
+  // Logo-derived brand palette
+  static const Color navy = Color(0xFF0F2D4B);
+  static const Color sky = Color(0xFF0F96C3);
+  static const Color teal = Color(0xFF006969);
+  static const Color emerald = Color(0xFF1EA569);
+  static const Color gold = Color(0xFFF0C31E);
+  static const Color orange = Color(0xFFF0963C);
+  static const Color coral = Color(0xFFF0695A);
+
   // Primary role colors
-  static const Color learner = Color(0xFF0E7490);
-  static const Color educator = Color(0xFF059669);
-  static const Color parent = Color(0xFF2563EB);
-  static const Color site = Color(0xFFD97706);
-  static const Color hq = Color(0xFFE11D48);
-  static const Color partner = Color(0xFF4F46E5);
-  static const Color purple = Color(0xFF6366F1);
+  static const Color learner = sky;
+  static const Color educator = emerald;
+  static const Color parent = teal;
+  static const Color site = gold;
+  static const Color hq = coral;
+  static const Color partner = orange;
+  static const Color purple = navy;
 
   // Background colors
-  static const Color background = Color(0xFFECFEFF);
+  static const Color background = Color(0xFFF7FAFC);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF0FDFA);
+  static const Color surfaceVariant = Color(0xFFF8FBF9);
 
   // Text colors
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = navy;
+  static const Color textSecondary = Color(0xFF40576C);
+  static const Color textMuted = Color(0xFF6F8294);
 
   // Border colors
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color borderLight = Color(0xFFF1F5F9);
+  static const Color border = Color(0xFFE4ECF2);
+  static const Color borderLight = Color(0xFFF7FAFC);
 
   // Primary brand color
-  static const Color primary = Color(0xFF0E7490);
-  static const Color primaryDark = Color(0xFF155E75);
+  static const Color primary = sky;
+  static const Color primaryDark = navy;
 
   // Status colors
-  static const Color success = Color(0xFF059669);
-  static const Color warning = Color(0xFFD97706);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
+  static const Color success = emerald;
+  static const Color warning = orange;
+  static const Color error = coral;
+  static const Color info = sky;
 
   // Pillar colors
-  static const Color futureSkills = Color(0xFF3B82F6);
-  static const Color leadership = Color(0xFFE11D48);
-  static const Color impact = Color(0xFF059669);
+  static const Color futureSkills = sky;
+  static const Color leadership = emerald;
+  static const Color impact = teal;
 
   // Role gradients
   static const LinearGradient missionGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF0E7490), Color(0xFF059669)],
+    colors: <Color>[sky, emerald, gold],
   );
 
   static const LinearGradient learnerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF0E7490), Color(0xFF06B6D4)],
+    colors: <Color>[sky, emerald],
   );
 
   static const LinearGradient educatorGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF059669), Color(0xFF10B981)],
+    colors: <Color>[teal, emerald],
   );
 
   static const LinearGradient parentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF2563EB), Color(0xFF3B82F6)],
+    colors: <Color>[teal, sky],
   );
 
   static const LinearGradient siteGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFFD97706), Color(0xFFF59E0B)],
+    colors: <Color>[navy, teal],
   );
 
   static const LinearGradient hqGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFFE11D48), Color(0xFFF43F5E)],
+    colors: <Color>[coral, orange],
   );
 
   static const LinearGradient partnerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF4F46E5), Color(0xFF6366F1)],
+    colors: <Color>[orange, coral],
   );
 
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF0E7490), Color(0xFF059669)],
+    colors: <Color>[sky, emerald, gold],
   );
 
   // Feature gradients
   static const LinearGradient scheduleGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF6366F1), Color(0xFF818CF8)],
+    colors: <Color>[sky, teal],
   );
 
   static const LinearGradient billingGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFF059669), Color(0xFF10B981)],
+    colors: <Color>[emerald, teal],
   );
 
   static const LinearGradient safetyGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0xFFEF4444), Color(0xFFF87171)],
+    colors: <Color>[coral, orange],
   );
 
   /// Get color for a user role
@@ -172,24 +181,24 @@ class ScholesaTheme {
     ).copyWith(
       primary: ScholesaColors.primary,
       onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFCFFAFE),
-      onPrimaryContainer: const Color(0xFF164E63),
+      primaryContainer: const Color(0xFFE8F6FB),
+      onPrimaryContainer: ScholesaColors.navy,
       secondary: ScholesaColors.success,
       onSecondary: Colors.white,
-      secondaryContainer: const Color(0xFFD1FAE5),
-      onSecondaryContainer: const Color(0xFF064E3B),
+      secondaryContainer: const Color(0xFFEAF7F1),
+      onSecondaryContainer: ScholesaColors.teal,
       tertiary: ScholesaColors.warning,
-      onTertiary: Colors.white,
-      tertiaryContainer: const Color(0xFFFEF3C7),
-      onTertiaryContainer: const Color(0xFF78350F),
+      onTertiary: ScholesaColors.navy,
+      tertiaryContainer: const Color(0xFFFFF0E3),
+      onTertiaryContainer: ScholesaColors.navy,
       error: ScholesaColors.error,
       surface: ScholesaColors.surface,
       surfaceContainerLowest: ScholesaColors.background,
       surfaceContainerLow: ScholesaColors.surfaceVariant,
-      surfaceContainer: const Color(0xFFE0F2FE),
-      surfaceContainerHigh: const Color(0xFFEFF6FF),
-      surfaceContainerHighest: const Color(0xFFF8FAFC),
-      outline: const Color(0xFF94A3B8),
+      surfaceContainer: const Color(0xFFE8F6FB),
+      surfaceContainerHigh: const Color(0xFFE5F3F3),
+      surfaceContainerHighest: const Color(0xFFF7FAFC),
+      outline: const Color(0xFF6F8294),
       outlineVariant: ScholesaColors.border,
     );
     return ThemeData(
@@ -211,7 +220,7 @@ class ScholesaTheme {
         surfaceTintColor: ScholesaColors.primary.withValues(alpha: 0.08),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.all(Radius.circular(24)),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -222,9 +231,9 @@ class ScholesaTheme {
           disabledBackgroundColor: scheme.surfaceContainerHighest,
           disabledForegroundColor: scheme.onSurfaceVariant,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(999),
           ),
         ),
       ),
@@ -232,15 +241,15 @@ class ScholesaTheme {
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.primary),
         ),
         labelStyle: TextStyle(color: scheme.onSurfaceVariant),
@@ -258,7 +267,7 @@ class ScholesaTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: scheme.inverseSurface,
@@ -270,7 +279,7 @@ class ScholesaTheme {
         labelStyle: TextStyle(color: scheme.onSurface),
         secondaryLabelStyle: TextStyle(color: scheme.onPrimaryContainer),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(999),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -294,25 +303,25 @@ class ScholesaTheme {
       seedColor: ScholesaColors.primary,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: const Color(0xFF67E8F9),
-      onPrimary: const Color(0xFF083344),
-      primaryContainer: const Color(0xFF164E63),
-      onPrimaryContainer: const Color(0xFFCFFAFE),
-      secondary: const Color(0xFF6EE7B7),
-      onSecondary: const Color(0xFF022C22),
-      secondaryContainer: const Color(0xFF064E3B),
-      onSecondaryContainer: const Color(0xFFD1FAE5),
-      tertiary: const Color(0xFFFCD34D),
-      onTertiary: const Color(0xFF451A03),
-      tertiaryContainer: const Color(0xFF78350F),
-      onTertiaryContainer: const Color(0xFFFEF3C7),
-      error: const Color(0xFFFCA5A5),
-      surface: const Color(0xFF0F172A),
-      surfaceContainerLowest: const Color(0xFF020617),
-      surfaceContainerLow: const Color(0xFF111827),
-      surfaceContainer: const Color(0xFF1E293B),
-      surfaceContainerHigh: const Color(0xFF263244),
-      surfaceContainerHighest: const Color(0xFF334155),
+      primary: ScholesaColors.sky,
+      onPrimary: Colors.white,
+      primaryContainer: ScholesaColors.teal,
+      onPrimaryContainer: const Color(0xFFE8F6FB),
+      secondary: ScholesaColors.emerald,
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFF0A4C49),
+      onSecondaryContainer: const Color(0xFFEAF7F1),
+      tertiary: ScholesaColors.gold,
+      onTertiary: ScholesaColors.navy,
+      tertiaryContainer: const Color(0xFF6B5610),
+      onTertiaryContainer: const Color(0xFFFFF7D6),
+      error: ScholesaColors.coral,
+      surface: const Color(0xFF0B253C),
+      surfaceContainerLowest: const Color(0xFF061A2A),
+      surfaceContainerLow: const Color(0xFF0F2D4B),
+      surfaceContainer: const Color(0xFF12385A),
+      surfaceContainerHigh: const Color(0xFF17456B),
+      surfaceContainerHighest: const Color(0xFF1D527A),
       outline: const Color(0xFF64748B),
       outlineVariant: const Color(0xFF334155),
     );
@@ -335,7 +344,7 @@ class ScholesaTheme {
         surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.12),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(16)),
+          borderRadius: const BorderRadius.all(Radius.circular(24)),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -346,9 +355,9 @@ class ScholesaTheme {
           disabledBackgroundColor: scheme.surfaceContainerHighest,
           disabledForegroundColor: scheme.onSurfaceVariant,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(999),
           ),
         ),
       ),
@@ -356,15 +365,15 @@ class ScholesaTheme {
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.32),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.primary),
         ),
         labelStyle: TextStyle(color: scheme.onSurfaceVariant),
@@ -382,7 +391,7 @@ class ScholesaTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: scheme.inverseSurface,
@@ -394,7 +403,7 @@ class ScholesaTheme {
         labelStyle: TextStyle(color: scheme.onSurface),
         secondaryLabelStyle: TextStyle(color: scheme.onPrimaryContainer),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(999),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(

@@ -8,6 +8,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        scholesa: {
+          navy: '#0F2D4B',
+          sky: '#0F96C3',
+          teal: '#006969',
+          emerald: '#1EA569',
+          gold: '#F0C31E',
+          orange: '#F0963C',
+          coral: '#F0695A',
+          page: '#F7FAFC',
+          warm: '#F8FBF9',
+          skySoft: '#E8F6FB',
+          tealSoft: '#E5F3F3',
+          emeraldSoft: '#EAF7F1',
+          goldSoft: '#FFF7D6',
+          orangeSoft: '#FFF0E3',
+          coralSoft: '#FDECEA',
+        },
         border: 'hsl(var(--border) / <alpha-value>)',
         input: 'hsl(var(--input) / <alpha-value>)',
         ring: 'hsl(var(--ring) / <alpha-value>)',
@@ -41,6 +58,18 @@ module.exports = {
           DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
           foreground: 'hsl(var(--popover-foreground) / <alpha-value>)',
         },
+      },
+      borderRadius: {
+        card: '24px',
+        panel: '32px',
+      },
+      boxShadow: {
+        scholesa: '0 18px 45px rgba(15, 45, 75, 0.10)',
+        soft: '0 10px 30px rgba(15, 45, 75, 0.08)',
+      },
+      fontFamily: {
+        heading: ['Sora', 'Manrope', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'Nunito Sans', 'system-ui', 'sans-serif'],
       },
     },
   },
