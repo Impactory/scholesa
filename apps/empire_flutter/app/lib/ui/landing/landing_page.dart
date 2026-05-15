@@ -21,8 +21,12 @@ const Map<String, String> _landingZhCn = <String, String>{
       '为学习者、教育者、家庭、学校团队和 HQ 提供证据视图。',
   'Sign In': '登录',
   'Summer Camp': '夏令营',
+  'Summer Camp 2026': '2026 夏令营',
   'Reserve Summer Camp': '预留夏令营名额',
   'Young Innovators Summer Camp 2026': 'Young Innovators 2026 夏令营',
+  'Reserve a Young Innovators Summer Camp seat': '预留 Young Innovators 夏令营名额',
+  'Evidence-rich invention studios for Discoverers, Builders, Explorers, and Innovators.':
+      '为发现者、建构者、探索者和创新者打造证据丰富的发明工作室。',
   'Summer Camp page is unavailable right now.': '夏令营页面暂时无法打开。',
   'Capability learning, made visible': '让能力学习清晰可见',
   'The Proof Engine for\nReal Capability Growth': '真实能力成长的\n证据引擎',
@@ -83,8 +87,12 @@ const Map<String, String> _landingZhTw = <String, String>{
       '為學習者、教育者、家庭、學校團隊和 HQ 提供證據視圖。',
   'Sign In': '登入',
   'Summer Camp': '夏令營',
+  'Summer Camp 2026': '2026 夏令營',
   'Reserve Summer Camp': '預留夏令營名額',
   'Young Innovators Summer Camp 2026': 'Young Innovators 2026 夏令營',
+  'Reserve a Young Innovators Summer Camp seat': '預留 Young Innovators 夏令營名額',
+  'Evidence-rich invention studios for Discoverers, Builders, Explorers, and Innovators.':
+      '為發現者、建構者、探索者和創新者打造證據豐富的發明工作室。',
   'Summer Camp page is unavailable right now.': '夏令營頁面暫時無法開啟。',
   'Capability learning, made visible': '讓能力學習清晰可見',
   'The Proof Engine for\nReal Capability Growth': '真實能力成長的\n證據引擎',
@@ -309,6 +317,10 @@ class _LandingPageState extends State<LandingPage>
                 child: _buildNavBar(context, isWide),
               ),
 
+              SliverToBoxAdapter(
+                child: _buildSummerCampBand(context, isWide),
+              ),
+
               // Hero Section
               SliverToBoxAdapter(
                 child: SlideTransition(
@@ -421,20 +433,19 @@ class _LandingPageState extends State<LandingPage>
           ],
           // CTA Buttons
           if (isWide) ...<Widget>[
-            OutlinedButton.icon(
+            FilledButton.icon(
               onPressed: () =>
                   _openSummerCampPage(context, 'landing_nav_summer_camp'),
               icon: const Icon(Icons.calendar_month_rounded, size: 18),
               label: Text(_tLanding(context, 'Summer Camp')),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFBBF24),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFBBF24),
+                foregroundColor: const Color(0xFF172033),
                 minimumSize: const Size(0, 40),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                side: BorderSide(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 textStyle: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -471,6 +482,53 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSummerCampBand(BuildContext context, bool isWide) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isWide ? 64 : 24, 8, isWide ? 64 : 24, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isWide ? 20 : 16,
+          vertical: isWide ? 14 : 16,
+        ),
+        child: isWide
+            ? Row(
+                children: <Widget>[
+                  _SummerCampSignal(
+                      label: _tLanding(context, 'Summer Camp 2026')),
+                  const SizedBox(width: 16),
+                  Expanded(child: _SummerCampBandCopy(sourceContext: context)),
+                  const SizedBox(width: 16),
+                  _SummerCampBandButton(
+                    label: _tLanding(context, 'Reserve Summer Camp'),
+                    onPressed: () => _openSummerCampPage(
+                        context, 'landing_band_summer_camp'),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _SummerCampSignal(
+                      label: _tLanding(context, 'Summer Camp 2026')),
+                  const SizedBox(height: 12),
+                  _SummerCampBandCopy(sourceContext: context),
+                  const SizedBox(height: 14),
+                  _SummerCampBandButton(
+                    label: _tLanding(context, 'Reserve Summer Camp'),
+                    onPressed: () => _openSummerCampPage(
+                        context, 'landing_band_summer_camp'),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -546,7 +604,7 @@ class _LandingPageState extends State<LandingPage>
             fontWeight: FontWeight.bold,
             color: Colors.white,
             height: 1.1,
-            letterSpacing: -1,
+            letterSpacing: 0,
           ),
         ),
         const SizedBox(height: 24),
@@ -576,7 +634,7 @@ class _LandingPageState extends State<LandingPage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -597,7 +655,7 @@ class _LandingPageState extends State<LandingPage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -615,7 +673,7 @@ class _LandingPageState extends State<LandingPage>
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -1099,7 +1157,7 @@ class _LandingPageState extends State<LandingPage>
               foregroundColor: ScholesaColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(8),
               ),
               textStyle: const TextStyle(
                 fontSize: 16,
@@ -1143,6 +1201,99 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SummerCampSignal extends StatelessWidget {
+  const _SummerCampSignal({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBBF24),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Icon(
+            Icons.calendar_month_rounded,
+            color: Color(0xFF172033),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF172033),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummerCampBandCopy extends StatelessWidget {
+  const _SummerCampBandCopy({required this.sourceContext});
+
+  final BuildContext sourceContext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tLanding(
+              sourceContext, 'Reserve a Young Innovators Summer Camp seat'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            height: 1.25,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _tLanding(sourceContext,
+              'Evidence-rich invention studios for Discoverers, Builders, Explorers, and Innovators.'),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.72),
+            fontSize: 13,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummerCampBandButton extends StatelessWidget {
+  const _SummerCampBandButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: ScholesaColors.primaryDark,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
       ),
     );
   }

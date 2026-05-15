@@ -46,7 +46,21 @@ class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
   Future<bool> supportsMode(PreferredLaunchMode mode) async => true;
 }
 
-class _FakeAuthService extends Fake implements AuthService {}
+class _FakeAuthService extends Fake implements AuthService {
+  String? email;
+  String? password;
+  int submitCount = 0;
+
+  @override
+  Future<void> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    this.email = email;
+    this.password = password;
+    submitCount += 1;
+  }
+}
 
 class _FakeRecentLoginStore extends RecentLoginStore {}
 
@@ -122,6 +136,8 @@ void main() {
 
     expect(find.text('Capability learning, made visible'), findsOneWidget);
     expect(find.text('Scholesa'), findsOneWidget);
+    expect(find.text('Summer Camp 2026'), findsOneWidget);
+    expect(find.text('Reserve Summer Camp'), findsWidgets);
     expect(find.text('Sign In'), findsWidgets);
 
     await tester.tap(find.text('Sign In').first);
@@ -168,6 +184,44 @@ void main() {
     expect(urlLauncher.launchedUrls.single, endsWith('/videos/proof-flow.mp4'));
   });
 
+  testWidgets('summer camp CTA opens the public camp route',
+      (WidgetTester tester) async {
+    final _FakeUrlLauncherPlatform urlLauncher = _FakeUrlLauncherPlatform();
+    UrlLauncherPlatform.instance = urlLauncher;
+
+    final GoRouter router = GoRouter(
+      initialLocation: '/welcome',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/welcome',
+          builder: (BuildContext context, GoRouterState state) =>
+              const LandingPage(),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder summerCampCta = find.text('Reserve Summer Camp').first;
+    await tester.ensureVisible(summerCampCta);
+    await tester.pumpAndSettle();
+
+    await tester.tap(summerCampCta);
+    await tester.pump();
+
+    expect(urlLauncher.launchedUrls, hasLength(1));
+    expect(urlLauncher.launchedUrls.single, endsWith('/en/summer-camp-2026'));
+  });
+
   testWidgets('login page validates required email and password fields',
       (WidgetTester tester) async {
     await tester.pumpWidget(_buildLoginHarness());
@@ -182,5 +236,51 @@ void main() {
 
     expect(find.text('Please enter your email'), findsOneWidget);
     expect(find.text('Please enter your password'), findsOneWidget);
+  });
+
+  testWidgets('login page submits email and password credentials',
+      (WidgetTester tester) async {
+    final _FakeAuthService authService = _FakeAuthService();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<AuthService>.value(value: authService),
+          ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+          ChangeNotifierProvider<RecentLoginStore>.value(
+            value: _FakeRecentLoginStore(),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: const LoginPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.byType(TextFormField).at(0), 'builder@scholesa.test');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Test123!');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
+    await tester.pumpAndSettle();
+
+    expect(authService.submitCount, 1);
+    expect(authService.email, 'builder@scholesa.test');
+    expect(authService.password, 'Test123!');
   });
 }
