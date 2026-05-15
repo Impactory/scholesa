@@ -13,25 +13,39 @@ import '../widgets/scholesa_logo.dart';
 
 const Map<String, String> _loginZhCn = <String, String>{
   'Education 2.0\nPlatform': '教育 2.0\n平台',
+  'Capability Evidence\nPlatform': '能力证据\n平台',
   'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.':
       '通过任务式学习、证据型作品集和分阶段 AI 治理，赋能 K-12 学校。',
+  'Sign in to capture Evidence, run Sessions, review Capability growth, and keep Portfolio proof connected.':
+      '登录以采集证据、运行课程、审阅能力成长，并保持作品集证据连贯。',
   'Mission-based learning': '任务式学习',
+  'Mission Evidence capture': '任务证据采集',
   'Habit coaching': '习惯教练',
+  'Capability Review': '能力审阅',
   'Portfolio showcase': '作品集展示',
+  'Portfolio proof': '作品集证据',
   'Discoverers': '发现者',
   'Builders': '建构者',
+  'Explorers': '探索者',
   'Innovators': '创新者',
 };
 
 const Map<String, String> _loginZhTw = <String, String>{
   'Education 2.0\nPlatform': '教育 2.0\n平台',
+  'Capability Evidence\nPlatform': '能力證據\n平台',
   'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.':
       '透過任務式學習、證據型作品集和分階段 AI 治理，賦能 K-12 學校。',
+  'Sign in to capture Evidence, run Sessions, review Capability growth, and keep Portfolio proof connected.':
+      '登入以擷取證據、運行課程、審閱能力成長，並保持作品集證據連貫。',
   'Mission-based learning': '任務式學習',
+  'Mission Evidence capture': '任務證據擷取',
   'Habit coaching': '習慣教練',
+  'Capability Review': '能力審閱',
   'Portfolio showcase': '作品集展示',
+  'Portfolio proof': '作品集證據',
   'Discoverers': '發現者',
   'Builders': '建構者',
+  'Explorers': '探索者',
   'Innovators': '創新者',
 };
 
@@ -537,7 +551,15 @@ class _LoginPageState extends State<LoginPage>
               flex: 5,
               child: Container(
                 decoration: const BoxDecoration(
-                  gradient: ScholesaColors.primaryGradient,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: <Color>[
+                      Color(0xFF0F172A),
+                      Color(0xFF155E75),
+                      Color(0xFF172033),
+                    ],
+                  ),
                 ),
                 child: SafeArea(
                   child: Padding(
@@ -563,18 +585,19 @@ class _LoginPageState extends State<LoginPage>
                         const Spacer(),
                         // Hero text
                         Text(
-                          _tLogin(context, 'Education 2.0\nPlatform'),
+                          _tLogin(context, 'Capability Evidence\nPlatform'),
                           style: TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             height: 1.2,
+                            letterSpacing: 0,
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           _tLogin(context,
-                              'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.'),
+                              'Sign in to capture Evidence, run Sessions, review Capability growth, and keep Portfolio proof connected.'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.9),
@@ -584,13 +607,13 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 48),
                         // Feature highlights
                         _buildFeatureRow(Icons.rocket_launch_rounded,
-                            _tLogin(context, 'Mission-based learning')),
+                            _tLogin(context, 'Mission Evidence capture')),
                         const SizedBox(height: 16),
                         _buildFeatureRow(Icons.psychology_rounded,
-                            _tLogin(context, 'Habit coaching')),
+                            _tLogin(context, 'Capability Review')),
                         const SizedBox(height: 16),
                         _buildFeatureRow(Icons.folder_special_rounded,
-                            _tLogin(context, 'Portfolio showcase')),
+                            _tLogin(context, 'Portfolio proof')),
                         const Spacer(),
                         // Bottom pillars
                         Wrap(
@@ -601,6 +624,8 @@ class _LoginPageState extends State<LoginPage>
                                 ScholesaColors.futureSkills),
                             _buildPillarChip(_tLogin(context, 'Builders'),
                                 ScholesaColors.leadership),
+                            _buildPillarChip(_tLogin(context, 'Explorers'),
+                                ScholesaColors.info),
                             _buildPillarChip(_tLogin(context, 'Innovators'),
                                 ScholesaColors.impact),
                           ],
