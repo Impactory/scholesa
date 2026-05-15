@@ -2168,3 +2168,144 @@ Uploading tarball of [/var/folders/lf/67v4w5915kq97xpsv4vlh9cc0000gn/T/tmp.IVsw9
 Created [https://cloudbuild.googleapis.com/v1/projects/studio-3328096157-e3f79/locations/global/builds/183841b2-5cb4-43b2-9a82-10a9a7c5dd5f].
 Logs are available at [ https://console.cloud.google.com/cloud-build/builds/183841b2-5cb4-43b2-9a82-10a9a7c5dd5f?project=97120825720 ].
 Waiting for build to complete. Polling interval: 1 second(s).
+Cancelling...
+Cancelled [https://cloudbuild.googleapis.com/v1/projects/studio-3328096157-e3f79/locations/global/builds/183841b2-5cb4-43b2-9a82-10a9a7c5dd5f].
+
+BUILD FAILURE: Build step failure: user cancelation
+ERROR: (gcloud.builds.submit) build 183841b2-5cb4-43b2-9a82-10a9a7c5dd5f completed with status "CANCELLED"
+----------------------------- REMOTE BUILD OUTPUT ------------------------------
+starting build "183841b2-5cb4-43b2-9a82-10a9a7c5dd5f"
+
+FETCHSOURCE
+Fetching storage object: gs://studio-3328096157-e3f79_cloudbuild/source/1778888712.589969-e66cb5a85aac4d8bac01ad6176230486.tgz#1778888715025566
+Copying gs://studio-3328096157-e3f79_cloudbuild/source/1778888712.589969-e66cb5a85aac4d8bac01ad6176230486.tgz#1778888715025566...
+/ [0 files][    0.0 B/ 15.6 MiB]                                                / [1 files][ 15.6 MiB/ 15.6 MiB]                                                
+Operation completed over 1 objects/15.6 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  22.03MB
+Step 1/22 : FROM ghcr.io/cirruslabs/flutter:3.41.6 AS builder
+3.41.6: Pulling from cirruslabs/flutter
+20043066d3d5: Pulling fs layer
+debb49cb0d5e: Pulling fs layer
+3c191bc08c7d: Pulling fs layer
+821ff31b6cb4: Pulling fs layer
+38b2eee2a622: Pulling fs layer
+7b3fb6c6aba3: Pulling fs layer
+9319724368b6: Pulling fs layer
+9319724368b6: Waiting
+20043066d3d5: Verifying Checksum
+20043066d3d5: Download complete
+38b2eee2a622: Verifying Checksum
+38b2eee2a622: Download complete
+821ff31b6cb4: Verifying Checksum
+821ff31b6cb4: Download complete
+3c191bc08c7d: Verifying Checksum
+3c191bc08c7d: Download complete
+7b3fb6c6aba3: Download complete
+20043066d3d5: Pull complete
+debb49cb0d5e: Verifying Checksum
+debb49cb0d5e: Download complete
+9319724368b6: Verifying Checksum
+9319724368b6: Download complete
+debb49cb0d5e: Pull complete
+3c191bc08c7d: Pull complete
+821ff31b6cb4: Pull complete
+38b2eee2a622: Pull complete
+7b3fb6c6aba3: Pull complete
+9319724368b6: Pull complete
+Digest: sha256:2e5918c0681a1599ca6bf9a4c0a4f78d39e450da673d063a13968265aa87c210
+Status: Downloaded newer image for ghcr.io/cirruslabs/flutter:3.41.6
+ ---> 16c29950cc00
+Step 2/22 : WORKDIR /workspace
+ ---> Running in cbadf2937111
+Removing intermediate container cbadf2937111
+ ---> f41f2b2a47a8
+Step 3/22 : COPY scholesa.svg /workspace/scholesa.svg
+ ---> 14484fc90cb4
+Step 4/22 : COPY public/videos /workspace/public/videos
+ ---> 8756ff0e2679
+Step 5/22 : COPY apps/empire_flutter/app /workspace/apps/empire_flutter/app
+ ---> 6da90e6e6dec
+Step 6/22 : RUN mkdir -p /workspace/public/icons
+ ---> Running in f6fccce15716
+Removing intermediate container f6fccce15716
+ ---> fd48f3be7d37
+Step 7/22 : WORKDIR /workspace/apps/empire_flutter/app
+ ---> Running in bcec218ee459
+Removing intermediate container bcec218ee459
+ ---> d634d98f2fe1
+Step 8/22 : RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize tools); using checked-in assets"
+ ---> Running in 6b6e309830a0
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+[91m[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets
+[0m[icons] Syncing Android launcher icons from assets/icons/android
+[91mMissing required file: /workspace/apps/empire_flutter/app/assets/icons/android/android-launchericon-48-48.png
+[0m[icons] Sync skipped (no resize tools); using checked-in assets
+Removing intermediate container 6b6e309830a0
+ ---> 4d15b3d38b4b
+Step 9/22 : RUN flutter pub get
+ ---> Running in 6fa2238439f5
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 67.0.0 (100.0.0 available)
+  _flutterfire_internals 1.3.69 (1.3.71 available)
+  analyzer 6.4.1 (13.0.0 available)
+  build 2.4.1 (4.0.6 available)
+  build_config 1.1.2 (1.3.0 available)
+  build_resolvers 2.4.2 (3.0.4 available)
+  build_runner 2.4.13 (2.15.0 available)
+  build_runner_core 7.3.2 (9.3.2 available)
+  built_value 8.12.5 (8.12.6 available)
+  cloud_firestore 6.3.0 (6.4.1 available)
+  cloud_firestore_platform_interface 7.2.0 (8.0.1 available)
+  cloud_firestore_web 5.3.0 (5.4.1 available)
+  cloud_functions 6.2.0 (6.3.1 available)
+  cloud_functions_platform_interface 5.8.12 (6.0.1 available)
+  cloud_functions_web 5.1.5 (5.1.7 available)
+  dart_style 2.3.6 (3.1.9 available)
+  file_picker 10.3.10 (11.0.2 available)
+  firebase_auth 6.4.0 (6.5.1 available)
+  firebase_auth_platform_interface 8.1.9 (9.0.1 available)
+  firebase_auth_web 6.1.5 (6.2.1 available)
+  firebase_core 4.7.0 (4.9.0 available)
+  firebase_core_platform_interface 6.0.3 (7.0.1 available)
+  firebase_core_web 3.6.0 (3.7.0 available)
+  firebase_storage 13.3.0 (13.4.1 available)
+  firebase_storage_platform_interface 5.2.20 (6.0.1 available)
+  firebase_storage_web 3.11.5 (3.11.7 available)
+  flutter_svg 2.2.4 (2.3.0 available)
+  go_router 17.2.2 (17.2.3 available)
+  google_fonts 8.0.2 (8.1.0 available)
+  hooks 1.0.2 (1.0.3 available)
+  json_annotation 4.11.0 (4.12.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  native_toolchain_c 0.17.6 (0.18.0 available)
+  rx 0.4.0 (0.5.0 available)
+  shelf_web_socket 2.0.1 (3.0.0 available)
+  source_gen 1.5.0 (4.2.3 available)
+  source_helper 1.3.5 (1.3.12 available)
+  test_api 0.7.10 (0.7.12 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_graphics 1.1.21 (1.2.1 available)
+  vector_graphics_compiler 1.2.0 (1.2.2 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.1.0 (15.2.0 available)
+  win32 5.15.0 (6.2.0 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies!
+46 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Removing intermediate container 6fa2238439f5
+ ---> bc95921ca635
+Step 10/22 : RUN flutter build web --wasm --release --no-tree-shake-icons
+ ---> Running in f22c552beccc
+Downloading Web SDK...                                           2,562ms
+
+┌─ New feature ────────────────────────────────────────────────────────────────────────────┐
+│   WebAssembly compilation is new. Understand the details before deploying to production. │
+│   See https://flutter.dev/to/wasm for more information.                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+----------------------------------------------------------------------------------------------------------------------------------------------------------
