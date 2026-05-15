@@ -98,6 +98,8 @@ class TelemetryService {
     'site.switched',
     'export.requested',
     'export.downloaded',
+    'report.delivery_blocked',
+    'report.delivery_failed',
     'notification.requested',
     'fdm.state.changed',
     // BOS+MIA Runtime Events

@@ -1,0 +1,198 @@
+[0;32m[deploy][0m Building primary web image with Cloud Build (project=studio-3328096157-e3f79 service=scholesa-web region=us-central1 tag=20260515-share-telemetry-gold)...
+Creating temporary archive of 12003 file(s) totalling 339.0 MiB before compression.
+Uploading tarball of [.] to [gs://studio-3328096157-e3f79_cloudbuild/source/1778888318.474319-e52af064993a431ab88ccf732da481ab.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/studio-3328096157-e3f79/locations/global/builds/b0ed7848-9622-4df2-a2ad-3c3e1c331329].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/b0ed7848-9622-4df2-a2ad-3c3e1c331329?project=97120825720 ].
+Waiting for build to complete. Polling interval: 1 second(s).
+----------------------------- REMOTE BUILD OUTPUT ------------------------------
+starting build "b0ed7848-9622-4df2-a2ad-3c3e1c331329"
+
+FETCHSOURCE
+Fetching storage object: gs://studio-3328096157-e3f79_cloudbuild/source/1778888318.474319-e52af064993a431ab88ccf732da481ab.tgz#1778888339700041
+Copying gs://studio-3328096157-e3f79_cloudbuild/source/1778888318.474319-e52af064993a431ab88ccf732da481ab.tgz#1778888339700041...
+/ [0 files][    0.0 B/ 98.4 MiB]                                                -- [1 files][ 98.4 MiB/ 98.4 MiB]                                                
+Operation completed over 1 objects/98.4 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon     44MB
+Step 1/38 : FROM node:24-bullseye-slim AS builder
+24-bullseye-slim: Pulling from library/node
+77e30ef52aeb: Pulling fs layer
+0352796fb5dd: Pulling fs layer
+038f86bf041c: Pulling fs layer
+4806c952f7e8: Pulling fs layer
+deaf3b8b2a90: Pulling fs layer
+0352796fb5dd: Verifying Checksum
+0352796fb5dd: Download complete
+deaf3b8b2a90: Verifying Checksum
+deaf3b8b2a90: Download complete
+4806c952f7e8: Verifying Checksum
+4806c952f7e8: Download complete
+77e30ef52aeb: Verifying Checksum
+77e30ef52aeb: Download complete
+038f86bf041c: Verifying Checksum
+038f86bf041c: Download complete
+77e30ef52aeb: Pull complete
+0352796fb5dd: Pull complete
+038f86bf041c: Pull complete
+4806c952f7e8: Pull complete
+deaf3b8b2a90: Pull complete
+Digest: sha256:4c620a40970ae65085aea8470c706669d7e92efd80e1c777d0b07755ad0a79b1
+Status: Downloaded newer image for node:24-bullseye-slim
+ ---> d23c0919a12f
+Step 2/38 : WORKDIR /app
+ ---> Running in 4b4fdd1e0054
+Removing intermediate container 4b4fdd1e0054
+ ---> e9e6914ae083
+Step 3/38 : COPY package.json package-lock.json ./
+ ---> 3b967f52b2bc
+Step 4/38 : RUN npm ci --no-audit --no-fund --no-update-notifier --loglevel=error
+ ---> Running in 21a54f4e138f
+
+added 1011 packages in 24s
+Removing intermediate container 21a54f4e138f
+ ---> c2595cd6c70b
+Step 5/38 : COPY . ./
+ ---> 1ecc4251c29c
+Step 6/38 : ARG NEXT_PUBLIC_FIREBASE_API_KEY
+ ---> Running in fbcca6f73ff3
+Removing intermediate container fbcca6f73ff3
+ ---> 4eba24f528c9
+Step 7/38 : ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ ---> Running in 63673d3d7b75
+Removing intermediate container 63673d3d7b75
+ ---> b6b07dbdddf1
+Step 8/38 : ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ ---> Running in c4021e17e500
+Removing intermediate container c4021e17e500
+ ---> 92376b597c73
+Step 9/38 : ARG NEXT_PUBLIC_FIREBASE_APP_ID
+ ---> Running in 7b62a39cf7bc
+Removing intermediate container 7b62a39cf7bc
+ ---> b91d4bf25827
+Step 10/38 : ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+ ---> Running in 7ac32b372c81
+Removing intermediate container 7ac32b372c81
+ ---> 02edd4adf167
+Step 11/38 : ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+ ---> Running in e3e0485d8e01
+Removing intermediate container e3e0485d8e01
+ ---> 34ef11365c30
+Step 12/38 : ARG NEXT_PUBLIC_ENABLE_SW=false
+ ---> Running in 823ce83e7082
+Removing intermediate container 823ce83e7082
+ ---> 6ab46e554911
+Step 13/38 : ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
+ ---> Running in a949755ed420
+Removing intermediate container a949755ed420
+ ---> 830af307e055
+Step 14/38 : ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+ ---> Running in 6d37f2a33480
+Removing intermediate container 6d37f2a33480
+ ---> faad6040b567
+Step 15/38 : ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+ ---> Running in 7db22b3b19a0
+Removing intermediate container 7db22b3b19a0
+ ---> 9556b6702d64
+Step 16/38 : ENV NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}
+ ---> Running in f497f90a2b3b
+Removing intermediate container f497f90a2b3b
+ ---> c5a9328f8bd8
+Step 17/38 : ENV NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+ ---> Running in 32e59a1dc503
+Removing intermediate container 32e59a1dc503
+ ---> cfa291a12198
+Step 18/38 : ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}
+ ---> Running in 5b9a99967dd2
+Removing intermediate container 5b9a99967dd2
+ ---> 588cca26abdb
+Step 19/38 : ENV NEXT_PUBLIC_ENABLE_SW=${NEXT_PUBLIC_ENABLE_SW}
+ ---> Running in d8a1d0fe5cec
+Removing intermediate container d8a1d0fe5cec
+ ---> c8e5952c18ea
+Step 20/38 : RUN npm run build
+ ---> Running in 5f17fa728406
+
+> scholesa@0.1.0 prebuild
+> npm run icons:sync
+
+
+> scholesa@0.1.0 icons:sync
+> bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh
+
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+[91m[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets
+[0m[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/android/app/src/main/res/drawable-nodpi/splash_logo.png
+[0m[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)
+[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+Warning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[91m./apps/empire_flutter/app/scripts/sync_platform_icons.sh: line 156: python3: command not found
+[0m[91mWarning: python3 with Pillow not available, copying non-converted icon
+[0m[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png
+[0m[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png
+[0m[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png
+[0m[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[91m[icons] Warning: no ico conversion tool found (sips/magick/convert). Copying PNG with .ico extension: /app/apps/empire_flutter/app/windows/runner/resources/app_icon.ico
+[0m[icons] Syncing Flutter web PNG icons from assets/icons/android
+[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/web/icons/favicon-16x16.png
+[0m[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/apps/empire_flutter/app/web/icons/favicon-32x32.png
+[0m[91m[icons] Warning: no ico conversion tool found (sips/magick/convert). Copying PNG with .ico extension: /app/apps/empire_flutter/app/web/icons/favicon.ico
+[0m[icons] Syncing Next.js public PNG icons from assets/icons/android
+[91m[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: /app/public/favicon.png
+[0m[91m[icons] Warning: no ico conversion tool found (sips/magick/convert). Copying PNG with .ico extension: /app/public/favicon.ico
+[0m[icons] Platform icon sync complete.
+
+> scholesa@0.1.0 build
+> next build --webpack
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.2.6 (webpack)
+
+  Creating an optimized production build ...
