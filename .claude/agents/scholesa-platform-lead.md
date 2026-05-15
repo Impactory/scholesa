@@ -39,3 +39,34 @@ Every UAT test should protect this chain.
 Core UAT principle:
 
 Every feature must prove learner growth, preserve capability context, protect minors, enforce role permissions, support educator workflow, and create auditability where needed.
+
+Create a terminology audit test that scans visible UI text in core routes.
+
+fix these outdated terms in user-facing core product areas:
+- Teacher
+- Student
+- Parent
+- Class
+- Assignment
+- Lesson
+- Homework
+- Grading
+- Gradebook
+- Report Card
+- AI Tutor
+
+Preferred replacements:
+- Educator
+- Learner
+- Family
+- Cohort
+- Mission
+- Session
+- Home Connection
+- Capability Review / Evidence Review
+- Growth Record / Evidence Review
+- Growth Report
+- MiloOS Coach
+
+Exception:
+The word “Grade” may still be used only when referring to school grade level, such as Grade 5 or Grades 1–3.
