@@ -1,0 +1,81 @@
+name: Blanket Gold UAT
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/blanket-gold-uat.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/**'
+      - 'test/**'
+      - 'src/**'
+      - 'app/**'
+      - 'functions/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'jest*.config.js'
+      - 'playwright.config.ts'
+  push:
+    branches:
+      - main
+      - release/**
+    paths:
+      - '.github/workflows/blanket-gold-uat.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/**'
+      - 'test/**'
+      - 'src/**'
+      - 'app/**'
+      - 'functions/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'jest*.config.js'
+      - 'playwright.config.ts'
+
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('blanket-gold-uat-{0}-{1}', github.ref, github.run_id) || format('blanket-gold-uat-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  blanket-gold-uat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install native Python requirements
+        run: ./scripts/install_native_python_requirements.sh
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run blanket-gold UAT gate
+        run: npm run test:uat:blanket-gold
+
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blanket-gold-uat-audit-pack
+          path: audit-pack/reports
+          if-no-files-found: ignore
