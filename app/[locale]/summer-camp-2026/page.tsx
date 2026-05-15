@@ -181,8 +181,8 @@ export default async function SummerCampPage({
   const { locale } = await params;
 
   return (
-    <div className="min-h-screen bg-app-canvas text-app-foreground">
-      <header className="border-b border-app bg-app-surface/95 backdrop-blur">
+    <div className="public-site min-h-screen">
+      <header className="public-header border-b">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link
             href={`/${locale}`}
@@ -199,8 +199,8 @@ export default async function SummerCampPage({
               className="h-11 w-11 shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-lg font-bold leading-5 text-app-foreground">Scholesa</p>
-              <p className="text-xs font-medium uppercase text-app-muted">Young Innovators</p>
+              <p className="text-lg font-bold leading-5 text-slate-950 dark:text-white">Scholesa</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Young Innovators</p>
             </div>
           </Link>
           <nav className="flex items-center gap-2" aria-label="Summer camp navigation">
@@ -212,7 +212,7 @@ export default async function SummerCampPage({
             </Link>
             <a
               href="mailto:info@scholesa.com?subject=Scholesa%20Young%20Innovators%20Summer%20Camp%202026"
-              className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
+              className="public-button-primary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
             >
               <Mail className="h-4 w-4" aria-hidden="true" />
               Reserve
@@ -222,18 +222,18 @@ export default async function SummerCampPage({
       </header>
 
       <main>
-        <section className="border-b border-app bg-slate-950 text-white">
+        <section className="public-hero border-b border-transparent">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:min-h-[calc(100vh-72px)] lg:grid-cols-[1fr_0.9fr] lg:items-center lg:px-8">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-sm font-bold uppercase tracking-wide text-amber-200">
+              <div className="public-chip px-4 py-2">
                 <CalendarDays className="h-4 w-4" aria-hidden="true" />
                 Summer Camp 2026
               </div>
-              <p className="mt-5 text-sm font-bold uppercase tracking-wide text-cyan-200">
+              <p className="public-kicker mt-5 text-teal-200">
                 Grades 1-6 · Ages 6-11
               </p>
-              <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-                Young Innovators build future skills through creativity and invention.
+              <h1 className="public-display-title mt-4 max-w-4xl text-5xl leading-[0.95] text-white sm:text-6xl lg:text-7xl">
+                Young Innovators build future skills through <span className="italic text-amber-400">creativity</span> and invention.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
                 A creativity-driven camp that helps young minds imagine, design, test, and
@@ -243,14 +243,14 @@ export default async function SummerCampPage({
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a
                   href="mailto:info@scholesa.com?subject=Scholesa%20Young%20Innovators%20Summer%20Camp%202026"
-                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+                  className="public-button-primary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
                   Reserve your spot
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </a>
                 <a
                   href="tel:6047577797"
-                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md border border-slate-600 bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
+                  className="public-button-secondary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   604-757-7797
@@ -260,7 +260,7 @@ export default async function SummerCampPage({
 
             <div className="grid gap-4" aria-label="Summer camp weeks">
               {weeks.map((week) => (
-                <section key={week.label} className="rounded-md border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/20">
+                <section key={week.label} className="public-panel rounded-md p-5">
                   <p className="text-xs font-bold uppercase tracking-wide text-cyan-200">{week.label}</p>
                   <h2 className="mt-2 text-2xl font-bold text-white">{week.title}</h2>
                   <p className="mt-1 text-sm font-semibold text-amber-200">{week.date}</p>
@@ -271,10 +271,10 @@ export default async function SummerCampPage({
           </div>
         </section>
 
-        <section className="border-b border-app bg-cyan-700 px-4 py-6 text-white sm:px-6 lg:px-8">
+        <section className="public-stat-band border-b border-transparent px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-5">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-md border border-white/15 bg-white/10 p-4 text-center">
+              <div key={stat.label} className="rounded-md border border-white/15 bg-white/10 p-4 text-center shadow-sm shadow-black/10">
                 <p className="text-3xl font-bold text-amber-200">{stat.value}</p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wide text-cyan-50">{stat.label}</p>
               </div>
@@ -282,11 +282,11 @@ export default async function SummerCampPage({
           </div>
         </section>
 
-        <section className="border-b border-app bg-white px-4 py-14 sm:px-6 lg:px-8 dark:bg-slate-950">
+        <section className="public-section-cream border-b border-app px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl">
-              <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">What learners build</p>
-              <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl dark:text-white">
+              <p className="public-kicker">What learners build</p>
+              <h2 className="public-display-title mt-3 text-4xl leading-tight text-slate-950 sm:text-5xl dark:text-white">
                 Five durable capabilities, visible through real artifacts.
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
@@ -309,11 +309,11 @@ export default async function SummerCampPage({
           </div>
         </section>
 
-        <section className="border-b border-app bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8">
+        <section className="public-section-dark border-b border-transparent px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl">
-              <p className="text-sm font-bold uppercase text-cyan-200">Session by session</p>
-              <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
+              <p className="public-kicker text-teal-200">Session by session</p>
+              <h2 className="public-display-title mt-3 text-4xl leading-tight sm:text-5xl">
                 Two weeks. Ten sessions. Every day builds on the last.
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-300">
@@ -362,12 +362,12 @@ export default async function SummerCampPage({
           </div>
         </section>
 
-        <section className="border-b border-app bg-slate-50 px-4 py-14 sm:px-6 lg:px-8 dark:bg-slate-900">
+        <section className="public-section-offwhite border-b border-app px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
               <div>
-                <p className="text-sm font-bold uppercase text-cyan-700 dark:text-cyan-300">A different kind of camp</p>
-                <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl dark:text-white">
+                <p className="public-kicker">A different kind of camp</p>
+                <h2 className="public-display-title mt-3 text-4xl leading-tight text-slate-950 sm:text-5xl dark:text-white">
                   Built for evidence, confidence, and real-world creativity.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
@@ -380,7 +380,7 @@ export default async function SummerCampPage({
                 {differentiators.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <article key={item.title} className="rounded-md border border-app bg-app-surface p-5 shadow-sm">
+                    <article key={item.title} className="public-card rounded-md p-5">
                       <Icon className="h-6 w-6 text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
                       <h3 className="mt-4 text-lg font-bold text-slate-950 dark:text-white">{item.title}</h3>
                       <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{item.detail}</p>
@@ -392,8 +392,8 @@ export default async function SummerCampPage({
           </div>
         </section>
 
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 dark:bg-slate-950">
-          <div className="mx-auto grid max-w-7xl gap-6 rounded-md border border-cyan-200 bg-cyan-50 p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center dark:border-cyan-800 dark:bg-cyan-950/30">
+        <section className="public-section-cream px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-6 rounded-md border border-teal-200 bg-teal-50 p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center dark:border-teal-800 dark:bg-teal-950/30">
             <div className="flex gap-3">
               <Map className="mt-1 h-5 w-5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden="true" />
               <div>

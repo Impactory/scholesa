@@ -136,6 +136,9 @@
     "ws": "^8.19.0",
     "zod": "^3.25.76"
   },
+  "overrides": {
+    "postcss": "$postcss"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@eslint/eslintrc": "^3.3.5",

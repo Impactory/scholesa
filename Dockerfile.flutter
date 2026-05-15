@@ -23,6 +23,7 @@ RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize
 RUN flutter pub get
 RUN flutter build web --wasm --release --no-tree-shake-icons
 RUN mkdir -p build/web/videos && cp -R /workspace/public/videos/. build/web/videos/
+RUN printf 'const STALE_CACHE_PREFIXES=["workbox-","static-","google-fonts","font-awesome","apis","others"];\nself.addEventListener("install",()=>{self.skipWaiting();});\nself.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(cacheNames=>Promise.all(cacheNames.filter(cacheName=>STALE_CACHE_PREFIXES.some(prefix=>cacheName.startsWith(prefix))).map(cacheName=>caches.delete(cacheName)))).then(()=>self.clients.claim()));});\n' > build/web/sw.js
 RUN cache_bust="$(date +%Y%m%d%H%M%S)" && \
     sed -i "s/main.dart.js/main.dart.js?v=${cache_bust}/g; s/main.dart.mjs/main.dart.mjs?v=${cache_bust}/g; s/main.dart.wasm/main.dart.wasm?v=${cache_bust}/g" build/web/index.html
 
@@ -55,7 +56,7 @@ server {\n\
         add_header Cache-Control "no-cache, no-store, must-revalidate";\n\
         try_files $uri =404;\n\
     }\n\
-    location ~ ^/(en|es|th|zh-CN|zh-TW)/summer-camp-2026/?$ {\n\
+    location ~ ^/(en|es|th|zh-CN|zh-TW)(/privacy|/summer-camp-2026)?/?$ {\n\
         proxy_ssl_server_name on;\n\
         proxy_set_header Host scholesa-web-gu5vyrn2tq-uc.a.run.app;\n\
         proxy_set_header X-Forwarded-Host $host;\n\

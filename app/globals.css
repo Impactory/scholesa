@@ -4,6 +4,17 @@
 
 :root {
   --scholesa-font-stack: "Noto Sans", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "PingFang SC", "PingFang TC", "Microsoft YaHei", "Nirmala UI", "Leelawadee UI", "Inter", "Segoe UI", sans-serif;
+  --scholesa-public-display: Georgia, "Times New Roman", serif;
+  --scholesa-public-navy: #1B3A5C;
+  --scholesa-public-navy-deep: #0F2340;
+  --scholesa-public-teal: #00897B;
+  --scholesa-public-teal-light: #00BFA5;
+  --scholesa-public-gold: #F5A623;
+  --scholesa-public-gold-light: #FFD166;
+  --scholesa-public-coral: #E84855;
+  --scholesa-public-purple: #5B4A8A;
+  --scholesa-public-cream: #FEFCF7;
+  --scholesa-public-off-white: #F7F5F0;
   --background: 210 40% 98%;
   --foreground: 222 47% 11%;
   --surface: 0 0% 100%;
@@ -153,6 +164,148 @@ html[data-theme='dark'] body {
 
 .focus-visible\:outline-app-ring:focus-visible {
   outline-color: hsl(var(--ring));
+}
+
+.public-site {
+  background: var(--scholesa-public-cream);
+  color: #1A1A2E;
+}
+
+.public-header {
+  border-color: rgb(15 35 64 / 0.1);
+  background: rgb(254 252 247 / 0.94);
+  backdrop-filter: blur(16px);
+}
+
+.public-kicker {
+  color: var(--scholesa-public-teal);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.public-display-title {
+  font-family: var(--scholesa-public-display);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.public-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--scholesa-public-navy-deep);
+  color: white;
+}
+
+.public-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 18% 50%, rgb(0 137 123 / 0.18) 0%, transparent 62%),
+    radial-gradient(ellipse 50% 80% at 84% 20%, rgb(245 166 35 / 0.1) 0%, transparent 54%);
+  pointer-events: none;
+}
+
+.public-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(54%, 760px);
+  background: linear-gradient(135deg, rgb(0 137 123 / 0.08) 0%, rgb(245 166 35 / 0.05) 100%);
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+  pointer-events: none;
+}
+
+.public-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.public-chip {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgb(245 166 35 / 0.42);
+  border-radius: 999px;
+  background: rgb(245 166 35 / 0.14);
+  color: var(--scholesa-public-gold-light);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.public-chip::before {
+  content: '';
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--scholesa-public-gold);
+  box-shadow: 0 0 0 5px rgb(245 166 35 / 0.12);
+}
+
+.public-panel {
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.075);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.public-card {
+  border: 1px solid rgb(27 58 92 / 0.1);
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 14px 36px rgb(15 35 64 / 0.08);
+}
+
+.public-button-primary {
+  background: linear-gradient(135deg, var(--scholesa-public-gold) 0%, #E8940A 100%);
+  color: var(--scholesa-public-navy-deep);
+  box-shadow: 0 10px 30px rgb(245 166 35 / 0.3);
+}
+
+.public-button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 36px rgb(245 166 35 / 0.4);
+}
+
+.public-button-secondary {
+  border: 1px solid rgb(255 255 255 / 0.2);
+  background: rgb(255 255 255 / 0.07);
+  color: white;
+}
+
+.public-stat-band {
+  background: linear-gradient(90deg, var(--scholesa-public-teal) 0%, var(--scholesa-public-navy) 100%);
+  color: white;
+}
+
+.public-section-cream {
+  background: var(--scholesa-public-cream);
+}
+
+.public-section-offwhite {
+  background: var(--scholesa-public-off-white);
+}
+
+.public-section-dark {
+  background: var(--scholesa-public-navy-deep);
+  color: white;
+}
+
+html[data-theme='dark'] .public-site,
+html[data-theme='dark'] .public-section-cream,
+html[data-theme='dark'] .public-section-offwhite {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html[data-theme='dark'] .public-header,
+html[data-theme='dark'] .public-card {
+  border-color: hsl(var(--border));
+  background: hsl(var(--surface) / 0.88);
 }
 
 html[data-theme='dark'] .bg-white,

@@ -67,8 +67,8 @@ export default function LandingPage() {
   const [proofFlowOpen, setProofFlowOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-app-canvas text-app-foreground">
-      <header className="sticky top-0 z-30 border-b border-app bg-app-surface/95 backdrop-blur">
+    <div className="public-site min-h-screen">
+      <header className="public-header sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link
             href={`/${locale}`}
@@ -85,18 +85,19 @@ export default function LandingPage() {
               className="h-11 w-11 shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-lg font-bold leading-5 text-app-foreground">Scholesa</p>
-              <p className="text-xs font-medium uppercase text-app-muted">{t('landing.brandSubtitle')}</p>
+              <p className="text-lg font-bold leading-5 text-slate-950 dark:text-white">Scholesa</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('landing.brandSubtitle')}</p>
             </div>
           </Link>
           <nav className="flex items-center gap-2" aria-label={t('landing.publicNavigationAria')}>
             <ThemeModeToggle compact />
             <Link
               href={`/${locale}/summer-camp-2026`}
-              className="hidden min-touch-target items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring md:inline-flex dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 dark:hover:bg-amber-950/50"
+              className="min-touch-target inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/60 sm:px-4"
             >
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
-              Summer Camp
+              <span className="sm:hidden">Camp</span>
+              <span className="hidden sm:inline">Summer Camp</span>
             </Link>
             <Link
               href={`/${locale}/login`}
@@ -109,23 +110,23 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="border-b border-app bg-cyan-50 dark:bg-slate-950">
+        <section className="public-hero border-b border-transparent">
           <div className="mx-auto grid max-w-7xl content-center gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:min-h-[calc(100vh-72px)] lg:grid-cols-[1fr_0.86fr] lg:items-center lg:gap-9 lg:px-8 lg:py-14">
             <div className="max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+              <div className="public-chip px-4 py-2">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                 {t('landing.heroEyebrow')}
               </div>
-              <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl sm:leading-tight lg:text-5xl dark:text-white">
+              <h1 className="public-display-title mt-5 max-w-4xl text-4xl leading-[0.98] text-white sm:text-5xl lg:text-6xl">
                 {t('landing.heroTitle')}
               </h1>
-              <p className="mt-5 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 dark:text-slate-300">
+              <p className="mt-5 max-w-3xl text-base leading-7 text-white/75 sm:text-lg sm:leading-8">
                 {t('landing.heroBody')}
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
                 <Link
                   href={`/${locale}/login`}
-                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                  className="public-button-primary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
                   {t('landing.primaryCta')}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -133,7 +134,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setProofFlowOpen(true)}
-                  className="min-touch-target inline-flex items-center justify-center gap-2 rounded-md border border-cyan-300 bg-white px-5 py-3 text-sm font-semibold text-cyan-800 shadow-sm hover:bg-cyan-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-cyan-700 dark:bg-slate-900 dark:text-cyan-200 dark:hover:bg-slate-800"
+                  className="public-button-secondary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                   aria-haspopup="dialog"
                 >
                   <PlayCircle className="h-4 w-4" aria-hidden="true" />
@@ -141,37 +142,37 @@ export default function LandingPage() {
                 </button>
                 <Link
                   href={`/${locale}/register`}
-                  className="min-touch-target inline-flex items-center justify-center rounded-md border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
+                  className="min-touch-target inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
                   {t('landing.registerArrow')}
                 </Link>
               </div>
             </div>
 
-            <div className="rounded-md border border-cyan-200 bg-white p-4 shadow-xl shadow-cyan-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30" aria-label={t('landing.evidenceCommandCenterAria')}>
-              <div className="flex items-center justify-between gap-3 border-b border-cyan-100 pb-3 dark:border-slate-700">
+            <div className="public-panel rounded-md p-4" aria-label={t('landing.evidenceCommandCenterAria')}>
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
                 <div>
-                  <p className="text-sm font-bold text-slate-950 dark:text-white">{t('landing.commandCenterTitle')}</p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{t('landing.commandCenterSubtitle')}</p>
+                  <p className="text-sm font-bold text-white">{t('landing.commandCenterTitle')}</p>
+                  <p className="mt-1 text-xs text-white/55">{t('landing.commandCenterSubtitle')}</p>
                 </div>
-                <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-bold text-emerald-100 ring-1 ring-emerald-200/25">
                   {t('landing.trustedBadge')}
                 </span>
               </div>
               <div className="mt-4 grid gap-3">
                 {proofLanes.map((lane) => (
-                  <div key={lane.key} className="grid grid-cols-[0.35fr_1fr] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
-                    <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">{t(`landing.proofLanes.${lane.key}.label`)}</p>
+                  <div key={lane.key} className="grid grid-cols-[0.35fr_1fr] items-center gap-3 rounded-md border border-white/10 bg-white/10 p-3">
+                    <p className="text-xs font-bold uppercase text-white/50">{t(`landing.proofLanes.${lane.key}.label`)}</p>
                     <div>
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                      <div className="h-2 overflow-hidden rounded-full bg-white/15">
                         <div className={`h-full rounded-full ${lane.tone}`} />
                       </div>
-                      <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{t(`landing.proofLanes.${lane.key}.value`)}</p>
+                      <p className="mt-2 text-sm font-semibold text-white">{t(`landing.proofLanes.${lane.key}.value`)}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 p-3 text-sm leading-6 text-cyan-950 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-100">
+              <div className="mt-4 rounded-md border border-teal-200/25 bg-teal-300/10 p-3 text-sm leading-6 text-teal-50">
                 {t('landing.commandCenterQuestion')}
               </div>
             </div>
