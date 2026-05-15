@@ -65,6 +65,8 @@ const trustOutcomes = [
 export default function LandingPage() {
   const { locale, t } = useI18n();
   const [proofFlowOpen, setProofFlowOpen] = useState(false);
+  const appLoginHref = '/login';
+  const appLoginFor = (path: string) => `/login?from=${encodeURIComponent(path)}`;
 
   return (
     <div className="public-site min-h-screen">
@@ -100,7 +102,7 @@ export default function LandingPage() {
               <span className="hidden sm:inline">{t('landing.summerCamp')}</span>
             </Link>
             <Link
-              href={`/${locale}/login`}
+              href={appLoginHref}
               className="min-touch-target inline-flex items-center rounded-md border border-app bg-app-surface px-4 py-2 text-sm font-semibold text-app-foreground hover:bg-app-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
             >
               {t('landing.loginCta')}
@@ -125,7 +127,7 @@ export default function LandingPage() {
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
                 <Link
-                  href={`/${locale}/login`}
+                  href={appLoginHref}
                   className="public-button-primary min-touch-target inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
                   {t('landing.primaryCta')}
@@ -141,10 +143,10 @@ export default function LandingPage() {
                   {t('landing.proofFlowCta')}
                 </button>
                 <Link
-                  href={`/${locale}/register`}
+                  href={`/${locale}/summer-camp-2026`}
                   className="min-touch-target inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
                 >
-                  {t('landing.registerArrow')}
+                  {t('landing.summerCamp')}
                 </Link>
               </div>
             </div>
@@ -213,7 +215,7 @@ export default function LandingPage() {
                   return (
                     <Link
                       key={surface.key}
-                      href={`/${locale}${surface.path}`}
+                      href={appLoginFor(surface.path)}
                       className={`group rounded-md border p-4 shadow-sm transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring ${surface.tone}`}
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -275,7 +277,7 @@ export default function LandingPage() {
               </div>
             </div>
             <Link
-              href={`/${locale}/login`}
+              href={appLoginHref}
               className="min-touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-cyan-700 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring dark:bg-cyan-300 dark:text-slate-950 dark:hover:bg-cyan-200"
             >
               {t('landing.signInCta')}

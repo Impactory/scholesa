@@ -17,16 +17,16 @@
     "liveRoster": "Live roster",
     "liveMetrics": "Live metrics",
     "learners": "Learners",
-    "parents": "Parents",
+    "parents": "Families",
     "educators": "Educators"
   },
   "landing": {
     "title": "Scholesa",
-    "tagline": "Skills-first learning OS. Empowering learners, educators, and communities.",
+    "tagline": "Capability evidence platform for learners, educators, families, and communities.",
     "heroEyebrow": "Capability learning, made visible",
-    "heroTitle": "The proof engine for real capability growth.",
-    "heroBody": "Scholesa turns classroom moments into inspectable proof: observations, learner artifacts, explain-backs, rubric judgments, growth history, portfolios, reports, and partner deliverables all tied to the evidence that earned the claim.",
-    "primaryCta": "Enter the evidence engine",
+    "heroTitle": "The Proof Engine for Real Capability Growth.",
+    "heroBody": "Scholesa turns session moments into inspectable proof: observations, learner artifacts, explain-backs, capability reviews, growth history, portfolios, Growth Reports, and partner deliverables all tied to the evidence that earned the claim.",
+    "primaryCta": "Sign in to Scholesa",
     "proofFlowCta": "See the Proof Flow",
     "commandCenterTitle": "Evidence command center",
     "commandCenterSubtitle": "Capture, verify, interpret, and communicate growth.",
@@ -36,7 +36,7 @@
     "registerCta": "Register",
     "registerArrow": "Register →",
     "homeAria": "Scholesa home",
-    "brandSubtitle": "Evidence OS",
+    "brandSubtitle": "Capability Evidence",
     "publicNavigationAria": "Public navigation",
     "evidenceCommandCenterAria": "Evidence command center",
     "evidenceChainAria": "Evidence chain",
@@ -47,7 +47,7 @@
       },
       "liveSession": {
         "label": "Live session",
-        "detail": "teacher capture during studio time"
+        "detail": "educator capture during studio time"
       },
       "learnerProof": {
         "label": "Learner proof",
@@ -77,7 +77,7 @@
       },
       "communicate": {
         "label": "Communicate",
-        "value": "portfolio + Passport"
+        "value": "portfolio + Growth Report"
       }
     },
     "roleSurfacesKicker": "Role surfaces",
@@ -93,7 +93,7 @@
         "proof": "quick capture, proof review, verification queue"
       },
       "guardian": {
-        "label": "Guardian",
+        "label": "Family",
         "proof": "capability progress with evidence links"
       },
       "school": {
@@ -112,7 +112,7 @@
     "trustTitle": "Trust you can inspect",
     "trustSignals": {
       "claimEvidence": "Every learner claim can point back to evidence, context, and reviewer judgment",
-      "educatorCapture": "Educators can capture meaningful observations during the live flow of class",
+      "educatorCapture": "Educators can capture meaningful observations during the live flow of a session",
       "familyProgress": "Families see capability progress without reducing growth to marks or averages",
       "leaderCoverage": "School and HQ teams can trace implementation health through evidence coverage"
     },
@@ -132,7 +132,7 @@
       },
       "leaders": {
         "label": "Leaders",
-        "detail": "spot evidence gaps, support teachers, and protect the integrity of every claim"
+        "detail": "spot evidence gaps, support educators, and protect the integrity of every claim"
       }
     },
     "finalCtaTitle": "Make growth impossible to miss.",
@@ -171,7 +171,7 @@
       "role": {
         "learner": "Learner",
         "educator": "Educator",
-        "parent": "Parent",
+        "parent": "Family",
         "site": "Site Lead",
         "partner": "Partner"
       },
@@ -183,8 +183,8 @@
         "ageBandLabel": "Age of the primary user of this account",
         "ageBandSelectPrompt": "Select age range",
         "ageBandUnder13": "Under 13",
-        "under13Banner": "Accounts for children under 13 require parental/guardian consent. A parent or guardian must complete this registration.",
-        "parentGuardianConfirm": "I confirm I am the parent/guardian of this child and consent to their use of this platform.",
+        "under13Banner": "Accounts for learners under 13 require family consent. An authorized family adult must complete this registration.",
+        "parentGuardianConfirm": "I confirm I am an authorized family adult for this learner and consent to their use of this platform.",
         "privacyPolicyLinkText": "Privacy Policy",
         "termsOfServiceLinkText": "Terms of Service",
         "crossBorderNotice": "Your data may be processed in Canada and the United States. By creating an account, you acknowledge this cross-border data transfer."
@@ -235,18 +235,18 @@
       "createMission": "Create Mission",
       "linkedLearners": "Linked learners",
       "fallback": {
-        "studentsToday": "Students Today",
+        "studentsToday": "Learners Today",
         "attendance": "Attendance",
         "toReview": "To Review"
       }
     },
     "parent": {
-      "loading": "Loading parent dashboard...",
+      "loading": "Loading family dashboard...",
       "welcome": "Welcome, {{name}}",
-      "defaultName": "Parent",
-      "subtitle": "Track your children’s progress and upcoming activities.",
-      "children": "My Children",
-      "emptyWelcome": "Welcome Parent",
+      "defaultName": "Family",
+      "subtitle": "Track your learner's progress and upcoming activities.",
+      "children": "My Learners",
+      "emptyWelcome": "Welcome Family",
       "emptyMessage": "You do not have any learners associated with your account yet.",
       "registerLearner": "Register a Learner",
       "viewProgress": "View Progress",
@@ -322,7 +322,7 @@
       "resources": "Resources",
       "downloadImpactReport": "Download Impact Report",
       "partnerGuidelines": "Partner Guidelines",
-      "selectedSiteParents": "Selected site parents",
+      "selectedSiteParents": "Selected site families",
       "fallback": {
         "associatedSites": "Associated Sites",
         "learnersSupported": "Learners Supported",
@@ -361,13 +361,13 @@
     },
     "educatorAnalytics": {
       "title": "Analytics Dashboard | Scholesa",
-      "description": "Student engagement and motivation analytics for educators"
+      "description": "Learner engagement and motivation analytics for educators"
     }
   },
   "analytics": {
     "educator": {
       "title": "Analytics Dashboard",
-      "subtitle": "Track student engagement, SDT metrics, and learning progress",
+      "subtitle": "Track learner engagement, SDT metrics, and learning progress",
       "loadError": "Failed to load analytics. Please try again.",
       "thisWeek": "This Week",
       "thisMonth": "This Month",
@@ -384,11 +384,11 @@
         "atRisk": "At Risk"
       },
       "atRiskTitle": "{{count}} learners may need support",
-      "atRiskBody": "Students with engagement below 60% have low recent activity or participation.",
+      "atRiskBody": "Learners with engagement below 60% have low recent activity or participation.",
       "table": {
-        "title": "Student Motivation Profiles (SDT)",
-        "subtitle": "Self-Determination Theory metrics by student",
-        "student": "Student",
+        "title": "Learner Motivation Profiles (SDT)",
+        "subtitle": "Self-Determination Theory metrics by learner",
+        "student": "Learner",
         "autonomy": "Autonomy",
         "competence": "Competence",
         "belonging": "Belonging",
@@ -539,7 +539,7 @@
   "aiInsights": {
     "panelTitle": "AI Insights",
     "countLabel": "{{count}} insights",
-    "empty": "No insights available yet. Check back after students engage more with the platform.",
+    "empty": "No insights available yet. Check back after learners engage more with the platform.",
     "showLess": "Show less",
     "showDetails": "Show details",
     "affectedLearners": "Affected Learners:",
@@ -600,17 +600,17 @@
       }
     },
     "classLow": {
-      "title": "Class Engagement Below Target",
-      "description": "Average class engagement is {{score}}%. Consider adjusting pacing.",
+      "title": "Cohort Engagement Below Target",
+      "description": "Average cohort engagement is {{score}}%. Consider adjusting pacing.",
       "actions": {
         "survey": "Survey learners about interests and challenges",
         "variety": "Introduce more variety in mission types",
-        "choice": "Increase opportunities for student choice"
+        "choice": "Increase opportunities for learner choice"
       }
     },
     "classHigh": {
-      "title": "Strong Class Engagement",
-      "description": "Class is highly engaged ({{score}}%). Keep up the strong work.",
+      "title": "Strong Cohort Engagement",
+      "description": "Cohort is highly engaged ({{score}}%). Keep up the strong work.",
       "actions": {
         "document": "Document successful strategies",
         "share": "Share best practices with other educators",
@@ -618,20 +618,20 @@
       }
     },
     "inactive": {
-      "title": "{{count}} inactive students",
-      "description": "These students have not logged in for over a week.",
+      "title": "{{count}} inactive learners",
+      "description": "These learners have not logged in for over a week.",
       "actions": {
         "reengage": "Send re-engagement message",
-        "contactParents": "Contact parents or guardians",
+        "contactParents": "Contact families",
         "investigateBarriers": "Investigate potential access barriers"
       }
     },
     "sdtImbalance": {
       "title": "{{dimension}} dimension needs attention",
-      "description": "Class shows stronger {{strong}} than {{weak}}.",
+      "description": "Cohort shows stronger {{strong}} than {{weak}}.",
       "actions": {
         "autonomy": {
-          "choice": "Increase student choice in missions",
+          "choice": "Increase learner choice in missions",
           "goals": "Allow learners to set personal goals",
           "selfPaced": "Offer self-paced learning paths"
         },
@@ -654,7 +654,7 @@
     "openAria": "Open MiloOS",
     "minimizeAria": "Minimize MiloOS",
     "responseTranscript": "MiloOS response transcript",
-    "teacherGuidance": "Check with your teacher before using MiloOS.",
+    "teacherGuidance": "Check with your educator before using MiloOS.",
     "howCanIHelp": "How can I help you today?",
     "mode": {
       "hint": {
@@ -697,7 +697,7 @@
     "submitQuestion": "Ask MiloOS",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
-    "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help.",
+    "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your educator for help.",
     "spokenResponseHeadline": "MiloOS answered out loud.",
     "replaySpokenResponse": "Replay spoken response",
     "voiceConfidence": {
@@ -753,10 +753,10 @@
     "sessionLoopSubtitle": "Latest learning signals for this session",
     "sessionLoopEmpty": "No session learning signals yet",
     "familyLearningTitle": "Family Learning Signals",
-    "familyLearningSubtitle": "Your child's learning readiness and growth signals",
+    "familyLearningSubtitle": "Your learner's readiness and growth signals",
     "familyLearningEmpty": "No family learning signals yet",
     "familyScheduleTitle": "Family Schedule Signals",
-    "familyScheduleSubtitle": "Your child's learning readiness and attendance signals",
+    "familyScheduleSubtitle": "Your learner's readiness and attendance signals",
     "familyScheduleEmpty": "No schedule signals yet",
     "familyBillingTitle": "Family Billing Signals",
     "familyBillingSubtitle": "Learning engagement and progress metrics",
@@ -779,7 +779,7 @@
     "kicker": "Privacy Policy",
     "title": "Scholesa Privacy Policy",
     "lastUpdated": "Last updated: May 13, 2026",
-    "intro": "Scholesa is a capability-first evidence platform for schools and learning studios. This policy explains how Scholesa handles information in the web app and mobile app, including classroom evidence, learner reflections, and optional voice input used by the AI coach experience.",
+    "intro": "Scholesa is a capability-first evidence platform for schools and learning studios. This policy explains how Scholesa handles information in the web app and mobile app, including session evidence, learner reflections, and optional voice input used by the AI coach experience.",
     "informationHeading": "Information Scholesa Processes",
     "informationBody": "Scholesa may process account profile information, school and site membership, session participation, learner artifacts, reflections, educator observations, proof-of-learning records, rubric judgments, capability growth records, portfolio outputs, support messages, device and diagnostic data, and audit records needed to keep evidence trustworthy.",
     "voiceHeading": "Voice And Microphone Use",
@@ -789,7 +789,7 @@
     "aiHeading": "AI Assistance And Authenticity",
     "aiBody": "Where AI assistance is available, Scholesa treats AI as support rather than a substitute for learner understanding. The platform may keep records of AI-use disclosures, prompts, responses, learner changes, verification intent, and proof-of-learning so educators can evaluate authenticity.",
     "sharingHeading": "Sharing And Access",
-    "sharingBody": "Access is role-based. Learners, educators, guardians, school leaders, partners, and platform operators can only access information appropriate to their role, site, and permissions. Scholesa does not sell learner personal information.",
+    "sharingBody": "Access is role-based. Learners, educators, families, school leaders, partners, and platform operators can only access information appropriate to their role, site, and permissions. Scholesa does not sell learner personal information.",
     "storageHeading": "Storage, Security, And Retention",
     "storageBody": "Scholesa uses tenant-scoped persistence, security rules, audit trails, and operational controls to protect evidence and account data. Schools and platform administrators determine retention and deletion requirements according to their agreements, legal obligations, and learning records policies.",
     "contactHeading": "Contact",
@@ -821,7 +821,7 @@
     "differentiatorsBody": "The camp experience stays playful, but the learning record is serious: projects, reflections, feedback, and showcase moments can become evidence learners are proud to revisit.",
     "limitedKicker": "Limited spots available",
     "limitedTitle": "Small groups. Big impact. Register early.",
-    "limitedBody": "Cohorts are intentionally small to protect the learning experience. Reach out to hold your child's place for Scholesa Young Innovators Summer Camp 2026.",
+    "limitedBody": "Cohorts are intentionally small to protect the learning experience. Reach out to hold your learner's place for Scholesa Young Innovators Summer Camp 2026.",
     "email": "info@scholesa.com",
     "stats": {
       "sessions": "sessions",
