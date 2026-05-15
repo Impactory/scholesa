@@ -54,6 +54,7 @@ EXPOSE 8080
 
 # Use a lightweight non-root user
 RUN useradd --user-group --create-home --shell /bin/false appuser
+RUN mkdir -p /app/.next/cache/images && chown -R appuser:appuser /app/.next/cache
 USER appuser
 
 # Start the Next.js server
