@@ -142,6 +142,21 @@ String roleDefaultWorkflowRoute(UserRole? role) {
   return kRoleDefaultWorkflowRoute[role] ?? '/';
 }
 
+@visibleForTesting
+String appInitialLocation({
+  required bool isWeb,
+  required String unauthenticatedEntry,
+  Uri? baseUri,
+}) {
+  if (!isWeb) return unauthenticatedEntry;
+
+  final Uri uri = baseUri ?? Uri.base;
+  final String path = uri.path.isEmpty ? '/' : uri.path;
+  if (path == '/' || path == '/index.html') return unauthenticatedEntry;
+
+  return uri.hasQuery ? '$path?${uri.query}' : path;
+}
+
 GoRouter createAppRouter(
   AppState appState, {
   GlobalKey<NavigatorState>? navigatorKey,
@@ -151,7 +166,11 @@ GoRouter createAppRouter(
   return GoRouter(
     navigatorKey: navigatorKey,
     refreshListenable: appState,
-    initialLocation: unauthenticatedEntry,
+    initialLocation: appInitialLocation(
+      isWeb: kIsWeb,
+      unauthenticatedEntry: unauthenticatedEntry,
+    ),
+    overridePlatformDefaultLocation: kIsWeb,
     debugLogDiagnostics: true,
     redirect: (BuildContext context, GoRouterState state) {
       final bool isLoading = appState.isLoading;

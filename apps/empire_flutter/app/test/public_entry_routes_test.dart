@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/auth/recent_login_store.dart';
+import 'package:scholesa_app/router/app_router.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
 import 'package:scholesa_app/ui/landing/landing_page.dart';
 import 'package:url_launcher_platform_interface/link.dart';
@@ -103,6 +104,36 @@ void main() {
 
   tearDown(() {
     UrlLauncherPlatform.instance = originalUrlLauncher;
+  });
+
+  test('web initial location preserves public direct login routes', () {
+    expect(
+      appInitialLocation(
+        isWeb: true,
+        unauthenticatedEntry: '/welcome',
+        baseUri: Uri.parse('https://scholesa.com/login'),
+      ),
+      '/login',
+    );
+    expect(
+      appInitialLocation(
+        isWeb: true,
+        unauthenticatedEntry: '/welcome',
+        baseUri: Uri.parse('https://scholesa.com/login?next=%2Flearner'),
+      ),
+      '/login?next=%2Flearner',
+    );
+  });
+
+  test('web initial location falls back to welcome at root', () {
+    expect(
+      appInitialLocation(
+        isWeb: true,
+        unauthenticatedEntry: '/welcome',
+        baseUri: Uri.parse('https://scholesa.com/'),
+      ),
+      '/welcome',
+    );
   });
 
   testWidgets('landing page shows core public messaging and navigates to login',
