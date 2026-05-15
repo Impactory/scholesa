@@ -23,8 +23,14 @@ Next verification prompt: Explain the prototype tradeoff.
 
 describe('report share/export helpers', () => {
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  let warnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
 
   afterEach(() => {
+    warnSpy.mockRestore();
     if (originalNavigator) {
       Object.defineProperty(globalThis, 'navigator', originalNavigator);
     } else {
@@ -54,6 +60,38 @@ describe('report share/export helpers', () => {
     await expect(shareTextWithFallback({ title: 'Family summary', text: 'Evidence-backed' }))
       .resolves.toBe('copied');
     expect(writeText).toHaveBeenCalledWith('Evidence-backed');
+  });
+
+  it('falls back to clipboard and logs a safe warning when native share fails', async () => {
+    const share = jest.fn().mockRejectedValue(new Error('share unavailable'));
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { share, clipboard: { writeText } },
+    });
+
+    await expect(shareTextWithFallback({ title: 'Family summary', text: 'Evidence-backed' }))
+      .resolves.toBe('copied');
+    expect(writeText).toHaveBeenCalledWith('Evidence-backed');
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Native report share failed; attempting clipboard fallback.',
+      { name: 'Error', message: 'share unavailable' }
+    );
+  });
+
+  it('logs a safe warning when clipboard fallback fails', async () => {
+    const writeText = jest.fn().mockRejectedValue(new Error('clipboard denied'));
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { clipboard: { writeText } },
+    });
+
+    await expect(shareTextWithFallback({ title: 'Family summary', text: 'Evidence-backed' }))
+      .resolves.toBe('unavailable');
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Report clipboard fallback failed.',
+      { name: 'Error', message: 'clipboard denied' }
+    );
   });
 
   it('returns unavailable when no browser share channel exists', async () => {
@@ -229,5 +267,50 @@ describe('report share/export helpers', () => {
         reportName: 'weak family summary',
       })
     ).toThrow('weak family summary is missing report provenance signals: growth, portfolio, proof, aiDisclosure, rubric, reviewer, verificationPrompt');
+  });
+
+  it('returns unavailable and logs a safe warning when report download click fails', () => {
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    const createObjectURL = jest.fn().mockReturnValue('blob:report');
+    const revokeObjectURL = jest.fn();
+    const anchor = {
+      href: '',
+      download: '',
+      style: { display: '' },
+      click: jest.fn(() => {
+        throw new Error('download blocked');
+      }),
+      remove: jest.fn(),
+    };
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: {
+        body: { appendChild: jest.fn() },
+        createElement: jest.fn(() => anchor),
+      },
+    });
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+
+    try {
+      expect(downloadTextReport({ fileName: 'report.txt', lines: ['Evidence-backed'] }))
+        .toBe('unavailable');
+      expect(anchor.remove).toHaveBeenCalled();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:report');
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Report download failed.',
+        { name: 'Error', message: 'download blocked' }
+      );
+    } finally {
+      if (originalDocument) {
+        Object.defineProperty(globalThis, 'document', originalDocument);
+      } else {
+        Reflect.deleteProperty(globalThis, 'document');
+      }
+      Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: originalCreateObjectURL });
+      Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectURL });
+    }
   });
 });

@@ -1,0 +1,19 @@
+00:00 +0: loading /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/scholesa_gold_theme_test.dart
+00:00 +0: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/scholesa_gold_theme_test.dart: native theme uses the current Gold evidence palette
+00:00 +1: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Landing page - mobile
+00:00 +2: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Landing page - desktop
+00:00 +3: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Login page - mobile
+00:00 +4: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Login page - desktop
+00:00 +5: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Login page - shared device recent accounts
+00:00 +6: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Login page - validation error state
+00:00 +7: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Login page - loading state
+00:00 +8: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens AI Help - unavailable runtime honesty
+00:01 +9: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens AI Help - guarded learner runtime
+00:01 +10: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens AI Help - verification gate
+00:01 +11: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Learner support loop - honest empty state
+00:01 +12: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Class insights - partial verified data
+00:01 +13: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Class insights - missing learner identity
+00:01 +14: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Role dashboard - learner
+00:01 +15: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Role dashboard - educator
+00:01 +16: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ui_golden_test.dart: UI Goldens Role dashboard - HQ
+00:01 +17: All tests passed!

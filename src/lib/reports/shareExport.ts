@@ -60,6 +60,11 @@ export interface ReportProvenanceMetadata {
 
 type ReportProvenanceHandler = (metadata: ReportProvenanceMetadata) => void;
 
+function warnReportDelivery(message: string, error?: unknown): void {
+  const detail = error instanceof Error ? { name: error.name, message: error.message } : undefined;
+  console.warn(message, detail);
+}
+
 export const passportReportProvenanceSignals: ReportProvenanceSignal[] = [
   'evidence',
   'growth',
@@ -264,12 +269,20 @@ export async function shareTextWithFallback({
     return 'contract-failed';
   }
 
-  try {
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
       await navigator.share({ title, text });
       return 'shared';
-    }
+    } catch (err) {
+      if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+        return 'aborted';
+      }
 
+      warnReportDelivery('Native report share failed; attempting clipboard fallback.', err);
+    }
+  }
+
+  try {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
       return 'copied';
@@ -277,10 +290,7 @@ export async function shareTextWithFallback({
 
     return 'unavailable';
   } catch (err) {
-    if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
-      return 'aborted';
-    }
-
+    warnReportDelivery('Report clipboard fallback failed.', err);
     return 'unavailable';
   }
 }
@@ -333,6 +343,10 @@ export function downloadTextReport({
     document.body?.appendChild(anchor);
     anchor.click();
     anchor.remove();
+  } catch (error) {
+    anchor.remove();
+    warnReportDelivery('Report download failed.', error);
+    return 'unavailable';
   } finally {
     URL.revokeObjectURL(url);
   }
