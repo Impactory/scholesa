@@ -444,7 +444,41 @@ class ReportActions {
           SnackBar(content: Text(copiedMessage)),
         );
       }
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Report export failed for $surface/$fileName: $error');
+      TelemetryService.instance.logEvent(
+        event: 'report.delivery_failed',
+        role: role,
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'module': module,
+          'surface': surface,
+          if (learnerId != null) 'learner_id': learnerId,
+          'file_name': fileName,
+          ...provenanceMetadata,
+          ...metadata,
+          'report_action': 'export_text',
+          'report_delivery': 'failed',
+          'failure_stage': 'export_or_clipboard_fallback',
+          'error_type': error.runtimeType.toString(),
+        },
+      );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'export_text',
+        reportDelivery: 'failed',
+        module: module,
+        surface: surface,
+        cta: copiedEventName,
+        fileName: fileName,
+        provenanceMetadata: provenanceMetadata,
+        metadata: <String, dynamic>{
+          ...metadata,
+          'failure_stage': 'export_or_clipboard_fallback',
+          'error_type': error.runtimeType.toString(),
+        },
+      );
       if (!isMounted()) {
         return;
       }
@@ -570,7 +604,40 @@ class ReportActions {
       messenger.showSnackBar(
         SnackBar(content: Text(successMessage)),
       );
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Report share clipboard failed for $surface/$cta: $error');
+      TelemetryService.instance.logEvent(
+        event: 'report.delivery_failed',
+        role: role,
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'module': module,
+          'surface': surface,
+          'cta': cta,
+          if (learnerId != null) 'learner_id': learnerId,
+          ...provenanceMetadata,
+          ...metadata,
+          'report_action': 'share',
+          'report_delivery': 'failed',
+          'failure_stage': 'clipboard',
+          'error_type': error.runtimeType.toString(),
+        },
+      );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'share',
+        reportDelivery: 'failed',
+        module: module,
+        surface: surface,
+        cta: cta,
+        provenanceMetadata: provenanceMetadata,
+        metadata: <String, dynamic>{
+          ...metadata,
+          'failure_stage': 'clipboard',
+          'error_type': error.runtimeType.toString(),
+        },
+      );
       if (!isMounted()) {
         return;
       }

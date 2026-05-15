@@ -529,4 +529,204 @@ void main() {
       <String>['sharePolicy'],
     );
   });
+
+  testWidgets('clipboard share failures are logged and audited',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> auditCalls = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> shareRequestCalls =
+        <Map<String, dynamic>>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          throw PlatformException(code: 'clipboard-denied');
+        }
+        return null;
+      },
+    );
+
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) {
+              messenger = ScaffoldMessenger.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        shareRequestCalls.add(<String, dynamic>{
+          'callableName': callableName,
+          'payload': payload,
+        });
+        return <String, dynamic>{'id': 'share-request-1'};
+      },
+      () => ReportDeliveryAuditService.runWithCallableInvoker(
+        (String callableName, Map<String, dynamic> payload) async {
+          auditCalls.add(<String, dynamic>{
+            'callableName': callableName,
+            'payload': payload,
+          });
+        },
+        () => TelemetryService.runWithDispatcher(
+          (Map<String, dynamic> payload) async {
+            events.add(payload);
+          },
+          () async {
+            await ReportActions.shareToClipboard(
+              messenger: messenger,
+              isMounted: () => true,
+              content: _richEvidenceReport,
+              module: 'parent_summary',
+              surface: 'family_dashboard',
+              cta: 'parent_summary_share_family_summary',
+              successMessage: 'Copied.',
+              errorMessage: 'Unable to copy.',
+              learnerId: 'learner-1',
+              role: 'parent',
+              siteId: 'site-1',
+              expectedProvenanceSignals:
+                  ReportActions.passportReportProvenanceSignals,
+              enforceProvenanceContract: true,
+              sharePolicy: ReportActions.familyReportSharePolicy,
+            );
+            await tester.pump();
+            await tester.pump();
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Unable to copy.'), findsOneWidget);
+    expect(shareRequestCalls, isEmpty);
+    final Map<String, dynamic> failedEvent = events.firstWhere(
+      (Map<String, dynamic> payload) =>
+          payload['event'] == 'report.delivery_failed',
+    );
+    final Map<String, dynamic> failedMetadata =
+        failedEvent['metadata'] as Map<String, dynamic>;
+    expect(failedMetadata['report_action'], 'share');
+    expect(failedMetadata['report_delivery'], 'failed');
+    expect(failedMetadata['failure_stage'], 'clipboard');
+    expect(failedMetadata['error_type'], 'PlatformException');
+    expect(failedMetadata.containsKey('content'), isFalse);
+    expect(auditCalls, hasLength(1));
+    final Map<String, dynamic> auditPayload =
+        auditCalls.single['payload'] as Map<String, dynamic>;
+    expect(auditPayload['reportDelivery'], 'failed');
+    expect(auditPayload['shareRequestId'], isNull);
+    final Map<String, dynamic> auditMetadata =
+        auditPayload['metadata'] as Map<String, dynamic>;
+    expect(auditMetadata['failure_stage'], 'clipboard');
+    expect(auditMetadata.containsKey('content'), isFalse);
+  });
+
+  testWidgets('export failures are logged and audited',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> auditCalls = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> shareRequestCalls =
+        <Map<String, dynamic>>[];
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw StateError('disk unavailable');
+    };
+
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) {
+              messenger = ScaffoldMessenger.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        shareRequestCalls.add(<String, dynamic>{
+          'callableName': callableName,
+          'payload': payload,
+        });
+        return <String, dynamic>{'id': 'share-request-1'};
+      },
+      () => ReportDeliveryAuditService.runWithCallableInvoker(
+        (String callableName, Map<String, dynamic> payload) async {
+          auditCalls.add(<String, dynamic>{
+            'callableName': callableName,
+            'payload': payload,
+          });
+        },
+        () => TelemetryService.runWithDispatcher(
+          (Map<String, dynamic> payload) async {
+            events.add(payload);
+          },
+          () async {
+            await ReportActions.exportText(
+              messenger: messenger,
+              isMounted: () => true,
+              fileName: 'family-summary.txt',
+              content: _richEvidenceReport,
+              module: 'parent_summary',
+              surface: 'family_dashboard',
+              copiedEventName: 'parent.summary_export.copied',
+              successMessage: 'Exported.',
+              copiedMessage: 'Copied.',
+              errorMessage: 'Unable to export.',
+              unsupportedLogMessage: 'Unsupported export',
+              learnerId: 'learner-1',
+              role: 'parent',
+              siteId: 'site-1',
+              expectedProvenanceSignals:
+                  ReportActions.passportReportProvenanceSignals,
+              enforceProvenanceContract: true,
+              sharePolicy: ReportActions.familyReportSharePolicy,
+            );
+            await tester.pump();
+            await tester.pump();
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Unable to export.'), findsOneWidget);
+    expect(shareRequestCalls, isEmpty);
+    final Map<String, dynamic> failedEvent = events.firstWhere(
+      (Map<String, dynamic> payload) =>
+          payload['event'] == 'report.delivery_failed',
+    );
+    final Map<String, dynamic> failedMetadata =
+        failedEvent['metadata'] as Map<String, dynamic>;
+    expect(failedMetadata['report_action'], 'export_text');
+    expect(failedMetadata['report_delivery'], 'failed');
+    expect(failedMetadata['failure_stage'], 'export_or_clipboard_fallback');
+    expect(failedMetadata['error_type'], 'StateError');
+    expect(failedMetadata.containsKey('content'), isFalse);
+    expect(auditCalls, hasLength(1));
+    final Map<String, dynamic> auditPayload =
+        auditCalls.single['payload'] as Map<String, dynamic>;
+    expect(auditPayload['reportDelivery'], 'failed');
+    expect(auditPayload['shareRequestId'], isNull);
+    final Map<String, dynamic> auditMetadata =
+        auditPayload['metadata'] as Map<String, dynamic>;
+    expect(auditMetadata['failure_stage'], 'export_or_clipboard_fallback');
+    expect(auditMetadata.containsKey('content'), isFalse);
+  });
 }
