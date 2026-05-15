@@ -31,9 +31,9 @@ describe('UAT mission acceptance criteria', () => {
         learnerRole,
         uiStates: {
           loading: `Loading ${mission.title} Mission Evidence...`,
-          empty: `No Evidence has been submitted for this Mission yet.`,
-          error: `Access denied: unable to submit Evidence for this Cohort.`,
-          success: `Success: Evidence submitted, Portfolio updated, and Growth Report ready.`,
+          empty: 'No Evidence has been submitted for this Mission yet.',
+          error: 'Access denied: unable to submit Evidence for this Cohort.',
+          success: 'Success: Evidence submitted, Portfolio updated, and Growth Report ready.',
         },
         uiCopy: [
           ...requiredScholesaTerminology,
