@@ -188,6 +188,7 @@ html[data-theme='dark'] body {
 .public-header {
   border-color: rgb(15 45 75 / 0.1);
   background: rgb(247 250 252 / 0.94);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
 
@@ -264,6 +265,7 @@ html[data-theme='dark'] body {
   border: 1px solid rgb(255 255 255 / 0.14);
   background: rgb(255 255 255 / 0.075);
   box-shadow: 0 24px 60px rgb(0 0 0 / 0.22);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
