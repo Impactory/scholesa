@@ -7,6 +7,7 @@ import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
 const String _proofFlowVideoPath = '/videos/proof-flow.mp4';
+const String _summerCampPath = '/en/summer-camp-2026';
 
 const Map<String, String> _landingZhCn = <String, String>{
   'Features': '功能',
@@ -19,6 +20,10 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Evidence views for learners, educators, families, school teams, and HQ.':
       '为学习者、教育者、家庭、学校团队和 HQ 提供证据视图。',
   'Sign In': '登录',
+  'Summer Camp': '夏令营',
+  'Reserve Summer Camp': '预留夏令营名额',
+  'Young Innovators Summer Camp 2026': 'Young Innovators 2026 夏令营',
+  'Summer Camp page is unavailable right now.': '夏令营页面暂时无法打开。',
   'Capability learning, made visible': '让能力学习清晰可见',
   'The Proof Engine for\nReal Capability Growth': '真实能力成长的\n证据引擎',
   'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
@@ -77,6 +82,10 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Evidence views for learners, educators, families, school teams, and HQ.':
       '為學習者、教育者、家庭、學校團隊和 HQ 提供證據視圖。',
   'Sign In': '登入',
+  'Summer Camp': '夏令營',
+  'Reserve Summer Camp': '預留夏令營名額',
+  'Young Innovators Summer Camp 2026': 'Young Innovators 2026 夏令營',
+  'Summer Camp page is unavailable right now.': '夏令營頁面暫時無法開啟。',
   'Capability learning, made visible': '讓能力學習清晰可見',
   'The Proof Engine for\nReal Capability Growth': '真實能力成長的\n證據引擎',
   'Scholesa turns classroom moments into trustworthy proof: observations, artifacts, explain-backs, rubric judgments, growth history, and portfolios families can understand.':
@@ -199,6 +208,42 @@ class _LandingPageState extends State<LandingPage>
         'cta': 'landing_sign_in',
         'source': source,
       },
+    );
+  }
+
+  Future<void> _openSummerCampPage(BuildContext context, String source) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String unavailableMessage =
+        _tLanding(context, 'Summer Camp page is unavailable right now.');
+
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'landing_summer_camp',
+        'source': source,
+        'path': _summerCampPath,
+      },
+    );
+
+    final Uri summerCampUri = Uri.base.resolve(_summerCampPath);
+    try {
+      final bool launched = await launchUrl(
+        summerCampUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched || !mounted) {
+        return;
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(unavailableMessage),
+      ),
     );
   }
 
@@ -375,6 +420,38 @@ class _LandingPageState extends State<LandingPage>
             const SizedBox(width: 32),
           ],
           // CTA Buttons
+          if (isWide) ...<Widget>[
+            OutlinedButton.icon(
+              onPressed: () =>
+                  _openSummerCampPage(context, 'landing_nav_summer_camp'),
+              icon: const Icon(Icons.calendar_month_rounded, size: 18),
+              label: Text(_tLanding(context, 'Summer Camp')),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFFBBF24),
+                minimumSize: const Size(0, 40),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                side: BorderSide(
+                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ] else ...<Widget>[
+            Tooltip(
+              message: _tLanding(context, 'Young Innovators Summer Camp 2026'),
+              child: IconButton(
+                onPressed: () =>
+                    _openSummerCampPage(context, 'landing_nav_summer_camp'),
+                icon: const Icon(Icons.calendar_month_rounded),
+                color: const Color(0xFFFBBF24),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
           TextButton(
             onPressed: () {
               _trackSignInCTA('landing_nav_sign_in');
@@ -488,6 +565,25 @@ class _LandingPageState extends State<LandingPage>
           spacing: 16,
           runSpacing: 16,
           children: <Widget>[
+            ElevatedButton.icon(
+              onPressed: () =>
+                  _openSummerCampPage(context, 'landing_hero_summer_camp'),
+              icon: const Icon(Icons.calendar_month_rounded),
+              label: Text(_tLanding(context, 'Reserve Summer Camp')),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFBBF24),
+                foregroundColor: const Color(0xFF0F172A),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
             ElevatedButton.icon(
               onPressed: () {
                 _trackSignInCTA('landing_hero_sign_in');
