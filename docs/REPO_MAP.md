@@ -1,6 +1,6 @@
 # Repo Map
 
-Last updated: 2026-03-18
+Last updated: 2026-05-15
 
 This is the current source-of-truth map for the Scholesa repository. It replaces stale assumptions from earlier single-app or Flutter-only views.
 
@@ -9,7 +9,7 @@ This is the current source-of-truth map for the Scholesa repository. It replaces
 | Product | Entry points | Primary code roots | Notes |
 | --- | --- | --- | --- |
 | Web platform | `npm run dev`, `npm run build`, `npm run test:e2e:web` | `app/`, `src/`, `public/`, `locales/` | Next.js App Router product with locale-first protected workflows; `test:e2e:web` runs the browser harness in explicit fake-backend mode |
-| Flutter app | `flutter run`, `flutter analyze`, `flutter test` from `apps/empire_flutter/app` | `apps/empire_flutter/app/lib/`, `apps/empire_flutter/app/test/` | Mobile and multi-platform client with role routing and offline queue |
+| Flutter app | `flutter run`, `flutter analyze`, `flutter test` from `apps/empire_flutter/app` | `apps/empire_flutter/app/lib/`, `apps/empire_flutter/app/test/` | Mobile, Flutter Web front door, and multi-platform client with role routing and offline queue |
 | Firebase backend | `npm --prefix functions run build`, `firebase deploy --only functions` | `functions/src/` | Functions v2 on Node 24 for workflows, billing, runtime, voice, telemetry |
 | Compliance operator | `npm run compliance:serve`, `npm run compliance:run`, `npm run compliance:scan` | `services/scholesa-compliance/src/` | Separate CI and operator-facing compliance service |
 
@@ -34,6 +34,7 @@ This is the current source-of-truth map for the Scholesa repository. It replaces
 | Path | Role |
 | --- | --- |
 | `app/[locale]/page.tsx` | Localized landing page |
+| `app/[locale]/summer-camp-2026/page.tsx` | Public Summer Camp page proxied through `scholesa.com` |
 | `app/[locale]/(auth)/` | Auth entrypoints |
 | `app/[locale]/(protected)/` | Role-gated web workflow routes |
 | `app/api/` | Server-side API routes for web-facing integrations |
@@ -87,6 +88,22 @@ This is the current source-of-truth map for the Scholesa repository. It replaces
 | `.github/workflows/ci.yml` | Main CI pipeline |
 | `TRACEABILITY_MATRIX.md` and `docs/TRACEABILITY_MATRIX.md` | Requirement-to-implementation evidence |
 | `scripts/` | Release gates, telemetry audits, no-mock audits, seeding, and repair tooling |
+
+## Refactor Validation Gates
+
+| Command | Scope | Mutation policy |
+| --- | --- | --- |
+| `npm run refactor:baseline` | Typecheck, lint, no-mock workflow audit, secret scan, AI internal-only gates, compliance scan | Non-mutating local gate; no deploy, no live seed, no native upload |
+| `npm run refactor:full` | Baseline plus Firestore/Storage rules emulator tests, Functions build/tests, Flutter CI tests, Next build | Non-deploying local gate; May 15 proof log is `audit-pack/reports/refactor-full-may15.log` |
+| `npm run test:uat:blanket-gold` | Full web/security release gate including live role UAT when live env vars are provided | Non-deploying, but may exercise live `scholesa.com` role accounts when configured |
+
+## Current Public Domain Ownership
+
+| URL family | Owner | Notes |
+| --- | --- | --- |
+| `/welcome`, `/login`, app-shell role paths | Flutter Web `empire-web` | CanvasKit/Flutter Web renders role surfaces; live UAT uses Flutter host and URL proof rather than DOM text selectors. |
+| `/en`, `/en/summer-camp-2026` | Next public pages proxied through Flutter nginx | Public marketing and Summer Camp pages are served by the primary Next service behind the Flutter public front door. |
+| `/:locale/*` protected Next routes | Next App Router | Primary source for locale web workflow parity and route metadata; not the owner of live `scholesa.com/login`. |
 
 ## Firebase and Infra Files
 

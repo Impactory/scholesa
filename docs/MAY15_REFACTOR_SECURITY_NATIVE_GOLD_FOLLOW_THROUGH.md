@@ -38,6 +38,8 @@ Current verdict: `scholesa.com` public web is live, serving the updated Flutter 
 | `npm run test:integration:rules` | PASS | Firestore and Storage emulator rules passed 238 tests. |
 | `npm run test:uat:live-role-accounts` via full gate | PASS | 8 canonical `@scholesa.test` accounts and 16 route proofs passed against live `https://scholesa.com`; artifact `audit-pack/reports/live-role-account-uat-certification.json`. |
 | `npm run test:uat:blanket-gold` with live env | PASS | Full web/security gate passed; artifact `audit-pack/reports/blanket-gold-live-may15.log`. |
+| `npm run refactor:baseline` | PASS | New non-mutating refactor ratchet passed: typecheck, lint, workflow no-mock, secret scan, AI internal-only, compliance scan. |
+| `npm run refactor:full` | PASS | Non-deploying full refactor gate passed; proof log `audit-pack/reports/refactor-full-may15.log`. |
 | `npm run compliance:scan` | PASS | Compliance repo-structure scan passed. |
 | `npm audit --audit-level=high` | PASS with low findings | No high or critical audit findings; 9 low advisories remain in transitive Firebase/Google packages. |
 | `npm run native:distribution:readiness` | BLOCKED | iOS and Android local distribution prerequisites pass; macOS Developer ID notarization is blocked by `errSecInternalComponent` keychain access. |
@@ -50,6 +52,15 @@ Current verdict: `scholesa.com` public web is live, serving the updated Flutter 
 | macOS Developer ID private-key access | Release owner on the Mac keychain | Approve or repair keychain access, rerun `npm run native:distribution:readiness`, then rerun macOS signing/notarization proof. |
 | Native distribution proof packet | Release owner | Rerun guarded native proof after macOS unblocks. Do not call native blanket Gold without TestFlight, Play internal, and notarized macOS proof in one packet. |
 | Refactor execution cadence | Engineering lead | Run the repo refactor plan as small PR-sized phases, never as an unbounded rewrite. |
+
+## Refactor Follow-Through Completed This Pass
+
+| Item | Result |
+| --- | --- |
+| Validation ratchet scripts | Added `refactor:baseline` and `refactor:full` to `package.json`. |
+| Route ownership docs | Updated `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` Flutter/Next split and live UAT route equivalents. |
+| Baseline proof | `npm run refactor:baseline` passed on May 15. |
+| Full refactor proof | `npm run refactor:full` passed on May 15; log stored at `audit-pack/reports/refactor-full-may15.log`. |
 
 ## Operating Rule
 

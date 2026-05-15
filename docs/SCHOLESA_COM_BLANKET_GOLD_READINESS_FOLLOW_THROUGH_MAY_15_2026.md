@@ -65,6 +65,8 @@ Summary: 8 canonical accounts certified, 16 route proofs certified, product chai
 | Gate | Result | Gold relevance |
 | --- | --- | --- |
 | `npm run test:uat:blanket-gold` with live `scholesa.com` env | PASS | Full web/security gate passed with live role-account UAT. Proof log: `audit-pack/reports/blanket-gold-live-may15.log`. |
+| `npm run refactor:baseline` | PASS | Non-mutating refactor/security ratchet passed after adding the May 15 scripts. |
+| `npm run refactor:full` | PASS | Non-deploying refactor full gate passed; proof log: `audit-pack/reports/refactor-full-may15.log`. |
 | `npm run typecheck -- --pretty false` | PASS | Web TypeScript safety. |
 | `npm run lint` | PASS | Web/static code quality. |
 | `npm run build` | PASS | Next production build. |

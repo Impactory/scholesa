@@ -1,6 +1,6 @@
 # Repo-Wide Refactor And Security Execution Plan - May 15 2026
 
-Status: execution plan with May 15 baseline evidence.
+Status: execution plan with May 15 baseline evidence and first refactor ratchet implemented.
 
 This plan extends `docs/REPO_STABILITY_SECURITY_REFACTOR_PLAN_MAY_2026.md`. It is not a mandate for a big rewrite. The repo is too broad and too close to live operation for a sweeping refactor. The correct path is a ratcheted sequence of small, reversible phases that strengthen security, evidence provenance, and maintainability without changing product truth.
 
@@ -32,6 +32,8 @@ Scholesa is refactor-ready when all of these are true:
 | High-severity npm audit | PASS, with low-severity transitive advisories remaining |
 | Live role-account UAT | PASS, 8 canonical accounts and 16 route proofs against `https://scholesa.com` |
 | Full web/security blanket-gold gate | PASS, proof log `audit-pack/reports/blanket-gold-live-may15.log` |
+| Refactor baseline gate | PASS, `npm run refactor:baseline` on May 15 |
+| Refactor full gate | PASS, `npm run refactor:full` on May 15, proof log `audit-pack/reports/refactor-full-may15.log` |
 
 Rollback rule: if a later refactor causes any Phase 0 gate to fail, stop and either fix the exact regression or revert that phase only.
 
@@ -67,8 +69,10 @@ Add or confirm two explicit scripts:
 
 | Script | Purpose | Must not do |
 | --- | --- | --- |
-| `refactor:baseline` | Typecheck, lint, workflow no-mock, secret scan, AI internal-only, compliance scan. | Deploy, seed live data, mutate Firebase, upload native builds. |
-| `refactor:full` | Baseline plus rules emulator tests, Functions build/tests, focused Flutter tests, Next build. | Shift Cloud Run traffic or use store credentials. |
+| `refactor:baseline` | Typecheck, lint, workflow no-mock, secret scan, AI internal-only, compliance scan. Implemented in `package.json`. | Deploy, seed live data, mutate Firebase, upload native builds. |
+| `refactor:full` | Baseline plus rules emulator tests, Functions build/tests, focused Flutter tests, Next build. Implemented in `package.json`. | Shift Cloud Run traffic or use store credentials. |
+
+May 15 result: `npm run refactor:baseline` passed and `npm run refactor:full` passed. The full gate proof is stored at `audit-pack/reports/refactor-full-may15.log` and includes Firestore/Storage rules emulator tests, Functions build/tests, Flutter CI tests, and a Next production build.
 
 Acceptance gates:
 
@@ -179,3 +183,5 @@ Exit criteria:
 1. **Route truth slice**: regenerate route ownership map, add drift tests, and confirm Next/Flutter public route ownership.
 2. **Rules hardening slice**: classify Firestore/Storage collections and add denial tests for missing site scope plus unrelated Family access.
 3. **Native small-screen slice**: implement responsive shell and bottom-action patterns from the Phase 2 native UX plan, with focused Flutter tests before broad visual work.
+
+May 15 progress: the route truth slice has refreshed `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` ownership split, refactor gates, and live route UAT equivalents. Next implementation slice should target rules hardening or native small-screen tests; do not start a repo-wide move/rename pass first.

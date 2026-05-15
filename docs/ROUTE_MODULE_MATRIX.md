@@ -1,10 +1,12 @@
 # Route Module Matrix
 
-Last updated: 2026-04-27
+Last updated: 2026-05-15
 
 This matrix maps the currently implemented route surfaces to their entry files and backing modules.
 
 For current Flutter route proof status and remaining blind spots, see `docs/FLUTTER_ROUTE_PROOF_MATRIX_2026-03-19.md`.
+
+May 15 live route proof is captured in `audit-pack/reports/live-role-account-uat-certification.json`. The full web/security gate proof is captured in `audit-pack/reports/blanket-gold-live-may15.log`.
 
 ## Web Routing Model
 
@@ -107,6 +109,8 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 - Route discoverability is driven by `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart`.
 - Access control is enforced with `RoleGate` in `apps/empire_flutter/app/lib/router/role_gate.dart`.
 - Flutter includes a small number of alias routes that currently resolve to the same page as the canonical route.
+- On `https://scholesa.com`, Flutter owns `/welcome`, `/login`, and authenticated app-shell role paths. Live CanvasKit route proof uses authenticated in-app routing plus Flutter host detection because visible UI is not exposed as normal DOM text.
+- Public locale marketing routes such as `/en` and `/en/summer-camp-2026` are proxied to Next through the Flutter public front door.
 
 ## Flutter Routes
 
@@ -132,6 +136,9 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/educator/mission-plans` | `EducatorMissionPlansPage` | `apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart` | Lesson planning |
 | `/educator/learner-supports` | `EducatorLearnerSupportsPage` | `apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart` | Intervention planning |
 | `/educator/integrations` | `EducatorIntegrationsPage` | `apps/empire_flutter/app/lib/modules/educator/educator_integrations_page.dart` | Integration ops |
+| `/educator/observations` | `ObservationCapturePage` | `apps/empire_flutter/app/lib/modules/educator/educator.dart` | Educator evidence capture surface |
+| `/educator/rubrics/apply` | `RubricApplicationPage` | `apps/empire_flutter/app/lib/modules/educator/educator.dart` | Capability Review/rubric application surface |
+| `/educator/proof-review` | `ProofVerificationPage` | `apps/empire_flutter/app/lib/modules/educator/educator.dart` | Evidence Review equivalent used in live UAT |
 | `/parent/summary` | `ParentSummaryPage` | `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart` | Canonical parent home |
 | `/parent/child/:learnerId` | `ParentChildPage` | `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` | Param route |
 | `/parent/consent` | `ParentConsentPage` | `apps/empire_flutter/app/lib/modules/parent/parent_consent_page.dart` | Consent surface |
@@ -139,6 +146,7 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/parent/messages` | `MessagesPage` | `apps/empire_flutter/app/lib/modules/messages/messages_page.dart` | Parent-scoped alias to shared messages |
 | `/parent/schedule` | `ParentSchedulePage` | `apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart` | Schedule view |
 | `/parent/portfolio` | `ParentPortfolioPage` | `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` | Parent portfolio |
+| `/parent/growth-timeline` | `GrowthTimelinePage` | `apps/empire_flutter/app/lib/modules/parent/parent.dart` | Family Growth Report equivalent used in live UAT |
 | `/parent/settings` | `SettingsPage` | `apps/empire_flutter/app/lib/modules/settings/settings_page.dart` | Parent-specific alias to shared settings |
 | `/site/checkin` | `CheckinPage` | `apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart` | Arrival and pickup ops |
 | `/site/provisioning` | `ProvisioningPage` | `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart` | Provisioning and links |
@@ -170,6 +178,8 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/hq/integrations-health` | `HqIntegrationsHealthPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_integrations_health_page.dart` | Integration health |
 | `/hq/cms` | `HqCurriculumPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` | Alias of `/hq/curriculum` |
 | `/hq/curriculum` | `HqCurriculumPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` | Canonical curriculum builder |
+| `/hq/capability-frameworks` | `HqCapabilityFrameworksPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_admin.dart` | Capability framework administration |
+| `/hq/rubric-builder` | `HqRubricBuilderPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_admin.dart` | Rubric builder administration |
 | `/hq/feature-flags` | `HqFeatureFlagsPage` | `apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart` | Feature flag control |
 | `/messages` | `MessagesPage` | `apps/empire_flutter/app/lib/modules/messages/messages_page.dart` | Shared cross-role route |
 | `/notifications` | `NotificationsPage` | `apps/empire_flutter/app/lib/modules/messages/notifications_page.dart` | Shared cross-role route |
@@ -183,3 +193,17 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | Web | Protected workflow pages are centralized behind the generic workflow renderer, so behavior changes often belong in `workflowData.ts` or `workflowRoutes.ts`, not in the page wrappers |
 | Flutter | Alias routes still exist for `/educator/review-queue`, `/site/scheduling`, and `/hq/cms` |
 | Cross-platform | Web and Flutter cover many of the same business surfaces but not always with identical route names or the same level of feature completeness |
+
+## May 15 Live Route UAT Equivalents
+
+| Product-chain proof target | Next route name | Live Flutter route certified on `scholesa.com` |
+| --- | --- | --- |
+| HQ site administration | `/:locale/hq/sites` | `/hq/sites` |
+| HQ user administration | `/:locale/hq/user-admin` | `/hq/user-admin` |
+| Educator session workflow | `/:locale/educator/today` | `/educator/today` |
+| Educator Evidence Review | `/:locale/educator/evidence` | `/educator/proof-review` |
+| Learner workflow surfaces | `/:locale/learner/*` | `/learner/onboarding` when canonical live test accounts still require setup |
+| Family progress summary | `/:locale/parent/summary` | `/parent/summary` |
+| Family Growth Report/Passport | `/:locale/parent/passport` | `/parent/growth-timeline` |
+| Partner listing surface | `/:locale/partner/listings` | `/partner/listings` |
+| Partner deliverable boundary | `/:locale/educator/evidence` attempted as mentor | `/partner/deliverables` |
