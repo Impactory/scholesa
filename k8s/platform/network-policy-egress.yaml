@@ -22,6 +22,8 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
+        - ipBlock:
+            cidr: 169.254.20.10/32
       ports:
         - protocol: UDP
           port: 53
@@ -74,3 +76,11 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+        - protocol: TCP
+          port: 80
+    - to:
+        - ipBlock:
+            cidr: 34.118.224.0/20
+      ports:
+        - protocol: TCP
+          port: 80

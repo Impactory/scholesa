@@ -18,7 +18,8 @@ const nextEnv = [
 ].join(' ');
 
 export default defineConfig({
-  testDir: './test/e2e',
+  testDir: '.',
+  testMatch: ['test/e2e/**/*.spec.ts', 'tests/e2e/**/*.spec.ts', 'tests/uat/**/*.spec.ts', 'tests/accessibility/**/*.spec.ts'],
   timeout: 120_000,
   expect: {
     timeout: 20_000,

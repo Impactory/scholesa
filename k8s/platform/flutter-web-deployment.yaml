@@ -79,3 +79,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+          volumeMounts:
+            - name: nginx-run
+              mountPath: /run
+      volumes:
+        - name: nginx-run
+          emptyDir: {}
