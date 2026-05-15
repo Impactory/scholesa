@@ -99,7 +99,7 @@ Then run the full web/security/native proof bundle:
 ```bash
 npm run test:uat:blanket-gold
 npm run test:uat:live-role-accounts
-SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS npm run native:distribution:proof -- execute-live
+SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS bash scripts/native_distribution_proof.sh execute-live
 ```
 
 Stop if any command requires a secret or keychain password in the terminal output. The release owner must enter or approve those secrets locally; they must not be recorded in logs, docs, shell history, or proof artifacts.

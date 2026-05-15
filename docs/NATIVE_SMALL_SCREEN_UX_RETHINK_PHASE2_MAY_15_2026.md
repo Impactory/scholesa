@@ -2,7 +2,7 @@
 
 Status: design and implementation plan for Flutter native app refinement.
 
-The native app should feel like Scholesa in a small-screen classroom setting, not like a compressed web dashboard. Phase 2 focuses on fast evidence capture, readable learner progress, Family trust, and safe MiloOS Coach support on phone-width screens.
+The native app should feel like Scholesa in a small-screen studio setting, not like a compressed web dashboard. Phase 2 focuses on fast evidence capture, readable learner progress, Family trust, and safe MiloOS Coach support on phone-width screens.
 
 ## Product Principle
 
@@ -27,7 +27,7 @@ The app must help an Educator act in under 10 seconds during a live session and 
 | One-thumb navigation | Primary Learner, Educator, Family, site, and MiloOS Coach actions are reachable from thumb-safe bottom actions or clear top-level cards. |
 | Evidence-first screens | Each screen starts with what the user can do now, then shows evidence/provenance details. |
 | Small-screen readability | No horizontal overflow at 390px or 430px logical widths; long capability names and evidence titles wrap cleanly. |
-| Classroom speed | Educator capture path supports tap, select learner/cohort/session, capture note/artifact, and save without admin cleanup. |
+| Live-session speed | Educator capture path supports tap, select learner/cohort/session, capture note/artifact, and save without admin cleanup. |
 | Family trust | Family surfaces show evidence provenance and clear empty states instead of unsupported claims. |
 | MiloOS safety | MiloOS Coach makes support/disclosure clear and never presents AI output as capability mastery. |
 | Offline honesty | Offline capture queues evidence or proof bundles but does not directly write server-owned growth/mastery records. |
@@ -82,7 +82,7 @@ The app must help an Educator act in under 10 seconds during a live session and 
 ## Accessibility And Safety Requirements
 
 - Every tappable target must be at least 44px high.
-- Text must wrap within parent containers at 390px width.
+- Text must wrap within its container at 390px width.
 - Screens must support dynamic text up to at least a large accessibility preset without hiding the primary action.
 - Voice and microphone access must be opt-in and must show why the permission is requested.
 - MiloOS Coach output must remain support, not a substitute for learner understanding.
@@ -110,7 +110,7 @@ Before a native-channel Gold claim:
 
 ```bash
 npm run native:distribution:readiness
-SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS npm run native:distribution:proof -- execute-live
+SCHOLESA_NATIVE_DISTRIBUTION_CONFIRM=I_UNDERSTAND_THIS_UPLOADS_NATIVE_BUILDS bash scripts/native_distribution_proof.sh execute-live
 ```
 
 Do not run the guarded live native proof command until the release owner explicitly authorizes uploads and macOS notarization credentials are working.

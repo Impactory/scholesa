@@ -9,7 +9,7 @@ import {
 
 test('UAT mission smoke verifies UI plus backend/API permission chain', async ({ page }) => {
   await page.goto('/en');
-  await expect(page.getByRole('link', { name: /Summer Camp|Camp/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Summer Camp|Camp/i }).first()).toBeVisible();
 
   expect(uatMissionDefinitions.map((mission) => mission.title)).toEqual([
     'My Helpful Invention Studio',

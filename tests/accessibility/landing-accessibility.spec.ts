@@ -19,10 +19,11 @@ test('@wcag public Summer Camp CTA flow meets automated accessibility baseline',
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
   await page.goto('/en');
 
-  await expect(page.getByRole('link', { name: /Summer Camp|Camp/i })).toBeVisible();
+  const summerCampLink = page.getByRole('link', { name: /Summer Camp|Camp/i }).first();
+  await expect(summerCampLink).toBeVisible();
   await expectNoAccessibilityViolations(page);
 
-  await page.getByRole('link', { name: /Summer Camp|Camp/i }).click();
+  await summerCampLink.click();
   await expect(page).toHaveURL(/\/en\/summer-camp-2026$/);
   await expect(page.getByRole('heading', { name: /Young Innovators/i })).toBeVisible();
   await expectNoAccessibilityViolations(page);
