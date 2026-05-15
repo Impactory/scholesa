@@ -1,0 +1,18 @@
+
+> scholesa@0.1.0 native:distribution:readiness
+> bash scripts/native_distribution_readiness.sh
+
+[native-readiness] Checking iOS TestFlight local distribution...
+[native-readiness] PASS iOS TestFlight local distribution
+[native-readiness] Checking Android Play local distribution...
+[native-readiness] PASS Android Play local distribution
+[native-readiness] Checking macOS Developer ID notarization...
+[native-readiness] BLOCKED macOS Developer ID notarization
+  Local macOS distribution prerequisites are incomplete:
+   - Developer ID private-key access is blocked. Approve the Keychain Access prompt, or run security unlock-keychain ~/Library/Keychains/login.keychain-db and security set-key-partition-list -S apple-tool:,apple: -s -k <login-keychain-password> ~/Library/Keychains/login.keychain-db locally. Do not store the keychain password in repo files, shell history, CI logs, or release proof artifacts.
+  Run ./scripts/setup_app_store_connect_key.sh to install notarization credentials. Then run ./scripts/apple_release_local.sh prepare_macos_developer_id, or ./scripts/setup_apple_signing.sh macos-csr if Apple requires the Account Holder to create the Developer ID certificate.
+[native-readiness] Checking Native icon Pillow tooling...
+[native-readiness] PASS Native icon Pillow tooling
+[native-readiness] Native-channel distribution is not gold-ready.
+[native-readiness] Blocked checks: 1
+[native-readiness] Resolve the blocked signing/store credential or app-permission checks, rerun this script, then capture live TestFlight, Google Play internal, and macOS notarization proof before claiming native-channel Gold.
