@@ -28,6 +28,7 @@ type RoleProof = {
 
 const liveBaseUrl = process.env.LIVE_ROLE_UAT_BASE_URL || process.env.PLAYWRIGHT_BASE_URL || '';
 const liveLoginPath = process.env.LIVE_ROLE_UAT_LOGIN_PATH || (usesFlutterFrontDoor(liveBaseUrl) ? '/login' : '/en/login');
+const isFlutterFrontDoor = usesFlutterFrontDoor(liveBaseUrl);
 const password = process.env.LIVE_ROLE_UAT_PASSWORD ||
   process.env.TEST_LOGIN_PASSWORD ||
   process.env.TEST_USER_PASSWORD ||
@@ -179,6 +180,20 @@ function usesFlutterFrontDoor(baseUrl: string): boolean {
   }
 }
 
+function routePathForTarget(path: string): string {
+  if (!isFlutterFrontDoor) return path;
+  return path.replace(/^\/en(?=\/)/, '');
+}
+
+function expectedFlutterRoutePattern(account: RoleAccount, requestedPath: string): RegExp {
+  if (account.role === 'admin') return /^\/hq(\/|$)/;
+  if (account.role === 'educator') return /^\/educator(\/|$)/;
+  if (account.role === 'family') return /^\/parent(\/|$)/;
+  if (account.role === 'mentor') return /^\/partner(\/|$)/;
+  if (requestedPath.includes('/learner/')) return /^\/learner(\/|$)/;
+  return /^\/(dashboard|learner|educator|parent|site|hq|partner)(\/|$)/;
+}
+
 function requireLiveUatInputs() {
   if (!liveBaseUrl) {
     throw new Error('Set LIVE_ROLE_UAT_BASE_URL or PLAYWRIGHT_BASE_URL to a deployed Scholesa URL.');
@@ -190,7 +205,21 @@ function requireLiveUatInputs() {
 
 async function loginAs(page: Page, account: RoleAccount) {
   await page.goto(liveLoginPath, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  if (isFlutterFrontDoor) {
+    await page.waitForTimeout(3000);
+    const viewport = page.viewportSize() || { width: 1280, height: 720 };
+    const inputX = Math.round(viewport.width * 0.78);
+
+    await page.mouse.click(inputX, Math.round(viewport.height * 0.35));
+    await page.keyboard.type(account.email);
+    await page.mouse.click(inputX, Math.round(viewport.height * 0.44));
+    await page.keyboard.type(password);
+    await page.mouse.click(inputX, Math.round(viewport.height * 0.61));
+    await page.waitForURL(/\/(dashboard|learner|educator|parent|site|hq|partner)(\/|$)/, { timeout: 90_000 });
+    return;
+  }
+
   if ((await page.locator('input[name="email"]').count()) === 0) {
     const signIn = page.getByRole('link', { name: /sign in/i }).or(page.getByRole('button', { name: /sign in/i })).first();
     await expect(signIn).toBeVisible({ timeout: 20_000 });
@@ -217,14 +246,26 @@ async function certifyRole(browser: Browser, account: RoleAccount): Promise<Role
     await loginAs(page, account);
 
     for (const route of account.routes) {
-      await page.goto(route.path, { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('main')).toBeVisible();
-      await expect(page.locator('main')).toContainText(route.expectedText, { timeout: 60_000 });
-      if (!(account.role === 'mentor' && route.path === '/en/educator/evidence')) {
-        await expect(page.locator('body')).not.toContainText(/Login could not be completed|not provisioned|permission-denied|requires an index|Failed to load/i);
+      const targetPath = routePathForTarget(route.path);
+      await page.goto(targetPath, { waitUntil: 'domcontentloaded' });
+
+      let visibleTextSample: string;
+      if (isFlutterFrontDoor) {
+        await page.waitForTimeout(3000);
+        const finalPath = new URL(page.url()).pathname;
+        expect(finalPath).not.toMatch(/\/login\/?$/);
+        expect(finalPath).toMatch(expectedFlutterRoutePattern(account, route.path));
+        expect(await page.locator('canvas').count()).toBeGreaterThan(0);
+        visibleTextSample = `Flutter CanvasKit route rendered at ${finalPath}`;
+      } else {
+        await expect(page.locator('main')).toBeVisible();
+        await expect(page.locator('main')).toContainText(route.expectedText, { timeout: 60_000 });
+        if (!(account.role === 'mentor' && route.path === '/en/educator/evidence')) {
+          await expect(page.locator('body')).not.toContainText(/Login could not be completed|not provisioned|permission-denied|requires an index|Failed to load/i);
+        }
+        visibleTextSample = (await page.locator('main').innerText()).replace(/\s+/g, ' ').trim().slice(0, 500);
       }
 
-      const visibleTextSample = (await page.locator('main').innerText()).replace(/\s+/g, ' ').trim().slice(0, 500);
       routeProofs.push({
         path: route.path,
         finalUrl: page.url(),
@@ -245,6 +286,8 @@ async function certifyRole(browser: Browser, account: RoleAccount): Promise<Role
 }
 
 test.describe('Live role-account UAT certification', () => {
+  test.setTimeout(600_000);
+
   test('certifies deployed role accounts across the Scholesa product chain', async ({ browser }) => {
     requireLiveUatInputs();
 

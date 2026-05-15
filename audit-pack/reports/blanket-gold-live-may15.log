@@ -1,0 +1,53 @@
+
+> scholesa@0.1.0 test:uat:blanket-gold
+> npm run lint && npm run typecheck && npm run qa:k8s:manifests && npm run test:uat && npm run test:integration:rules && npm run test:integration:evidence-chain && npm run test:integration:analytics && npm run qa:secret-scan && npm run ai:internal-only:all && npm run qa:coppa:guards && npm run test && npm run build
+
+
+> scholesa@0.1.0 lint
+> eslint .
+
+
+> scholesa@0.1.0 typecheck
+> tsc --noEmit
+
+
+> scholesa@0.1.0 qa:k8s:manifests
+> bash scripts/k8s_platform_health_check.sh --render-only
+
+[k8s] Kubernetes manifests rendered and structural checks passed.
+
+> scholesa@0.1.0 test:uat
+> jest --runInBand tests/unit tests/integration tests/uat && npx playwright test --config playwright.config.ts tests/e2e tests/accessibility
+
+PASS tests/unit/uat-mission-card.test.tsx
+PASS tests/uat/launch-blocker-gate.test.ts
+PASS tests/uat/family-access.test.ts
+PASS tests/uat/capability-graph-integrity.test.ts
+PASS tests/uat/miloos-coach-policy-safety-logs.test.ts
+PASS tests/uat/uat-completeness-gate.test.ts
+PASS tests/uat/gold-workflow-gate.test.ts
+PASS tests/unit/uat-seed-data.test.ts
+PASS tests/uat/tenant-cohort-readiness.test.ts
+PASS tests/uat/product-promise-gate.test.ts
+PASS tests/uat/portfolio-credentialing.test.ts
+PASS tests/uat/performance-reliability.test.ts
+PASS tests/uat/mission-session-delivery.test.ts
+PASS tests/uat/evidence-proof-of-work.test.ts
+PASS tests/uat/educator-workflows.test.ts
+PASS tests/integration/uat-evidence-chain.test.ts
+PASS tests/uat/reporting-analytics.test.ts
+PASS tests/uat/mission-acceptance.test.ts
+PASS tests/uat/mentor-access.test.ts
+PASS tests/uat/blanket-gold-live-readiness-gate.test.ts
+PASS tests/uat/accessibility-udl.test.ts
+PASS tests/unit/mock-services.test.ts
+
+Test Suites: 22 passed, 22 total
+Tests:       112 passed, 112 total
+Snapshots:   0 total
+Time:        0.694 s, estimated 1 s
+Ran all test suites matching /tests\/unit|tests\/integration|tests\/uat/i.
+
+Running 3 tests using 1 worker
+
+  ✓  1 [chromium] › tests/accessibility/landing-accessibility.spec.ts:18:5 › @wcag public Summer Camp CTA flow meets automated accessibility baseline (1.9s)
