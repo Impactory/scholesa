@@ -43,8 +43,8 @@ const Map<String, String> _landingZhCn = <String, String>{
   'A K-12 learning architecture that carries evidence from discovery to innovation.':
       '一个让证据贯穿从发现到创新全过程的 K-12 学习架构。',
   'Discoverers': '发现者',
-  'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
-      '1-3 年级 • 以故事驱动的发明工作室，由教师主导 AI 示范。',
+    'Grades 1-3 • Story-rich invention studio with educator-led AI demonstrations.':
+      '1-3 年级 • 以故事驱动的发明工作室，由教育者主导 AI 示范。',
   'Builders': '建构者',
   'Grades 4-6 • Design-and-build labs with guided assistive AI use.':
       '4-6 年级 • 以设计与建造实验室为核心，配合引导式 AI 辅助。',
@@ -110,8 +110,8 @@ const Map<String, String> _landingZhTw = <String, String>{
   'A K-12 learning architecture that carries evidence from discovery to innovation.':
       '一個讓證據貫穿從發現到創新全過程的 K-12 學習架構。',
   'Discoverers': '發現者',
-  'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
-      '1-3 年級 • 以故事驅動的發明工作室，由教師主導 AI 示範。',
+    'Grades 1-3 • Story-rich invention studio with educator-led AI demonstrations.':
+      '1-3 年級 • 以故事驅動的發明工作室，由教育者主導 AI 示範。',
   'Builders': '建構者',
   'Grades 4-6 • Design-and-build labs with guided assistive AI use.':
       '4-6 年級 • 以設計與建造實驗室為核心，搭配引導式 AI 輔助。',
@@ -305,9 +305,9 @@ class _LandingPageState extends State<LandingPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
-              Color(0xFF0F172A),
+              ScholesaColors.navy,
+              ScholesaColors.teal,
+              ScholesaColors.navy,
             ],
           ),
         ),
@@ -441,13 +441,13 @@ class _LandingPageState extends State<LandingPage>
               icon: const Icon(Icons.calendar_month_rounded, size: 18),
               label: Text(_tLanding(context, 'Summer Camp')),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFBBF24),
-                foregroundColor: const Color(0xFF172033),
+                backgroundColor: ScholesaColors.gold,
+                foregroundColor: ScholesaColors.navy,
                 minimumSize: const Size(0, 40),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 textStyle: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -460,7 +460,7 @@ class _LandingPageState extends State<LandingPage>
                 onPressed: () =>
                     _openSummerCampPage(context, 'landing_nav_summer_camp'),
                 icon: const Icon(Icons.calendar_month_rounded),
-                color: const Color(0xFFFBBF24),
+                color: ScholesaColors.gold,
                 visualDensity: VisualDensity.compact,
               ),
             ),
@@ -631,12 +631,12 @@ class _LandingPageState extends State<LandingPage>
               icon: const Icon(Icons.calendar_month_rounded),
               label: Text(_tLanding(context, 'Reserve Summer Camp')),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFBBF24),
-                foregroundColor: const Color(0xFF0F172A),
+                backgroundColor: ScholesaColors.gold,
+                foregroundColor: ScholesaColors.navy,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -652,12 +652,12 @@ class _LandingPageState extends State<LandingPage>
               icon: const Icon(Icons.login_rounded),
               label: Text(_tLanding(context, 'Sign In')),
               style: ElevatedButton.styleFrom(
-                backgroundColor: ScholesaColors.primary,
+                backgroundColor: ScholesaColors.orange,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -675,7 +675,7 @@ class _LandingPageState extends State<LandingPage>
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -864,7 +864,7 @@ class _LandingPageState extends State<LandingPage>
                   icon: Icons.auto_awesome_rounded,
                   title: _tLanding(context, 'Discoverers'),
                   description: _tLanding(context,
-                      'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.'),
+                      'Grades 1-3 • Story-rich invention studio with educator-led AI demonstrations.'),
                   color: ScholesaColors.futureSkills,
                   emoji: '✨',
                 ),
@@ -1008,8 +1008,8 @@ class _LandingPageState extends State<LandingPage>
                   Icons.insights_rounded, _tLanding(context, 'Growth Signals')),
               _buildFeatureItem(
                   Icons.groups_rounded, _tLanding(context, 'Family Clarity')),
-              _buildFeatureItem(Icons.cloud_off_rounded,
-                  _tLanding(context, 'Classroom-Ready Offline')),
+                _buildFeatureItem(Icons.cloud_off_rounded,
+                  _tLanding(context, 'Studio-Ready Offline')),
             ],
           ),
         ],
