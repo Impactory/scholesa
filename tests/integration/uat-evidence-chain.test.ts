@@ -1,10 +1,25 @@
 import { getUatMissionByStage } from '../fixtures/uat-missions';
 import { getUatUser } from '../fixtures/uat-seed-data';
-import { createUatTestHarness } from '../helpers';
+import {
+  createUatApiClient,
+  createUatTestHarness,
+  requiredScholesaTerminology,
+  verifyUatAcceptanceCriteria,
+} from '../helpers';
+
+const uiStates = {
+  loading: 'Loading Mission Session Evidence...',
+  empty: 'No Evidence has been submitted yet for this Mission.',
+  error: 'Access denied: unable to perform this Capability Review.',
+  success: 'Success: Evidence saved and Growth Report updated.',
+};
+
+const uiCopy = requiredScholesaTerminology.join(' ');
 
 describe('Scholesa UAT evidence chain harness', () => {
   it('runs mission -> checkpoint -> evidence -> reflection -> capability review -> portfolio -> growth report', async () => {
     const harness = createUatTestHarness();
+    const api = createUatApiClient(harness);
     const mission = getUatMissionByStage('Builders');
 
     harness.loginAs('admin');
@@ -43,10 +58,23 @@ describe('Scholesa UAT evidence chain harness', () => {
     expect(harness.expectGrowthReportUpdated('builder')[0]).toMatchObject({ latestReviewId: review.id });
     expect(harness.expectCapabilityContextPreserved(review.id, mission.capabilityDomains)).toHaveLength(1);
     expect(harness.checkAuditLog('capability-review.perform')[0]).toMatchObject({ targetId: review.id });
+
+    await verifyUatAcceptanceCriteria({
+      harness,
+      api,
+      mission,
+      action: 'performCapabilityReview',
+      correctRole: 'educator',
+      incorrectRole: 'family',
+      learnerRole: 'builder',
+      uiStates,
+      uiCopy,
+    });
   });
 
   it('enforces educator-led AI for Discoverers and tenant isolation expectations', async () => {
     const harness = createUatTestHarness();
+    const api = createUatApiClient(harness);
     const mission = getUatMissionByStage('Discoverers');
 
     harness.loginAs('educator');
@@ -75,5 +103,17 @@ describe('Scholesa UAT evidence chain harness', () => {
     );
     expect(harness.state.accessDenied[0]).toMatchObject({ targetId: 'capability-review-official-record' });
     expect(harness.expectTenantIsolation('mentor', 'tenant-other-academy')).toMatchObject({ allowed: false });
+
+    await verifyUatAcceptanceCriteria({
+      harness,
+      api,
+      mission,
+      action: 'useMiloOSCoach',
+      correctRole: 'educator',
+      incorrectRole: 'family',
+      learnerRole: 'discoverer',
+      uiStates,
+      uiCopy,
+    });
   });
 });

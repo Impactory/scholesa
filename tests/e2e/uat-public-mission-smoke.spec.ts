@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { uatMissionDefinitions } from '../fixtures/uat-missions';
+import { getUatMissionByStage, uatMissionDefinitions } from '../fixtures/uat-missions';
+import {
+  createUatApiClient,
+  createUatTestHarness,
+  requiredScholesaTerminology,
+  verifyUatAcceptanceCriteria,
+} from '../helpers';
 
-test('UAT mission fixtures preserve stage, capability, AI policy, and evidence context', async ({ page }) => {
+test('UAT mission smoke verifies UI plus backend/API permission chain', async ({ page }) => {
   await page.goto('/en');
   await expect(page.getByRole('link', { name: /Summer Camp|Camp/i })).toBeVisible();
 
@@ -13,4 +19,25 @@ test('UAT mission fixtures preserve stage, capability, AI policy, and evidence c
   ]);
   expect(uatMissionDefinitions.every((mission) => mission.capabilityDomains.length >= 2)).toBe(true);
   expect(uatMissionDefinitions.every((mission) => mission.expectedEvidence.length >= 4)).toBe(true);
+
+  const harness = createUatTestHarness();
+  const api = createUatApiClient(harness);
+  const mission = getUatMissionByStage('Builders');
+
+  await verifyUatAcceptanceCriteria({
+    harness,
+    api,
+    mission,
+    action: 'submitEvidence',
+    correctRole: 'builder',
+    incorrectRole: 'family',
+    learnerRole: 'builder',
+    uiStates: {
+      loading: 'Loading Mission Evidence...',
+      empty: 'No Evidence has been submitted yet.',
+      error: 'Access denied: unable to submit Evidence.',
+      success: 'Success: Evidence submitted and Portfolio updated.',
+    },
+    uiCopy: requiredScholesaTerminology.join(' '),
+  });
 });
