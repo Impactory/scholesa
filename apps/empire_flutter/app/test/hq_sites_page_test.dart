@@ -238,7 +238,7 @@ void main() {
     expect(find.text('No sites found'), findsNothing);
   });
 
-  testWidgets('HQ sites page selecting a site updates active site context',
+  testWidgets('HQ sites page selecting a site opens management sheet',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedSites(firestore);
@@ -268,5 +268,75 @@ void main() {
 
     expect(appState.activeSiteId, equals('site-active'));
     expect(appState.siteIds, contains('site-active'));
+    expect(find.text('Manage Site'), findsOneWidget);
+    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Open Site Dashboard'), findsOneWidget);
+    expect(find.text('Delete Site'), findsOneWidget);
+  });
+
+  testWidgets('HQ sites page edits a site from the management sheet',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSites(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(_buildHarness(firestoreService));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Alpha Studio'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Site Name'),
+      'Alpha Campus',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Location'),
+      'Singapore Central',
+    );
+    await tester.tap(find.text('Save Changes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Site updated successfully'), findsOneWidget);
+    final DocumentSnapshot<Map<String, dynamic>> doc =
+        await firestore.collection('sites').doc('site-active').get();
+    expect(doc.data()?['name'], 'Alpha Campus');
+    expect(doc.data()?['location'], 'Singapore Central');
+  });
+
+  testWidgets('HQ sites page deletes a site from the management sheet',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSites(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(_buildHarness(firestoreService));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Gamma Studio'),
+      320,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Gamma Studio'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Delete Site'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Site deleted successfully'), findsOneWidget);
+    final DocumentSnapshot<Map<String, dynamic>> doc =
+        await firestore.collection('sites').doc('site-pending').get();
+    expect(doc.exists, isFalse);
   });
 }

@@ -317,8 +317,8 @@ class _HqSitesPageState extends State<HqSitesPage> {
     );
   }
 
-  void _openSiteDetail(String siteId) {
-    final String selectedSiteId = siteId.trim();
+  void _openSiteDetail(_SiteItem site) {
+    final String selectedSiteId = site.id.trim();
     if (selectedSiteId.isEmpty) return;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -331,15 +331,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
     final AppState? appState = _maybeAppState();
     appState?.switchSite(selectedSiteId);
 
-    final GoRouter? router = GoRouter.maybeOf(context);
-    if (router != null) {
-      router.go('/site/dashboard');
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_tHqSites(context, 'Opening site')}: $selectedSiteId'),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext ctx) => _ManageSiteSheet(
+        site: site,
+        onChanged: () {
+          _loadSites();
+        },
       ),
     );
   }
@@ -423,7 +423,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             educatorCount: item.educatorCount,
             status: item.status,
             healthScore: item.healthScore,
-            onTap: () => _openSiteDetail(item.id),
+            onTap: () => _openSiteDetail(item),
           );
         },
         childCount: filtered.length + (_loadError != null ? 1 : 0),
@@ -1177,6 +1177,350 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
         ),
       );
     }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class _ManageSiteSheet extends StatefulWidget {
+  const _ManageSiteSheet({required this.site, required this.onChanged});
+
+  final _SiteItem site;
+  final VoidCallback onChanged;
+
+  @override
+  State<_ManageSiteSheet> createState() => _ManageSiteSheetState();
+}
+
+class _ManageSiteSheetState extends State<_ManageSiteSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late String _status;
+  bool _isSaving = false;
+  bool _isDeleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.site.name);
+    _locationController = TextEditingController(
+      text: widget.site.location == '—' ? '' : widget.site.location,
+    );
+    _status = widget.site.status;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.86,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 12,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: ScholesaColors.site.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.location_city_rounded,
+                      color: ScholesaColors.site,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _tHqSites(context, 'Manage Site'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          widget.site.id,
+                          style: TextStyle(
+                            color: scheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                    tooltip: _tHqSites(context, 'Close'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: _tHqSites(context, 'Site Name'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _locationController,
+                decoration: InputDecoration(
+                  labelText: _tHqSites(context, 'Location'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _status,
+                decoration: InputDecoration(
+                  labelText: _tHqSites(context, 'Status'),
+                ),
+                items: <String>['active', 'onboarding', 'pending']
+                    .map(
+                      (String status) => DropdownMenuItem<String>(
+                        value: status,
+                        child: Text(_statusLabel(context, status)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isSaving || _isDeleting
+                    ? null
+                    : (String? value) {
+                        if (value == null) return;
+                        setState(() => _status = value);
+                      },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _isSaving || _isDeleting ? null : _saveSite,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_rounded),
+                  label: Text(_tHqSites(context, 'Save Changes')),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isSaving || _isDeleting ? null : _openDashboard,
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: Text(_tHqSites(context, 'Open Site Dashboard')),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: _isSaving || _isDeleting ? null : _confirmDelete,
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.error,
+                  ),
+                  icon: _isDeleting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_outline_rounded),
+                  label: Text(_tHqSites(context, 'Delete Site')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _statusLabel(BuildContext context, String status) {
+    switch (status) {
+      case 'active':
+        return _tHqSites(context, 'Active');
+      case 'onboarding':
+        return _tHqSites(context, 'Onboarding');
+      case 'pending':
+        return _tHqSites(context, 'Pending');
+      default:
+        return status;
+    }
+  }
+
+  Future<void> _saveSite() async {
+    final String name = _nameController.text.trim();
+    if (name.isEmpty) return;
+
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      _showSnackBar('Update site failed', ScholesaColors.error);
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'hq_sites_update_site_submit',
+        'site_id': widget.site.id,
+      },
+    );
+    try {
+      await firestoreService.firestore
+          .collection('sites')
+          .doc(widget.site.id)
+          .update(<String, dynamic>{
+        'name': name,
+        'location': _locationController.text.trim(),
+        'status': _status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onChanged();
+      _showSnackBar('Site updated successfully', ScholesaColors.success);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      _showSnackBar('Update site failed', ScholesaColors.error);
+    }
+  }
+
+  void _openDashboard() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'hq_sites_open_site_dashboard',
+        'site_id': widget.site.id,
+      },
+    );
+    final GoRouter? router = GoRouter.maybeOf(context);
+    if (router == null) return;
+    Navigator.pop(context);
+    router.go('/site/dashboard');
+  }
+
+  Future<void> _confirmDelete() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final ColorScheme scheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: Text(_tHqSites(dialogContext, 'Delete Site')),
+          content: Text(
+            _tHqSites(
+              dialogContext,
+              'This removes the site record. Learner evidence remains in its own collections.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(_tHqSites(dialogContext, 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
+              ),
+              child: Text(_tHqSites(dialogContext, 'Delete')),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+    await _deleteSite();
+  }
+
+  Future<void> _deleteSite() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      _showSnackBar('Delete site failed', ScholesaColors.error);
+      return;
+    }
+
+    setState(() => _isDeleting = true);
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'hq_sites_delete_site_confirmed',
+        'site_id': widget.site.id,
+      },
+    );
+    try {
+      await firestoreService.firestore
+          .collection('sites')
+          .doc(widget.site.id)
+          .delete();
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onChanged();
+      _showSnackBar('Site deleted successfully', ScholesaColors.success);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      _showSnackBar('Delete site failed', ScholesaColors.error);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_tHqSites(context, message)),
+        backgroundColor: color,
+      ),
+    );
   }
 
   FirestoreService? _maybeFirestoreService() {
