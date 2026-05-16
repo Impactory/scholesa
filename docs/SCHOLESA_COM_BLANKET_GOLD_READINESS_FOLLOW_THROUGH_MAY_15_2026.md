@@ -1,8 +1,8 @@
 # Scholesa.com Blanket Gold Readiness Follow-Through - May 15 2026
 
-Status: current live evidence record and blocker table after May 15 full web/security gate.
+Status: current live evidence record and blocker table after the May 15 learner-onboarding/MiloOS follow-through deploy.
 
-Verdict: `scholesa.com` public web is live, attractive, aligned with the updated capability evidence language, and passing the full web/security blanket-gold gate with live role-account UAT. Complete blanket Gold across all requested web and native surfaces is still not claimable because macOS Developer ID notarization readiness is blocked by keychain access. iOS TestFlight build visibility is proven.
+Verdict: `scholesa.com` public web is live, attractive, aligned with the updated capability evidence language, and passing live role-account UAT after the learner first-login setup and MiloOS voice/i18n update. Complete blanket Gold across all requested web and native surfaces is still not claimable because macOS Developer ID notarization readiness is blocked by keychain access. iOS and Android local release builds pass after the latest source changes; iOS TestFlight build visibility remains proven for the previously uploaded build.
 
 ## Scope
 
@@ -13,6 +13,8 @@ Included in this May 15 packet:
 - Email login routing behavior already proven in the prior live pass.
 - Full live role-account UAT across the canonical `@scholesa.test` accounts.
 - Full web/security blanket-gold gate log at `audit-pack/reports/blanket-gold-live-may15.log`.
+- Learner first-login step-through setup with MiloOS read-aloud controls and i18n strings.
+- MiloOS friendly voice persona, locale-aware TTS setup, and privacy-safe voice/onboarding failure telemetry.
 - Security and compliance gates listed below.
 - iOS TestFlight visibility check for the current Flutter build.
 
@@ -25,10 +27,28 @@ Not included as complete until rerun after release-owner keychain repair:
 
 | Service | Evidence |
 | --- | --- |
-| Primary Next web | `scholesa-web-00070-wx6` serving 100 percent traffic after Cloud Build `b0eb894d-21f4-4cf5-aefd-1d0d42928a1e`. |
-| Primary Next image | `gcr.io/studio-3328096157-e3f79/scholesa:20260515-marketing-parity`, digest `sha256:6f9ec2af9381b564e890efe87089c4e2577a0eb80e288ff40909c29297a1fb6a`. |
-| Flutter web | Current public route/login fixes previously deployed to `empire-web-00101-tv9`, serving 100 percent traffic. |
+| Primary Next web | `scholesa-web-00076-qq5` serving 100 percent traffic after Cloud Build `4483be81-5357-4ba8-9db0-7ac217ab4bc9`. |
+| Primary Next image | `gcr.io/studio-3328096157-e3f79/scholesa:20260515-learner-onboarding-miloos-r2`. |
+| Flutter web | `empire-web-00103-h5c` serving 100 percent traffic after Cloud Build `f350685f-f278-46d2-a581-bd1ce18ea545`. |
 | Public domain split | Flutter owns `/welcome`, `/login`, and app shell routes; Flutter nginx proxies locale public Next routes such as `/en` and `/en/summer-camp-2026`. |
+| Deploy proof | `audit-pack/reports/deploy-web-learner-onboarding-miloos-may15.log`. |
+
+## Learner Onboarding And MiloOS Follow-Through
+
+| Item | Result | Proof |
+| --- | --- | --- |
+| First-login learner setup | PASS | The old long setup sheet is now a five-step flow: reading comfort, confidence, interests/goals, weekly rhythm, and helpful tools. Incomplete Learners remain gated until setup is saved. |
+| Classroom mobile behavior | PASS | The setup sheet is height-constrained, scrollable, and verified at phone width so Learners see one step at a time without compact action overflow. |
+| Spoken MiloOS guidance | PASS | Each setup step has a MiloOS read-aloud path, a replay button, warm voice settings, locale-aware TTS configuration, and Web Speech/FlutterTTS fallback logging. |
+| MiloOS persona | PASS | The AI Coach prompt now asks MiloOS to sound like a friendly, warm woman coach, calm and non-robotic, while preserving safety and evidence-scaffold rules. |
+| i18n | PASS | Learner setup strings were added for English source, Simplified Chinese, and Traditional Chinese through `LearnerSurfaceI18n`. TTS language selection follows the active/platform locale. |
+| Warning/error logging | PASS for changed surfaces | Learner setup load/save failures, onboarding gate failures, setup speech failures, and AI Coach voice API/FlutterTTS/Web Speech/init failures now emit privacy-safe logs/telemetry without learner content. |
+
+Proof logs:
+
+- `audit-pack/reports/flutter-focused-learner-miloos-may15.log`
+- `audit-pack/reports/flutter-learner-setup-persistence-may15.log`
+- `audit-pack/reports/live-role-account-uat-learner-onboarding-miloos-may15.log`
 
 ## Live Browser Proof
 
@@ -64,6 +84,10 @@ Summary: 8 canonical accounts certified, 16 route proofs certified, product chai
 
 | Gate | Result | Gold relevance |
 | --- | --- | --- |
+| `./scripts/deploy.sh web` after learner/MiloOS update | PASS | Next and Flutter web deployed to `scholesa-web-00076-qq5` and `empire-web-00103-h5c`; proof log `audit-pack/reports/deploy-web-learner-onboarding-miloos-may15.log`. |
+| `npm run test:uat:live-role-accounts` after learner/MiloOS deploy | PASS | 8 canonical `@scholesa.test` accounts and 16 route proofs passed against live `https://scholesa.com`; proof log `audit-pack/reports/live-role-account-uat-learner-onboarding-miloos-may15.log`. |
+| Focused learner/MiloOS Flutter tests | PASS | `learner_today_page_test.dart`, `ai_coach_widget_regression_test.dart`, and `learner_onboarding_gate_test.dart` passed; proof log `audit-pack/reports/flutter-focused-learner-miloos-may15.log`. |
+| Learner setup persistence regression | PASS | The broader tri-locale learner setup persistence test now walks the new step-through flow and passed; proof log `audit-pack/reports/flutter-learner-setup-persistence-may15.log`. |
 | `npm run test:uat:blanket-gold` with live `scholesa.com` env | PASS | Full web/security gate passed with live role-account UAT. Proof log: `audit-pack/reports/blanket-gold-live-may15.log`. |
 | `npm run refactor:baseline` | PASS | Non-mutating refactor/security ratchet passed after adding the May 15 scripts. |
 | `npm run refactor:full` | PASS | Non-deploying refactor full gate passed; proof log: `audit-pack/reports/refactor-full-may15.log`. |
@@ -84,8 +108,8 @@ Summary: 8 canonical accounts certified, 16 route proofs certified, product chai
 
 | Channel | Result | Evidence |
 | --- | --- | --- |
-| iOS | PASS for current TestFlight visibility | `./scripts/apple_release_local.sh verify_testflight_build` verified build `5` for `com.scholesa.app`; processing state `VALID`. |
-| Android | PASS for local distribution readiness | `npm run native:distribution:readiness` reported Android Play local distribution PASS. |
+| iOS | PASS for local release build after latest changes; PASS for previous TestFlight visibility | `./scripts/deploy.sh flutter-ios` passed the Flutter gate and built `build/ios/iphoneos/Runner.app` with codesigning disabled. Proof log: `audit-pack/reports/flutter-ios-build-learner-onboarding-miloos-may15.log`. `./scripts/apple_release_local.sh verify_testflight_build` previously verified build `5` for `com.scholesa.app`; processing state `VALID`. |
+| Android | PASS for local release build after latest changes | `./scripts/deploy.sh flutter-android` passed the Flutter gate and built `build/app/outputs/bundle/release/app-release.aab` plus `build/app/outputs/flutter-apk/app-release.apk`. Proof log: `audit-pack/reports/flutter-android-build-learner-onboarding-miloos-may15.log`. |
 | macOS | BLOCKED | `npm run native:distribution:readiness` reported Developer ID notarization blocked by `errSecInternalComponent` during codesign probe. |
 | Native aggregate | BLOCKED | Aggregate native-channel distribution is not Gold-ready until macOS keychain/signing/notarization proof passes again. |
 

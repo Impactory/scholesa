@@ -1079,8 +1079,12 @@ class _LandingPageState extends State<LandingPage>
                   ScholesaColors.learner, Icons.school_rounded),
               _buildRoleChip(_tLanding(context, 'Educators'),
                   ScholesaColors.educator, Icons.person_rounded),
-              _buildRoleChip(_tLanding(context, 'Families'),
-                  ScholesaColors.parent, Icons.family_restroom_rounded),
+              _buildRoleChip(
+                _tLanding(context, 'Families'),
+                ScholesaColors.parent,
+                Icons.family_restroom_rounded,
+                foregroundColor: ScholesaColors.sky,
+              ),
               _buildRoleChip(_tLanding(context, 'School Teams'),
                   ScholesaColors.site, Icons.business_rounded),
               _buildRoleChip(_tLanding(context, 'HQ Leaders'),
@@ -1092,23 +1096,29 @@ class _LandingPageState extends State<LandingPage>
     );
   }
 
-  Widget _buildRoleChip(String label, Color color, IconData icon) {
+  Widget _buildRoleChip(
+    String label,
+    Color color,
+    IconData icon, {
+    Color? foregroundColor,
+  }) {
+    final Color contentColor = foregroundColor ?? color;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: contentColor.withValues(alpha: 0.55)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, color: color, size: 20),
+          Icon(icon, color: contentColor, size: 20),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: contentColor,
               fontWeight: FontWeight.w600,
             ),
           ),

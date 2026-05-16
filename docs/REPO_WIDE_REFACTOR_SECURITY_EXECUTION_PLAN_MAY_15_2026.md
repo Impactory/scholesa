@@ -30,8 +30,13 @@ Scholesa is refactor-ready when all of these are true:
 | Firestore and Storage rules emulator tests | PASS, 239 tests |
 | Compliance scan | PASS |
 | High-severity npm audit | PASS, with low-severity transitive advisories remaining |
-| Live role-account UAT | PASS, 8 canonical accounts and 16 route proofs against `https://scholesa.com` |
+| Live role-account UAT | PASS, 8 canonical accounts and 16 route proofs against `https://scholesa.com`; rerun after learner/MiloOS deploy in `audit-pack/reports/live-role-account-uat-learner-onboarding-miloos-may15.log` |
 | Full web/security blanket-gold gate | PASS, proof log `audit-pack/reports/blanket-gold-live-may15.log` |
+| Learner onboarding/MiloOS focused tests | PASS, proof log `audit-pack/reports/flutter-focused-learner-miloos-may15.log` |
+| Learner setup persistence regression | PASS, proof log `audit-pack/reports/flutter-learner-setup-persistence-may15.log` |
+| Web deploy after learner/MiloOS update | PASS, `scholesa-web-00076-qq5` and `empire-web-00103-h5c` serving 100 percent traffic; proof log `audit-pack/reports/deploy-web-learner-onboarding-miloos-may15.log` |
+| iOS local release build | PASS, unsigned `Runner.app` built after Flutter gate; proof log `audit-pack/reports/flutter-ios-build-learner-onboarding-miloos-may15.log` |
+| Android local release build | PASS, release AAB and APK built after Flutter gate; proof log `audit-pack/reports/flutter-android-build-learner-onboarding-miloos-may15.log` |
 | Refactor baseline gate | PASS, `npm run refactor:baseline` on May 15 |
 | Refactor full gate | PASS, `npm run refactor:full` on May 15, proof log `audit-pack/reports/refactor-full-may15.log` |
 | Rules hardening slice | PASS, report-share request/consent boundary emulator proof added |
@@ -185,4 +190,4 @@ Exit criteria:
 2. **Rules hardening slice**: classify Firestore/Storage collections and add denial tests for missing site scope plus unrelated Family access.
 3. **Native small-screen slice**: implement responsive shell and bottom-action patterns from the Phase 2 native UX plan, with focused Flutter tests before broad visual work.
 
-May 15 progress: the route truth slice has refreshed `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` ownership split, refactor gates, and live route UAT equivalents. The rules hardening slice added direct emulator coverage for `reportShareRequests` and `reportShareConsents`, proving linked Family access, unlinked Family denial, missing-site denial, wrong-site denial, and server-owned writes. Next implementation slice should target native small-screen tests; do not start a repo-wide move/rename pass first.
+May 15 progress: the route truth slice has refreshed `docs/REPO_MAP.md` and `docs/ROUTE_MODULE_MATRIX.md` with the current `scholesa.com` ownership split, refactor gates, and live route UAT equivalents. The rules hardening slice added direct emulator coverage for `reportShareRequests` and `reportShareConsents`, proving linked Family access, unlinked Family denial, missing-site denial, wrong-site denial, and server-owned writes. The native small-screen slice has begun with the Learner first-login setup flow: the old long setup sheet is now a five-step guided mobile-tested flow with MiloOS read-aloud support, i18n strings, and privacy-safe failure telemetry. Next implementation slice should continue native small-screen workflow extraction and warning/error telemetry cleanup; do not start a repo-wide move/rename pass first.
