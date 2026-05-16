@@ -1,0 +1,371 @@
+[0;32m[deploy][0m Syncing platform icons...
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/20.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/60.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/29.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/58.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/87.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/80.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/50.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/100.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/57.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/114.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/180.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/72.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/144.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/76.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/152.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/167.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/1024.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+[0;32m[deploy][0m Platform icons synced ✓
+[0;32m[deploy][0m Running flutter analyze...
+Analyzing app...                                                
+No issues found! (ran in 12.1s)
+[0;32m[deploy][0m Running flutter test...
+00:00 +0: loading /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart
+00:00 +0: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +1: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +2: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +3: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +4: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +5: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +6: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +7: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +8: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +9: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +10: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +11: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +12: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +13: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +14: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +15: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +16: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +17: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +18: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +19: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +20: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +21: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +22: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +23: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +24: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +25: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +26: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +27: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +28: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +29: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +30: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +31: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +32: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +33: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +34: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +35: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +36: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +37: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +38: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +39: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +40: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +41: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +42: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +43: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +44: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +45: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +46: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +47: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +48: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +49: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +50: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +51: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +52: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +53: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +54: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+00:00 +55: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/rubric_application_page_test.dart: rubric load failures show friendly setup guidance
+Failed to load rubric attempts: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:00 +56: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart: reflection journal submits AI disclosure through the service
+00:00 +57: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart: reflection journal submits AI disclosure through the service
+00:00 +57: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page persists learner follow-up requests
+Loaded 1 learners for educator
+00:00 +58: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart: reflection journal submits AI disclosure through the service
+00:01 +59: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart: reflection journal submits AI disclosure through the service
+00:01 +60: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/reflection_journal_page_test.dart: reflection journal submits AI disclosure through the service
+00:01 +61: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page persists learner follow-up requests
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:01 +62: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page persists learner follow-up requests
+00:01 +63: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_voice_integration_test.dart: AI Help runtime integration renders core coach controls for floating assistant
+00:01 +64: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_voice_integration_test.dart: AI Help runtime integration renders core coach controls for floating assistant
+00:01 +64: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:01 +65: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_voice_integration_test.dart: AI Help runtime integration renders core coach controls for floating assistant
+00:01 +66: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:01 +67: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +68: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +69: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +70: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +71: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +72: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +73: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +74: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +75: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +76: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +77: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +78: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +79: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +80: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +81: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +82: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +83: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +84: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +85: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +86: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +87: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +88: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +89: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +90: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +91: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +92: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +93: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +94: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +95: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +96: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +97: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+00:01 +98: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page submits learner follow-up requests for learners created through provisioning
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:01 +99: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_roster_review_queue_test.dart: site admin can review queued roster imports
+00:01 +99: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows learner unavailable label
+Loaded 1 learners for educator
+00:01 +100: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_roster_review_queue_test.dart: site admin can review queued roster imports
+00:02 +100: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page discloses synthetic AI help preview
+Loaded 1 learners for educator
+00:02 +101: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_roster_review_queue_test.dart: site admin can review queued roster imports
+00:02 +101: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page recommends scaffolded lane from reviewed mastery instead of legacy progress
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:02 +102: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_roster_review_queue_test.dart: site admin can review queued roster imports
+00:02 +102: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page saves lane taps immediately and reloads overrides
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:02 +103: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page saves lane taps immediately and reloads overrides
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:02 +104: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page reverts lane selection when immediate save fails
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to save differentiation lane override: Bad state: lane override write failed
+00:02 +105: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions role dashboard View All opens quick actions sheet
+00:02 +105: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page restores search and session filters on reopen
+Loaded 2 sessions for educator
+Loaded 2 learners for educator
+Loaded 2 sessions for educator
+Loaded 2 learners for educator
+00:02 +106: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions role dashboard View All opens quick actions sheet
+00:02 +106: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows roster load failure instead of blank roster
+Error loading learners: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:02 +107: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions role dashboard View All opens quick actions sheet
+00:02 +107: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page keeps stale roster visible after refresh failure
+Loaded 1 learners for educator
+Error loading learners: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:02 +108: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions role dashboard View All opens quick actions sheet
+00:02 +108: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows learners provisioned from queued roster imports
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:03 +108: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/lti_integration_test.dart: LTI integrations educator integrations page renders LTI provider and queues sync
+Loaded 0 learners for educator
+00:03 +108: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows learners provisioned from queued roster imports
+Loaded 1 learners for educator
+00:03 +109: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions role dashboard View All opens quick actions sheet
+00:03 +109: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows cross-site learners after they are linked through provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:03 +109: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+Loaded 1 learners and 1 records
+00:03 +109: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows cross-site learners after they are linked through provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:03 +110: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/lti_integration_test.dart: LTI integrations educator integrations page renders LTI provider and queues sync
+00:03 +111: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +112: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +112: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learners_page_test.dart: educator learners page shows cross-site learners after they are linked through provisioning
+Loaded 1 learners for educator
+00:03 +113: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +114: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +115: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +115: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions site dashboard export CTA copies report when file export is unsupported
+Export unsupported for site dashboard report, copying report instead: Unsupported operation: File export is not supported on this platform.
+00:03 +116: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +117: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +118: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves a configured pickup code into the real checkout flow
+00:03 +119: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/dashboard_cta_regression_test.dart: Dashboard CTA regressions site dashboard hides disconnected pillar telemetry card
+00:03 +120: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_approvals_page_test.dart: HQ approvals moves a decided item into completed even if the refresh fails
+00:03 +120: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+Failed to load cohort launches: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:03 +121: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_approvals_page_test.dart: HQ approvals moves a decided item into completed even if the refresh fails
+00:03 +122: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:03 +123: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:03 +124: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +125: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +126: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +127: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +128: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +129: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +130: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +131: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +132: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +133: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +134: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +135: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +136: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+00:04 +137: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: quick pickup resolves guardian-link fallback created through provisioning
+Loaded 1 learners and 1 records
+00:04 +138: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +138: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: checkin page labels missing learner names as unavailable
+Loaded 1 learners and 0 records
+00:04 +139: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +139: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: late pickup flagging shows an error when the write fails
+Loaded 1 learners and 1 records
+00:04 +140: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +141: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +142: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +143: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +144: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:04 +145: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +146: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +147: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +148: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +149: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +150: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +151: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +152: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +153: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +153: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: checkin page shows load failure instead of fake empty learners
+Error loading checkin data: Exception: network down
+00:05 +154: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +154: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: checkin page keeps stale learner data visible after refresh failure
+Loaded 1 learners and 1 records
+Error loading checkin data: Exception: network down
+00:05 +155: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +155: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart: checkin service loads guardian-link pickups when pickup auth docs are absent
+Loaded 1 learners and 1 records
+00:05 +156: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +157: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +158: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +159: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +160: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +161: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +162: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +163: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +164: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +165: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +166: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +167: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +168: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +169: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +170: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +171: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +172: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:05 +173: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_live_session_mode_test.dart: educator today live session mode persists state and session events
+00:06 +174: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +175: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +176: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +177: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +178: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +179: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +180: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_marketplace_panel_test.dart: site marketplace shows explicit unavailable state on first-load failure
+00:06 +181: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/google_classroom_integration_test.dart: Google Classroom integration educator integrations page renders sync state and queues a sync job
+Loaded 0 learners for educator
+00:06 +182: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/google_classroom_integration_test.dart: Google Classroom integration educator integrations page renders sync state and queues a sync job
+00:07 +183: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/proof_assembly_page_test.dart: proof assembly captures same-site proof methods on classroom mobile width
+00:07 +184: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/proof_assembly_page_test.dart: proof assembly captures same-site proof methods on classroom mobile width
+00:07 +185: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows site ops shows only active-site activity and opens day when learners are present
+00:07 +186: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_audit_page_localization_test.dart: HQ audit tri-locale coverage hq audit page renders zh-CN copy
+00:07 +187: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_audit_page_localization_test.dart: HQ audit tri-locale coverage hq audit page renders zh-CN copy
+00:07 +188: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/habits_page_test.dart: habits page shows empty-state coaching copy
+00:07 +189: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/habits_page_test.dart: habits page shows empty-state coaching copy
+00:08 +190: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/habits_page_test.dart: habits page shows empty-state coaching copy
+Loaded 0 habits and 0 logs
+00:08 +191: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_audit_page_localization_test.dart: HQ audit tri-locale coverage hq audit review dialog renders zh-TW copy
+00:08 +192: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +192: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/habits_page_test.dart: habits page completes a habit and persists a log
+Loaded 1 habits and 0 logs
+00:08 +193: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +194: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +195: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +196: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +196: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/habits_page_test.dart: habits AI fallback offers degraded-mode guidance
+Loaded 1 habits and 0 logs
+00:08 +197: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +198: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +199: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports downloads a real full bundle from live bundle data
+00:08 +200: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_role_switcher_page_test.dart: HQ role switcher activates learner impersonation and returns to launcher
+00:08 +201: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning deletes active-site guardian links and updates the UI
+00:08 +202: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning deletes active-site guardian links and updates the UI
+00:08 +203: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning deletes active-site guardian links and updates the UI
+00:08 +204: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports copies full bundle when file export is unsupported
+Export unsupported for HQ full bundle, copying content instead: Unsupported operation: File export is not supported on this platform.
+00:08 +205: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a learner from the add learner dialog
+00:09 +206: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_exports_page_test.dart: hq exports keeps full bundle downloadable after analytics refresh failure
+00:09 +207: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +208: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +209: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +210: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +211: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +212: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +213: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +214: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +215: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +216: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +217: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +218: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +219: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +220: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +221: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +222: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +223: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +224: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +225: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +226: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +227: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +228: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +229: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +230: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +231: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +232: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +233: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +234: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +235: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +236: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +237: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +238: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +239: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +240: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +241: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +242: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +243: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +244: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +245: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a parent from the add parent dialog
+00:09 +246: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a guardian link from the create link dialog
+00:09 +247: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart: Site ops and provisioning workflows provisioning creates a cohort launch from the cohort dialog
