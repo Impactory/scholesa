@@ -13,6 +13,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
+import 'milo_voice_persona.dart';
 import 'voice_runtime_service.dart';
 import 'web_speech.dart';
 import '../services/telemetry_service.dart';
@@ -209,6 +210,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   Future<void> _initializeVoiceStack() async {
+    final Locale locale = WidgetsBinding.instance.platformDispatcher.locale;
     if (widget.skipVoiceInitializationForTesting) {
       if (mounted) {
         setState(() {
@@ -239,9 +241,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           }
         },
       );
-      await _flutterTts.setSpeechRate(kIsWeb ? 0.82 : 0.42);
-      await _flutterTts.setVolume(1.0);
-      await _flutterTts.setPitch(1.02);
+      await MiloVoicePersona.configure(
+        _flutterTts,
+        locale: locale,
+      );
       await _flutterTts.awaitSpeakCompletion(true);
 
       final bool isApplePlatform = !kIsWeb &&
@@ -323,7 +326,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         _uploadSttAvailable = uploadReady;
       });
       unawaited(_maybeSpeakInitialGreeting());
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('MiloOS voice stack initialization failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        metadata: <String, dynamic>{
+          'source': 'voice_stack_init_failed',
+          'surface': 'ai_coach_widget',
+          'errorType': error.runtimeType.toString(),
+          'web': kIsWeb,
+        },
+      ));
       if (!mounted) return;
       setState(() {
         _speechAvailable = false;
@@ -1024,6 +1038,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     // Capture locale before any async gap to avoid use_build_context_synchronously.
     final String capturedLocale =
         Localizations.localeOf(context).toLanguageTag();
+    final Locale capturedLocaleForTts = Localizations.localeOf(context);
 
     if (widget.onSpeakOverride != null) {
       await widget.onSpeakOverride!(text);
@@ -1078,7 +1093,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             'chars': text.length,
           },
         );
-      } catch (_) {
+      } catch (error, stackTrace) {
+        debugPrint('MiloOS voice API audio failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': 'voice_api_audio_failed',
+            'surface': 'ai_coach_widget',
+            'traceId': traceId,
+            'errorType': error.runtimeType.toString(),
+          },
+        );
         if (mounted) setState(() => _isSpeaking = false);
       }
     }
@@ -1087,6 +1113,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       try {
         await _audioPlayer?.stop();
         await _flutterTts.stop();
+        await MiloVoicePersona.configure(
+          _flutterTts,
+          locale: capturedLocaleForTts,
+        );
         if (mounted) setState(() => _isSpeaking = true);
         await _flutterTts.speak(text);
         played = true;
@@ -1108,7 +1138,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             'chars': text.length,
           },
         );
-      } catch (_) {
+      } catch (error, stackTrace) {
+        debugPrint('MiloOS FlutterTTS failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': kIsWeb ? 'flutter_tts_web_failed' : 'flutter_tts_failed',
+            'surface': 'ai_coach_widget',
+            'traceId': traceId,
+            'chars': text.length,
+            'errorType': error.runtimeType.toString(),
+          },
+        );
         if (mounted) setState(() => _isSpeaking = false);
       }
     }
@@ -1121,7 +1163,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           text,
           locale: capturedLocale,
           rate: 0.82,
-          pitch: 1.02,
+          pitch: 1.08,
         );
         played = true;
         if (mounted) setState(() => _isSpeaking = false);
@@ -1147,7 +1189,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           _listenAfterSpeech = false;
           unawaited(_toggleListening());
         }
-      } catch (_) {
+      } catch (error, stackTrace) {
+        debugPrint('MiloOS Web Speech synthesis failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': 'web_speech_synthesis_failed',
+            'surface': 'ai_coach_widget',
+            'traceId': traceId,
+            'chars': text.length,
+            'errorType': error.runtimeType.toString(),
+          },
+        );
         if (mounted) setState(() => _isSpeaking = false);
       }
     }
@@ -1341,6 +1395,8 @@ You are MiloOS in a live spoken conversation.
 ${_roleInstruction(widget.actorRole)}
 Mode: ${_selectedMode.name}. ${_coachDirectiveForMode(_selectedMode)}
 Safety: Do not provide final graded answers; scaffold thinking.
+Voice persona: sound like a friendly, warm woman coach. Be human, calm, encouraging, and not robotic.
+Response locale: ${Localizations.localeOf(context).toLanguageTag()}.
 
 Context:
 - missionContextAvailable: ${(widget.missionId ?? '').trim().isEmpty ? 'no' : 'yes'}

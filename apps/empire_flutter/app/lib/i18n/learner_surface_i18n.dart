@@ -224,6 +224,39 @@ class LearnerSurfaceI18n {
     'What worked? What is your next step?': '什么有效？你的下一步是什么？',
     'Tell us about your goals, supports, and study rhythm.':
         '告诉我们你的目标、支持需求和学习节奏。',
+    'MiloOS will guide you one step at a time. You can keep answers short.':
+        'MiloOS 会一步一步带你完成。答案可以很短。',
+    'MiloOS setup guide': 'MiloOS 设置向导',
+    'Read this step': '朗读这一步',
+    'Step': '步骤',
+    'of': '共',
+    'Back': '返回',
+    'Next': '下一步',
+    'Finish setup': '完成设置',
+    'Step 1: Reading comfort': '第 1 步：阅读感觉',
+    'Step 2: Confidence': '第 2 步：信心',
+    'Step 3: What you like': '第 3 步：你喜欢什么',
+    'Step 4: Your rhythm': '第 4 步：你的节奏',
+    'Step 5: Helpful tools': '第 5 步：有帮助的工具',
+    'Pick the choice that feels most true today.': '选择今天最像你的一个选项。',
+    'It is okay to leave this blank if you are not sure.': '如果不确定，可以先留空。',
+    'Write a few interests and goals. Short words are fine.':
+        '写几个兴趣和目标。用简单词语也可以。',
+    'Choose a small weekly goal and reminder plan.': '选择一个小小的每周目标和提醒计划。',
+    'Turn on any tools that make Scholesa easier to use.':
+        '打开任何能让 Scholesa 更好用的工具。',
+    'Hi, I am MiloOS. We will do this one small step at a time. First, tell me how reading feels today.':
+        '你好，我是 MiloOS。我们会一步一步来。先告诉我，今天阅读感觉怎么样。',
+    'Now choose how confident you feel. There is no bad answer. This only helps us support you.':
+        '现在选择你的信心感受。没有不好的答案，这只是帮助我们更好支持你。',
+    'Next, tell me what you like and what you want to get better at. You can use simple words.':
+        '接下来，告诉我你喜欢什么，以及你想在哪方面变得更好。可以用简单的词。',
+    'Now let us make a simple plan. Pick a weekly time goal and when reminders should help you.':
+        '现在我们做一个简单计划。选择每周学习时间目标，以及什么时候提醒你。',
+    'Last step. Pick any tools that help you focus, read, or use the keyboard.':
+        '最后一步。选择能帮助你专注、阅读或使用键盘的工具。',
+    'Setup could not be saved right now. Please try again.':
+        '现在无法保存设置。请再试一次。',
     'Comma separated': '用逗号分隔',
     'Learner onboarding': '学习者入门设置',
     'Build your goals, reminders, and reflection rhythm before you jump into missions.':
@@ -475,6 +508,39 @@ class LearnerSurfaceI18n {
     'What worked? What is your next step?': '什麼有效？你的下一步是什麼？',
     'Tell us about your goals, supports, and study rhythm.':
         '告訴我們你的目標、支援需求與學習節奏。',
+    'MiloOS will guide you one step at a time. You can keep answers short.':
+        'MiloOS 會一步一步帶你完成。答案可以很短。',
+    'MiloOS setup guide': 'MiloOS 設定向導',
+    'Read this step': '朗讀這一步',
+    'Step': '步驟',
+    'of': '共',
+    'Back': '返回',
+    'Next': '下一步',
+    'Finish setup': '完成設定',
+    'Step 1: Reading comfort': '第 1 步：閱讀感覺',
+    'Step 2: Confidence': '第 2 步：信心',
+    'Step 3: What you like': '第 3 步：你喜歡什麼',
+    'Step 4: Your rhythm': '第 4 步：你的節奏',
+    'Step 5: Helpful tools': '第 5 步：有幫助的工具',
+    'Pick the choice that feels most true today.': '選擇今天最像你的選項。',
+    'It is okay to leave this blank if you are not sure.': '如果不確定，可以先留空。',
+    'Write a few interests and goals. Short words are fine.':
+        '寫幾個興趣和目標。用簡單詞語也可以。',
+    'Choose a small weekly goal and reminder plan.': '選擇一個小小的每週目標和提醒計畫。',
+    'Turn on any tools that make Scholesa easier to use.':
+        '開啟任何能讓 Scholesa 更好用的工具。',
+    'Hi, I am MiloOS. We will do this one small step at a time. First, tell me how reading feels today.':
+        '你好，我是 MiloOS。我們會一步一步來。先告訴我，今天閱讀感覺怎麼樣。',
+    'Now choose how confident you feel. There is no bad answer. This only helps us support you.':
+        '現在選擇你的信心感受。沒有不好的答案，這只是幫助我們更好支援你。',
+    'Next, tell me what you like and what you want to get better at. You can use simple words.':
+        '接下來，告訴我你喜歡什麼，以及你想在哪方面變得更好。可以用簡單的詞。',
+    'Now let us make a simple plan. Pick a weekly time goal and when reminders should help you.':
+        '現在我們做一個簡單計畫。選擇每週學習時間目標，以及什麼時候提醒你。',
+    'Last step. Pick any tools that help you focus, read, or use the keyboard.':
+        '最後一步。選擇能幫助你專注、閱讀或使用鍵盤的工具。',
+    'Setup could not be saved right now. Please try again.':
+        '現在無法儲存設定。請再試一次。',
     'Comma separated': '以逗號分隔',
     'Learner onboarding': '學習者入門設定',
     'Build your goals, reminders, and reflection rhythm before you jump into missions.':

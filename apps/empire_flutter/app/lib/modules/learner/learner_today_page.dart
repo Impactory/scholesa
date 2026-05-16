@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models.dart';
@@ -11,6 +12,7 @@ import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../runtime/milo_voice_persona.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/learner_surface_i18n.dart';
@@ -38,6 +40,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   bool _isProfileLoading = false;
   bool _didLogOnboardingStart = false;
   bool _didAutoOpenForcedSetup = false;
+  final FlutterTts _setupMiloTts = FlutterTts();
 
   String _t(String input) {
     return LearnerSurfaceI18n.text(context, input);
@@ -52,6 +55,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       context.read<MessageService>().loadMessages();
       unawaited(_loadLearnerProfile(openSetupAfterLoad: widget.forceSetupMode));
     });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_setupMiloTts.stop());
+    super.dispose();
   }
 
   @override
@@ -909,9 +918,64 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           }
         });
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Learner setup profile load failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'onboarding.check_failed',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'surface': widget.forceSetupMode
+              ? 'learner_onboarding_route'
+              : 'learner_today_setup',
+          'stage': 'profile_load',
+          'errorType': error.runtimeType.toString(),
+        },
+      ));
       if (!mounted) return;
       setState(() => _isProfileLoading = false);
+    }
+  }
+
+  Future<void> _speakLearnerSetupStep(
+    String text, {
+    required String stepId,
+  }) async {
+    final Locale locale = Localizations.localeOf(context);
+    final String siteId = _activeSiteId(context.read<AppState>());
+    try {
+      await MiloVoicePersona.configure(
+        _setupMiloTts,
+        locale: locale,
+      );
+      await _setupMiloTts.stop();
+      await _setupMiloTts.speak(text);
+      await TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'source': 'learner_setup_miloos',
+          'surface': 'learner_onboarding',
+          'stepId': stepId,
+          'chars': text.length,
+        },
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Learner setup MiloOS speech failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'source': 'learner_setup_miloos_failed',
+          'surface': 'learner_onboarding',
+          'stepId': stepId,
+          'errorType': error.runtimeType.toString(),
+        },
+      ));
     }
   }
 
@@ -1037,18 +1101,15 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                   ),
                 ),
               ),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final List<Widget> actions = <Widget>[
+                  OutlinedButton.icon(
                     onPressed: () => _openQuickReflectionSheet(),
                     icon: const Icon(Icons.rate_review_outlined),
                     label: Text(_t('Quick reflection')),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
+                  ElevatedButton.icon(
                     onPressed: _openLearnerSetupSheet,
                     icon: const Icon(Icons.auto_awesome_mosaic),
                     label: Text(
@@ -1057,8 +1118,25 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                           : _t('Complete setup'),
                     ),
                   ),
-                ),
-              ],
+                ];
+                if (constraints.maxWidth < 520) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      actions[0],
+                      const SizedBox(height: 10),
+                      actions[1],
+                    ],
+                  );
+                }
+                return Row(
+                  children: <Widget>[
+                    Expanded(child: actions[0]),
+                    const SizedBox(width: 12),
+                    Expanded(child: actions[1]),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -1308,6 +1386,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         currentProfile?.reducedDistractionEnabled ?? false;
     bool keyboardOnlyEnabled = currentProfile?.keyboardOnlyEnabled ?? false;
     bool highContrastEnabled = currentProfile?.highContrastEnabled ?? false;
+    bool miloReadsSetup = !_setupComplete || ttsEnabled;
+    bool didSpeakSetupIntro = false;
+    int setupStepIndex = 0;
     bool isSaving = false;
 
     final List<String> selectedSupports =
@@ -1319,17 +1400,258 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       builder: (BuildContext bottomSheetContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter modalSetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom:
-                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+            final List<_LearnerSetupStepData> setupSteps =
+                <_LearnerSetupStepData>[
+              _LearnerSetupStepData(
+                id: 'reading',
+                title: _t('Step 1: Reading comfort'),
+                helper: _t('Pick the choice that feels most true today.'),
+                speech: _t(
+                    'Hi, I am MiloOS. We will do this one small step at a time. First, tell me how reading feels today.'),
+                content: DropdownButtonFormField<String>(
+                  initialValue: readingLevel,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: _t('Reading check')),
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem(
+                        value: 'need_support',
+                        child: Text(_t('Need support'))),
+                    DropdownMenuItem(
+                        value: 'just_right', child: Text(_t('Just right'))),
+                    DropdownMenuItem(
+                        value: 'challenge_me',
+                        child: Text(_t('Ready for a challenge'))),
+                  ],
+                  onChanged: isSaving
+                      ? null
+                      : (String? value) {
+                          if (value == null) return;
+                          modalSetState(() => readingLevel = value);
+                        },
+                ),
               ),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
+              _LearnerSetupStepData(
+                id: 'confidence',
+                title: _t('Step 2: Confidence'),
+                helper: _t('It is okay to leave this blank if you are not sure.'),
+                speech: _t(
+                    'Now choose how confident you feel. There is no bad answer. This only helps us support you.'),
+                content: DropdownButtonFormField<String>(
+                  initialValue: diagnosticBand,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: _t('Mastery confidence'),
+                    helperText: _t('Leave blank until you know'),
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem(
+                        value: 'emerging', child: Text(_t('Emerging'))),
+                    DropdownMenuItem(
+                        value: 'developing', child: Text(_t('Developing'))),
+                    DropdownMenuItem(
+                        value: 'confident', child: Text(_t('Confident'))),
+                  ],
+                  onChanged: isSaving
+                      ? null
+                      : (String? value) {
+                          modalSetState(() => diagnosticBand = value);
+                        },
+                ),
+              ),
+              _LearnerSetupStepData(
+                id: 'interests_goals',
+                title: _t('Step 3: What you like'),
+                helper: _t('Write a few interests and goals. Short words are fine.'),
+                speech: _t(
+                    'Next, tell me what you like and what you want to get better at. You can use simple words.'),
+                content: Column(
+                  children: <Widget>[
+                    TextField(
+                      controller: interestsController,
+                      decoration: InputDecoration(
+                        labelText: _t('Interests'),
+                        helperText: _t('Comma separated'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: goalsController,
+                      decoration: InputDecoration(
+                        labelText: _t('Goals'),
+                        helperText: _t('Comma separated'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _LearnerSetupStepData(
+                id: 'rhythm',
+                title: _t('Step 4: Your rhythm'),
+                helper: _t('Choose a small weekly goal and reminder plan.'),
+                speech: _t(
+                    'Now let us make a simple plan. Pick a weekly time goal and when reminders should help you.'),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      '${_t('Weekly target minutes')}: ${weeklyTargetMinutes.round()}',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Slider(
+                      value: weeklyTargetMinutes,
+                      min: 30,
+                      max: 240,
+                      divisions: 7,
+                      label: weeklyTargetMinutes.round().toString(),
+                      onChanged: isSaving
+                          ? null
+                          : (double value) {
+                              modalSetState(() => weeklyTargetMinutes = value);
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: reminderSchedule,
+                      isExpanded: true,
+                      decoration:
+                          InputDecoration(labelText: _t('Reminder schedule')),
+                      items: <DropdownMenuItem<String>>[
+                        DropdownMenuItem(value: 'off', child: Text(_t('Off'))),
+                        DropdownMenuItem(
+                            value: 'daily', child: Text(_t('Daily'))),
+                        DropdownMenuItem(
+                            value: 'weekdays', child: Text(_t('Weekdays'))),
+                        DropdownMenuItem(
+                            value: 'weekends', child: Text(_t('Weekends'))),
+                      ],
+                      onChanged: isSaving
+                          ? null
+                          : (String? value) {
+                              if (value == null) return;
+                              modalSetState(() => reminderSchedule = value);
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: valuePromptController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: _t('Why does this matter to you?'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _LearnerSetupStepData(
+                id: 'accessibility',
+                title: _t('Step 5: Helpful tools'),
+                helper: _t('Turn on any tools that make Scholesa easier to use.'),
+                speech: _t(
+                    'Last step. Pick any tools that help you focus, read, or use the keyboard.'),
+                content: Column(
+                  children: <Widget>[
+                    CheckboxListTile(
+                      value: ttsEnabled,
+                      onChanged: isSaving
+                          ? null
+                          : (bool? value) {
+                              modalSetState(() {
+                                ttsEnabled = value ?? false;
+                                miloReadsSetup = ttsEnabled || !_setupComplete;
+                              });
+                            },
+                      title: Text(_t('Text-to-Speech')),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    CheckboxListTile(
+                      value: reducedDistractionEnabled,
+                      onChanged: isSaving
+                          ? null
+                          : (bool? value) {
+                              modalSetState(() =>
+                                  reducedDistractionEnabled = value ?? false);
+                            },
+                      title: Text(_t('Reduced distraction')),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    CheckboxListTile(
+                      value: keyboardOnlyEnabled,
+                      onChanged: isSaving
+                          ? null
+                          : (bool? value) {
+                              modalSetState(
+                                  () => keyboardOnlyEnabled = value ?? false);
+                            },
+                      title: Text(_t('Keyboard only')),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    CheckboxListTile(
+                      value: highContrastEnabled,
+                      onChanged: isSaving
+                          ? null
+                          : (bool? value) {
+                              modalSetState(
+                                  () => highContrastEnabled = value ?? false);
+                            },
+                      title: Text(_t('High contrast')),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+            ];
+
+            final _LearnerSetupStepData currentStep = setupSteps[setupStepIndex];
+
+            void logAndSpeakStep(int index) {
+              final _LearnerSetupStepData step = setupSteps[index];
+              unawaited(TelemetryService.instance.logEvent(
+                event: 'onboarding.step.viewed',
+                role: 'learner',
+                siteId: siteId,
+                metadata: <String, dynamic>{
+                  'surface': widget.forceSetupMode
+                      ? 'learner_onboarding_route'
+                      : 'learner_today_setup',
+                  'stepId': step.id,
+                  'stepIndex': index + 1,
+                  'stepCount': setupSteps.length,
+                },
+              ));
+              if (miloReadsSetup) {
+                unawaited(_speakLearnerSetupStep(
+                  step.speech,
+                  stepId: step.id,
+                ));
+              }
+            }
+
+            if (!didSpeakSetupIntro) {
+              didSpeakSetupIntro = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  logAndSpeakStep(setupStepIndex);
+                }
+              });
+            }
+
+            return SizedBox(
+              height: MediaQuery.sizeOf(bottomSheetContext).height * 0.9,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom:
+                      MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+                ),
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -1341,190 +1663,169 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _t('Tell us about your goals, supports, and study rhythm.'),
+                        _t('MiloOS will guide you one step at a time. You can keep answers short.'),
                         style: TextStyle(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        initialValue: readingLevel,
-                        decoration:
-                            InputDecoration(labelText: _t('Reading check')),
-                        items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                              value: 'need_support',
-                              child: Text(_t('Need support'))),
-                          DropdownMenuItem(
-                              value: 'just_right',
-                              child: Text(_t('Just right'))),
-                          DropdownMenuItem(
-                              value: 'challenge_me',
-                              child: Text(_t('Ready for a challenge'))),
-                        ],
-                        onChanged: isSaving
-                            ? null
-                            : (String? value) {
-                                if (value == null) return;
-                                modalSetState(() => readingLevel = value);
-                              },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: diagnosticBand,
-                        decoration: InputDecoration(
-                          labelText: _t('Mastery confidence'),
-                          helperText: _t('Leave blank until you know'),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: ScholesaColors.learner.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: ScholesaColors.learner.withValues(alpha: 0.18),
+                          ),
                         ),
-                        items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                              value: 'emerging', child: Text(_t('Emerging'))),
-                          DropdownMenuItem(
-                              value: 'developing',
-                              child: Text(_t('Developing'))),
-                          DropdownMenuItem(
-                              value: 'confident', child: Text(_t('Confident'))),
-                        ],
-                        onChanged: isSaving
-                            ? null
-                            : (String? value) {
-                                if (value == null) return;
-                                modalSetState(() => diagnosticBand = value);
-                              },
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: interestsController,
-                        decoration: InputDecoration(
-                          labelText: _t('Interests'),
-                          helperText: _t('Comma separated'),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: goalsController,
-                        decoration: InputDecoration(
-                          labelText: _t('Goals'),
-                          helperText: _t('Comma separated'),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '${_t('Weekly target minutes')}: ${weeklyTargetMinutes.round()}',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Slider(
-                        value: weeklyTargetMinutes,
-                        min: 30,
-                        max: 240,
-                        divisions: 7,
-                        label: weeklyTargetMinutes.round().toString(),
-                        onChanged: isSaving
-                            ? null
-                            : (double value) {
-                                modalSetState(
-                                    () => weeklyTargetMinutes = value);
-                              },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: reminderSchedule,
-                        decoration:
-                            InputDecoration(labelText: _t('Reminder schedule')),
-                        items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                              value: 'off', child: Text(_t('Off'))),
-                          DropdownMenuItem(
-                              value: 'daily', child: Text(_t('Daily'))),
-                          DropdownMenuItem(
-                              value: 'weekdays', child: Text(_t('Weekdays'))),
-                          DropdownMenuItem(
-                              value: 'weekends', child: Text(_t('Weekends'))),
-                        ],
-                        onChanged: isSaving
-                            ? null
-                            : (String? value) {
-                                if (value == null) return;
-                                modalSetState(() => reminderSchedule = value);
-                              },
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: valuePromptController,
-                        maxLines: 3,
-                        decoration: InputDecoration(
-                          labelText: _t('Why does this matter to you?'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                const Icon(Icons.record_voice_over_rounded,
+                                    color: ScholesaColors.learner),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _t('MiloOS setup guide'),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                                Switch(
+                                  value: miloReadsSetup,
+                                  onChanged: isSaving
+                                      ? null
+                                      : (bool value) {
+                                          modalSetState(
+                                              () => miloReadsSetup = value);
+                                        },
+                                ),
+                              ],
+                            ),
+                            Text(
+                              currentStep.speech,
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton.icon(
+                              onPressed: isSaving
+                                  ? null
+                                  : () => _speakLearnerSetupStep(
+                                        currentStep.speech,
+                                        stepId: currentStep.id,
+                                      ),
+                              icon: const Icon(Icons.volume_up_rounded),
+                              label: Text(_t('Read this step')),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _t('Accessibility supports'),
-                        style: Theme.of(context).textTheme.titleSmall,
+                        '${_t('Step')} ${setupStepIndex + 1} ${_t('of')} ${setupSteps.length}',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: ScholesaColors.learner,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                       const SizedBox(height: 8),
-                      CheckboxListTile(
-                        value: ttsEnabled,
-                        onChanged: isSaving
-                            ? null
-                            : (bool? value) {
-                                modalSetState(
-                                    () => ttsEnabled = value ?? false);
-                              },
-                        title: Text(_t('Text-to-Speech')),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: reducedDistractionEnabled,
-                        onChanged: isSaving
-                            ? null
-                            : (bool? value) {
-                                modalSetState(() =>
-                                    reducedDistractionEnabled = value ?? false);
-                              },
-                        title: Text(_t('Reduced distraction')),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: keyboardOnlyEnabled,
-                        onChanged: isSaving
-                            ? null
-                            : (bool? value) {
-                                modalSetState(
-                                    () => keyboardOnlyEnabled = value ?? false);
-                              },
-                        title: Text(_t('Keyboard only')),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: highContrastEnabled,
-                        onChanged: isSaving
-                            ? null
-                            : (bool? value) {
-                                modalSetState(
-                                    () => highContrastEnabled = value ?? false);
-                              },
-                        title: Text(_t('High contrast')),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: Container(
+                          key: ValueKey<String>(currentStep.id),
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                currentStep.title,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                currentStep.helper,
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              currentStep.content,
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: <Widget>[
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: isSaving
-                                  ? null
-                                  : () => Navigator.pop(bottomSheetContext),
-                              child: Text(_t('Cancel')),
+                          if (setupStepIndex > 0) ...<Widget>[
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: isSaving
+                                    ? null
+                                    : () {
+                                        modalSetState(
+                                            () => setupStepIndex -= 1);
+                                        logAndSpeakStep(setupStepIndex);
+                                      },
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                label: Text(_t('Back')),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
+                            const SizedBox(width: 12),
+                          ],
                           Expanded(
-                            child: ElevatedButton(
-                              onPressed: isSaving
+                            child: setupStepIndex < setupSteps.length - 1
+                                ? ElevatedButton.icon(
+                                    onPressed: isSaving
+                                        ? null
+                                        : () {
+                                            modalSetState(
+                                                () => setupStepIndex += 1);
+                                            logAndSpeakStep(setupStepIndex);
+                                          },
+                                    icon:
+                                        const Icon(Icons.arrow_forward_rounded),
+                                    label: Text(_t('Next')),
+                                  )
+                                : ElevatedButton.icon(
+                                    icon: isSaving
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.check_rounded),
+                                    label: Text(_t('Finish setup')),
+                                    onPressed: isSaving
                                   ? null
                                   : () async {
                                       modalSetState(() => isSaving = true);
@@ -1613,18 +1914,42 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         if (widget.forceSetupMode) {
                                           router.go('/learner/today');
                                         }
+                                      } catch (error, stackTrace) {
+                                        debugPrint(
+                                            'Learner setup save failed: $error');
+                                        debugPrintStack(stackTrace: stackTrace);
+                                        await TelemetryService.instance.logEvent(
+                                          event: 'onboarding.save_failed',
+                                          role: 'learner',
+                                          siteId: siteId,
+                                          metadata: <String, dynamic>{
+                                            'surface': widget.forceSetupMode
+                                                ? 'learner_onboarding_route'
+                                                : 'learner_today_setup',
+                                            'errorType':
+                                                error.runtimeType.toString(),
+                                            'stepId': currentStep.id,
+                                          },
+                                        );
+                                        if (!mounted) return;
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(_t(
+                                                'Setup could not be saved right now. Please try again.')),
+                                          ),
+                                        );
                                       } finally {
                                         if (bottomSheetContext.mounted) {
                                           modalSetState(() => isSaving = false);
                                         }
                                       }
                                     },
-                              child: Text(_t('Save')),
-                            ),
+                                  ),
                           ),
                         ],
                       ),
                     ],
+                    ),
                   ),
                 ),
               ),
@@ -2041,6 +2366,22 @@ class _SummaryChipData {
 
   final String label;
   final Color color;
+}
+
+class _LearnerSetupStepData {
+  const _LearnerSetupStepData({
+    required this.id,
+    required this.title,
+    required this.helper,
+    required this.speech,
+    required this.content,
+  });
+
+  final String id;
+  final String title;
+  final String helper;
+  final String speech;
+  final Widget content;
 }
 
 class _EvidenceLoopCopy {

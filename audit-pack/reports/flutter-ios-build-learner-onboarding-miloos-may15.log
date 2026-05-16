@@ -1,0 +1,37 @@
+[0;32m[deploy][0m Syncing platform icons...
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/20.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/60.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/29.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/58.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/87.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/80.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/50.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/100.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/57.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/114.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/180.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/72.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/144.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/76.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/152.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/167.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/1024.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+[0;32m[deploy][0m Platform icons synced ✓
+[0;32m[deploy][0m Running flutter analyze...
+Analyzing app...                                                

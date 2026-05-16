@@ -226,13 +226,30 @@ void main() {
           await tester.tap(find.text('Complete setup'));
           await tester.pumpAndSettle();
 
+            await tester.ensureVisible(find.text('Next'));
+            await tester.tap(find.text('Next'));
+            await tester.pumpAndSettle();
+            await tester.ensureVisible(find.text('Next'));
+            await tester.tap(find.text('Next'));
+            await tester.pumpAndSettle();
+
           await tester.enterText(
               find.byType(TextField).at(0), 'Robotics, coding');
           await tester.enterText(
               find.byType(TextField).at(1), 'Build a better robot');
+
+            await tester.ensureVisible(find.text('Next'));
+            await tester.tap(find.text('Next'));
+            await tester.pumpAndSettle();
+
           await tester.enterText(
-              find.byType(TextField).at(2), 'I want to create useful things');
-          await tester.tap(find.text('Save').last);
+              find.byType(TextField).last, 'I want to create useful things');
+            await tester.ensureVisible(find.text('Next'));
+            await tester.tap(find.text('Next'));
+            await tester.pumpAndSettle();
+
+            await tester.ensureVisible(find.text('Finish setup'));
+            await tester.tap(find.text('Finish setup'));
           await tester.pumpAndSettle();
         },
       );

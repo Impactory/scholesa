@@ -133,6 +133,7 @@ Widget _buildHarness({
   required HabitService habitService,
   required MissionService missionService,
   required MessageService messageService,
+  bool forceSetupMode = false,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -158,7 +159,7 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const LearnerTodayPage(),
+      home: LearnerTodayPage(forceSetupMode: forceSetupMode),
     ),
   );
 }
@@ -177,6 +178,64 @@ Future<void> _scrollUntilTextVisible(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('learner first login setup opens one simple step at a time',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    final HabitService habitService = _FakeHabitService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+    final MissionService missionService = _FakeMissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+    final MessageService messageService = MessageService(
+      firestoreService: firestoreService,
+      userId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        habitService: habitService,
+        missionService: missionService,
+        messageService: messageService,
+        forceSetupMode: true,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Learner Setup'), findsWidgets);
+    expect(find.text('MiloOS setup guide'), findsOneWidget);
+    expect(find.text('Step 1: Reading comfort'), findsOneWidget);
+    expect(find.text('Step 3: What you like'), findsNothing);
+    expect(find.text('Goals'), findsNothing);
+
+    await tester.ensureVisible(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Step 2: Confidence'));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2: Confidence'), findsOneWidget);
+    expect(find.text('Step 1: Reading comfort'), findsNothing);
+
+    await tester.ensureVisible(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Step 3: What you like'));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 3: What you like'), findsOneWidget);
+    expect(find.text('Goals'), findsOneWidget);
+  });
 
   testWidgets(
       'learner today shows explicit mission and habit load errors instead of fake empty cards',

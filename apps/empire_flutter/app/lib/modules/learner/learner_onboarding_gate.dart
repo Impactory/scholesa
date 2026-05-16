@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../domain/repositories.dart';
 import '../../services/firestore_service.dart';
+import '../../services/telemetry_service.dart';
 
 class LearnerOnboardingGate extends StatefulWidget {
   const LearnerOnboardingGate({
@@ -72,12 +73,28 @@ class _LearnerOnboardingGateState extends State<LearnerOnboardingGate> {
     final LearnerProfileRepository repository = LearnerProfileRepository(
       firestore: context.read<FirestoreService>().firestore,
     );
-    final bool onboardingComplete = (await repository.getByLearnerAndSite(
-              learnerId: learnerId,
-              siteId: siteId,
-            ))
-            ?.onboardingCompleted ??
-        false;
+    bool onboardingComplete = false;
+    try {
+      onboardingComplete = (await repository.getByLearnerAndSite(
+                learnerId: learnerId,
+                siteId: siteId,
+              ))
+              ?.onboardingCompleted ??
+          false;
+    } catch (error, stackTrace) {
+      debugPrint('Learner onboarding check failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'onboarding.check_failed',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'surface': 'learner_onboarding_gate',
+          'matchedLocation': matchedLocation,
+          'errorType': error.runtimeType.toString(),
+        },
+      ));
+    }
 
     if (!mounted) {
       return;
