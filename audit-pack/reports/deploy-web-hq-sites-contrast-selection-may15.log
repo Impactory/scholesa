@@ -2421,3 +2421,19 @@ Deploying to Cloud Run: service=empire-web region=us-central1
 Deploying container to Cloud Run service [[1mempire-web[m] in project [[1mstudio-3328096157-e3f79[m] region [[1mus-central1[m]
 Deploying...
 Setting IAM Policy...............done
+Creating Revision....................................................................................done
+Routing traffic.....done
+Done.
+Service [[1mempire-web[m] revision [[1mempire-web-00105-hwf[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://empire-web-97120825720.us-central1.run.app[m
+Routing traffic to latest revision for empire-web
+Updating traffic...
+Done.
+URL: https://empire-web-gu5vyrn2tq-uc.a.run.app
+Traffic:
+  0%   [1mempire-web-00074-rvc[m
+         gold-rehearsal: https://gold-rehearsal---empire-web-gu5vyrn2tq-uc.a.run.app
+  100% [1mLATEST (currently empire-web-00105-hwf)[m
+Deployment finished.
+[0;32m[deploy][0m Flutter web deployed ✓
+[0;32m[deploy][0m Both Cloud Run web surfaces deployed ✓
