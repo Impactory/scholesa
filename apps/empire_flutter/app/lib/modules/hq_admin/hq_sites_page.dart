@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
@@ -45,6 +47,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -52,9 +55,9 @@ class _HqSitesPageState extends State<HqSitesPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withValues(alpha: 0.05),
-              Colors.white,
-              ScholesaColors.site.withValues(alpha: 0.03),
+              scheme.surfaceContainerLow,
+              scheme.surface,
+              scheme.surfaceContainerHighest,
             ],
           ),
         ),
@@ -82,6 +85,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   Widget _buildHeader() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -117,7 +121,10 @@ class _HqSitesPageState extends State<HqSitesPage> {
                   ),
                   Text(
                     _tHqSites(context, 'Manage all platform sites'),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -138,6 +145,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   Widget _buildSearchBar() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
@@ -174,14 +182,18 @@ class _HqSitesPageState extends State<HqSitesPage> {
                 )
               : null,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: scheme.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: scheme.outlineVariant),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: scheme.outlineVariant),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: scheme.primary),
           ),
         ),
       ),
@@ -245,7 +257,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             _FilterChip(
               label: _tHqSites(context, 'Pending'),
               isSelected: _filterStatus == 'pending',
-              color: Colors.grey,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -306,17 +318,28 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   void _openSiteDetail(String siteId) {
+    final String selectedSiteId = siteId.trim();
+    if (selectedSiteId.isEmpty) return;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'hq_sites_open_detail',
-        'site_id': siteId
+        'site_id': selectedSiteId,
       },
     );
+
+    final AppState? appState = _maybeAppState();
+    appState?.switchSite(selectedSiteId);
+
+    final GoRouter? router = GoRouter.maybeOf(context);
+    if (router != null) {
+      router.go('/site/dashboard');
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${_tHqSites(context, 'Opening site')}: $siteId'),
-        backgroundColor: ScholesaColors.hq,
+        content: Text('${_tHqSites(context, 'Opening site')}: $selectedSiteId'),
       ),
     );
   }
@@ -528,7 +551,8 @@ class _HqSitesPageState extends State<HqSitesPage> {
     }
   }
 
-  Future<List<_SiteItem>> _loadSiteItems(FirestoreService firestoreService) async {
+  Future<List<_SiteItem>> _loadSiteItems(
+      FirestoreService firestoreService) async {
     if (widget.loadSitesOverride != null) {
       final List<Map<String, dynamic>> rows = await widget.loadSitesOverride!();
       return rows.map(_siteItemFromMap).toList()
@@ -543,10 +567,8 @@ class _HqSitesPageState extends State<HqSitesPage> {
           .limit(300)
           .get();
     } catch (_) {
-      snapshot = await firestoreService.firestore
-          .collection('sites')
-          .limit(300)
-          .get();
+      snapshot =
+          await firestoreService.firestore.collection('sites').limit(300).get();
     }
 
     return snapshot.docs
@@ -563,7 +585,8 @@ class _HqSitesPageState extends State<HqSitesPage> {
         (data['educatorIds'] as List?) ?? <dynamic>[];
     final String status =
         ((data['status'] as String?) ?? 'active').trim().toLowerCase();
-    final int healthScore = _asInt(data['healthScore']) ?? _defaultHealth(status);
+    final int healthScore =
+        _asInt(data['healthScore']) ?? _defaultHealth(status);
 
     return _SiteItem(
       id: (data['id'] as String?)?.trim().isNotEmpty == true
@@ -613,6 +636,14 @@ class _HqSitesPageState extends State<HqSitesPage> {
   FirestoreService? _maybeFirestoreService() {
     try {
       return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
     } catch (_) {
       return null;
     }
@@ -672,11 +703,13 @@ class _SiteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
+        surfaceTintColor: scheme.surfaceTint,
         child: InkWell(
           onTap: () {
             TelemetryService.instance.logEvent(
@@ -694,7 +727,7 @@ class _SiteCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: scheme.outlineVariant),
             ),
             child: Column(
               children: <Widget>[
@@ -703,7 +736,7 @@ class _SiteCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.site.withValues(alpha: 0.1),
+                        color: ScholesaColors.site.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -719,20 +752,23 @@ class _SiteCard extends StatelessWidget {
                         children: <Widget>[
                           Text(
                             name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: scheme.onSurface,
                             ),
                           ),
                           Row(
                             children: <Widget>[
                               Icon(Icons.location_on,
-                                  size: 14, color: Colors.grey[500]),
+                                  size: 14, color: scheme.onSurfaceVariant),
                               const SizedBox(width: 2),
                               Text(
                                 location,
                                 style: TextStyle(
-                                    color: Colors.grey[600], fontSize: 13),
+                                  color: scheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
@@ -745,6 +781,9 @@ class _SiteCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: _statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _statusColor.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: Text(
                         status.toUpperCase(),
@@ -800,20 +839,25 @@ class _SiteMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Row(
       children: <Widget>[
-        Icon(icon, size: 16, color: Colors.grey[500]),
+        Icon(icon, size: 16, color: scheme.onSurfaceVariant),
         const SizedBox(width: 4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
             Text(
               label,
-              style: TextStyle(color: Colors.grey[500], fontSize: 10),
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 10),
             ),
           ],
         ),
@@ -835,6 +879,7 @@ class _HealthScore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Row(
       children: <Widget>[
         SizedBox(
@@ -863,7 +908,7 @@ class _HealthScore extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           _tHqSites(context, 'Health'),
-          style: TextStyle(color: Colors.grey[500], fontSize: 10),
+          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 10),
         ),
       ],
     );
@@ -885,6 +930,10 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color chipColor = color ?? ScholesaColors.hq;
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final Color selectedLabelColor = chipColor == ScholesaColors.warning
+        ? ScholesaColors.navy
+        : Colors.white;
     return GestureDetector(
       onTap: () {
         TelemetryService.instance.logEvent(
@@ -899,13 +948,16 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : chipColor.withValues(alpha: 0.1),
+          color: isSelected ? chipColor : scheme.surface,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? chipColor : chipColor.withValues(alpha: 0.45),
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : chipColor,
+            color: isSelected ? selectedLabelColor : chipColor,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),
@@ -929,13 +981,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         children: <Widget>[
@@ -951,7 +1004,7 @@ class _StatCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(color: Colors.grey[600], fontSize: 10),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 10),
           ),
         ],
       ),
@@ -1093,7 +1146,9 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
     }
 
     try {
-      await firestoreService.firestore.collection('sites').add(<String, dynamic>{
+      await firestoreService.firestore
+          .collection('sites')
+          .add(<String, dynamic>{
         'name': name,
         'location': location,
         'status': 'pending',

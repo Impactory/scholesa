@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_sites_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -15,10 +16,15 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 Widget _buildHarness(
   FirestoreService firestoreService, {
   Future<List<Map<String, dynamic>>> Function()? loadSitesOverride,
+  AppState? appState,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
       Provider<FirestoreService>.value(value: firestoreService),
+      if (appState != null)
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+        ),
     ],
     child: MaterialApp(
       theme: ThemeData(
@@ -49,7 +55,10 @@ Future<void> _seedSites(FakeFirebaseFirestore firestore) async {
     'educatorCount': 5,
     'healthScore': 96,
   });
-  await firestore.collection('sites').doc('site-onboarding').set(<String, dynamic>{
+  await firestore
+      .collection('sites')
+      .doc('site-onboarding')
+      .set(<String, dynamic>{
     'name': 'Beta Studio',
     'location': 'Hong Kong',
     'status': 'onboarding',
@@ -80,7 +89,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Sites Management'), findsOneWidget);
     expect(find.text('Alpha Studio'), findsOneWidget);
     expect(find.text('Beta Studio'), findsOneWidget);
@@ -132,7 +141,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add New Site'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextField, 'Site Name'), 'Delta Studio');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Site Name'), 'Delta Studio');
     await tester.enterText(find.widgetWithText(TextField, 'Location'), 'Seoul');
 
     await tester.tap(find.text('Create Site'));
@@ -150,7 +160,8 @@ void main() {
     expect(created.single['location'], 'Seoul');
   });
 
-  testWidgets('HQ sites page shows an explicit unavailable state instead of a fake empty list',
+  testWidgets(
+      'HQ sites page shows an explicit unavailable state instead of a fake empty list',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -169,10 +180,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Sites are temporarily unavailable'), findsOneWidget);
     expect(
-      find.text('We could not load sites right now. Retry to check the current state.'),
+      find.text(
+          'We could not load sites right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('No sites found'), findsNothing);
@@ -219,9 +231,42 @@ void main() {
 
     expect(find.text('Alpha Studio'), findsOneWidget);
     expect(
-      find.text('Unable to refresh sites right now. Showing the last successful data.'),
+      find.text(
+          'Unable to refresh sites right now. Showing the last successful data.'),
       findsOneWidget,
     );
     expect(find.text('No sites found'), findsNothing);
+  });
+
+  testWidgets('HQ sites page selecting a site updates active site context',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSites(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = AppState()
+      ..updateFromMeResponse(<String, dynamic>{
+        'userId': 'hq123',
+        'email': 'hq@example.com',
+        'displayName': 'HQ User',
+        'role': 'hq',
+        'activeSiteId': null,
+        'siteIds': <String>[],
+        'entitlements': <dynamic>[],
+      });
+
+    await tester.pumpWidget(
+      _buildHarness(firestoreService, appState: appState),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Alpha Studio'));
+    await tester.pumpAndSettle();
+
+    expect(appState.activeSiteId, equals('site-active'));
+    expect(appState.siteIds, contains('site-active'));
   });
 }

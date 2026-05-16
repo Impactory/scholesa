@@ -123,6 +123,7 @@ class AppState extends ChangeNotifier {
   bool get isImpersonating => _impersonatingRole != null;
 
   String? get activeSiteId => _activeSiteId;
+
   /// Learner's learning stage (discoverers/builders/explorers/innovators)
   String? get stageId => _stageId;
   List<String> get siteIds => List<String>.unmodifiable(_siteIds);
@@ -139,6 +140,7 @@ class AppState extends ChangeNotifier {
         return const Locale('en');
     }
   }
+
   String get timeZone => _timeZone;
   bool get notificationsEnabled => _notificationsEnabled;
   bool get emailNotifications => _emailNotifications;
@@ -207,10 +209,18 @@ class AppState extends ChangeNotifier {
 
   /// Switch active site
   void switchSite(String siteId) {
-    if (_siteIds.contains(siteId)) {
-      _activeSiteId = siteId;
-      notifyListeners();
+    final String normalizedSiteId = siteId.trim();
+    if (normalizedSiteId.isEmpty) return;
+
+    final bool canSelectSite =
+        _siteIds.contains(normalizedSiteId) || _role == UserRole.hq;
+    if (!canSelectSite) return;
+
+    if (_role == UserRole.hq && !_siteIds.contains(normalizedSiteId)) {
+      _siteIds = <String>[..._siteIds, normalizedSiteId];
     }
+    _activeSiteId = normalizedSiteId;
+    notifyListeners();
   }
 
   /// Set loading state

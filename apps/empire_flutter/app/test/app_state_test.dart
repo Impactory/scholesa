@@ -81,6 +81,25 @@ void main() {
       appState.switchSite('site3'); // Invalid
       expect(appState.activeSiteId, equals('site2')); // Unchanged
     });
+
+    test('switchSite allows HQ to select any managed site', () {
+      final AppState appState = AppState();
+
+      appState.updateFromMeResponse(<String, dynamic>{
+        'userId': 'hq123',
+        'email': 'hq@example.com',
+        'displayName': 'HQ User',
+        'role': 'hq',
+        'activeSiteId': null,
+        'siteIds': <String>[],
+        'entitlements': <dynamic>[],
+      });
+
+      appState.switchSite('site-from-directory');
+
+      expect(appState.activeSiteId, equals('site-from-directory'));
+      expect(appState.siteIds, contains('site-from-directory'));
+    });
   });
 
   group('UserRole', () {
