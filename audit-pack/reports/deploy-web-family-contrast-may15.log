@@ -2172,3 +2172,273 @@ Uploading tarball of [/var/folders/lf/67v4w5915kq97xpsv4vlh9cc0000gn/T/tmp.XQdGv
 Created [https://cloudbuild.googleapis.com/v1/projects/studio-3328096157-e3f79/locations/global/builds/d820a65e-2251-4379-93e3-83974f8ad0ba].
 Logs are available at [ https://console.cloud.google.com/cloud-build/builds/d820a65e-2251-4379-93e3-83974f8ad0ba?project=97120825720 ].
 Waiting for build to complete. Polling interval: 1 second(s).
+----------------------------- REMOTE BUILD OUTPUT ------------------------------
+starting build "d820a65e-2251-4379-93e3-83974f8ad0ba"
+
+FETCHSOURCE
+Fetching storage object: gs://studio-3328096157-e3f79_cloudbuild/source/1778900794.594774-ff89d1854ffd460d88a5f4d65d31ceb5.tgz#1778900796711349
+Copying gs://studio-3328096157-e3f79_cloudbuild/source/1778900794.594774-ff89d1854ffd460d88a5f4d65d31ceb5.tgz#1778900796711349...
+/ [0 files][    0.0 B/ 15.6 MiB]                                                / [1 files][ 15.6 MiB/ 15.6 MiB]                                                
+Operation completed over 1 objects/15.6 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  22.05MB
+Step 1/22 : FROM ghcr.io/cirruslabs/flutter:3.41.6 AS builder
+3.41.6: Pulling from cirruslabs/flutter
+20043066d3d5: Pulling fs layer
+debb49cb0d5e: Pulling fs layer
+3c191bc08c7d: Pulling fs layer
+821ff31b6cb4: Pulling fs layer
+38b2eee2a622: Pulling fs layer
+7b3fb6c6aba3: Pulling fs layer
+9319724368b6: Pulling fs layer
+9319724368b6: Waiting
+20043066d3d5: Download complete
+38b2eee2a622: Verifying Checksum
+38b2eee2a622: Download complete
+821ff31b6cb4: Verifying Checksum
+821ff31b6cb4: Download complete
+7b3fb6c6aba3: Verifying Checksum
+7b3fb6c6aba3: Download complete
+3c191bc08c7d: Verifying Checksum
+3c191bc08c7d: Download complete
+debb49cb0d5e: Verifying Checksum
+debb49cb0d5e: Download complete
+20043066d3d5: Pull complete
+9319724368b6: Verifying Checksum
+9319724368b6: Download complete
+debb49cb0d5e: Pull complete
+3c191bc08c7d: Pull complete
+821ff31b6cb4: Pull complete
+38b2eee2a622: Pull complete
+7b3fb6c6aba3: Pull complete
+9319724368b6: Pull complete
+Digest: sha256:2e5918c0681a1599ca6bf9a4c0a4f78d39e450da673d063a13968265aa87c210
+Status: Downloaded newer image for ghcr.io/cirruslabs/flutter:3.41.6
+ ---> 16c29950cc00
+Step 2/22 : WORKDIR /workspace
+ ---> Running in 21bd9a165f3d
+Removing intermediate container 21bd9a165f3d
+ ---> 67a27c5e1dca
+Step 3/22 : COPY scholesa.svg /workspace/scholesa.svg
+ ---> 7a8a76670e51
+Step 4/22 : COPY public/videos /workspace/public/videos
+ ---> db3818d435c8
+Step 5/22 : COPY apps/empire_flutter/app /workspace/apps/empire_flutter/app
+ ---> 8e83e4bab1f6
+Step 6/22 : RUN mkdir -p /workspace/public/icons
+ ---> Running in ffafc832c6a0
+Removing intermediate container ffafc832c6a0
+ ---> 0ef6c52f96d5
+Step 7/22 : WORKDIR /workspace/apps/empire_flutter/app
+ ---> Running in 9b46df5f7486
+Removing intermediate container 9b46df5f7486
+ ---> bed614e30ebf
+Step 8/22 : RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize tools); using checked-in assets"
+ ---> Running in b62c662d47e5
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+[91m[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets
+[0m[icons] Syncing Android launcher icons from assets/icons/android
+[91mMissing required file: /workspace/apps/empire_flutter/app/assets/icons/android/android-launchericon-48-48.png
+[0m[icons] Sync skipped (no resize tools); using checked-in assets
+Removing intermediate container b62c662d47e5
+ ---> f85ec71eb52f
+Step 9/22 : RUN flutter pub get
+ ---> Running in 5b014a67da65
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 67.0.0 (100.0.0 available)
+  _flutterfire_internals 1.3.69 (1.3.71 available)
+  analyzer 6.4.1 (13.0.0 available)
+  build 2.4.1 (4.0.6 available)
+  build_config 1.1.2 (1.3.0 available)
+  build_resolvers 2.4.2 (3.0.4 available)
+  build_runner 2.4.13 (2.15.0 available)
+  build_runner_core 7.3.2 (9.3.2 available)
+  built_value 8.12.5 (8.12.6 available)
+  cloud_firestore 6.3.0 (6.4.1 available)
+  cloud_firestore_platform_interface 7.2.0 (8.0.1 available)
+  cloud_firestore_web 5.3.0 (5.4.1 available)
+  cloud_functions 6.2.0 (6.3.1 available)
+  cloud_functions_platform_interface 5.8.12 (6.0.1 available)
+  cloud_functions_web 5.1.5 (5.1.7 available)
+  dart_style 2.3.6 (3.1.9 available)
+  file_picker 10.3.10 (11.0.2 available)
+  firebase_auth 6.4.0 (6.5.1 available)
+  firebase_auth_platform_interface 8.1.9 (9.0.1 available)
+  firebase_auth_web 6.1.5 (6.2.1 available)
+  firebase_core 4.7.0 (4.9.0 available)
+  firebase_core_platform_interface 6.0.3 (7.0.1 available)
+  firebase_core_web 3.6.0 (3.7.0 available)
+  firebase_storage 13.3.0 (13.4.1 available)
+  firebase_storage_platform_interface 5.2.20 (6.0.1 available)
+  firebase_storage_web 3.11.5 (3.11.7 available)
+  flutter_svg 2.2.4 (2.3.0 available)
+  go_router 17.2.2 (17.2.3 available)
+  google_fonts 8.0.2 (8.1.0 available)
+  hooks 1.0.2 (1.0.3 available)
+  json_annotation 4.11.0 (4.12.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  native_toolchain_c 0.17.6 (0.18.0 available)
+  rx 0.4.0 (0.5.0 available)
+  shelf_web_socket 2.0.1 (3.0.0 available)
+  source_gen 1.5.0 (4.2.3 available)
+  source_helper 1.3.5 (1.3.12 available)
+  test_api 0.7.10 (0.7.12 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_graphics 1.1.21 (1.2.1 available)
+  vector_graphics_compiler 1.2.0 (1.2.2 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.1.0 (15.2.0 available)
+  win32 5.15.0 (6.2.0 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies!
+46 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Removing intermediate container 5b014a67da65
+ ---> bc536a36a5e1
+Step 10/22 : RUN flutter build web --wasm --release --no-tree-shake-icons
+ ---> Running in 629681090fee
+Downloading Web SDK...                                              3.0s
+
+┌─ New feature ────────────────────────────────────────────────────────────────────────────┐
+│   WebAssembly compilation is new. Understand the details before deploying to production. │
+│   See https://flutter.dev/to/wasm for more information.                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+Compiling lib/main.dart for the Web...                            355.5s
+✓ Built build/web
+Removing intermediate container 629681090fee
+ ---> 43c25c1607b2
+Step 11/22 : RUN mkdir -p build/web/videos && cp -R /workspace/public/videos/. build/web/videos/
+ ---> Running in 7d435aa2c91f
+Removing intermediate container 7d435aa2c91f
+ ---> 9b07cff2a1b1
+Step 12/22 : RUN printf 'const STALE_CACHE_PREFIXES=["workbox-","static-","google-fonts","font-awesome","apis","others"];\nself.addEventListener("install",()=>{self.skipWaiting();});\nself.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(cacheNames=>Promise.all(cacheNames.filter(cacheName=>STALE_CACHE_PREFIXES.some(prefix=>cacheName.startsWith(prefix))).map(cacheName=>caches.delete(cacheName)))).then(()=>self.clients.claim()));});\n' > build/web/sw.js
+ ---> Running in afe75f41bb5a
+Removing intermediate container afe75f41bb5a
+ ---> 1677c343ac13
+Step 13/22 : RUN cache_bust="$(date +%Y%m%d%H%M%S)" &&     sed -i "s/main.dart.js/main.dart.js?v=${cache_bust}/g; s/main.dart.mjs/main.dart.mjs?v=${cache_bust}/g; s/main.dart.wasm/main.dart.wasm?v=${cache_bust}/g" build/web/index.html
+ ---> Running in 1a59f59f825b
+Removing intermediate container 1a59f59f825b
+ ---> abff7dcbf361
+Step 14/22 : FROM nginx:1.25-alpine
+1.25-alpine: Pulling from library/nginx
+4abcf2066143: Pulling fs layer
+fc21a1d387f5: Pulling fs layer
+e6ef242c1570: Pulling fs layer
+13fcfbc94648: Pulling fs layer
+d4bca490e609: Pulling fs layer
+5406ed7b06d9: Pulling fs layer
+8a3742a9529d: Pulling fs layer
+0d0c16747d2c: Pulling fs layer
+8a3742a9529d: Waiting
+0d0c16747d2c: Waiting
+5406ed7b06d9: Verifying Checksum
+5406ed7b06d9: Download complete
+d4bca490e609: Verifying Checksum
+d4bca490e609: Download complete
+e6ef242c1570: Verifying Checksum
+e6ef242c1570: Download complete
+13fcfbc94648: Download complete
+4abcf2066143: Verifying Checksum
+4abcf2066143: Download complete
+fc21a1d387f5: Download complete
+4abcf2066143: Pull complete
+8a3742a9529d: Download complete
+0d0c16747d2c: Verifying Checksum
+0d0c16747d2c: Download complete
+fc21a1d387f5: Pull complete
+e6ef242c1570: Pull complete
+13fcfbc94648: Pull complete
+d4bca490e609: Pull complete
+5406ed7b06d9: Pull complete
+8a3742a9529d: Pull complete
+0d0c16747d2c: Pull complete
+Digest: sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00
+Status: Downloaded newer image for nginx:1.25-alpine
+ ---> 501d84f5d064
+Step 15/22 : COPY --from=builder /workspace/apps/empire_flutter/app/build/web /usr/share/nginx/html
+ ---> 6ccfa82c9234
+Step 16/22 : ENV SCHOLESA_WEB_UPSTREAM=https://scholesa-web-gu5vyrn2tq-uc.a.run.app
+ ---> Running in 03af406fbd49
+Removing intermediate container 03af406fbd49
+ ---> f41cda68df09
+Step 17/22 : ENV SCHOLESA_WEB_HOST=scholesa-web-gu5vyrn2tq-uc.a.run.app
+ ---> Running in 2c6e619cd87a
+Removing intermediate container 2c6e619cd87a
+ ---> ff01913a4809
+Step 18/22 : RUN mkdir -p /etc/nginx/templates && printf 'server {\n    listen 8080;\n    server_name _;\n    root /usr/share/nginx/html;\n    include /etc/nginx/mime.types;\n    types {\n        application/wasm wasm;\n        text/javascript mjs;\n    }\n    add_header Cross-Origin-Opener-Policy "same-origin";\n    add_header Cross-Origin-Embedder-Policy "credentialless";\n    gzip on;\n    gzip_types text/html text/css application/javascript application/json image/svg+xml;\n    gzip_min_length 256;\n    location = /index.html {\n        add_header Cache-Control "no-cache, no-store, must-revalidate";\n        try_files $uri =404;\n    }\n    location ~* ^/(main\\.dart\\.(js|mjs|wasm)|flutter_bootstrap\\.js|flutter\\.js|version\\.json)$ {\n        add_header Cache-Control "no-cache, no-store, must-revalidate";\n        try_files $uri =404;\n    }\n    location ~ ^/(en|es|th|zh-CN|zh-TW)(/privacy|/summer-camp-2026)?/?$ {\n        proxy_ssl_server_name on;\n        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n    }\n    location ^~ /_next/ {\n        proxy_ssl_server_name on;\n        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n    }\n    location ^~ /logo/ {\n        proxy_ssl_server_name on;\n        proxy_set_header Host ${SCHOLESA_WEB_HOST};\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_pass ${SCHOLESA_WEB_UPSTREAM};\n    }\n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        add_header Cache-Control "public, max-age=31536000, immutable";\n        try_files $uri =404;\n    }\n    location / {\n        try_files $uri $uri/ /index.html;\n    }\n    error_page 404 /index.html;\n}\n' > /etc/nginx/templates/default.conf.template
+ ---> Running in 606a26b77414
+Removing intermediate container 606a26b77414
+ ---> 9894ed0e0d20
+Step 19/22 : RUN mkdir -p /var/cache/nginx /var/run /tmp /etc/nginx/conf.d     && chown -R 101:101 /var/cache/nginx /var/run /tmp /etc/nginx/conf.d /etc/nginx/templates
+ ---> Running in dab928afb23f
+Removing intermediate container dab928afb23f
+ ---> 7fcaf8e10908
+Step 20/22 : ENV PORT=8080
+ ---> Running in 518c40062cc5
+Removing intermediate container 518c40062cc5
+ ---> f588bd078f34
+Step 21/22 : EXPOSE 8080
+ ---> Running in d5c615e56eaa
+Removing intermediate container d5c615e56eaa
+ ---> 86089cf5271a
+Step 22/22 : CMD ["nginx", "-g", "daemon off;"]
+ ---> Running in 56495192ab59
+Removing intermediate container 56495192ab59
+ ---> adf904c31570
+Successfully built adf904c31570
+Successfully tagged gcr.io/studio-3328096157-e3f79/empire-web:20260515-family-contrast
+PUSH
+Pushing gcr.io/studio-3328096157-e3f79/empire-web:20260515-family-contrast
+The push refers to repository [gcr.io/studio-3328096157-e3f79/empire-web]
+b4a589a623c6: Preparing
+a93d9c0d1281: Preparing
+1323fdac246f: Preparing
+ce495f7b0b7d: Preparing
+9c70f446fbe2: Preparing
+5be225e16e44: Preparing
+3d04ead9b400: Preparing
+af5598fef05f: Preparing
+8fbd5a835e5e: Preparing
+75061be64847: Preparing
+d4fc045c9e3a: Preparing
+d4fc045c9e3a: Waiting
+3d04ead9b400: Layer already exists
+ce495f7b0b7d: Layer already exists
+af5598fef05f: Layer already exists
+5be225e16e44: Layer already exists
+8fbd5a835e5e: Layer already exists
+9c70f446fbe2: Layer already exists
+75061be64847: Layer already exists
+d4fc045c9e3a: Layer already exists
+b4a589a623c6: Pushed
+a93d9c0d1281: Pushed
+1323fdac246f: Pushed
+20260515-family-contrast: digest: sha256:eabcb5327a660a4f2d25be00f4fc562bc9b939277698e7a85c56877819da60ee size: 2616
+DONE
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                 IMAGES                                                              STATUS
+d820a65e-2251-4379-93e3-83974f8ad0ba  2026-05-16T03:06:37+00:00  8M32S     gs://studio-3328096157-e3f79_cloudbuild/source/1778900794.594774-ff89d1854ffd460d88a5f4d65d31ceb5.tgz  gcr.io/studio-3328096157-e3f79/empire-web:20260515-family-contrast  SUCCESS
+Deploying to Cloud Run: service=empire-web region=us-central1
+Deploying container to Cloud Run service [[1mempire-web[m] in project [[1mstudio-3328096157-e3f79[m] region [[1mus-central1[m]
+Deploying...
+Setting IAM Policy................done
+Creating Revision................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [[1mempire-web[m] revision [[1mempire-web-00104-rgc[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://empire-web-97120825720.us-central1.run.app[m
+Routing traffic to latest revision for empire-web
+Updating traffic...
+Done.
+URL: https://empire-web-gu5vyrn2tq-uc.a.run.app
+Traffic:
+  0%   [1mempire-web-00074-rvc[m
+         gold-rehearsal: https://gold-rehearsal---empire-web-gu5vyrn2tq-uc.a.run.app
+  100% [1mLATEST (currently empire-web-00104-rgc)[m
+Deployment finished.
+[0;32m[deploy][0m Flutter web deployed ✓
+[0;32m[deploy][0m Both Cloud Run web surfaces deployed ✓
