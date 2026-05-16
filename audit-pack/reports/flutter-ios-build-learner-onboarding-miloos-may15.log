@@ -1013,3 +1013,696 @@ Loaded 1 missions for learner
 Loaded 1 pending reviews
 00:29 +705: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
 00:29 +706: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:29 +707: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+Loaded 1 learner summaries for parent
+00:29 +708: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+00:29 +708: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression mission service persists mission assignment status transitions
+Loaded 1 missions for learner
+00:29 +709: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+00:29 +709: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression mission service persists educator grading with ai feedback and rubric support
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:29 +710: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+00:29 +710: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression mission service persists study flow controls and emits learner telemetry
+Loaded 3 missions for learner
+00:29 +711: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+00:29 +711: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression worked example support decays after sustained correct FSRS ratings
+Loaded 1 missions for learner
+00:29 +712: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families
+00:29 +713: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +714: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +714: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression habit service keeps stale habits visible after refresh failure
+Loaded 1 habits and 1 logs
+Error loading habits: Exception: network down
+00:29 +715: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +715: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression mission service keeps stale missions and progress after refresh failure
+Loaded 1 missions for learner
+Error loading missions: Exception: network down
+00:29 +716: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +717: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +717: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression attendance service keeps stale occurrences visible after refresh failure
+Loaded 1 occurrences for today
+Failed to load attendance occurrences: Exception: network down
+00:29 +718: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +718: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows portfolio page downloads a real summary file
+Loaded 1 learner summaries for parent
+00:29 +718: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/persistence_blockers_regression_test.dart: Persistence blockers regression checkin service keeps stale learner summaries visible after refresh failure
+Loaded 1 learners and 1 records
+Error loading checkin data: Exception: network down
+00:29 +719: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +720: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +720: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows portfolio page copies summary when file export is unsupported
+Loaded 1 learner summaries for parent
+00:29 +721: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +721: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows portfolio page copies summary when file export is unsupported
+Export unsupported for parent portfolio download, copying summary instead: Unsupported operation: File export is not supported on this platform.
+00:29 +722: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +722: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows portfolio page prefers direct artifact proof and ai provenance over mission fallback
+Loaded 1 learner summaries for parent
+00:29 +723: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +723: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows child passport prefers direct artifact proof and ai provenance over mission fallback
+Loaded 1 learner summaries for parent
+00:29 +724: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +724: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart: Parent surface workflows billing page shows explicit unavailable state when no billing data exists
+Loaded 1 learner summaries for parent
+00:29 +725: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+00:29 +726: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail saves lane override, printable practice export, and persisted follow-up request
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:30 +727: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio uses site unavailable in the fallback headline when site identity is missing
+00:30 +727: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learners page shows honest learner unavailable label
+Loaded 1 learners for educator
+00:30 +728: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio uses site unavailable in the fallback headline when site identity is missing
+00:30 +728: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart: educator learner detail copies practice plan when file export is unsupported
+Loaded 1 learners for educator
+Failed to load growth events: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Failed to load MVL episode: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+Export unsupported for educator practice plan download, copying plan instead: Unsupported operation: File export is not supported on this platform.
+00:30 +729: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio uses site unavailable in the fallback headline when site identity is missing
+00:30 +730: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio uses site unavailable in the fallback headline when site identity is missing
+00:30 +731: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_page_test.dart: site ops page composes same-site checkins and today sessions into live ops status
+00:31 +732: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_page_test.dart: site ops page composes same-site checkins and today sessions into live ops status
+00:31 +733: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_page_test.dart: site ops page composes same-site checkins and today sessions into live ops status
+00:31 +734: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_page_test.dart: site ops page composes same-site checkins and today sessions into live ops status
+00:31 +735: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_ops_honesty_test.dart: site ops keeps live runtime rollout data visible when a later refresh fails
+00:31 +736: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +737: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +738: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +739: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +740: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +741: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +742: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +743: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login page applies the active dark theme on first paint
+00:31 +744: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/milo_runtime_scope_test.dart: MiloRuntimeScope renders child without AppState in tree
+00:31 +745: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/milo_runtime_scope_test.dart: MiloRuntimeScope renders child without AppState in tree
+00:31 +746: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login CTAs stack without overflow on narrow screens
+00:31 +747: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login CTAs stack without overflow on narrow screens
+00:31 +747: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+Loaded 1 missions for learner
+00:31 +748: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/login_page_recent_accounts_test.dart: login CTAs stack without overflow on narrow screens
+00:31 +749: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +750: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +751: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +752: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +753: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +754: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+00:32 +755: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart: learner portfolio renders reviewed artifacts created by the live educator mission review flow
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:33 +755: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: HQ capability load failures show friendly setup guidance
+Failed to load capability frameworks: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:33 +756: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: HQ capability load failures show friendly setup guidance
+00:33 +757: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent summary renders zh-CN strings
+00:33 +757: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: HQ rubric load failures show friendly setup guidance
+Failed to load rubric templates: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:33 +758: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent summary renders zh-CN strings
+00:33 +759: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent summary renders zh-CN strings
+00:33 +759: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/proof_verification_page_test.dart: proof load failures show friendly setup guidance
+Failed to load proof bundles: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:33 +760: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent summary renders zh-CN strings
+00:33 +761: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent summary renders zh-CN strings
+00:33 +761: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions shows current goals row after goal-like learner input
+MiloOS request failed, returning safe escalation: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:33 +762: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions shows current goals row after goal-like learner input
+00:33 +763: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions shows current goals row after goal-like learner input
+00:33 +764: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates site-scoped capability framework records
+00:33 +764: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions clear goals action hidden for learner role
+MiloOS request failed, returning safe escalation: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:33 +765: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates site-scoped capability framework records
+00:33 +766: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates site-scoped capability framework records
+00:33 +767: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates site-scoped capability framework records
+00:33 +767: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions educator clear goals cancel keeps goals
+MiloOS request failed, returning safe escalation: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:33 +768: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_surfaces_localization_test.dart: Parent surface tri-locale coverage parent portfolio renders zh-CN strings
+00:33 +769: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions educator clear goals cancel keeps goals
+00:33 +770: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates canonical site-scoped rubric templates
+00:33 +771: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates canonical site-scoped rubric templates
+00:33 +771: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions educator clear goals confirm removes goals
+MiloOS request failed, returning safe escalation: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:34 +772: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_authoring_persistence_test.dart: mobile HQ creates canonical site-scoped rubric templates
+00:34 +773: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions educator clear goals confirm removes goals
+00:34 +774: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions auto greeting proactively speaks on open
+00:34 +775: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions proactive BOS hesitation triggers voiced auto-assist
+00:34 +776: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/ai_coach_widget_regression_test.dart: AiCoachWidget conversational goals regressions voice-only mode hides text input and send button
+00:34 +777: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +778: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +779: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +780: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +781: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +782: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +783: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +784: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_today_page_test.dart: educator today exposes under-10-second evidence capture on classroom mobile width
+00:34 +785: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +786: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +787: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +788: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +789: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+Loaded 0 learners for educator
+00:34 +790: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +791: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +792: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +793: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +794: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +795: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +796: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +797: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +798: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +799: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +800: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +801: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +802: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +803: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +804: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +805: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:34 +806: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:35 +807: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:35 +808: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:35 +809: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:35 +810: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page shows explicit load error and retries successfully
+00:35 +811: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety detail sheets remove the fake full report CTA
+00:35 +811: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page surfaces sync failure instead of pretending success
+Loaded 0 learners for educator
+00:35 +812: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety detail sheets remove the fake full report CTA
+00:35 +813: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety detail sheets remove the fake full report CTA
+00:35 +813: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page keeps stale integrations visible when sync queues but refresh fails
+Loaded 0 learners for educator
+00:35 +814: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety detail sheets remove the fake full report CTA
+00:35 +814: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_integrations_page_test.dart: educator integrations page logs sync menu telemetry
+Loaded 0 learners for educator
+00:35 +815: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety detail sheets remove the fake full report CTA
+00:35 +816: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_honesty_regression_test.dart: educator review queue CTA navigates to the real queue route
+00:35 +816: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart: HQ safety copies incident summary when file export is unsupported
+Export unsupported for HQ safety incident summary, copying content instead: Unsupported operation: File export is not supported on this platform.
+00:35 +817: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_honesty_regression_test.dart: educator review queue CTA navigates to the real queue route
+00:35 +818: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:35 +819: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:35 +820: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:35 +820: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_honesty_regression_test.dart: mission review AI draft copy stays honest about local draft state
+Loaded 1 pending reviews
+00:35 +821: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:35 +822: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:35 +822: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_honesty_regression_test.dart: mission review uses learner unavailable when identity is missing
+Loaded 1 pending reviews
+00:36 +822: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +823: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +824: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +824: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_honesty_regression_test.dart: mission review uses mission unavailable when mission title is missing
+Loaded 1 pending reviews
+00:36 +825: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +826: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +827: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +828: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +829: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +830: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +831: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +832: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +833: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +834: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +835: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +835: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_audit_page_test.dart: HQ audit copies export when file export is unsupported
+Export unsupported for HQ audit export, copying content instead: Unsupported operation: File export is not supported on this platform.
+00:36 +836: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +837: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:36 +838: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +839: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +840: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +841: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +842: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +843: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:37 +844: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +844: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_user_admin_profile_edit_test.dart: hq user admin shows site id when site name is missing
+Loaded 1 users and 1 sites from Firebase
+00:38 +845: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +846: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +847: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +848: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +849: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +850: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +851: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +852: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +853: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +854: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +855: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +856: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +857: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +858: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +859: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +860: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +861: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +862: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +863: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +864: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +865: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +866: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +867: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +867: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review consumes learner-submitted canonical attempts from the live learner route
+Loaded 1 missions for learner
+00:38 +868: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +869: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +870: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +871: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +872: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +873: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:38 +874: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart: HQ page renders experiment section and saves a new cohort
+00:39 +875: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review consumes learner-submitted canonical attempts from the live learner route
+00:39 +876: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review consumes learner-submitted canonical attempts from the live learner route
+00:39 +877: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review consumes learner-submitted canonical attempts from the live learner route
+Loaded 1 pending reviews
+00:39 +878: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review consumes learner-submitted canonical attempts from the live learner route
+00:39 +879: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +880: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +880: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+Loaded 1 missions for learner
+00:39 +881: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +882: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +883: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +884: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +885: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +886: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +887: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +888: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +889: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/peer_feedback_page_test.dart: learner peer feedback persists same-site structured review only
+00:39 +890: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:39 +891: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+Loaded 1 pending reviews
+00:40 +892: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:40 +893: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:40 +894: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:40 +895: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:40 +896: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+00:40 +897: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review applies rubric scoring and growth linkage from the live review page
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:40 +898: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_billing_page_test.dart: parent billing page shows explicit unavailable state
+00:40 +899: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_billing_page_test.dart: parent billing page shows explicit unavailable state
+00:40 +899: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+Loaded 1 missions for learner
+00:40 +900: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_billing_page_test.dart: parent billing page shows explicit unavailable state
+00:40 +901: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +902: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +903: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +904: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +905: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +906: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +907: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:40 +908: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +909: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review requires explicit rubric scoring before review decisions unlock
+00:40 +910: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/startup_issue_banner_test.dart: startup issue banner localizes zh-CN recovery copy
+00:40 +910: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review falls back to HQ checkpoint guidance when live evidence prompt is absent
+Loaded 1 missions for learner
+00:40 +911: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/startup_issue_banner_test.dart: startup issue banner localizes zh-CN recovery copy
+00:40 +912: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/startup_issue_banner_test.dart: startup issue banner localizes zh-CN recovery copy
+00:40 +913: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/startup_issue_banner_test.dart: startup issue banner localizes zh-CN recovery copy
+00:40 +914: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:40 +915: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:40 +916: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:40 +917: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:41 +918: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:41 +918: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review falls back to HQ checkpoint guidance when live evidence prompt is absent
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:41 +919: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page shows an explicit load error instead of an empty state
+00:41 +919: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review excludes stale live evidence from other session occurrences
+Loaded 1 missions for learner
+00:41 +920: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review excludes stale live evidence from other session occurrences
+00:41 +920: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions page keeps stale sessions visible after refresh failure
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Error loading sessions: Exception: network down
+00:41 +921: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review excludes stale live evidence from other session occurrences
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:41 +922: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:41 +923: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:41 +923: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review carries structured live evidence into reviewed portfolio output when learner proof is absent
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:41 +924: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:41 +924: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review maps current-occurrence unmapped live evidence into the reviewed capability
+Loaded 1 missions for learner
+00:41 +924: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:42 +924: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_review_page_test.dart: educator mission review maps current-occurrence unmapped live evidence into the reviewed capability
+Loaded 1 pending reviews
+Cloud Function applyRubricToEvidence failed: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:42 +925: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:42 +926: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:42 +927: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:42 +928: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:42 +929: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+00:42 +930: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows learners created through provisioning reconciliation
+Loaded 1 learners for educator
+00:42 +931: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions quick evidence capture requires explicit mapped capability selection when available
+00:42 +932: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions quick evidence capture requires explicit mapped capability selection when available
+00:42 +932: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page renders support plan from live learner data
+Loaded 1 learners for educator
+00:42 +933: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator sessions quick evidence capture requires explicit mapped capability selection when available
+00:42 +934: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +934: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows MiloOS support debt for every learner
+Loaded 2 learners for educator
+00:42 +934: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+Loaded 1 missions for learner
+00:42 +935: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +936: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +936: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows a blocking error when learner load fails on first load
+Error loading learners: Bad state: learner roster unavailable
+00:42 +937: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +937: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page shows a blocking error when saved support plans fail on first load
+Loaded 1 learners for educator
+Failed to load learner support plans: Bad state: support plan query unavailable
+00:42 +938: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +939: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:42 +939: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page persists edited support plans
+Loaded 1 learners for educator
+00:43 +940: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:43 +940: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page re-reads persisted plan before settling success
+Loaded 1 learners for educator
+00:43 +941: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:43 +941: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator live studio shows HQ rubric descriptors and checkpoint guidance from linked mission
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:43 +942: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:43 +942: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page fails closed when persisted reload fails after save
+Loaded 1 learners for educator
+00:43 +943: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:43 +943: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: educator live studio resolves legacy human-readable checkpoint keys into current teaching prompts
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+00:43 +943: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page fails closed when persisted reload fails after save
+Failed to load learner support plans: Bad state: persisted support plan reload unavailable
+00:43 +944: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:43 +944: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page fails closed when support plan save fails
+Loaded 1 learners for educator
+Failed to update support plan: Bad state: support plan write failed
+00:43 +945: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+Loaded 2 pending reviews
+00:43 +945: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page logs support plan update telemetry
+Loaded 1 learners for educator
+00:43 +946: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:44 +947: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics top performers reflect reviewed learner work from the live learner and educator workflow
+00:44 +948: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +948: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports search filters the visible inventory
+Loaded 2 learners for educator
+00:44 +949: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +950: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +951: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +952: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +952: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page keeps stale plans visible after a refresh failure
+Loaded 1 learners for educator
+00:44 +953: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +953: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_learner_supports_page_test.dart: educator learner supports page keeps stale plans visible after a refresh failure
+Loaded 1 learners for educator
+Failed to load learner support plans: Bad state: saved support plans unavailable
+00:44 +954: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows explicit and guardian fallback coverage and persists new explicit records
+00:44 +954: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics export copies content when file export is unsupported
+Export unsupported for HQ analytics export, copying content instead: Unsupported operation: File export is not supported on this platform.
+00:44 +955: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: HQ capability mapping clears readiness and unblocks educator live evidence on reload
+00:44 +956: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: HQ capability mapping clears readiness and unblocks educator live evidence on reload
+00:44 +957: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: HQ capability mapping clears readiness and unblocks educator live evidence on reload
+00:44 +958: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: HQ capability mapping clears readiness and unblocks educator live evidence on reload
+00:44 +959: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_sessions_page_test.dart: HQ capability mapping clears readiness and unblocks educator live evidence on reload
+00:44 +960: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth keeps stale coverage visible after refresh failure
+00:44 +961: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_analytics_page_test.dart: hq analytics keeps stale telemetry metrics visible after refresh failure
+00:44 +962: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows guardian fallback for links created through provisioning
+Failed to load cohort launches: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:44 +963: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows guardian fallback for links created through provisioning
+00:44 +964: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows guardian fallback for links created through provisioning
+00:44 +965: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows guardian fallback for links created through provisioning
+00:44 +966: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_pickup_auth_page_test.dart: site pickup auth shows guardian fallback for links created through provisioning
+00:45 +967: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_mia_role_analytics_widgets_test.dart: role analytics regressions learner today renders learning support snapshot card
+Loaded 0 habits and 0 logs
+Loaded 0 messages and 0 conversations
+Loaded 0 missions for learner
+00:45 +968: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_mia_role_analytics_widgets_test.dart: role analytics regressions learner today renders learning support snapshot card
+00:45 +969: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_mia_role_analytics_widgets_test.dart: role analytics regressions learner today renders learning support snapshot card
+00:45 +970: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_portfolio_page_test.dart: parent portfolio page shows explicit load error instead of fake empty portfolio copy
+00:45 +971: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:45 +971: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/bos_mia_role_analytics_widgets_test.dart: role analytics regressions educator today renders class support snapshot card
+Loaded 0 classes for educator educator-test-1
+Loaded 1 learners for educator
+00:46 +972: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:46 +973: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:46 +974: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:46 +975: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:46 +976: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions site sessions create reflects immediately in list
+00:46 +977: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_portfolio_page_test.dart: parent portfolio download copies evidence summary when file export is unsupported
+00:46 +978: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_portfolio_page_test.dart: parent portfolio download copies evidence summary when file export is unsupported
+00:46 +979: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_portfolio_page_test.dart: parent portfolio download copies evidence summary when file export is unsupported
+Export unsupported for parent portfolio download, copying summary instead: Unsupported operation: File export is not supported on this platform.
+00:46 +979: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans create reflects immediately in list
+Loaded 0 learners for educator
+00:46 +980: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_portfolio_page_test.dart: parent portfolio download copies evidence summary when file export is unsupported
+00:46 +981: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans create reflects immediately in list
+00:46 +982: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans create reflects immediately in list
+00:46 +983: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans create reflects immediately in list
+00:46 +984: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans create reflects immediately in list
+00:46 +985: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert triage saves and reloads authoritative data
+00:46 +985: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans persist evidence defaults and authored step order
+Loaded 0 learners for educator
+00:46 +986: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_growth_timeline_page_test.dart: parent growth timeline load failures show friendly retry guidance
+00:46 +987: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_growth_timeline_page_test.dart: parent growth timeline load failures show friendly retry guidance
+00:46 +987: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans keep the dialog open and localize failure copy when persistence fails
+Loaded 0 learners for educator
+00:47 +987: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_growth_timeline_page_test.dart: parent growth timeline load failures show friendly retry guidance
+Failed to load parent growth timeline: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:47 +987: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/cta_reflection_test.dart: CTA reflection regressions mission plans keep the dialog open and localize failure copy when persistence fails
+Failed to create mission: Exception: Method.write on databases/fake-database/documents/missions/xj6EBMoeAkpWakkKzyOK with context {request: {auth: null}} is not allowed.
+00:47 +988: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/parent_growth_timeline_page_test.dart: parent growth timeline load failures show friendly retry guidance
+00:47 +989: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page shows an explicit learner load error instead of an empty state
+00:47 +990: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page shows an explicit learner load error instead of an empty state
+00:47 +991: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page shows an explicit learner load error instead of an empty state
+00:47 +992: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page shows an explicit learner load error instead of an empty state
+00:47 +993: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page shows an explicit learner load error instead of an empty state
+00:47 +994: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved triage record
+00:47 +995: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page keeps loaded learners visible behind a stale-data banner
+00:47 +996: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout control
+00:47 +997: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page creates a learner from the add learner dialog
+00:47 +998: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +999: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1000: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1001: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1002: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1003: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1004: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1005: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1006: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1007: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1008: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags alert history reflects the saved rollout escalation
+00:47 +1009: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/provisioning_page_test.dart: provisioning page creates a parent from the add parent dialog
+00:47 +1010: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_feature_flags_page_test.dart: hq feature flags rollout audit reflects saved governance mutations
+00:48 +1011: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1012: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1013: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1013: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadTodaySchedule only includes active site records
+Loaded 1 classes for educator educator-1
+00:48 +1014: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1014: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadTodaySchedule keeps stale classes visible after refresh failure
+Loaded 1 classes for educator educator-1
+Error loading educator schedule: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:48 +1015: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1015: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadSessions keeps stale sessions visible after refresh failure
+Loaded 1 sessions for educator
+Error loading sessions: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:48 +1016: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1016: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadLearners only includes learners in active site
+Loaded 1 learners for educator
+00:48 +1017: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1018: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1018: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadLearners uses reviewed capability mastery for pillar progress
+Loaded 1 learners for educator
+00:48 +1019: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1019: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping loadLearners keeps stale learners visible after refresh failure
+Loaded 1 learners for educator
+Error loading learners: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:48 +1020: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1021: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1021: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_service_site_scope_test.dart: EducatorService site scoping importRosterCsv enrolls known learners and queues unknown rows
+Loaded 1 sessions for educator
+Loaded 1 learners for educator
+00:48 +1022: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+Loaded 0 learners for educator
+00:48 +1023: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+Failed to load mission plans: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:48 +1024: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page keeps stale plans visible after refresh failure
+00:48 +1025: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/settings_placeholder_actions_test.dart: settings route aliases render for learner and parent roles
+00:48 +1025: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page shows an explicit load error instead of an empty state
+Failed to load mission plans: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+Loaded 0 learners for educator
+00:48 +1026: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/settings_placeholder_actions_test.dart: settings route aliases render for learner and parent roles
+00:48 +1026: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+Loaded 0 learners for educator
+00:48 +1027: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/settings_placeholder_actions_test.dart: settings route aliases render for learner and parent roles
+00:48 +1028: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/settings_placeholder_actions_test.dart: settings route aliases render for learner and parent roles
+00:48 +1029: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:48 +1030: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:48 +1031: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:48 +1032: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:49 +1033: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:49 +1034: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:49 +1035: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page creates a mission and persists it
+00:49 +1036: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1037: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1037: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page surfaces failed mission creation
+Loaded 0 learners for educator
+00:49 +1038: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1039: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1039: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page updates a mission and persists it
+Loaded 0 learners for educator
+00:49 +1040: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1041: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1042: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1043: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1044: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1045: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1045: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page archives a mission and persists it
+Loaded 0 learners for educator
+00:49 +1046: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1047: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1048: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1049: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1049: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page restores the saved pillar filter on reopen
+Loaded 0 learners for educator
+00:49 +1050: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1050: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page restores the saved pillar filter on reopen
+Loaded 0 learners for educator
+00:49 +1051: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:49 +1051: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/educator_mission_plans_page_test.dart: educator mission plans page surfaces failed mission archiving
+Loaded 0 learners for educator
+00:50 +1052: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1053: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1054: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1055: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1056: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1057: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1058: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1059: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1060: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1061: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart: HQ curriculum maintenance workflows curriculum status advances from draft to review to published
+00:50 +1062: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1063: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1064: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1065: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+Loaded 0 learners for educator
+00:50 +1066: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1067: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1068: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1069: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1069: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/app_resilience_test.dart: AppResilience sink failures are swallowed so reporting never crashes the app
+AppResilience sink failure: Bad state: sink boom
+#0      main.<anonymous closure>.<anonymous closure>.<anonymous closure> (file:///Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/app_resilience_test.dart:109:11)
+#1      AppResilience._capture (package:scholesa_app/services/app_resilience.dart:85:18)
+#2      AppResilience.captureFailure (package:scholesa_app/services/app_resilience.dart:98:11)
+#3      AppResilience.captureZoneError (package:scholesa_app/services/app_resilience.dart:141:11)
+#4      main.<anonymous closure>.<anonymous closure> (file:///Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/app_resilience_test.dart:113:24)
+#5      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:25)
+<asynchronous suspension>
+#6      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)
+<asynchronous suspension>
+#7      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)
+<asynchronous suspension>
+00:50 +1070: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1071: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/district_provider_integration_test.dart: District provider integrations educator integrations page renders Clever and ClassLink and queues sync by provider
+00:50 +1072: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1073: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1074: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1075: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1076: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1077: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1078: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+Loaded 1 missions for learner
+00:51 +1078: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/observation_capture_page_test.dart: observation load failures show friendly setup guidance
+Failed to load observation capture data: [cloud_firestore/failed-precondition] The query requires an index. You can create it here: https://console.firebase.google.com/project/demo/firestore/indexes
+00:51 +1079: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1080: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1081: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1082: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1083: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1084: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1085: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/mission_mvl_progression_test.dart: mission details are blocked behind active MVL explain-back gate
+00:51 +1086: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/shared_state_theme_test.dart: shared error state uses Scholesa semantic theme colors
+00:51 +1087: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/shared_state_theme_test.dart: shared error state uses Scholesa semantic theme colors
+00:51 +1088: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/shared_state_theme_test.dart: shared error state uses Scholesa semantic theme colors
+00:52 +1089: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1090: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1091: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1092: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1093: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1094: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent loads live consent records and persists media and research updates with audit logs
+00:52 +1095: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/partner_integrations_page_test.dart: partner integrations page renders live connection state
+00:52 +1095: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+Failed to load cohort launches: [core/no-app] No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+00:52 +1096: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/partner_integrations_page_test.dart: partner integrations page renders live connection state
+00:52 +1097: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:52 +1098: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1099: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1100: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1101: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1102: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1103: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent shows provisioning-linked learners and parents in the live consent workflow
+00:53 +1104: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page loads live roster from enrolled learners
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+00:53 +1105: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page loads live roster from enrolled learners
+00:53 +1106: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/site_consent_page_test.dart: site consent keeps stale records visible after refresh failure
+00:53 +1107: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: educator roster import flows into the attendance roster for the same class
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 sessions for educator
+Loaded 1 learners for educator
+Loaded 1 occurrences for today
+Loaded roster with 1 learners
+00:53 +1108: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page shows a class created through site sessions via the generated occurrence
+Loaded 1 occurrences for today
+00:53 +1109: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: queued roster imports reconcile through site provisioning into the attendance roster
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 occurrences for today
+Loaded roster with 1 learners
+00:53 +1110: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: cross-site existing learners are linked into the new site and appear in attendance after provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 occurrences for today
+Loaded roster with 1 learners
+00:54 +1111: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: reviewed roster imports stay terminal and do not reconcile into attendance after provisioning
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 sessions for educator
+Loaded 0 learners for educator
+Loaded 1 occurrences for today
+00:54 +1112: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance roster keeps stale learners visible after refresh failure
+00:54 +1113: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page saves attendance records to Firestore
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+00:54 +1114: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page logs save telemetry on live save
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+00:54 +1115: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page shows explicit save failure
+00:54 +1116: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page reloads saved attendance from Firestore
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+Loaded roster with 2 learners
+00:54 +1117: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page queues attendance when offline
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+00:54 +1118: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page logs queue telemetry when offline
+Loaded 1 occurrences for today
+Loaded roster with 2 learners
+00:54 +1119: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page records presence only and shows no learner capability or mastery claims
+00:54 +1120: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: attendance page does not present AI-generated output as verified learner proof
+00:54 +1121: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart: (tearDownAll)
+00:54 +1121: All tests passed!
+[0;32m[deploy][0m Flutter gate passed ✓
+[0;32m[deploy][0m Building Flutter iOS (release)...
+Warning: Building for device with codesigning disabled. You will have to manually codesign before deploying to device.
+Building com.scholesa.app for device (ios-release)...
+Running Xcode build...                                          
