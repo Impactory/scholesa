@@ -2169,3 +2169,6 @@ Staging minimal Cloud Build context
 Submitting Docker build with Dockerfile.flutter for gcr.io/studio-3328096157-e3f79/empire-web:20260515-family-contrast
 Creating temporary archive of 319 file(s) totalling 20.8 MiB before compression.
 Uploading tarball of [/var/folders/lf/67v4w5915kq97xpsv4vlh9cc0000gn/T/tmp.XQdGvUaf5o] to [gs://studio-3328096157-e3f79_cloudbuild/source/1778900794.594774-ff89d1854ffd460d88a5f4d65d31ceb5.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/studio-3328096157-e3f79/locations/global/builds/d820a65e-2251-4379-93e3-83974f8ad0ba].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/d820a65e-2251-4379-93e3-83974f8ad0ba?project=97120825720 ].
+Waiting for build to complete. Polling interval: 1 second(s).
