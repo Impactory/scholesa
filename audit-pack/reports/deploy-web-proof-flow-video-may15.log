@@ -196,3 +196,300 @@ https://nextjs.org/telemetry
 ▲ Next.js 16.2.6 (webpack)
 
   Creating an optimized production build ...
+✓ Compiled successfully in 42s
+  Running TypeScript ...
+  Finished TypeScript in 20.3s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/10) ...
+  Generating static pages using 1 worker (2/10) 
+  Generating static pages using 1 worker (4/10) 
+  Generating static pages using 1 worker (7/10) 
+✓ Generating static pages using 1 worker (10/10) in 507ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/dashboard
+├ ƒ /[locale]/educator
+├ ƒ /[locale]/educator/analytics
+├ ƒ /[locale]/educator/attendance
+├ ƒ /[locale]/educator/evidence
+├ ƒ /[locale]/educator/integrations
+├ ƒ /[locale]/educator/learner-supports
+├ ƒ /[locale]/educator/learners
+├ ƒ /[locale]/educator/mission-plans
+├ ƒ /[locale]/educator/missions/review
+├ ƒ /[locale]/educator/observations
+├ ƒ /[locale]/educator/proof-review
+├ ƒ /[locale]/educator/rubrics/apply
+├ ƒ /[locale]/educator/sessions
+├ ƒ /[locale]/educator/today
+├ ƒ /[locale]/educator/verification
+├ ƒ /[locale]/hq
+├ ƒ /[locale]/hq/analytics
+├ ƒ /[locale]/hq/approvals
+├ ƒ /[locale]/hq/audit
+├ ƒ /[locale]/hq/billing
+├ ƒ /[locale]/hq/capabilities
+├ ƒ /[locale]/hq/capability-frameworks
+├ ƒ /[locale]/hq/curriculum
+├ ƒ /[locale]/hq/feature-flags
+├ ƒ /[locale]/hq/integrations-health
+├ ƒ /[locale]/hq/role-switcher
+├ ƒ /[locale]/hq/rubric-builder
+├ ƒ /[locale]/hq/safety
+├ ƒ /[locale]/hq/sites
+├ ƒ /[locale]/hq/user-admin
+├ ƒ /[locale]/learner
+├ ƒ /[locale]/learner/checkpoints
+├ ƒ /[locale]/learner/habits
+├ ƒ /[locale]/learner/miloos
+├ ƒ /[locale]/learner/missions
+├ ƒ /[locale]/learner/peer-feedback
+├ ƒ /[locale]/learner/portfolio
+├ ƒ /[locale]/learner/profile
+├ ƒ /[locale]/learner/proof-assembly
+├ ƒ /[locale]/learner/reflections
+├ ƒ /[locale]/learner/timeline
+├ ƒ /[locale]/learner/today
+├ ƒ /[locale]/login
+├ ƒ /[locale]/messages
+├ ƒ /[locale]/notifications
+├ ƒ /[locale]/parent
+├ ƒ /[locale]/parent/billing
+├ ƒ /[locale]/parent/growth-timeline
+├ ƒ /[locale]/parent/passport
+├ ƒ /[locale]/parent/portfolio
+├ ƒ /[locale]/parent/schedule
+├ ƒ /[locale]/parent/summary
+├ ƒ /[locale]/partner
+├ ƒ /[locale]/partner/contracts
+├ ƒ /[locale]/partner/deliverables
+├ ƒ /[locale]/partner/integrations
+├ ƒ /[locale]/partner/listings
+├ ƒ /[locale]/partner/payouts
+├ ƒ /[locale]/privacy
+├ ƒ /[locale]/profile
+├ ƒ /[locale]/register
+├ ƒ /[locale]/settings
+├ ƒ /[locale]/site
+├ ƒ /[locale]/site/billing
+├ ƒ /[locale]/site/checkin
+├ ƒ /[locale]/site/clever
+├ ƒ /[locale]/site/dashboard
+├ ƒ /[locale]/site/evidence-health
+├ ƒ /[locale]/site/identity
+├ ƒ /[locale]/site/incidents
+├ ƒ /[locale]/site/integrations-health
+├ ƒ /[locale]/site/ops
+├ ƒ /[locale]/site/provisioning
+├ ƒ /[locale]/site/sessions
+├ ƒ /[locale]/summer-camp-2026
+├ ƒ /api/ai/complete
+├ ƒ /api/auth/session-login
+├ ƒ /api/auth/session-logout
+├ ƒ /api/auth/sso/providers
+├ ƒ /api/healthz
+├ ƒ /api/lti/launch
+└ ƒ /api/stages
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+[91mnpm notice
+npm notice New minor version of npm available! 11.12.1 -> 11.14.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
+npm notice To update run: npm install -g npm@11.14.1
+npm notice
+[0mRemoving intermediate container 18355d6edc20
+ ---> d7db5d0ff480
+Step 21/38 : RUN npm prune --omit=dev
+ ---> Running in f659c3a9597f
+[91mnpm warn ERESOLVE overriding peer dependency
+[0m[91mnpm warn While resolving: @dataconnect/generated@1.0.0
+npm warn Found: firebase@11.10.0
+npm warn node_modules/firebase
+npm warn   firebase@"^11.10.0" from the root project
+npm warn   3 more (@firebase/rules-unit-testing, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer firebase@"^12.11.0" from @dataconnect/generated@1.0.0
+npm warn src/dataconnect-generated
+npm warn   @dataconnect/generated@1.0.0
+npm warn   node_modules/@dataconnect/generated
+npm warn
+npm warn Conflicting peer dependency: firebase@12.13.0
+npm warn node_modules/firebase
+npm warn   peer firebase@"^12.11.0" from @dataconnect/generated@1.0.0
+npm warn   src/dataconnect-generated
+npm warn     @dataconnect/generated@1.0.0
+npm warn     node_modules/@dataconnect/generated
+[0m
+removed 601 packages, and audited 413 packages in 48s
+
+65 packages are looking for funding
+  run `npm fund` for details
+
+9 low severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+Removing intermediate container f659c3a9597f
+ ---> 7ffda13a25ba
+Step 22/38 : FROM node:24-bullseye-slim AS runner
+ ---> d23c0919a12f
+Step 23/38 : WORKDIR /app
+ ---> Using cache
+ ---> efce34f8d29f
+Step 24/38 : ENV NODE_ENV=production
+ ---> Running in 7a3d844bf78a
+Removing intermediate container 7a3d844bf78a
+ ---> f50452e46c87
+Step 25/38 : COPY --from=builder /app/package.json ./
+ ---> e9ed7ecc83df
+Step 26/38 : COPY --from=builder /app/node_modules ./node_modules
+ ---> 7fe3834a30ac
+Step 27/38 : COPY --from=builder /app/.next ./.next
+ ---> 112a94035e6a
+Step 28/38 : COPY --from=builder /app/public ./public
+ ---> f6ac0b614a71
+Step 29/38 : COPY --from=builder /app/locales ./locales
+ ---> ee7bfdebd5f7
+Step 30/38 : COPY --from=builder /app/next.config.mjs ./next.config.mjs
+ ---> b847d1709f4d
+Step 31/38 : ENV PORT=8080
+ ---> Running in 01b2922c8313
+Removing intermediate container 01b2922c8313
+ ---> 7410737f324d
+Step 32/38 : ENV HOSTNAME=0.0.0.0
+ ---> Running in 77847d94986f
+Removing intermediate container 77847d94986f
+ ---> 673cf6fb39e8
+Step 33/38 : EXPOSE 8080
+ ---> Running in 92b5dc3ff080
+Removing intermediate container 92b5dc3ff080
+ ---> 500608d11539
+Step 34/38 : RUN useradd --user-group --create-home --shell /bin/false appuser
+ ---> Running in de816f6a599c
+Removing intermediate container de816f6a599c
+ ---> ded7fd3fe488
+Step 35/38 : RUN mkdir -p /app/.next/cache/images && chown -R appuser:appuser /app/.next/cache
+ ---> Running in ba935658ef61
+Removing intermediate container ba935658ef61
+ ---> f6a829685d82
+Step 36/38 : USER appuser
+ ---> Running in d0b3d4efb780
+Removing intermediate container d0b3d4efb780
+ ---> 20a37db9e50e
+Step 37/38 : CMD ["npm", "start"]
+ ---> Running in 543356c22c73
+Removing intermediate container 543356c22c73
+ ---> 6a9df6f80939
+Step 38/38 : LABEL org.opencontainers.image.version=20260515-proof-flow-video
+ ---> Running in 3353902f48d7
+Removing intermediate container 3353902f48d7
+ ---> 74629baa6cd7
+Successfully built 74629baa6cd7
+Successfully tagged gcr.io/studio-3328096157-e3f79/scholesa:20260515-proof-flow-video
+PUSH
+Pushing gcr.io/studio-3328096157-e3f79/scholesa:20260515-proof-flow-video
+The push refers to repository [gcr.io/studio-3328096157-e3f79/scholesa]
+66bb28085924: Preparing
+d993b7ae30ae: Preparing
+1eeb233cc3c1: Preparing
+cbee14971003: Preparing
+49a8979d120f: Preparing
+383aec3292f3: Preparing
+1a0047de6f89: Preparing
+e7ba611d8dc2: Preparing
+8b26103c3a90: Preparing
+1776e4987fa8: Preparing
+291e417b2f33: Preparing
+7e1861b3be8e: Preparing
+afb371bdfbda: Preparing
+589c64d8a13b: Preparing
+291e417b2f33: Waiting
+7e1861b3be8e: Waiting
+afb371bdfbda: Waiting
+589c64d8a13b: Waiting
+1776e4987fa8: Layer already exists
+291e417b2f33: Layer already exists
+7e1861b3be8e: Layer already exists
+8b26103c3a90: Pushed
+d993b7ae30ae: Pushed
+e7ba611d8dc2: Pushed
+afb371bdfbda: Layer already exists
+cbee14971003: Pushed
+1eeb233cc3c1: Pushed
+49a8979d120f: Pushed
+589c64d8a13b: Layer already exists
+383aec3292f3: Pushed
+66bb28085924: Pushed
+1a0047de6f89: Pushed
+20260515-proof-flow-video: digest: sha256:7c6619b933764ee5359f5145860f6897c248872d8d0da5bb2ae9aad6ac7546ef size: 3255
+DONE
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                 IMAGES                                                             STATUS
+241b5e13-98ae-43ab-b031-2cfd7fcee32d  2026-05-16T04:11:14+00:00  6M1S      gs://studio-3328096157-e3f79_cloudbuild/source/1778904653.376001-d82b45034cd04b5fa10e35f23e37cffc.tgz  gcr.io/studio-3328096157-e3f79/scholesa:20260515-proof-flow-video  SUCCESS
+[0;32m[deploy][0m Deploying primary web to Cloud Run...
+Deploying container to Cloud Run service [[1mscholesa-web[m] in project [[1mstudio-3328096157-e3f79[m] region [[1mus-central1[m]
+Deploying...
+Setting IAM Policy...............done
+Creating Revision.............................................................................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [[1mscholesa-web[m] revision [[1mscholesa-web-00080-27k[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://scholesa-web-97120825720.us-central1.run.app[m
+[0;32m[deploy][0m Routing primary web traffic to latest revision...
+Updating traffic...
+Done.
+URL: https://scholesa-web-gu5vyrn2tq-uc.a.run.app
+Traffic:
+  0%   [1mscholesa-web-00069-qiy[m
+         gold-rehearsal: https://gold-rehearsal---scholesa-web-gu5vyrn2tq-uc.a.run.app
+  100% [1mLATEST (currently scholesa-web-00080-27k)[m
+[0;32m[deploy][0m Primary web deployed ✓
+[0;32m[deploy][0m Syncing platform icons...
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+[icons] Syncing canonical SVG brand source
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/20.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/60.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/29.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/58.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/87.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/40.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/80.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/50.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/100.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/57.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/114.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/120.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/180.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/72.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/144.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/76.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/152.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/167.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png
+Converted /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/assets/icons/ios/1024.png to opaque RGB PNG: /Users/impactory/Documents/GitHub/scholesa/apps/empire_flutter/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+[0;32m[deploy][0m Platform icons synced ✓
+[0;32m[deploy][0m Running flutter analyze...
+Analyzing app...                                                
